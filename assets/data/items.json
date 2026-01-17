@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "name": "Health Potion",
+    "description": "Restores 2d4+2 hit points.",
+    "type": "potion",
+    "rarity": "common"
+  },
+  {
+    "id": "2",
+    "name": "Scroll of Fireball",
+    "description": "A spell scroll containing the Fireball spell.",
+    "type": "scroll",
+    "rarity": "rare"
+  },
+  {
+    "id": "3",
+    "name": "+1 Longsword",
+    "description": "A finely crafted longsword with a magical edge.",
+    "type": "weapon",
+    "rarity": "uncommon"
+  }
+]
