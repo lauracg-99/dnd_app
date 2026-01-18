@@ -10,7 +10,7 @@ import 'viewmodels/feats_viewmodel.dart';
 Future<void> main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   runApp(
     MultiProvider(
       providers: [
@@ -33,14 +33,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6A1B9A), // Deep purple
+          seedColor: Colors.blue,
           brightness: Brightness.light,
         ),
         useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 2,
-        ),
+        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 2),
         cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -65,24 +62,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
   static const List<Widget> _screens = [
-    ItemsListScreen(),
-    SpellsListScreen(),
     InformationScreen(),
+    SpellsListScreen(),
+    ItemsListScreen(),
   ];
 
   static const List<NavigationDestination> _destinations = [
-    NavigationDestination(
-      icon: Icon(Icons.inventory),
-      label: 'Items',
-    ),
+    NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),
     NavigationDestination(
       icon: Icon(Icons.auto_awesome_motion),
       label: 'Spells',
     ),
-    NavigationDestination(
-      icon: Icon(Icons.menu_book),
-      label: 'Information',
-    ),
+    NavigationDestination(icon: Icon(Icons.inventory), label: 'Items'),
   ];
 
   void _onItemTapped(int index) {
@@ -94,10 +85,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
