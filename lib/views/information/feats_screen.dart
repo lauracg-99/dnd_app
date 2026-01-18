@@ -175,40 +175,6 @@ class _FeatsScreenState extends State<FeatsScreen> {
                         feat.description,
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
-                      /* if (feat.effects.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  'Effects:',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                ...feat.effects.map((effect) {
-                  final effectData = effect['stats']?['effect']?['value']?['stats'];
-                  if (effectData == null) return const SizedBox.shrink();
-                  
-                  final name = effectData['name']?['value']?.toString();
-                  final description = effectData['description']?['value']?.toString() ?? 
-                                    effectData['type']?.toString();
-                  
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (name != null) ...[
-                          Text(
-                            '• $name',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                        ],
-                        if (description != null)
-                          Text('  $description'),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ], */
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,

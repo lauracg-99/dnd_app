@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'feats_screen.dart';
+import 'classes_screen.dart';
 
 class InformationScreen extends StatelessWidget {
   const InformationScreen({super.key});
@@ -24,6 +25,17 @@ class InformationScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const FeatsScreen()),
+              );
+            },
+          ),
+          _buildCategoryCard(
+            context: context,
+            title: 'Classes',
+            icon: Icons.class_,
+            onTap: () {    
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ClassesScreen()),
               );
             },
           ),
@@ -71,17 +83,7 @@ class InformationScreen extends StatelessWidget {
               );
             },
           ),
-          _buildCategoryCard(
-            context: context,
-            title: 'Classes',
-            icon: Icons.class_, // Note the underscore at the end for the class icon
-            onTap: () {
-              // Will be implemented later
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Classes section coming soon!')),
-              );
-            },
-          ),
+          
         ],
       ),
     );
