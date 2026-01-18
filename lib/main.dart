@@ -4,6 +4,7 @@ import 'viewmodels/items_viewmodel.dart';
 import 'viewmodels/spells_viewmodel.dart';
 import 'views/items_list_screen.dart';
 import 'views/spells/spells_list_screen.dart';
+import 'views/information/information_screen.dart';
 
 Future<void> main() async {
   // Ensure Flutter binding is initialized
@@ -64,6 +65,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   static const List<Widget> _screens = [
     ItemsListScreen(),
     SpellsListScreen(),
+    InformationScreen(),
   ];
 
   static const List<NavigationDestination> _destinations = [
@@ -74,6 +76,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     NavigationDestination(
       icon: Icon(Icons.auto_awesome_motion),
       label: 'Spells',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.menu_book),
+      label: 'Information',
     ),
   ];
 
