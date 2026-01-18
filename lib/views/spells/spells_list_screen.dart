@@ -237,24 +237,96 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
     );
   }
 
+  // Group spells by their level
+  Map<int, List<Spell>> _groupSpellsByLevel(List<Spell> spells) {
+    final Map<int, List<Spell>> groupedSpells = {};
+    
+    for (final spell in spells) {
+      final level = spell.levelNumber;
+      groupedSpells.putIfAbsent(level, () => []).add(spell);
+    }
+    
+    // Sort each level's spells alphabetically
+    for (final level in groupedSpells.keys) {
+      groupedSpells[level]!.sort((a, b) => a.name.compareTo(b.name));
+    }
+    
+    return Map.fromEntries(
+      groupedSpells.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
+    );
+  }
+
+  // Build a section header for a spell level
+  Widget _buildSectionHeader(int level) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Text(
+        level == 0 ? 'Cantrips' : 'Level $level Spells',
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  // Build a single spell item
+  Widget _buildSpellItem(Spell spell, BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: ListTile(
+        title: Text(spell.name),
+        subtitle: Text(
+          '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}${spell.ritual ? ' (Ritual)' : ''}'.trim(),
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          _showSpellDetails(context, spell);
+        },
+      ),
+    );
+  }
+
+  // The main method to build the spells list
   Widget _buildSpellsList(SpellsViewModel viewModel) {
+    final groupedSpells = _groupSpellsByLevel(viewModel.spells);
+    final levels = groupedSpells.keys.toList()..sort();
+    
+    // If no spells after filtering
+    if (viewModel.spells.isEmpty) {
+      return _buildEmptyView();
+    }
+
+    // Calculate total number of items (1 header + spells for each level)
+    int itemCount = 0;
+    for (final level in levels) {
+      itemCount += 1 + groupedSpells[level]!.length; // 1 for header + number of spells
+    }
+
     return ListView.builder(
-      itemCount: viewModel.spells.length,
+      itemCount: itemCount,
       itemBuilder: (context, index) {
-        final spell = viewModel.spells[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: ListTile(
-            title: Text(spell.name),
-            subtitle: Text(
-              '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              _showSpellDetails(context, spell);
-            },
-          ),
-        );
+        int currentPos = 0;
+        
+        for (final level in levels) {
+          final spells = groupedSpells[level]!;
+          
+          // Check if this is the header position
+          if (index == currentPos) {
+            return _buildSectionHeader(level);
+          }
+          currentPos++;
+          
+          // Check if this is a spell position
+          final spellIndex = index - currentPos;
+          if (spellIndex < spells.length) {
+            return _buildSpellItem(spells[spellIndex], context);
+          }
+          
+          currentPos += spells.length;
+        }
+        
+        return const SizedBox.shrink();
       },
     );
   }
