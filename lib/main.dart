@@ -5,6 +5,7 @@ import 'viewmodels/spells_viewmodel.dart';
 import 'views/items_list_screen.dart';
 import 'views/spells/spells_list_screen.dart';
 import 'views/information/information_screen.dart';
+import 'viewmodels/feats_viewmodel.dart';
 
 Future<void> main() async {
   // Ensure Flutter binding is initialized
@@ -15,6 +16,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ItemsViewModel()),
         ChangeNotifierProvider(create: (_) => SpellsViewModel()),
+        ChangeNotifierProvider(create: (_) => FeatsViewModel()),
       ],
       child: const MyApp(),
     ),
