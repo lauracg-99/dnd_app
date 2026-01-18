@@ -45,15 +45,16 @@ class _FeatsScreenState extends State<FeatsScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                      )
-                    : null,
+                suffixIcon:
+                    _searchController.text.isNotEmpty
+                        ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                        : null,
               ),
               onChanged: (value) {
                 setState(() {
@@ -79,18 +80,19 @@ class _FeatsScreenState extends State<FeatsScreen> {
             );
           }
 
-          final feats = _searchQuery.isEmpty
-              ? viewModel.feats
-              : viewModel.feats
-                  .where((feat) => feat.name
-                      .toLowerCase()
-                      .contains(_searchQuery.toLowerCase()))
-                  .toList();
+          final feats =
+              _searchQuery.isEmpty
+                  ? viewModel.feats
+                  : viewModel.feats
+                      .where(
+                        (feat) => feat.name.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ),
+                      )
+                      .toList();
 
           if (feats.isEmpty) {
-            return const Center(
-              child: Text('No feats found.'),
-            );
+            return const Center(child: Text('No feats found.'));
           }
 
           return ListView.builder(
@@ -130,48 +132,50 @@ class _FeatsScreenState extends State<FeatsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        maxChildSize: 0.9,
-        initialChildSize: 0.5,
-        minChildSize: 0.25,
-        builder: (_, controller) => SingleChildScrollView(
-          controller: controller,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[400],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Text(
-                feat.name,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Source: ${feat.source}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Description:',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                feat.description,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              if (feat.effects.isNotEmpty) ...[
+      builder:
+          (context) => DraggableScrollableSheet(
+            expand: false,
+            maxChildSize: 0.9,
+            initialChildSize: 0.5,
+            minChildSize: 0.25,
+            builder:
+                (_, controller) => SingleChildScrollView(
+                  controller: controller,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[400],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        feat.name,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Source: ${feat.source}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Description:',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        feat.description,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      /* if (feat.effects.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text(
                   'Effects:',
@@ -204,19 +208,19 @@ class _FeatsScreenState extends State<FeatsScreen> {
                     ),
                   );
                 }).toList(),
-              ],
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
+              ], */
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Close'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
           ),
-        ),
-      ),
     );
   }
 }
