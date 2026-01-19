@@ -271,7 +271,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                               Icons.person,
                               size: 60,
                               color: Colors.grey,
-                              ),
+                            ),
                   ),
                   // Camera button overlay
                   Positioned(
@@ -374,21 +374,21 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            childAspectRatio: 2,
+            crossAxisCount: 3,
+            childAspectRatio: 1.1, // Slightly taller cards
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
             children: [
-              _buildStatField('STR', _strengthController),
-              _buildStatField('DEX', _dexterityController),
-              _buildStatField('CON', _constitutionController),
-              _buildStatField('INT', _intelligenceController),
-              _buildStatField('WIS', _wisdomController),
-              _buildStatField('CHA', _charismaController),
+              _buildStatField('STRENGTH', _strengthController),
+              _buildStatField('DEXTERITY', _dexterityController),
+              _buildStatField('CONSTITUTION', _constitutionController),
+              _buildStatField('INTELLIGENCE', _intelligenceController),
+              _buildStatField('WISDOM', _wisdomController),
+              _buildStatField('CHARISMA', _charismaController),
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 10),
           const Text(
             'Combat Stats',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -436,14 +436,103 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildStatField(String label, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade300, width: 1),
       ),
-      keyboardType: TextInputType.number,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.black54, width: 1),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 46, 
+                    child: TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        hintText: '10',
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        isDense: true,
+                      ),
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                      onChanged: (value) {
+                        // Force rebuild to update modifier
+                        (context as Element).markNeedsBuild();
+                      },
+                    ),
+                  ),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      _getModifier(controller.text),
+                      style: const TextStyle(
+                        fontSize: 11, 
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.0, 
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.visible,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  String _getModifier(String scoreText) {
+    try {
+      final score = int.tryParse(scoreText) ?? 10;
+      final modifier = ((score - 10) / 2).floor();
+      return modifier >= 0 ? '+$modifier' : '$modifier';
+    } catch (e) {
+      return '+0';
+    }
   }
 
   Widget _buildSkillsTab() {
@@ -892,20 +981,21 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ],
       ),
       child: IconButton(
-        icon: _isPickingImage
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        icon:
+            _isPickingImage
+                ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                : const Icon(
+                  Icons.delete_outline,
+                  color: Colors.white,
+                  size: 20,
                 ),
-              )
-            : const Icon(
-                Icons.delete_outline,
-                color: Colors.white,
-                size: 20,
-              ),
         onPressed: _isPickingImage ? null : () => _triggerHapticAndConfirm(),
         tooltip: 'Remove image',
       ),
@@ -926,20 +1016,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ],
       ),
       child: IconButton(
-        icon: _isPickingImage
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-                size: 20,
-              ),
+        icon:
+            _isPickingImage
+                ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                : const Icon(Icons.camera_alt, color: Colors.white, size: 20),
         onPressed: _isPickingImage ? null : _triggerHapticAndShowOptions,
         tooltip: 'Change image',
       ),
@@ -978,7 +1065,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Remove Profile Image'),
-          content: const Text('Are you sure you want to remove this character\'s profile image?'),
+          content: const Text(
+            'Are you sure you want to remove this character\'s profile image?',
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -991,9 +1080,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 Navigator.of(context).pop();
                 _removeImage();
               },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Remove'),
             ),
           ],
@@ -1018,10 +1105,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Colors.white,
-                  Colors.grey.shade50,
-                ],
+                colors: [Colors.white, Colors.grey.shade50],
               ),
             ),
             child: Column(
@@ -1041,7 +1125,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Title
                 Text(
                   'Profile Image',
@@ -1052,16 +1136,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                
+
                 Text(
                   'Choose an option below',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Options
                 Container(
                   decoration: BoxDecoration(
@@ -1076,12 +1157,19 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           Navigator.of(context).pop();
                           _pickImage();
                         },
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.blue.shade50,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(12),
+                            ),
                           ),
                           child: Row(
                             children: [
@@ -1121,19 +1209,26 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       if (_customImagePath != null) ...[
                         // Divider
                         Divider(height: 1, color: Colors.grey.shade200),
-                        
+
                         // Remove image option
                         InkWell(
                           onTap: () {
                             Navigator.of(context).pop();
                             _showDeleteConfirmation();
                           },
-                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.circular(12),
+                          ),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red.shade50,
-                              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                              borderRadius: const BorderRadius.vertical(
+                                bottom: Radius.circular(12),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -1173,9 +1268,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Cancel button
                 SizedBox(
                   width: double.infinity,
@@ -3010,7 +3105,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   Future<void> _pickImage() async {
     if (_isPickingImage) return; // Prevent multiple calls
-    
+
     setState(() {
       _isPickingImage = true;
     });

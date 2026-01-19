@@ -223,7 +223,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
         ),
         title: Text(character.name),
         subtitle: Text(
-          '${character.characterClass}${character.subclass != null ? ' (${character.subclass})' : ''}',
+          '${character.characterClass}${character.subclass != "" ? ' (${character.subclass})' : ''}',
         ),
         trailing: PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
