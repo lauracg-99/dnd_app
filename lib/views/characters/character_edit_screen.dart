@@ -826,18 +826,43 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
           // Spells list
           ..._spells.asMap().entries.map((entry) {
             final index = entry.key;
-            final spell = entry.value;
+            final spellName = entry.value;
+            
+            // Try to find spell details
+            final spellsViewModel = context.read<SpellsViewModel>();
+            final spell = spellsViewModel.spells.firstWhere(
+              (s) => s.name.toLowerCase() == spellName.toLowerCase(),
+              orElse: () => Spell(
+                id: 'unknown',
+                name: spellName,
+                castingTime: 'Unknown',
+                range: 'Unknown',
+                duration: 'Unknown',
+                description: 'Custom spell',
+                classes: [],
+                dice: [],
+                updatedAt: DateTime.now(),
+              ),
+            );
+            
             return Card(
               child: ListTile(
                 title: InkWell(
                   child: Text(
-                    spell,
+                    spell.name,
                     style: const TextStyle(
                       color: Colors.blue,
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                  onTap: () => _showSpellDetails(spell),
+                  onTap: () => _showSpellDetails(spell.name),
+                ),
+                subtitle: Text(
+                  '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                  ),
                 ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete),
