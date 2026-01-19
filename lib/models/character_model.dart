@@ -15,6 +15,7 @@ class Character extends BaseModel {
   final CharacterSpellSlots spellSlots;
   final List<String> spells;
   final List<String> feats;
+  final List<CharacterPersonalizedSlot> personalizedSlots;
   final String quickGuide;
   final String backstory;
   final CharacterPillars pillars;
@@ -35,6 +36,7 @@ class Character extends BaseModel {
     required this.spellSlots,
     this.spells = const [],
     this.feats = const [],
+    this.personalizedSlots = const [],
     this.quickGuide = '',
     this.backstory = '',
     required this.pillars,
@@ -60,6 +62,7 @@ class Character extends BaseModel {
         'spell_slots': spellSlots.toJson(),
         'spells': {'value': spells},
         'feats': {'value': feats},
+        'personalized_slots': {'value': personalizedSlots.map((slot) => slot.toJson()).toList()},
         'quick_guide': {'value': quickGuide},
         'backstory': {'value': backstory},
         'pillars': pillars.toJson(),
@@ -88,6 +91,9 @@ class Character extends BaseModel {
       spellSlots: CharacterSpellSlots.fromJson(_getValue<Map<String, dynamic>>(stats, 'spell_slots')),
       spells: List<String>.from(_getValue<List<dynamic>>(stats, 'spells', defaultValue: const [])),
       feats: List<String>.from(_getValue<List<dynamic>>(stats, 'feats', defaultValue: const [])),
+      personalizedSlots: (_getValue<List<dynamic>>(stats, 'personalized_slots', defaultValue: const []))
+          .map((slot) => CharacterPersonalizedSlot.fromJson(slot as Map<String, dynamic>))
+          .toList(),
       quickGuide: _getValue<String>(stats, 'quick_guide', defaultValue: ''),
       backstory: _getValue<String>(stats, 'backstory', defaultValue: ''),
       pillars: CharacterPillars.fromJson(_getValue<Map<String, dynamic>>(stats, 'pillars')),
@@ -179,6 +185,7 @@ class Character extends BaseModel {
     CharacterSpellSlots? spellSlots,
     List<String>? spells,
     List<String>? feats,
+    List<CharacterPersonalizedSlot>? personalizedSlots,
     String? quickGuide,
     String? backstory,
     CharacterPillars? pillars,
@@ -199,6 +206,7 @@ class Character extends BaseModel {
       spellSlots: spellSlots ?? this.spellSlots,
       spells: spells ?? this.spells,
       feats: feats ?? this.feats,
+      personalizedSlots: personalizedSlots ?? this.personalizedSlots,
       quickGuide: quickGuide ?? this.quickGuide,
       backstory: backstory ?? this.backstory,
       pillars: pillars ?? this.pillars,
@@ -740,6 +748,50 @@ class CharacterSpellSlots {
       level8Used: Character._getValue<int>(json, 'level8_used', defaultValue: 0),
       level9Slots: Character._getValue<int>(json, 'level9_slots', defaultValue: 0),
       level9Used: Character._getValue<int>(json, 'level9_used', defaultValue: 0),
+    );
+  }
+}
+
+class CharacterPersonalizedSlot {
+  final String name;
+  final int maxSlots;
+  final int usedSlots;
+  final String diceType;
+
+  const CharacterPersonalizedSlot({
+    required this.name,
+    this.maxSlots = 0,
+    this.usedSlots = 0,
+    this.diceType = 'd6',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'name': {'value': name},
+    'max_slots': {'value': maxSlots},
+    'used_slots': {'value': usedSlots},
+    'dice_type': {'value': diceType},
+  };
+
+  factory CharacterPersonalizedSlot.fromJson(Map<String, dynamic> json) {
+    return CharacterPersonalizedSlot(
+      name: Character._getValue<String>(json, 'name', defaultValue: 'Slot'),
+      maxSlots: Character._getValue<int>(json, 'max_slots', defaultValue: 0),
+      usedSlots: Character._getValue<int>(json, 'used_slots', defaultValue: 0),
+      diceType: Character._getValue<String>(json, 'dice_type', defaultValue: 'd6'),
+    );
+  }
+
+  CharacterPersonalizedSlot copyWith({
+    String? name,
+    int? maxSlots,
+    int? usedSlots,
+    String? diceType,
+  }) {
+    return CharacterPersonalizedSlot(
+      name: name ?? this.name,
+      maxSlots: maxSlots ?? this.maxSlots,
+      usedSlots: usedSlots ?? this.usedSlots,
+      diceType: diceType ?? this.diceType,
     );
   }
 }
