@@ -839,14 +839,25 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     }
                   }
                   
+                  final selectedRace = _raceController.text.isNotEmpty 
+                      ? uniqueRaces[_raceController.text]
+                      : null;
+                  
                   return _isEditingCharacterCover
                       ? Padding(
                           padding: const EdgeInsets.only(top: 16.0),
                           child: DropdownButtonFormField<String>(
                               value: _raceController.text.isEmpty ? null : _raceController.text,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Race (Optional)',
                                 border: OutlineInputBorder(),
+                                suffixIcon: selectedRace != null 
+                                    ? IconButton(
+                                        icon: const Icon(Icons.info_outline),
+                                        onPressed: () => _showRaceDetailsModal(selectedRace),
+                                        tooltip: 'View race details',
+                                      )
+                                    : null,
                               ),
                               items: uniqueRaces.values.map<DropdownMenuItem<String>>((race) {
                                 return DropdownMenuItem<String>(
@@ -863,19 +874,29 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                               },
                             ),
                         )
-                      : Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                              _raceController.text.isNotEmpty 
-                                  ? _raceController.text
-                                  : 'Race',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.blue.shade600,
-                                fontStyle: FontStyle.italic,
+                      : GestureDetector(
+                          onTap: selectedRace != null 
+                              ? () => _showRaceDetailsModal(selectedRace)
+                              : null,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                                _raceController.text.isNotEmpty 
+                                    ? _raceController.text
+                                    : 'Race',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: selectedRace != null 
+                                      ? Colors.blue.shade600
+                                      : Colors.grey.shade600,
+                                  fontStyle: FontStyle.italic,
+                                  decoration: selectedRace != null 
+                                      ? TextDecoration.underline
+                                      : null,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
+                          ),
                         );
                 },
               ),
@@ -4974,6 +4995,118 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       classes: [],
       dice: [],
       updatedAt: DateTime.now(),
+    );
+  }
+
+  void _showRaceDetailsModal(Race race) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            expand: false,
+            builder: (_, controller) {
+              return SingleChildScrollView(
+                controller: controller,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[400],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        race.name,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Source: ${race.source}',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Race info
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.people,
+                              color: Colors.blue.shade700,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Race Information',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue.shade700,
+                                    ),
+                                  ),
+                                  if (race.flySpeed != null)
+                                    Text(
+                                      'Flying Speed: ${race.flySpeed} ft',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.blue.shade600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Description
+                      Text(
+                        'Description:',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        race.description,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Close button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Close'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
     );
   }
 
