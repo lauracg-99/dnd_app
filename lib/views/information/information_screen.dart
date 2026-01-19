@@ -15,7 +15,7 @@ class InformationScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          _buildSectionTitle('Game References'),
+         // _buildSectionTitle('Game References'),
           const SizedBox(height: 8),
           _buildCategoryCard(
             context: context,
@@ -40,7 +40,7 @@ class InformationScreen extends StatelessWidget {
               );
             },
           ),
-          _buildCategoryCard(
+          /* _buildCategoryCard(
             context: context,
             title: 'Armor',
             icon: Icons.shield,
@@ -50,7 +50,7 @@ class InformationScreen extends StatelessWidget {
                 const SnackBar(content: Text('Armor section coming soon!')),
               );
             },
-          ),
+          ), */
           _buildCategoryCard(
             context: context,
             title: 'Races',
@@ -62,7 +62,7 @@ class InformationScreen extends StatelessWidget {
               );
             },
           ),
-          _buildCategoryCard(
+          /* _buildCategoryCard(
             context: context,
             title: 'Items',
             icon: Icons.inventory,
@@ -72,7 +72,7 @@ class InformationScreen extends StatelessWidget {
                 const SnackBar(content: Text('Items section coming soon!')),
               );
             },
-          ),
+          ), */
           _buildCategoryCard(
             context: context,
             title: 'Backgrounds',

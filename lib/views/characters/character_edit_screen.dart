@@ -972,6 +972,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                             contentPadding: EdgeInsets.all(12),
                           ),
                           keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -1002,6 +1003,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                             contentPadding: EdgeInsets.all(12),
                           ),
                           keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -1033,6 +1035,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       contentPadding: EdgeInsets.all(12),
                     ),
                     keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -1072,6 +1075,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                             contentPadding: EdgeInsets.all(12),
                           ),
                           keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -1949,6 +1953,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   isDense: true,
                 ),
                 keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -2074,6 +2079,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   isDense: true,
                 ),
                 keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -2137,6 +2143,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   isDense: true,
                 ),
                 keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -3118,6 +3125,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                 ),
               ),
               const SizedBox(width: 8),
@@ -3129,6 +3137,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                 ),
               ),
             ],
@@ -3142,6 +3151,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               border: OutlineInputBorder(),
             ),
             keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done, // Show "Done" button on keyboard
           ),
 
           const SizedBox(height: 24),
@@ -3161,6 +3171,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                 ),
               ),
               const SizedBox(width: 8),
@@ -3977,6 +3988,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         controller: textController, // Use the controller
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done, // Show "Done" button on keyboard
                         onChanged: (value) {
                           final newValue = int.tryParse(value) ?? 0;
                           if (type == 'slots') {
@@ -4853,7 +4865,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     ),
                     const Divider(height: 1),
 
-                    // Search bar
+                   /*  // Search bar
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Consumer<SpellsViewModel>(
@@ -4870,7 +4882,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           );
                         },
                       ),
-                    ),
+                    ), */
 
                     // Spells list
                     Expanded(
@@ -5760,6 +5772,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done, // Show "Done" button on keyboard
             ),
           ],
         ),
@@ -5846,6 +5859,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             TextField(
               controller: textController,
               keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done, // Show "Done" button on keyboard
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 labelText: type == 'slots' ? 'Max Slots' : 'Used Slots',
