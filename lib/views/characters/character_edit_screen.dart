@@ -200,6 +200,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _nameController.addListener(_autoSaveCharacter);
     _classController.addListener(_autoSaveCharacter);
     _subclassController.addListener(_autoSaveCharacter);
+    _raceController.addListener(_autoSaveCharacter);
     _quickGuideController.addListener(_autoSaveCharacter);
     _backstoryController.addListener(_autoSaveCharacter);
 
