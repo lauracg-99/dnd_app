@@ -380,6 +380,167 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
   final _nameController = TextEditingController();
   String _selectedClass = 'Fighter';
   final _subclassController = TextEditingController();
+  bool _useCustomSubclass = false;
+
+  // Helper method to get subclasses for each class
+  List<String> _getSubclassesForClass(String className) {
+    switch (className.toLowerCase()) {
+      case 'fighter':
+        return [
+          'Battle Master',
+          'Champion',
+          'Eldritch Knight',
+          'Psi Warrior',
+          'Rune Knight',
+          'Samurai',
+          'Cavalier',
+          'Gunslinger',
+          'Banneret',
+        ];
+      case 'wizard':
+        return [
+          'School of Abjuration',
+          'School of Conjuration',
+          'School of Divination',
+          'School of Enchantment',
+          'School of Evocation',
+          'School of Illusion',
+          'School of Necromancy',
+          'School of Transmutation',
+          'School of Bladesinging',
+          'School of Chronurgy',
+          'School of Graviturgy',
+          'School of Scribes',
+          'School of Order',
+          'School of Invention',
+          'School of War Magic',
+        ];
+      case 'cleric':
+        return [
+          'Knowledge Domain',
+          'Life Domain',
+          'Light Domain',
+          'Nature Domain',
+          'Order Domain',
+          'Peace Domain',
+          'Trickery Domain',
+          'War Domain',
+          'Forge Domain',
+          'Grave Domain',
+          'Twilight Domain',
+          'Arcana Domain',
+        ];
+      case 'rogue':
+        return [
+          'Thief',
+          'Assassin',
+          'Arcane Trickster',
+          'Inquisitive',
+          'Mastermind',
+          'Scout',
+          'Soulknife',
+          'Swashbuckler',
+          'Phantom',
+        ];
+      case 'ranger':
+        return [
+          'Hunter',
+          'Beast Master',
+          'Gloom Stalker',
+          'Horizon Walker',
+          'Monster Slayer',
+          'Fey Wanderer',
+          'Druidic Warrior',
+          'Swarmkeeper',
+        ];
+      case 'paladin':
+        return [
+          'Devotion',
+          'Ancients',
+          'Vengeance',
+          'Oathbreaker',
+          'Glory',
+          'Crown',
+          'Watchers',
+        ];
+      case 'barbarian':
+        return [
+          'Path of the Berserker',
+          'Path of the Totem Warrior',
+          'Path of the Zealot',
+          'Path of the Wild Magic',
+          'Path of the Storm Herald',
+          'Path of the Ancestral Guardian',
+          'Path of the Battlerager',
+          'Path of the Beast',
+          'Path of the Wild Soul',
+        ];
+      case 'bard':
+        return [
+          'College of Lore',
+          'College of Valor',
+          'College of Glamour',
+          'College of Swords',
+          'College of Whispers',
+          'College of Creation',
+          'College of Eloquence',
+          'College of Spirits',
+        ];
+      case 'druid':
+        return [
+          'Circle of the Land',
+          'Circle of the Moon',
+          'Circle of the Shepherd',
+          'Circle of Spores',
+          'Circle of Stars',
+          'Circle of Wildfire',
+          'Circle of Dreams',
+          'Circle of the Coast',
+        ];
+      case 'monk':
+        return [
+          'Way of the Open Hand',
+          'Way of Shadow',
+          'Way of the Four Elements',
+          'Way of the Long Death',
+          'Way of Mercy',
+          'Way of the Drunken Master',
+          'Way of the Kensei',
+          'Way of the Astral Self',
+        ];
+      case 'sorcerer':
+        return [
+          'Draconic Bloodline',
+          'Wild Magic',
+          'Divine Soul',
+          'Shadow Magic',
+          'Storm Sorcery',
+          'Clockwork Soul',
+          'Aberrant Mind',
+        ];
+      case 'warlock':
+        return [
+          'The Fiend',
+          'The Great Old One',
+          'The Celestial',
+          'The Hexblade',
+          'The Archfey',
+          'The Undying',
+          'The Genie',
+          'The Fathomless',
+          'The Undead',
+        ];
+      case 'artificer':
+        return [
+          'Alchemist',
+          'Armorer',
+          'Artillerist',
+          'Battle Smith',
+        ];
+      default:
+        return [];
+    }
+  }
 
   @override
   void dispose() {
@@ -524,32 +685,156 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
             ),
             const SizedBox(height: 16),
 
-            // Subclass Field
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+            // Subclass picker
+            if (_useCustomSubclass)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _subclassController,
+                  decoration: InputDecoration(
+                    labelText: 'Custom Subclass',
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_subclassController.text.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            onPressed: () {
+                              setState(() {
+                                _subclassController.text = '';
+                              });
+                            },
+                            tooltip: 'Clear subclass',
+                          ),
+                        IconButton(
+                          icon: const Icon(Icons.list),
+                          onPressed: () {
+                            setState(() {
+                              _useCustomSubclass = false;
+                            });
+                          },
+                          tooltip: 'Choose from preset subclasses',
+                        ),
+                      ],
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(16),
                   ),
-                ],
-              ),
-              child: TextField(
-                controller: _subclassController,
-                decoration: InputDecoration(
-                  labelText: 'Subclass (Optional)',                 
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(16),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _subclassController.text.isEmpty ? null : _subclassController.text,
+                  decoration: InputDecoration(
+                    labelText: 'Subclass (Optional)',
+                    //prefixIcon: const Icon(Icons.star, color: Colors.orange),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(16),
+                  ),
+                  isExpanded: true,
+                  items: [
+                    if (_subclassController.text.isNotEmpty)
+                      DropdownMenuItem(
+                        value: '__CLEAR__',
+                        child: Row(
+                          children: [
+                            Icon(Icons.clear, color: Colors.red, size: 20),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Text(
+                                'Clear Subclass',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ..._getSubclassesForClass(_selectedClass).map((subclass) {
+                      return DropdownMenuItem(
+                        value: subclass,
+                        child: Row(
+                          children: [
+                            //Icon(Icons.star, color: Colors.orange, size: 20),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Text(
+                                subclass,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    DropdownMenuItem(
+                      value: '__CUSTOM__',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, color: Colors.grey, size: 20),
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: Text(
+                              'Custom Subclass...',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      if (value == '__CUSTOM__') {
+                        _useCustomSubclass = true;
+                        _subclassController.text = '';
+                      } else if (value == '__CLEAR__') {
+                        _subclassController.text = '';
+                      } else {
+                        _subclassController.text = value ?? '';
+                      }
+                    });
+                  },
                 ),
               ),
-            ),
             const SizedBox(height: 24),
 
             // Action Buttons
