@@ -822,16 +822,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
           const SizedBox(height: 24),
-          
-          // Spell slots grid
-          ...[
-            for (int level = 1; level <= 9; level++)
-              _buildSpellSlotField('Level $level', level),
-          ],
-          
-          const SizedBox(height: 32),
-          
-          // Summary section
+                    // Summary section
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -874,7 +865,47 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
                 ],
               ),
             ),
+          ), 
+          const SizedBox(height: 24), 
+          // Long Rest button
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  const Text(
+                    'Restore spell slots',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),                  
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _takeLongRest,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Restore'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
+          const SizedBox(height: 24),
+          // Spell slots grid
+          ...[
+            for (int level = 1; level <= 9; level++)
+              _buildSpellSlotField('Level $level', level),
+          ],
+          
+          const SizedBox(height: 32),
+          
+        
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -2082,6 +2113,44 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
     
     // Save the character silently (no success message)
     context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
+  }
+
+  void _takeLongRest() {
+    setState(() {
+      // Reset all used spell slots to 0 (restore all slots)
+      _spellSlots = CharacterSpellSlots(
+        level1Slots: _spellSlots.level1Slots,
+        level1Used: 0,
+        level2Slots: _spellSlots.level2Slots,
+        level2Used: 0,
+        level3Slots: _spellSlots.level3Slots,
+        level3Used: 0,
+        level4Slots: _spellSlots.level4Slots,
+        level4Used: 0,
+        level5Slots: _spellSlots.level5Slots,
+        level5Used: 0,
+        level6Slots: _spellSlots.level6Slots,
+        level6Used: 0,
+        level7Slots: _spellSlots.level7Slots,
+        level7Used: 0,
+        level8Slots: _spellSlots.level8Slots,
+        level8Used: 0,
+        level9Slots: _spellSlots.level9Slots,
+        level9Used: 0,
+      );
+    });
+    
+    // Auto-save the long rest
+    _autoSaveCharacter();
+    
+    // Show confirmation message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Long rest completed! All spell slots have been restored.'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
 
   void _saveCharacter() {
