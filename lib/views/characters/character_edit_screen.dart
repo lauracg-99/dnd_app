@@ -65,7 +65,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
     _initializeCharacterData();
   }
 
@@ -1001,36 +1001,115 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
       case 9: slots = _spellSlots.level9Slots; used = _spellSlots.level9Used; break;
     }
     
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            decoration: InputDecoration(
-              labelText: '$label Total',
-              border: const OutlineInputBorder(),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Slots: ',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    InkWell(
+                      onTap: () => _showSlotModifierDialog(level, 'slots', slots),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '$slots',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            keyboardType: TextInputType.number,
-            onChanged: (value) {
-              _updateSpellSlot(level, 'slots', int.tryParse(value) ?? 0);
-            },
-            controller: TextEditingController(text: slots.toString()),
-          ),
+            const SizedBox(height: 12),
+            
+            // Visual spell slot dots
+            if (slots > 0) ...[
+              Row(
+                children: [
+                  const Text('Used: ', style: TextStyle(color: Colors.grey)),
+                  ...List.generate(slots, (index) {
+                    final isUsed = index < used;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: GestureDetector(
+                        onTap: () => _toggleSpellSlot(level, index),
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isUsed ? Colors.red : Colors.grey.shade300,
+                            border: Border.all(
+                              color: isUsed ? Colors.red.shade300 : Colors.grey.shade400,
+                              width: 2,
+                            ),
+                          ),
+                          child: isUsed 
+                            ? const Icon(Icons.check, color: Colors.white, size: 12)
+                            : null,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$used of $slots slots used',
+                style: TextStyle(
+                  color: used == slots ? Colors.red : Colors.green,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.block, color: Colors.grey.shade400, size: 32),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No spell slots available',
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Increase spell slots to use this feature',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextField(
-            decoration: InputDecoration(
-              labelText: '$label Used',
-              border: const OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
-            onChanged: (value) {
-              _updateSpellSlot(level, 'used', int.tryParse(value) ?? 0);
-            },
-            controller: TextEditingController(text: used.toString()),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -1059,9 +1138,402 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
             level9Used: _spellSlots.level9Used,
           );
           break;
-        // Add other levels as needed
+        case 2:
+          _spellSlots = CharacterSpellSlots(
+            level1Slots: _spellSlots.level1Slots,
+            level1Used: _spellSlots.level1Used,
+            level2Slots: type == 'slots' ? value : _spellSlots.level2Slots,
+            level2Used: type == 'used' ? value : _spellSlots.level2Used,
+            level3Slots: _spellSlots.level3Slots,
+            level3Used: _spellSlots.level3Used,
+            level4Slots: _spellSlots.level4Slots,
+            level4Used: _spellSlots.level4Used,
+            level5Slots: _spellSlots.level5Slots,
+            level5Used: _spellSlots.level5Used,
+            level6Slots: _spellSlots.level6Slots,
+            level6Used: _spellSlots.level6Used,
+            level7Slots: _spellSlots.level7Slots,
+            level7Used: _spellSlots.level7Used,
+            level8Slots: _spellSlots.level8Slots,
+            level8Used: _spellSlots.level8Used,
+            level9Slots: _spellSlots.level9Slots,
+            level9Used: _spellSlots.level9Used,
+          );
+          break;
+        case 3:
+          _spellSlots = CharacterSpellSlots(
+            level1Slots: _spellSlots.level1Slots,
+            level1Used: _spellSlots.level1Used,
+            level2Slots: _spellSlots.level2Slots,
+            level2Used: _spellSlots.level2Used,
+            level3Slots: type == 'slots' ? value : _spellSlots.level3Slots,
+            level3Used: type == 'used' ? value : _spellSlots.level3Used,
+            level4Slots: _spellSlots.level4Slots,
+            level4Used: _spellSlots.level4Used,
+            level5Slots: _spellSlots.level5Slots,
+            level5Used: _spellSlots.level5Used,
+            level6Slots: _spellSlots.level6Slots,
+            level6Used: _spellSlots.level6Used,
+            level7Slots: _spellSlots.level7Slots,
+            level7Used: _spellSlots.level7Used,
+            level8Slots: _spellSlots.level8Slots,
+            level8Used: _spellSlots.level8Used,
+            level9Slots: _spellSlots.level9Slots,
+            level9Used: _spellSlots.level9Used,
+          );
+          break;
+        case 4:
+          _spellSlots = CharacterSpellSlots(
+            level1Slots: _spellSlots.level1Slots,
+            level1Used: _spellSlots.level1Used,
+            level2Slots: _spellSlots.level2Slots,
+            level2Used: _spellSlots.level2Used,
+            level3Slots: _spellSlots.level3Slots,
+            level3Used: _spellSlots.level3Used,
+            level4Slots: type == 'slots' ? value : _spellSlots.level4Slots,
+            level4Used: type == 'used' ? value : _spellSlots.level4Used,
+            level5Slots: _spellSlots.level5Slots,
+            level5Used: _spellSlots.level5Used,
+            level6Slots: _spellSlots.level6Slots,
+            level6Used: _spellSlots.level6Used,
+            level7Slots: _spellSlots.level7Slots,
+            level7Used: _spellSlots.level7Used,
+            level8Slots: _spellSlots.level8Slots,
+            level8Used: _spellSlots.level8Used,
+            level9Slots: _spellSlots.level9Slots,
+            level9Used: _spellSlots.level9Used,
+          );
+          break;
+        case 5:
+          _spellSlots = CharacterSpellSlots(
+            level1Slots: _spellSlots.level1Slots,
+            level1Used: _spellSlots.level1Used,
+            level2Slots: _spellSlots.level2Slots,
+            level2Used: _spellSlots.level2Used,
+            level3Slots: _spellSlots.level3Slots,
+            level3Used: _spellSlots.level3Used,
+            level4Slots: _spellSlots.level4Slots,
+            level4Used: _spellSlots.level4Used,
+            level5Slots: type == 'slots' ? value : _spellSlots.level5Slots,
+            level5Used: type == 'used' ? value : _spellSlots.level5Used,
+            level6Slots: _spellSlots.level6Slots,
+            level6Used: _spellSlots.level6Used,
+            level7Slots: _spellSlots.level7Slots,
+            level7Used: _spellSlots.level7Used,
+            level8Slots: _spellSlots.level8Slots,
+            level8Used: _spellSlots.level8Used,
+            level9Slots: _spellSlots.level9Slots,
+            level9Used: _spellSlots.level9Used,
+          );
+          break;
+        case 6:
+          _spellSlots = CharacterSpellSlots(
+            level1Slots: _spellSlots.level1Slots,
+            level1Used: _spellSlots.level1Used,
+            level2Slots: _spellSlots.level2Slots,
+            level2Used: _spellSlots.level2Used,
+            level3Slots: _spellSlots.level3Slots,
+            level3Used: _spellSlots.level3Used,
+            level4Slots: _spellSlots.level4Slots,
+            level4Used: _spellSlots.level4Used,
+            level5Slots: _spellSlots.level5Slots,
+            level5Used: _spellSlots.level5Used,
+            level6Slots: type == 'slots' ? value : _spellSlots.level6Slots,
+            level6Used: type == 'used' ? value : _spellSlots.level6Used,
+            level7Slots: _spellSlots.level7Slots,
+            level7Used: _spellSlots.level7Used,
+            level8Slots: _spellSlots.level8Slots,
+            level8Used: _spellSlots.level8Used,
+            level9Slots: _spellSlots.level9Slots,
+            level9Used: _spellSlots.level9Used,
+          );
+          break;
+        case 7:
+          _spellSlots = CharacterSpellSlots(
+            level1Slots: _spellSlots.level1Slots,
+            level1Used: _spellSlots.level1Used,
+            level2Slots: _spellSlots.level2Slots,
+            level2Used: _spellSlots.level2Used,
+            level3Slots: _spellSlots.level3Slots,
+            level3Used: _spellSlots.level3Used,
+            level4Slots: _spellSlots.level4Slots,
+            level4Used: _spellSlots.level4Used,
+            level5Slots: _spellSlots.level5Slots,
+            level5Used: _spellSlots.level5Used,
+            level6Slots: _spellSlots.level6Slots,
+            level6Used: _spellSlots.level6Used,
+            level7Slots: type == 'slots' ? value : _spellSlots.level7Slots,
+            level7Used: type == 'used' ? value : _spellSlots.level7Used,
+            level8Slots: _spellSlots.level8Slots,
+            level8Used: _spellSlots.level8Used,
+            level9Slots: _spellSlots.level9Slots,
+            level9Used: _spellSlots.level9Used,
+          );
+          break;
+        case 8:
+          _spellSlots = CharacterSpellSlots(
+            level1Slots: _spellSlots.level1Slots,
+            level1Used: _spellSlots.level1Used,
+            level2Slots: _spellSlots.level2Slots,
+            level2Used: _spellSlots.level2Used,
+            level3Slots: _spellSlots.level3Slots,
+            level3Used: _spellSlots.level3Used,
+            level4Slots: _spellSlots.level4Slots,
+            level4Used: _spellSlots.level4Used,
+            level5Slots: _spellSlots.level5Slots,
+            level5Used: _spellSlots.level5Used,
+            level6Slots: _spellSlots.level6Slots,
+            level6Used: _spellSlots.level6Used,
+            level7Slots: _spellSlots.level7Slots,
+            level7Used: _spellSlots.level7Used,
+            level8Slots: type == 'slots' ? value : _spellSlots.level8Slots,
+            level8Used: type == 'used' ? value : _spellSlots.level8Used,
+            level9Slots: _spellSlots.level9Slots,
+            level9Used: _spellSlots.level9Used,
+          );
+          break;
+        case 9:
+          _spellSlots = CharacterSpellSlots(
+            level1Slots: _spellSlots.level1Slots,
+            level1Used: _spellSlots.level1Used,
+            level2Slots: _spellSlots.level2Slots,
+            level2Used: _spellSlots.level2Used,
+            level3Slots: _spellSlots.level3Slots,
+            level3Used: _spellSlots.level3Used,
+            level4Slots: _spellSlots.level4Slots,
+            level4Used: _spellSlots.level4Used,
+            level5Slots: _spellSlots.level5Slots,
+            level5Used: _spellSlots.level5Used,
+            level6Slots: _spellSlots.level6Slots,
+            level6Used: _spellSlots.level6Used,
+            level7Slots: _spellSlots.level7Slots,
+            level7Used: _spellSlots.level7Used,
+            level8Slots: _spellSlots.level8Slots,
+            level8Used: _spellSlots.level8Used,
+            level9Slots: type == 'slots' ? value : _spellSlots.level9Slots,
+            level9Used: type == 'used' ? value : _spellSlots.level9Used,
+          );
+          break;
       }
     });
+  }
+
+  void _toggleSpellSlot(int level, int slotIndex) {
+    setState(() {
+      int currentUsed = 0;
+      
+      switch (level) {
+        case 1: currentUsed = _spellSlots.level1Used; break;
+        case 2: currentUsed = _spellSlots.level2Used; break;
+        case 3: currentUsed = _spellSlots.level3Used; break;
+        case 4: currentUsed = _spellSlots.level4Used; break;
+        case 5: currentUsed = _spellSlots.level5Used; break;
+        case 6: currentUsed = _spellSlots.level6Used; break;
+        case 7: currentUsed = _spellSlots.level7Used; break;
+        case 8: currentUsed = _spellSlots.level8Used; break;
+        case 9: currentUsed = _spellSlots.level9Used; break;
+      }
+      
+      // Toggle the slot: if it was used, make it unused; if it was unused, make it used
+      final newUsed = slotIndex < currentUsed ? currentUsed - 1 : currentUsed + 1;
+      
+      _updateSpellSlot(level, 'used', newUsed);
+    });
+    
+    // Auto-save when spell slot usage changes
+    _autoSaveCharacter();
+  }
+
+  void _showSlotModifierDialog(int level, String type, int currentValue) {
+  // Create a controller that we can update
+  final textController = TextEditingController(text: currentValue.toString());
+  
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Modify ${type == 'slots' ? 'Total Slots' : 'Used Slots'}'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            type == 'slots' 
+              ? 'Enter the total number of spell slots available for Level $level'
+              : 'Enter the number of spell slots currently used for Level $level',
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: () {
+                  final newValue = type == 'slots' 
+                    ? (currentValue - 1).clamp(0, 99)
+                    : (currentValue - 1).clamp(0, _getMaxSlots(level));
+                  _updateSpellSlot(level, type, newValue);
+                  currentValue = newValue; // Update local value
+                  textController.text = newValue.toString(); // Update text field
+                  _autoSaveCharacter(); // Auto-save on decrement
+                },
+              ),
+              const SizedBox(width: 16),
+              Container(
+                width: 80,
+                child: TextField(
+                  controller: textController, // Use the controller
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    final newValue = int.tryParse(value) ?? 0;
+                    if (type == 'slots') {
+                      _updateSpellSlot(level, type, newValue.clamp(0, 99));
+                      _autoSaveCharacter(); // Auto-save on text input
+                    } else {
+                      _updateSpellSlot(level, type, newValue.clamp(0, _getMaxSlots(level)));
+                      _autoSaveCharacter(); // Auto-save on text input
+                    }
+                    currentValue = newValue; // Update local value
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  final maxValue = type == 'slots' ? 99 : _getMaxSlots(level);
+                  final newValue = (currentValue + 1).clamp(0, maxValue);
+                  _updateSpellSlot(level, type, newValue);
+                  currentValue = newValue; // Update local value
+                  textController.text = newValue.toString(); // Update text field
+                  _autoSaveCharacter(); // Auto-save on increment
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Quick action buttons
+          if (type == 'slots') ...[
+            const Divider(),
+            const Text('Quick Actions:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    _updateSpellSlot(level, 'slots', 4);
+                    currentValue = 4;
+                    textController.text = '4';
+                    _autoSaveCharacter();
+                  },
+                  child: const Text('Clear'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    _updateSpellSlot(level, 'slots', 4);
+                    currentValue = 4;
+                    textController.text = '4';
+                    _autoSaveCharacter();
+                  },
+                  child: const Text('Set 4'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    _updateSpellSlot(level, 'slots', 6);
+                    currentValue = 6;
+                    textController.text = '6';
+                    _autoSaveCharacter();
+                  },
+                  child: const Text('Set 6'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    _updateSpellSlot(level, 'slots', 9);
+                    currentValue = 9;
+                    textController.text = '9';
+                    _autoSaveCharacter();
+                  },
+                  child: const Text('Set 9'),
+                ),
+              ],
+            ),
+          ] else ...[
+            const Divider(),
+            const Text('Quick Actions:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    _updateSpellSlot(level, 'used', 0);
+                    currentValue = 0;
+                    textController.text = '0';
+                    _autoSaveCharacter();
+                  },
+                  child: const Text('Clear All'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final maxSlots = _getMaxSlots(level);
+                    _updateSpellSlot(level, 'used', maxSlots);
+                    currentValue = maxSlots;
+                    textController.text = maxSlots.toString();
+                    _autoSaveCharacter();
+                  },
+                  child: const Text('Use All'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final halfSlots = _getMaxSlots(level) ~/ 2;
+                    _updateSpellSlot(level, 'used', halfSlots);
+                    currentValue = halfSlots;
+                    textController.text = halfSlots.toString();
+                    _autoSaveCharacter();
+                  },
+                  child: const Text('Half Used'),
+                ),
+              ],
+            ),
+          ],
+          
+          const SizedBox(height: 8),
+          Text(
+            type == 'slots'
+              ? 'Range: 0-99 slots'
+              : 'Range: 0-${_getMaxSlots(level)} slots',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Done'),
+        ),
+      ],
+    ),
+  );
+}
+
+  int _getMaxSlots(int level) {
+    switch (level) {
+      case 1: return _spellSlots.level1Slots;
+      case 2: return _spellSlots.level2Slots;
+      case 3: return _spellSlots.level3Slots;
+      case 4: return _spellSlots.level4Slots;
+      case 5: return _spellSlots.level5Slots;
+      case 6: return _spellSlots.level6Slots;
+      case 7: return _spellSlots.level7Slots;
+      case 8: return _spellSlots.level8Slots;
+      case 9: return _spellSlots.level9Slots;
+      default: return 0;
+    }
   }
 
   Widget _buildNotesTab() {
@@ -1601,9 +2073,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
   }
 
   void _autoSaveCharacter() {
-    // Create updated character with current spell list
+    // Create updated character with current spell list and spell slots
     final updatedCharacter = widget.character.copyWith(
       spells: _spells,
+      spellSlots: _spellSlots,
       updatedAt: DateTime.now(),
     );
     
