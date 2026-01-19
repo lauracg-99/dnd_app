@@ -42,6 +42,7 @@ void main() {
         skillChecks: CharacterSkillChecks(),
         health: CharacterHealth(maxHitPoints: 20, currentHitPoints: 20),
         characterClass: 'Fighter',
+        level: 5, // Test level
         spellSlots: CharacterSpellSlots(),
         pillars: CharacterPillars(),
         createdAt: now,
@@ -81,6 +82,7 @@ void main() {
           hitDiceType: 'd10',
         ),
         characterClass: 'Barbarian',
+        level: 3, // Test level
         subclass: 'Path of the Zealot',
         attacks: [
           CharacterAttack(

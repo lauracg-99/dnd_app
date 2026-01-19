@@ -18,6 +18,7 @@ void main() {
 
       expect(character.name, 'Test Hero');
       expect(character.characterClass, 'Fighter');
+      expect(character.level, 1); // Default level should be 1
       expect(character.subclass, 'Champion');
       expect(character.stats.strength, 10);
       expect(character.health.maxHitPoints, 10);

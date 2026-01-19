@@ -5437,6 +5437,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       name: _nameController.text.trim(),
       customImagePath: _customImagePath,
       characterClass: _classController.text.trim(),
+      level: int.tryParse(_levelController.text) ?? 1,
       subclass:
           _subclassController.text.trim().isEmpty
               ? null
