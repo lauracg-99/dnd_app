@@ -27,6 +27,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   String? _customImagePath;
   bool _isPickingImage = false;
   bool _hasUnsavedAbilityChanges = false;
+  bool _hasUnsavedClassChanges = false;
 
   // Form controllers
   final _nameController = TextEditingController();
@@ -75,7 +76,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 9, vsync: this);
+    _tabController = TabController(length: 10, vsync: this);
     _initializeCharacterData();
   }
 
@@ -91,6 +92,23 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _subclassController.text = character.subclass ?? '';
     _quickGuideController.text = character.quickGuide;
     _backstoryController.text = character.backstory;
+
+    // Add listeners for class changes
+    _classController.addListener(() {
+      if (_classController.text != character.characterClass) {
+        setState(() {
+          _hasUnsavedClassChanges = true;
+        });
+      }
+    });
+
+    _subclassController.addListener(() {
+      if (_subclassController.text != (character.subclass ?? '')) {
+        setState(() {
+          _hasUnsavedClassChanges = true;
+        });
+      }
+    });
 
     // Initialize stats
     _stats = character.stats;
@@ -211,6 +229,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           isScrollable: true,
           tabs: const [
             Tab(text: 'Basic', icon: Icon(Icons.person)),
+            Tab(text: 'Attacks', icon: Icon(Icons.gavel)),
             Tab(text: 'Stats', icon: Icon(Icons.bar_chart)),
             Tab(text: 'Skills', icon: Icon(Icons.psychology)),
             Tab(text: 'Health', icon: Icon(Icons.favorite)),
@@ -229,6 +248,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         controller: _tabController,
         children: [
           _buildBasicInfoTab(),
+          _buildAttacksTab(),
           _buildStatsTab(),
           _buildSkillsTab(),
           _buildHealthTab(),
@@ -330,14 +350,271 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          
+          // Class save button
+          if (_hasUnsavedClassChanges)
+            Align(
+              alignment: Alignment.center,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  _saveCharacter('Information saved!');
+                  setState(() {
+                    _hasUnsavedClassChanges = false;
+                  });
+                },
+                icon: const Icon(Icons.save, size: 16),
+                label: const Text('Save Changes'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  textStyle: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
 
-          // Attacks section
+          // Long Rest section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.bedtime,
+                      color: Colors.blue.shade700,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Long Rest',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Take a long rest to restore hit points, spell slots, and all class resources.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _takeComprehensiveLongRest,
+                    icon: const Icon(Icons.night_shelter),
+                    label: const Text('Take Long Rest'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper methods for spellcasting information
+  String? _getSpellcastingAbility() {
+    final className = _classController.text.toLowerCase();
+    final subclass = _subclassController.text.toLowerCase();
+    
+    // Define spellcasting abilities for different classes
+    final Map<String, String> classSpellcasting = {
+      'wizard': 'INT',
+      'sorcerer': 'CHA',
+      'warlock': 'CHA',
+      'bard': 'CHA',
+      'cleric': 'WIS',
+      'druid': 'WIS',
+      'paladin': 'CHA',
+      'ranger': 'WIS',
+      'artificer': 'INT',
+    };
+    
+    // Check main class first
+    if (classSpellcasting.containsKey(className)) {
+      return classSpellcasting[className];
+    }
+    
+    // Check subclasses that grant spellcasting
+    final Map<String, String> subclassSpellcasting = {
+      'eldritch knight': 'INT',
+      'arcane trickster': 'INT',
+      'divine soul': 'CHA',
+      'favored soul': 'CHA',
+      'shadow monk': 'WIS',
+      'four elements monk': 'WIS',
+      'way of mercy monk': 'WIS',
+    };
+    
+    if (subclassSpellcasting.containsKey(subclass)) {
+      return subclassSpellcasting[subclass];
+    }
+    
+    return null;
+  }
+  
+  int _getAbilityScore(String ability) {
+    switch (ability) {
+      case 'STR':
+        return int.tryParse(_strengthController.text) ?? 10;
+      case 'DEX':
+        return int.tryParse(_dexterityController.text) ?? 10;
+      case 'CON':
+        return int.tryParse(_constitutionController.text) ?? 10;
+      case 'INT':
+        return int.tryParse(_intelligenceController.text) ?? 10;
+      case 'WIS':
+        return int.tryParse(_wisdomController.text) ?? 10;
+      case 'CHA':
+        return int.tryParse(_charismaController.text) ?? 10;
+      default:
+        return 10;
+    }
+  }
+  
+  int _getAbilityModifier(String ability) {
+    final score = _getAbilityScore(ability);
+    return ((score - 10) / 2).floor();
+  }
+  
+  int _getSpellSaveDC() {
+    final spellcastingAbility = _getSpellcastingAbility();
+    if (spellcastingAbility == null) return 0;
+    
+    final proficiencyBonus = int.tryParse(_proficiencyBonusController.text) ?? 2;
+    final abilityModifier = _getAbilityModifier(spellcastingAbility);
+    
+    return 8 + proficiencyBonus + abilityModifier;
+  }
+  
+  int _getSpellAttackBonus() {
+    final spellcastingAbility = _getSpellcastingAbility();
+    if (spellcastingAbility == null) return 0;
+    
+    final proficiencyBonus = int.tryParse(_proficiencyBonusController.text) ?? 2;
+    final abilityModifier = _getAbilityModifier(spellcastingAbility);
+    
+    return proficiencyBonus + abilityModifier;
+  }
+
+  Widget _buildSpellcastingInfoRow(String label, String description, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.purple.shade300),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.purple,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.purple.shade600,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  String _getAbilityName(String ability) {
+    switch (ability) {
+      case 'STR':
+        return 'Strength';
+      case 'DEX':
+        return 'Dexterity';
+      case 'CON':
+        return 'Constitution';
+      case 'INT':
+        return 'Intelligence';
+      case 'WIS':
+        return 'Wisdom';
+      case 'CHA':
+        return 'Charisma';
+      default:
+        return ability;
+    }
+  }
+
+  Widget _buildAttacksTab() {
+    final spellcastingAbility = _getSpellcastingAbility();
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           const Text(
             'Attacks',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
+          const Text(
+            'Manage your character\'s attacks and weapons',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+
+          // Attacks list
           ..._attacks.asMap().entries.map((entry) {
             final index = entry.key;
             final attack = entry.value;
@@ -353,11 +630,112 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     setState(() {
                       _attacks.removeAt(index);
                     });
+
+                    // Auto-save the character when an attack is removed
+                    _autoSaveCharacter();
                   },
                 ),
               ),
             );
           }),
+
+          const SizedBox(height: 16),
+          
+          // Debug: Always show spellcasting section for testing
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.purple.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.purple.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome,
+                      color: Colors.purple.shade700,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Spellcasting',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                
+                // Debug info
+                /* Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade100,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Debug Info:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Class: "${_classController.text}"'),
+                      Text('Subclass: "${_subclassController.text}"'),
+                      Text('Spellcasting Ability: $spellcastingAbility'),
+                    ],
+                  ),
+                ), */
+                
+                const SizedBox(height: 12),
+                
+                // Only show spellcasting details if ability is detected
+                if (spellcastingAbility != null) ...[
+                  // Spellcasting Ability
+                  _buildSpellcastingInfoRow(
+                    'Spellcasting Ability',
+                    _getAbilityName(spellcastingAbility),
+                    '+${_getAbilityModifier(spellcastingAbility)}',
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Spell Save DC
+                  _buildSpellcastingInfoRow(
+                    'Spell Save DC',
+                    '8 + Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
+                    _getSpellSaveDC().toString(),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Spell Attack Bonus
+                  _buildSpellcastingInfoRow(
+                    'Spell Attack Bonus',
+                    'Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
+                    '+${_getSpellAttackBonus()}',
+                  ),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'No spellcasting ability detected for this class/subclass',
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
           TextButton.icon(
             onPressed: _showAddAttackDialog,
@@ -1371,25 +1749,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         );
       },
     );
-  }
-
-  int _getAbilityScore(String ability) {
-    switch (ability) {
-      case 'STR':
-        return int.tryParse(_strengthController.text) ?? 10;
-      case 'DEX':
-        return int.tryParse(_dexterityController.text) ?? 10;
-      case 'CON':
-        return int.tryParse(_constitutionController.text) ?? 10;
-      case 'INT':
-        return int.tryParse(_intelligenceController.text) ?? 10;
-      case 'WIS':
-        return int.tryParse(_wisdomController.text) ?? 10;
-      case 'CHA':
-        return int.tryParse(_charismaController.text) ?? 10;
-      default:
-        return 10;
-    }
   }
 
   void _updateSkillCheck(String skill, bool value) {
@@ -3969,6 +4328,60 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         content: Text('All class slots have been restored!'),
         backgroundColor: Colors.green,
         duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _takeComprehensiveLongRest() {
+    setState(() {
+      // Restore hit points to maximum
+      _currentHpController.text = _maxHpController.text;
+      _tempHpController.text = '0';
+      
+      // Update health object
+      _health = CharacterHealth(
+        maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
+        currentHitPoints: int.tryParse(_maxHpController.text) ?? 10,
+        temporaryHitPoints: 0,
+        hitDice: _health.hitDice,
+        hitDiceType: _health.hitDiceType,
+      );
+
+      // Reset all used spell slots to 0 (restore all slots)
+      _spellSlots = CharacterSpellSlots(
+        level1Slots: _spellSlots.level1Slots,
+        level1Used: 0,
+        level2Slots: _spellSlots.level2Slots,
+        level2Used: 0,
+        level3Slots: _spellSlots.level3Slots,
+        level3Used: 0,
+        level4Slots: _spellSlots.level4Slots,
+        level4Used: 0,
+        level5Slots: _spellSlots.level5Slots,
+        level5Used: 0,
+        level6Slots: _spellSlots.level6Slots,
+        level6Used: 0,
+        level7Slots: _spellSlots.level7Slots,
+        level7Used: 0,
+        level8Slots: _spellSlots.level8Slots,
+        level8Used: 0,
+        level9Slots: _spellSlots.level9Slots,
+        level9Used: 0,
+      );
+
+      // Reset all personalized slots to 0 (restore all slots)
+      _personalizedSlots = _personalizedSlots.map((slot) => slot.copyWith(usedSlots: 0)).toList();
+    });
+
+    // Auto-save the comprehensive long rest
+    _autoSaveCharacter();
+
+    // Show confirmation message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Long rest completed! HP, spell slots, and all class resources restored!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 3),
       ),
     );
   }
