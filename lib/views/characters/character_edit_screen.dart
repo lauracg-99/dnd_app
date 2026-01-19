@@ -2050,38 +2050,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
 
-          const SizedBox(height: 24),
-          const Text(
-            'Skills',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          // Skills with calculated modifiers, proficiency, and expertise
-          ...[
-            _buildSkillRow(
-              'Acrobatics',
-              'DEX',
-              _skillChecks.acrobaticsProficiency,
-              _skillChecks.acrobaticsExpertise,
-              'acrobatics',
-            ),
-            _buildSkillRow(
-              'Animal Handling',
-              'WIS',
-              _skillChecks.animalHandlingProficiency,
-              _skillChecks.animalHandlingExpertise,
-              'animal_handling',
-            ),
-            _buildSkillRow(
-              'Arcana',
-              'INT',
-              _skillChecks.arcanaProficiency,
-              _skillChecks.arcanaExpertise,
-              'arcana',
-            ),
+          // Skills grouped by ability scores
+          _buildSkillGroup('Strength', [
             _buildSkillRow(
               'Athletics',
               'STR',
@@ -2089,82 +2060,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.athleticsExpertise,
               'athletics',
             ),
+          ]),
+
+          const SizedBox(height: 24),
+          _buildSkillGroup('Dexterity', [
             _buildSkillRow(
-              'Deception',
-              'CHA',
-              _skillChecks.deceptionProficiency,
-              _skillChecks.deceptionExpertise,
-              'deception',
-            ),
-            _buildSkillRow(
-              'History',
-              'INT',
-              _skillChecks.historyProficiency,
-              _skillChecks.historyExpertise,
-              'history',
-            ),
-            _buildSkillRow(
-              'Insight',
-              'WIS',
-              _skillChecks.insightProficiency,
-              _skillChecks.insightExpertise,
-              'insight',
-            ),
-            _buildSkillRow(
-              'Intimidation',
-              'CHA',
-              _skillChecks.intimidationProficiency,
-              _skillChecks.intimidationExpertise,
-              'intimidation',
-            ),
-            _buildSkillRow(
-              'Investigation',
-              'INT',
-              _skillChecks.investigationProficiency,
-              _skillChecks.investigationExpertise,
-              'investigation',
-            ),
-            _buildSkillRow(
-              'Medicine',
-              'WIS',
-              _skillChecks.medicineProficiency,
-              _skillChecks.medicineExpertise,
-              'medicine',
-            ),
-            _buildSkillRow(
-              'Nature',
-              'WIS',
-              _skillChecks.natureProficiency,
-              _skillChecks.natureExpertise,
-              'nature',
-            ),
-            _buildSkillRow(
-              'Perception',
-              'WIS',
-              _skillChecks.perceptionProficiency,
-              _skillChecks.perceptionExpertise,
-              'perception',
-            ),
-            _buildSkillRow(
-              'Performance',
-              'CHA',
-              _skillChecks.performanceProficiency,
-              _skillChecks.performanceExpertise,
-              'performance',
-            ),
-            _buildSkillRow(
-              'Persuasion',
-              'CHA',
-              _skillChecks.persuasionProficiency,
-              _skillChecks.persuasionExpertise,
-              'persuasion',
-            ),
-            _buildSkillRow(
-              'Religion',
-              'INT',
-              _skillChecks.religionProficiency,
-              _skillChecks.religionExpertise,
-              'religion',
+              'Acrobatics',
+              'DEX',
+              _skillChecks.acrobaticsProficiency,
+              _skillChecks.acrobaticsExpertise,
+              'acrobatics',
             ),
             _buildSkillRow(
               'Sleight of Hand',
@@ -2180,6 +2085,77 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.stealthExpertise,
               'stealth',
             ),
+          ]),
+
+          const SizedBox(height: 24),
+          _buildSkillGroup('Intelligence', [
+            _buildSkillRow(
+              'Arcana',
+              'INT',
+              _skillChecks.arcanaProficiency,
+              _skillChecks.arcanaExpertise,
+              'arcana',
+            ),
+            _buildSkillRow(
+              'History',
+              'INT',
+              _skillChecks.historyProficiency,
+              _skillChecks.historyExpertise,
+              'history',
+            ),
+            _buildSkillRow(
+              'Investigation',
+              'INT',
+              _skillChecks.investigationProficiency,
+              _skillChecks.investigationExpertise,
+              'investigation',
+            ),
+            _buildSkillRow(
+              'Nature',
+              'INT',
+              _skillChecks.natureProficiency,
+              _skillChecks.natureExpertise,
+              'nature',
+            ),
+            _buildSkillRow(
+              'Religion',
+              'INT',
+              _skillChecks.religionProficiency,
+              _skillChecks.religionExpertise,
+              'religion',
+            ),
+          ]),
+
+          const SizedBox(height: 24),
+          _buildSkillGroup('Wisdom', [
+            _buildSkillRow(
+              'Animal Handling',
+              'WIS',
+              _skillChecks.animalHandlingProficiency,
+              _skillChecks.animalHandlingExpertise,
+              'animal_handling',
+            ),
+            _buildSkillRow(
+              'Insight',
+              'WIS',
+              _skillChecks.insightProficiency,
+              _skillChecks.insightExpertise,
+              'insight',
+            ),
+            _buildSkillRow(
+              'Medicine',
+              'WIS',
+              _skillChecks.medicineProficiency,
+              _skillChecks.medicineExpertise,
+              'medicine',
+            ),
+            _buildSkillRow(
+              'Perception',
+              'WIS',
+              _skillChecks.perceptionProficiency,
+              _skillChecks.perceptionExpertise,
+              'perception',
+            ),
             _buildSkillRow(
               'Survival',
               'WIS',
@@ -2187,10 +2163,120 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.survivalExpertise,
               'survival',
             ),
-          ],
+          ]),
+
+          const SizedBox(height: 24),
+          _buildSkillGroup('Charisma', [
+            _buildSkillRow(
+              'Deception',
+              'CHA',
+              _skillChecks.deceptionProficiency,
+              _skillChecks.deceptionExpertise,
+              'deception',
+            ),
+            _buildSkillRow(
+              'Intimidation',
+              'CHA',
+              _skillChecks.intimidationProficiency,
+              _skillChecks.intimidationExpertise,
+              'intimidation',
+            ),
+            _buildSkillRow(
+              'Performance',
+              'CHA',
+              _skillChecks.performanceProficiency,
+              _skillChecks.performanceExpertise,
+              'performance',
+            ),
+            _buildSkillRow(
+              'Persuasion',
+              'CHA',
+              _skillChecks.persuasionProficiency,
+              _skillChecks.persuasionExpertise,
+              'persuasion',
+            ),
+          ]),
+          const SizedBox(height: 45), // Extra space at bottom of screen
         ],
       ),
     );
+  }
+
+  Widget _buildSkillGroup(String abilityName, List<Widget> skills) {
+    // Get the ability modifier for this group
+    final abilityAbbreviation = _getAbilityAbbreviation(abilityName);
+    final abilityScore = _getAbilityScore(abilityAbbreviation);
+    final modifier = _stats.getModifier(abilityScore);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.blue.shade200, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                abilityName,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue.shade700,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Text(
+                  '${modifier >= 0 ? '+' : ''}$modifier',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        ...skills,
+      ],
+    );
+  }
+
+  String _getAbilityAbbreviation(String abilityName) {
+    switch (abilityName) {
+      case 'Strength':
+        return 'STR';
+      case 'Dexterity':
+        return 'DEX';
+      case 'Intelligence':
+        return 'INT';
+      case 'Wisdom':
+        return 'WIS';
+      case 'Charisma':
+        return 'CHA';
+      default:
+        return abilityName.substring(0, 3).toUpperCase();
+    }
   }
 
   Widget _buildSavingThrowRow(
@@ -2272,7 +2358,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         borderRadius: BorderRadius.circular(6),
         color:
             hasExpertise
-                ? Colors.blue.shade50
+                ? Colors.purple.shade50
                 : (isProficient ? Colors.green.shade50 : Colors.white),
       ),
       child: Row(
@@ -2323,10 +2409,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               height: 24,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: hasExpertise ? Colors.blue : Colors.grey,
+                  color: hasExpertise ? Colors.purple : Colors.grey,
                 ),
                 borderRadius: BorderRadius.circular(4),
-                color: hasExpertise ? Colors.blue : Colors.transparent,
+                color: hasExpertise ? Colors.purple : Colors.transparent,
               ),
               child:
                   hasExpertise
@@ -2345,7 +2431,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 fontWeight: FontWeight.bold,
                 color:
                     hasExpertise
-                        ? Colors.blue
+                        ? Colors.purple
                         : (isProficient ? Colors.green : Colors.black),
               ),
               textAlign: TextAlign.center,
