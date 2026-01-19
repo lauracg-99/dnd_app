@@ -979,57 +979,42 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             width: double.infinity,
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: Colors.green.shade50,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.shade200),
+              border: Border.all(color: Colors.green.shade200),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.bedtime,
-                      color: Colors.blue.shade700,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Long Rest',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
+                Icon(
+                  Icons.bedtime,
+                  color: Colors.green.shade700,
+                  size: 24,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(width: 12),
                 const Text(
-                  'Take a long rest to restore hit points, spell slots, and all class resources.',
+                  'Long Rest',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
                   ),
                 ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _takeComprehensiveLongRest,
-                    icon: const Icon(Icons.night_shelter),
-                    label: const Text('Take Long Rest'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: _takeComprehensiveLongRest,
+                  icon: const Icon(Icons.night_shelter),
+                  label: const Text('Take Long Rest'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 24), // Space under long rest section
         ],
       ),
     );
@@ -1878,28 +1863,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   });
                 },
                 borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
+                child: Icon(
                         _hasInspiration ? Icons.check_circle : Icons.circle_outlined,
                         color: _hasInspiration ? Colors.blue.shade800 : Colors.grey.shade400,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _hasInspiration ? 'Has' : 'None',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _hasInspiration ? Colors.blue.shade800 : Colors.grey.shade400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
           ],
