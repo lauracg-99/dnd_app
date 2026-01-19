@@ -163,6 +163,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
             Tab(text: 'Stats', icon: Icon(Icons.bar_chart)),
             Tab(text: 'Skills', icon: Icon(Icons.psychology)),
             Tab(text: 'Health', icon: Icon(Icons.favorite)),
+            Tab(text: 'Spell Slots', icon: Icon(Icons.grid_view)),
             Tab(text: 'Spells', icon: Icon(Icons.auto_awesome)),
             Tab(text: 'Notes', icon: Icon(Icons.note)),
           ],
@@ -181,6 +182,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
           _buildStatsTab(),
           _buildSkillsTab(),
           _buildHealthTab(),
+          _buildSpellSlotsTab(),
           _buildSpellsTab(),
           _buildNotesTab(),
         ],
@@ -804,14 +806,22 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
     );
   }
 
-  Widget _buildSpellsTab() {
+  Widget _buildSpellSlotsTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Spell Slots', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
+          const Text(
+            'Spell Slots',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your character\'s spell slots and usage',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+          const SizedBox(height: 24),
           
           // Spell slots grid
           ...[
@@ -819,8 +829,94 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
               _buildSpellSlotField('Level $level', level),
           ],
           
-          const SizedBox(height: 24),
-          const Text('Known Spells', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 32),
+          
+          // Summary section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Spell Slot Summary',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Calculate total slots and used
+                  Consumer<CharactersViewModel>(
+                    builder: (context, viewModel, child) {
+                      final totalSlots = _spellSlots.level1Slots + _spellSlots.level2Slots + 
+                                       _spellSlots.level3Slots + _spellSlots.level4Slots + 
+                                       _spellSlots.level5Slots + _spellSlots.level6Slots + 
+                                       _spellSlots.level7Slots + _spellSlots.level8Slots + 
+                                       _spellSlots.level9Slots;
+                      
+                      final totalUsed = _spellSlots.level1Used + _spellSlots.level2Used + 
+                                      _spellSlots.level3Used + _spellSlots.level4Used + 
+                                      _spellSlots.level5Used + _spellSlots.level6Used + 
+                                      _spellSlots.level7Used + _spellSlots.level8Used + 
+                                      _spellSlots.level9Used;
+                      
+                      final availableSlots = totalSlots - totalUsed;
+                      
+                      return Column(
+                        children: [
+                          _buildSummaryRow('Total Slots', totalSlots.toString()),
+                          _buildSummaryRow('Used Slots', totalUsed.toString()),
+                          _buildSummaryRow('Available Slots', availableSlots.toString(), 
+                            availableSlots > 0 ? Colors.green : Colors.red),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, [Color? valueColor]) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: valueColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpellsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Known Spells',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your character\'s known spells',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
           const SizedBox(height: 16),
           
           // Spells list
