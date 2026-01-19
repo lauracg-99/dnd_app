@@ -365,7 +365,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
           const Text('Saving Throws', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           
-          // Saving throws checkboxes
+          // Saving throws with calculated modifiers
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -374,7 +374,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
             children: [
-              _buildCheckbox('STR Save', _savingThrows.strengthProficiency, (value) {
+              _buildSavingThrowRow('STR', _savingThrows.strengthProficiency, (value) {
                 setState(() {
                   _savingThrows = CharacterSavingThrows(
                     strengthProficiency: value ?? false,
@@ -386,7 +386,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
                   );
                 });
               }),
-              _buildCheckbox('DEX Save', _savingThrows.dexterityProficiency, (value) {
+              _buildSavingThrowRow('DEX', _savingThrows.dexterityProficiency, (value) {
                 setState(() {
                   _savingThrows = CharacterSavingThrows(
                     strengthProficiency: _savingThrows.strengthProficiency,
@@ -398,7 +398,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
                   );
                 });
               }),
-              _buildCheckbox('CON Save', _savingThrows.constitutionProficiency, (value) {
+              _buildSavingThrowRow('CON', _savingThrows.constitutionProficiency, (value) {
                 setState(() {
                   _savingThrows = CharacterSavingThrows(
                     strengthProficiency: _savingThrows.strengthProficiency,
@@ -410,7 +410,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
                   );
                 });
               }),
-              _buildCheckbox('INT Save', _savingThrows.intelligenceProficiency, (value) {
+              _buildSavingThrowRow('INT', _savingThrows.intelligenceProficiency, (value) {
                 setState(() {
                   _savingThrows = CharacterSavingThrows(
                     strengthProficiency: _savingThrows.strengthProficiency,
@@ -422,7 +422,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
                   );
                 });
               }),
-              _buildCheckbox('WIS Save', _savingThrows.wisdomProficiency, (value) {
+              _buildSavingThrowRow('WIS', _savingThrows.wisdomProficiency, (value) {
                 setState(() {
                   _savingThrows = CharacterSavingThrows(
                     strengthProficiency: _savingThrows.strengthProficiency,
@@ -434,7 +434,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
                   );
                 });
               }),
-              _buildCheckbox('CHA Save', _savingThrows.charismaProficiency, (value) {
+              _buildSavingThrowRow('CHA', _savingThrows.charismaProficiency, (value) {
                 setState(() {
                   _savingThrows = CharacterSavingThrows(
                     strengthProficiency: _savingThrows.strengthProficiency,
@@ -453,98 +453,273 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
           const Text('Skills', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           
-          // Skill checkboxes
+          // Skills with calculated modifiers, proficiency, and expertise
           ...[
-            _buildCheckbox('Acrobatics', _skillChecks.acrobaticsProficiency, (value) {
-              _updateSkillCheck('acrobatics', value ?? false);
-            }),
-            _buildCheckbox('Animal Handling', _skillChecks.animalHandlingProficiency, (value) {
-              _updateSkillCheck('animal_handling', value ?? false);
-            }),
-            _buildCheckbox('Arcana', _skillChecks.arcanaProficiency, (value) {
-              _updateSkillCheck('arcana', value ?? false);
-            }),
-            _buildCheckbox('Athletics', _skillChecks.athleticsProficiency, (value) {
-              _updateSkillCheck('athletics', value ?? false);
-            }),
-            _buildCheckbox('Deception', _skillChecks.deceptionProficiency, (value) {
-              _updateSkillCheck('deception', value ?? false);
-            }),
-            _buildCheckbox('History', _skillChecks.historyProficiency, (value) {
-              _updateSkillCheck('history', value ?? false);
-            }),
-            _buildCheckbox('Insight', _skillChecks.insightProficiency, (value) {
-              _updateSkillCheck('insight', value ?? false);
-            }),
-            _buildCheckbox('Intimidation', _skillChecks.intimidationProficiency, (value) {
-              _updateSkillCheck('intimidation', value ?? false);
-            }),
-            _buildCheckbox('Investigation', _skillChecks.investigationProficiency, (value) {
-              _updateSkillCheck('investigation', value ?? false);
-            }),
-            _buildCheckbox('Medicine', _skillChecks.medicineProficiency, (value) {
-              _updateSkillCheck('medicine', value ?? false);
-            }),
-            _buildCheckbox('Nature', _skillChecks.natureProficiency, (value) {
-              _updateSkillCheck('nature', value ?? false);
-            }),
-            _buildCheckbox('Perception', _skillChecks.perceptionProficiency, (value) {
-              _updateSkillCheck('perception', value ?? false);
-            }),
-            _buildCheckbox('Performance', _skillChecks.performanceProficiency, (value) {
-              _updateSkillCheck('performance', value ?? false);
-            }),
-            _buildCheckbox('Persuasion', _skillChecks.persuasionProficiency, (value) {
-              _updateSkillCheck('persuasion', value ?? false);
-            }),
-            _buildCheckbox('Religion', _skillChecks.religionProficiency, (value) {
-              _updateSkillCheck('religion', value ?? false);
-            }),
-            _buildCheckbox('Sleight of Hand', _skillChecks.sleightOfHandProficiency, (value) {
-              _updateSkillCheck('sleight_of_hand', value ?? false);
-            }),
-            _buildCheckbox('Stealth', _skillChecks.stealthProficiency, (value) {
-              _updateSkillCheck('stealth', value ?? false);
-            }),
-            _buildCheckbox('Survival', _skillChecks.survivalProficiency, (value) {
-              _updateSkillCheck('survival', value ?? false);
-            }),
+            _buildSkillRow('Acrobatics', 'DEX', _skillChecks.acrobaticsProficiency, _skillChecks.acrobaticsExpertise, 'acrobatics'),
+            _buildSkillRow('Animal Handling', 'WIS', _skillChecks.animalHandlingProficiency, _skillChecks.animalHandlingExpertise, 'animal_handling'),
+            _buildSkillRow('Arcana', 'INT', _skillChecks.arcanaProficiency, _skillChecks.arcanaExpertise, 'arcana'),
+            _buildSkillRow('Athletics', 'STR', _skillChecks.athleticsProficiency, _skillChecks.athleticsExpertise, 'athletics'),
+            _buildSkillRow('Deception', 'CHA', _skillChecks.deceptionProficiency, _skillChecks.deceptionExpertise, 'deception'),
+            _buildSkillRow('History', 'INT', _skillChecks.historyProficiency, _skillChecks.historyExpertise, 'history'),
+            _buildSkillRow('Insight', 'WIS', _skillChecks.insightProficiency, _skillChecks.insightExpertise, 'insight'),
+            _buildSkillRow('Intimidation', 'CHA', _skillChecks.intimidationProficiency, _skillChecks.intimidationExpertise, 'intimidation'),
+            _buildSkillRow('Investigation', 'INT', _skillChecks.investigationProficiency, _skillChecks.investigationExpertise, 'investigation'),
+            _buildSkillRow('Medicine', 'WIS', _skillChecks.medicineProficiency, _skillChecks.medicineExpertise, 'medicine'),
+            _buildSkillRow('Nature', 'WIS', _skillChecks.natureProficiency, _skillChecks.natureExpertise, 'nature'),
+            _buildSkillRow('Perception', 'WIS', _skillChecks.perceptionProficiency, _skillChecks.perceptionExpertise, 'perception'),
+            _buildSkillRow('Performance', 'CHA', _skillChecks.performanceProficiency, _skillChecks.performanceExpertise, 'performance'),
+            _buildSkillRow('Persuasion', 'CHA', _skillChecks.persuasionProficiency, _skillChecks.persuasionExpertise, 'persuasion'),
+            _buildSkillRow('Religion', 'INT', _skillChecks.religionProficiency, _skillChecks.religionExpertise, 'religion'),
+            _buildSkillRow('Sleight of Hand', 'DEX', _skillChecks.sleightOfHandProficiency, _skillChecks.sleightOfHandExpertise, 'sleight_of_hand'),
+            _buildSkillRow('Stealth', 'DEX', _skillChecks.stealthProficiency, _skillChecks.stealthExpertise, 'stealth'),
+            _buildSkillRow('Survival', 'WIS', _skillChecks.survivalProficiency, _skillChecks.survivalExpertise, 'survival'),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildCheckbox(String label, bool value, Function(bool?) onChanged) {
-    return Row(
-      children: [
-        Checkbox(value: value, onChanged: onChanged),
-        Expanded(child: Text(label)),
-      ],
+  Widget _buildSavingThrowRow(String ability, bool isProficient, Function(bool?) onChanged) {
+    final abilityScore = _getAbilityScore(ability);
+    final modifier = _stats.getModifier(abilityScore);
+    final proficiencyBonus = int.tryParse(_proficiencyBonusController.text) ?? 2;
+    final total = modifier + (isProficient ? proficiencyBonus : 0);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        children: [
+          // Ability and modifier
+          SizedBox(
+            width: 50,
+            child: Text(
+              '$ability\n${modifier >= 0 ? '+' : ''}$modifier',
+              style: const TextStyle(fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Proficiency checkbox
+          Checkbox(
+            value: isProficient,
+            onChanged: onChanged,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          const SizedBox(width: 8),
+          // Total bonus
+          SizedBox(
+            width: 40,
+            child: Text(
+              '${total >= 0 ? '+' : ''}$total',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: isProficient ? Colors.blue : Colors.black,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildSkillRow(String skillName, String ability, bool isProficient, bool hasExpertise, String skillKey) {
+    final abilityScore = _getAbilityScore(ability);
+    final modifier = _stats.getModifier(abilityScore);
+    final proficiencyBonus = int.tryParse(_proficiencyBonusController.text) ?? 2;
+    final total = _skillChecks.calculateSkillModifier(skillKey, _stats, proficiencyBonus);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(6),
+        color: hasExpertise ? Colors.blue.shade50 : (isProficient ? Colors.green.shade50 : Colors.white),
+      ),
+      child: Row(
+        children: [
+          // Skill name
+          Expanded(
+            flex: 3,
+            child: Text(
+              skillName,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+          // Ability and modifier
+          SizedBox(
+            width: 50,
+            child: Text(
+              '$ability\n${modifier >= 0 ? '+' : ''}$modifier',
+              style: const TextStyle(fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Proficiency checkbox
+          GestureDetector(
+            onTap: () => _updateSkillCheck(skillKey, !isProficient),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                border: Border.all(color: isProficient ? Colors.green : Colors.grey),
+                borderRadius: BorderRadius.circular(4),
+                color: isProficient ? Colors.green : Colors.transparent,
+              ),
+              child: isProficient
+                  ? const Icon(Icons.check, color: Colors.white, size: 16)
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Expertise checkbox
+          GestureDetector(
+            onTap: () => _updateSkillExpertise(skillKey, !hasExpertise),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                border: Border.all(color: hasExpertise ? Colors.blue : Colors.grey),
+                borderRadius: BorderRadius.circular(4),
+                color: hasExpertise ? Colors.blue : Colors.transparent,
+              ),
+              child: hasExpertise
+                  ? const Icon(Icons.star, color: Colors.white, size: 16)
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Total bonus
+          SizedBox(
+            width: 40,
+            child: Text(
+              '${total >= 0 ? '+' : ''}$total',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: hasExpertise ? Colors.blue : (isProficient ? Colors.green : Colors.black),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _getAbilityScore(String ability) {
+    switch (ability) {
+      case 'STR':
+        return int.tryParse(_strengthController.text) ?? 10;
+      case 'DEX':
+        return int.tryParse(_dexterityController.text) ?? 10;
+      case 'CON':
+        return int.tryParse(_constitutionController.text) ?? 10;
+      case 'INT':
+        return int.tryParse(_intelligenceController.text) ?? 10;
+      case 'WIS':
+        return int.tryParse(_wisdomController.text) ?? 10;
+      case 'CHA':
+        return int.tryParse(_charismaController.text) ?? 10;
+      default:
+        return 10;
+    }
   }
 
   void _updateSkillCheck(String skill, bool value) {
     setState(() {
       _skillChecks = CharacterSkillChecks(
         acrobaticsProficiency: skill == 'acrobatics' ? value : _skillChecks.acrobaticsProficiency,
+        acrobaticsExpertise: skill == 'acrobatics' ? (value ? _skillChecks.acrobaticsExpertise : false) : _skillChecks.acrobaticsExpertise,
         animalHandlingProficiency: skill == 'animal_handling' ? value : _skillChecks.animalHandlingProficiency,
+        animalHandlingExpertise: skill == 'animal_handling' ? (value ? _skillChecks.animalHandlingExpertise : false) : _skillChecks.animalHandlingExpertise,
         arcanaProficiency: skill == 'arcana' ? value : _skillChecks.arcanaProficiency,
+        arcanaExpertise: skill == 'arcana' ? (value ? _skillChecks.arcanaExpertise : false) : _skillChecks.arcanaExpertise,
         athleticsProficiency: skill == 'athletics' ? value : _skillChecks.athleticsProficiency,
+        athleticsExpertise: skill == 'athletics' ? (value ? _skillChecks.athleticsExpertise : false) : _skillChecks.athleticsExpertise,
         deceptionProficiency: skill == 'deception' ? value : _skillChecks.deceptionProficiency,
+        deceptionExpertise: skill == 'deception' ? (value ? _skillChecks.deceptionExpertise : false) : _skillChecks.deceptionExpertise,
         historyProficiency: skill == 'history' ? value : _skillChecks.historyProficiency,
+        historyExpertise: skill == 'history' ? (value ? _skillChecks.historyExpertise : false) : _skillChecks.historyExpertise,
         insightProficiency: skill == 'insight' ? value : _skillChecks.insightProficiency,
+        insightExpertise: skill == 'insight' ? (value ? _skillChecks.insightExpertise : false) : _skillChecks.insightExpertise,
         intimidationProficiency: skill == 'intimidation' ? value : _skillChecks.intimidationProficiency,
+        intimidationExpertise: skill == 'intimidation' ? (value ? _skillChecks.intimidationExpertise : false) : _skillChecks.intimidationExpertise,
         investigationProficiency: skill == 'investigation' ? value : _skillChecks.investigationProficiency,
+        investigationExpertise: skill == 'investigation' ? (value ? _skillChecks.investigationExpertise : false) : _skillChecks.investigationExpertise,
         medicineProficiency: skill == 'medicine' ? value : _skillChecks.medicineProficiency,
+        medicineExpertise: skill == 'medicine' ? (value ? _skillChecks.medicineExpertise : false) : _skillChecks.medicineExpertise,
         natureProficiency: skill == 'nature' ? value : _skillChecks.natureProficiency,
+        natureExpertise: skill == 'nature' ? (value ? _skillChecks.natureExpertise : false) : _skillChecks.natureExpertise,
         perceptionProficiency: skill == 'perception' ? value : _skillChecks.perceptionProficiency,
+        perceptionExpertise: skill == 'perception' ? (value ? _skillChecks.perceptionExpertise : false) : _skillChecks.perceptionExpertise,
         performanceProficiency: skill == 'performance' ? value : _skillChecks.performanceProficiency,
+        performanceExpertise: skill == 'performance' ? (value ? _skillChecks.performanceExpertise : false) : _skillChecks.performanceExpertise,
         persuasionProficiency: skill == 'persuasion' ? value : _skillChecks.persuasionProficiency,
+        persuasionExpertise: skill == 'persuasion' ? (value ? _skillChecks.persuasionExpertise : false) : _skillChecks.persuasionExpertise,
         religionProficiency: skill == 'religion' ? value : _skillChecks.religionProficiency,
+        religionExpertise: skill == 'religion' ? (value ? _skillChecks.religionExpertise : false) : _skillChecks.religionExpertise,
         sleightOfHandProficiency: skill == 'sleight_of_hand' ? value : _skillChecks.sleightOfHandProficiency,
+        sleightOfHandExpertise: skill == 'sleight_of_hand' ? (value ? _skillChecks.sleightOfHandExpertise : false) : _skillChecks.sleightOfHandExpertise,
         stealthProficiency: skill == 'stealth' ? value : _skillChecks.stealthProficiency,
+        stealthExpertise: skill == 'stealth' ? (value ? _skillChecks.stealthExpertise : false) : _skillChecks.stealthExpertise,
         survivalProficiency: skill == 'survival' ? value : _skillChecks.survivalProficiency,
+        survivalExpertise: skill == 'survival' ? (value ? _skillChecks.survivalExpertise : false) : _skillChecks.survivalExpertise,
+      );
+    });
+  }
+
+  void _updateSkillExpertise(String skill, bool value) {
+    setState(() {
+      // If setting expertise to true, also set proficiency to true
+      if (value) {
+        _updateSkillCheck(skill, true);
+      }
+      
+      _skillChecks = CharacterSkillChecks(
+        acrobaticsProficiency: _skillChecks.acrobaticsProficiency,
+        acrobaticsExpertise: skill == 'acrobatics' ? value : _skillChecks.acrobaticsExpertise,
+        animalHandlingProficiency: _skillChecks.animalHandlingProficiency,
+        animalHandlingExpertise: skill == 'animal_handling' ? value : _skillChecks.animalHandlingExpertise,
+        arcanaProficiency: _skillChecks.arcanaProficiency,
+        arcanaExpertise: skill == 'arcana' ? value : _skillChecks.arcanaExpertise,
+        athleticsProficiency: _skillChecks.athleticsProficiency,
+        athleticsExpertise: skill == 'athletics' ? value : _skillChecks.athleticsExpertise,
+        deceptionProficiency: _skillChecks.deceptionProficiency,
+        deceptionExpertise: skill == 'deception' ? value : _skillChecks.deceptionExpertise,
+        historyProficiency: _skillChecks.historyProficiency,
+        historyExpertise: skill == 'history' ? value : _skillChecks.historyExpertise,
+        insightProficiency: _skillChecks.insightProficiency,
+        insightExpertise: skill == 'insight' ? value : _skillChecks.insightExpertise,
+        intimidationProficiency: _skillChecks.intimidationProficiency,
+        intimidationExpertise: skill == 'intimidation' ? value : _skillChecks.intimidationExpertise,
+        investigationProficiency: _skillChecks.investigationProficiency,
+        investigationExpertise: skill == 'investigation' ? value : _skillChecks.investigationExpertise,
+        medicineProficiency: _skillChecks.medicineProficiency,
+        medicineExpertise: skill == 'medicine' ? value : _skillChecks.medicineExpertise,
+        natureProficiency: _skillChecks.natureProficiency,
+        natureExpertise: skill == 'nature' ? value : _skillChecks.natureExpertise,
+        perceptionProficiency: _skillChecks.perceptionProficiency,
+        perceptionExpertise: skill == 'perception' ? value : _skillChecks.perceptionExpertise,
+        performanceProficiency: _skillChecks.performanceProficiency,
+        performanceExpertise: skill == 'performance' ? value : _skillChecks.performanceExpertise,
+        persuasionProficiency: _skillChecks.persuasionProficiency,
+        persuasionExpertise: skill == 'persuasion' ? value : _skillChecks.persuasionExpertise,
+        religionProficiency: _skillChecks.religionProficiency,
+        religionExpertise: skill == 'religion' ? value : _skillChecks.religionExpertise,
+        sleightOfHandProficiency: _skillChecks.sleightOfHandProficiency,
+        sleightOfHandExpertise: skill == 'sleight_of_hand' ? value : _skillChecks.sleightOfHandExpertise,
+        stealthProficiency: _skillChecks.stealthProficiency,
+        stealthExpertise: skill == 'stealth' ? value : _skillChecks.stealthExpertise,
+        survivalProficiency: _skillChecks.survivalProficiency,
+        survivalExpertise: skill == 'survival' ? value : _skillChecks.survivalExpertise,
       );
     });
   }
