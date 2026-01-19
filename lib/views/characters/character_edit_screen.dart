@@ -81,6 +81,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   // Inspiration state
   bool _hasInspiration = false;
 
+  // Spell filter states
+  bool _filterByCharacterClass = true;
+  String? _selectedLevelFilter;
+  String? _selectedClassFilter;
+  String? _selectedSchoolFilter;
+
   @override
   void initState() {
     super.initState();
@@ -4475,7 +4481,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             builder: (context, setState) => Dialog(
               child: Container(
                 width: double.maxFinite,
-                height: 500,
+                height: 600,
                 child: Column(
                   children: [
                     // Header
@@ -4520,6 +4526,149 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     ),
                     const Divider(height: 1),
 
+                    // Filters section
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      color: Colors.grey.shade50,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Filter by character class toggle
+                          Row(
+                            children: [
+                              Switch(
+                                value: _filterByCharacterClass,
+                                onChanged: (value) {
+                                  this.setState(() {
+                                    _filterByCharacterClass = value;
+                                  });
+                                  setState(() {});
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Only show ${widget.character.characterClass} spells',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Filter dropdowns
+                          Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Consumer<SpellsViewModel>(
+                                      builder: (context, spellsViewModel, child) {
+                                        final levels = ['All', 'Cantrips', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5', 'Level 6', 'Level 7', 'Level 8', 'Level 9'];
+                                        return DropdownButtonFormField<String>(
+                                          value: _selectedLevelFilter ?? 'All',
+                                          isExpanded: true,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Level',
+                                            border: OutlineInputBorder(),
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                          ),
+                                          items: levels.map((level) {
+                                            return DropdownMenuItem(
+                                              value: level,
+                                              child: Text(level, style: const TextStyle(fontSize: 11)),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            this.setState(() {
+                                              _selectedLevelFilter = value == 'All' ? null : value;
+                                            });
+                                            setState(() {});
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Consumer<SpellsViewModel>(
+                                      builder: (context, spellsViewModel, child) {
+                                        final classes = ['All', ...spellsViewModel.spells.map((s) => s.classes).expand((c) => c).toSet().toList()..sort()];
+                                        return DropdownButtonFormField<String>(
+                                          value: _selectedClassFilter ?? 'All',
+                                          isExpanded: true,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Class',
+                                            border: OutlineInputBorder(),
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                          ),
+                                          items: classes.map((className) {
+                                            final displayName = className == 'All' 
+                                              ? 'All'
+                                              : className.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ');
+                                            return DropdownMenuItem(
+                                              value: className,
+                                              child: Text(
+                                                displayName.length > 15 ? '${displayName.substring(0, 15)}...' : displayName,
+                                                style: const TextStyle(fontSize: 11),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            this.setState(() {
+                                              _selectedClassFilter = value == 'All' ? null : value;
+                                            });
+                                            setState(() {});
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Consumer<SpellsViewModel>(
+                                      builder: (context, spellsViewModel, child) {
+                                        final schools = ['All', ...spellsViewModel.spells.map((s) => s.schoolName).toSet().toList()..sort()];
+                                        return DropdownButtonFormField<String>(
+                                          value: _selectedSchoolFilter ?? 'All',
+                                          isExpanded: true,
+                                          decoration: const InputDecoration(
+                                            labelText: 'School',
+                                            border: OutlineInputBorder(),
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                          ),
+                                          items: schools.map((school) {
+                                            return DropdownMenuItem(
+                                              value: school,
+                                              child: Text(
+                                                school.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' '),
+                                                style: const TextStyle(fontSize: 11),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            this.setState(() {
+                                              _selectedSchoolFilter = value == 'All' ? null : value;
+                                            });
+                                            setState(() {});
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+
                     // Search bar
                     Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -4555,15 +4704,47 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                             );
                           }
 
-                          final spells = spellsViewModel.spells;
-                          if (spells.isEmpty) {
-                            return const Center(child: Text('No spells found'));
+                          // Apply filters
+                          List<Spell> filteredSpells = spellsViewModel.spells.where((spell) {
+                            // Filter by character class if enabled
+                            if (_filterByCharacterClass) {
+                              final characterClass = widget.character.characterClass.toLowerCase();
+                              if (!spell.classes.any((className) => className.toLowerCase() == characterClass)) {
+                                return false;
+                              }
+                            }
+
+                            // Filter by level
+                            if (_selectedLevelFilter != null) {
+                              if (_selectedLevelFilter == 'Cantrips') {
+                                if (spell.levelNumber != 0) return false;
+                              } else if (_selectedLevelFilter!.startsWith('Level')) {
+                                final level = int.tryParse(_selectedLevelFilter!.split(' ')[1]);
+                                if (spell.levelNumber != level) return false;
+                              }
+                            }
+
+                            // Filter by class
+                            if (_selectedClassFilter != null) {
+                              if (!spell.classes.contains(_selectedClassFilter)) return false;
+                            }
+
+                            // Filter by school
+                            if (_selectedSchoolFilter != null) {
+                              if (spell.schoolName != _selectedSchoolFilter) return false;
+                            }
+
+                            return true;
+                          }).toList();
+
+                          if (filteredSpells.isEmpty) {
+                            return const Center(child: Text('No spells found with current filters'));
                           }
 
                           return ListView.builder(
-                            itemCount: spells.length,
+                            itemCount: filteredSpells.length,
                             itemBuilder: (context, index) {
-                              final spell = spells[index];
+                              final spell = filteredSpells[index];
                               final isKnown = _spells.contains(spell.name);
                               final isSelected = selectedSpells.contains(spell.name);
 
