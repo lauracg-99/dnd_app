@@ -812,14 +812,24 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Spell Slots',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s spell slots and usage',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Spell Slots',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              ElevatedButton.icon(
+                onPressed: _takeLongRest,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Restore all slots'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
                     // Summary section
@@ -866,35 +876,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
               ),
             ),
           ), 
-          const SizedBox(height: 24), 
-          // Long Rest button
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  const Text(
-                    'Restore spell slots',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),                  
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _takeLongRest,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Restore'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
           const SizedBox(height: 24),
           // Spell slots grid
           ...[
@@ -1451,16 +1432,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    _updateSpellSlot(level, 'slots', 4);
-                    currentValue = 4;
-                    textController.text = '4';
-                    _autoSaveCharacter();
-                  },
-                  child: const Text('Clear'),
-                ),
+              children: [                
                 ElevatedButton(
                   onPressed: () {
                     _updateSpellSlot(level, 'slots', 4);
@@ -2146,9 +2118,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
     // Show confirmation message
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Long rest completed! All spell slots have been restored.'),
+        content: Text('All spell slots have been restored!'),
         backgroundColor: Colors.green,
-        duration: Duration(seconds: 3),
+        duration: Duration(seconds: 2),
       ),
     );
   }

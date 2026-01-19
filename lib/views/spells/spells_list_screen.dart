@@ -4,7 +4,6 @@ import '../../models/spell_model.dart';
 import '../../models/character_model.dart';
 import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/characters_viewmodel.dart';
-import '../debug/debug_screen.dart';
 
 class SpellsListScreen extends StatefulWidget {
   const SpellsListScreen({super.key});
@@ -51,17 +50,6 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
           preferredSize: Size.fromHeight(_isFilterExpanded ? 200 : 80),
           child: _buildSearchAndFilters(),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'spells_fab',
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const DebugScreen()),
-          );
-        },
-        tooltip: 'Debug Tools',
-        child: const Icon(Icons.bug_report),
       ),
       body: Consumer<SpellsViewModel>(
         builder: (context, viewModel, child) {

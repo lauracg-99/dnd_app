@@ -71,19 +71,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
   static const List<Widget> _screens = [
-    InformationScreen(),
-    SpellsListScreen(),
     CharactersListScreen(),
+    SpellsListScreen(),
+    InformationScreen(),
     ItemsListScreen(),
   ];
 
   static const List<NavigationDestination> _destinations = [
-    NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),
+    NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),    
     NavigationDestination(
       icon: Icon(Icons.auto_awesome_motion),
       label: 'Spells',
-    ),
-    NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),
+    ),  
+    NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),  
     NavigationDestination(icon: Icon(Icons.inventory), label: 'Items'),
   ];
 
