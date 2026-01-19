@@ -392,75 +392,267 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
   Widget build(BuildContext context) {
     final viewModel = context.read<CharactersViewModel>();
 
-    return AlertDialog(
-      title: const Text('Create New Character'),
-      content: SizedBox(
-        width: 300,
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      elevation: 8,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blue.shade50,
+              Colors.purple.shade50,
+            ],
+          ),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Character Name',
-                border: OutlineInputBorder(),
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade600,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.person_add,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Create New Character',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),                      
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Character Name Field
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              autofocus: true,
+              child: TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Character Name',
+                  prefixIcon: const Icon(Icons.person, color: Colors.blue),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                autofocus: true,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedClass,
-              decoration: const InputDecoration(
-                labelText: 'Class',
-                border: OutlineInputBorder(),
+
+            // Class Selector
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              items:
-                  viewModel.availableClasses.map((className) {
-                    return DropdownMenuItem(
-                      value: className,
-                      child: Text(className),
-                    );
-                  }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedClass = value!;
-                });
-              },
+              child: DropdownButtonFormField<String>(
+                value: _selectedClass,
+                decoration: InputDecoration(
+                  labelText: 'Class',
+                //  prefixIcon: const Icon(Icons.gavel, color: Colors.purple),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                items: viewModel.availableClasses.map((className) {
+                  return DropdownMenuItem(
+                    value: className,
+                    child: Row(
+                      children: [
+                       // _getClassIcon(className),
+                        const SizedBox(width: 12),
+                        Text(
+                          className,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedClass = value!;
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _subclassController,
-              decoration: const InputDecoration(
-                labelText: 'Subclass (Optional)',
-                border: OutlineInputBorder(),
+
+            // Subclass Field
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
+              child: TextField(
+                controller: _subclassController,
+                decoration: InputDecoration(
+                  labelText: 'Subclass (Optional)',                 
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: _nameController.text.trim().isEmpty
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                            viewModel.createCharacter(
+                              name: _nameController.text.trim(),
+                              characterClass: _selectedClass,
+                              subclass: _subclassController.text.trim().isEmpty
+                                  ? null
+                                  : _subclassController.text.trim(),
+                            );
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Create',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed:
-              _nameController.text.trim().isEmpty
-                  ? null
-                  : () {
-                    Navigator.pop(context);
-                    viewModel.createCharacter(
-                      name: _nameController.text.trim(),
-                      characterClass: _selectedClass,
-                      subclass:
-                          _subclassController.text.trim().isEmpty
-                              ? null
-                              : _subclassController.text.trim(),
-                    );
-                  },
-          child: const Text('Create'),
-        ),
-      ],
     );
+  }
+
+  Icon _getClassIcon(String className) {
+    switch (className.toLowerCase()) {
+      case 'fighter':
+        return const Icon(Icons.gavel, color: Colors.red, size: 20);
+      case 'wizard':
+        return const Icon(Icons.auto_awesome, color: Colors.purple, size: 20);
+      case 'cleric':
+        return const Icon(Icons.favorite, color: Colors.yellow, size: 20);
+      case 'rogue':
+        return const Icon(Icons.visibility, color: Colors.grey, size: 20);
+      case 'ranger':
+        return const Icon(Icons.pets, color: Colors.green, size: 20);
+      case 'paladin':
+        return const Icon(Icons.security, color: Colors.blue, size: 20);
+      case 'barbarian':
+        return const Icon(Icons.fitness_center, color: Colors.brown, size: 20);
+      case 'bard':
+        return const Icon(Icons.music_note, color: Colors.pink, size: 20);
+      case 'druid':
+        return const Icon(Icons.nature, color: Colors.green, size: 20);
+      case 'monk':
+        return const Icon(Icons.sports_martial_arts, color: Colors.orange, size: 20);
+      case 'sorcerer':
+        return const Icon(Icons.local_fire_department, color: Colors.red, size: 20);
+      case 'warlock':
+        return const Icon(Icons.nightlight, color: Colors.purple, size: 20);
+      case 'artificer':
+        return const Icon(Icons.build, color: Colors.amber, size: 20);
+      default:
+        return const Icon(Icons.person, color: Colors.blue, size: 20);
+    }
   }
 }
