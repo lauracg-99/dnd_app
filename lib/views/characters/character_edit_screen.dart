@@ -395,40 +395,21 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           ),
           const SizedBox(height: 16),
 
+          // Combat stats using separate combat field method
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: _proficiencyBonusController,
-                  decoration: const InputDecoration(
-                    labelText: 'Proficiency Bonus',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
+                child: _buildCombatField('Proficiency', _proficiencyBonusController),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: TextField(
-                  controller: _armorClassController,
-                  decoration: const InputDecoration(
-                    labelText: 'Armor Class',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
+                child: _buildCombatField('Armor Class', _armorClassController),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildCombatField('Speed', _speedController),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-
-          TextField(
-            controller: _speedController,
-            decoration: const InputDecoration(
-              labelText: 'Speed',
-              border: OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
           ),
         ],
       ),
@@ -517,6 +498,60 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCombatField(String label, TextEditingController controller) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              height: 46,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.black54, width: 1),
+              ),
+              child: TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: '10',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                  isDense: true,
+                ),
+                keyboardType: TextInputType.number,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
               ),
             ),
           ],
