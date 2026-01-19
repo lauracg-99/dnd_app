@@ -24,6 +24,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   late TabController _tabController;
   String? _customImagePath;
   bool _isPickingImage = false;
+  bool _hasUnsavedAbilityChanges = false;
 
   // Form controllers
   final _nameController = TextEditingController();
@@ -198,7 +199,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit ${widget.character.name}'),
+        title: Text('${widget.character.name}'),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -364,9 +365,29 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Ability Scores',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Ability Scores',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              if (_hasUnsavedAbilityChanges)
+                ElevatedButton.icon(
+                  onPressed: () {                    
+                    _saveCharacter('Ability scores saved!');
+                    setState(() {
+                      _hasUnsavedAbilityChanges = false;
+                    });
+                  },
+                  icon: const Icon(Icons.save, size: 16),
+                  label: const Text('Save'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    textStyle: const TextStyle(fontSize: 12),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
 
@@ -467,6 +488,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       ),
                       textAlign: TextAlign.center,
                       onChanged: (value) {
+                        // Mark as having unsaved changes and force rebuild
+                        setState(() {
+                          _hasUnsavedAbilityChanges = true;
+                        });
                         // Force rebuild to update modifier
                         (context as Element).markNeedsBuild();
                       },
@@ -3098,6 +3123,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Save the character silently (no success message)
     context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
+    
+    // Clear unsaved changes flag
+    _hasUnsavedAbilityChanges = false;
   }
 
   void _takeLongRest() {
@@ -3264,7 +3292,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     }
   }
 
-  void _saveCharacter() {
+  void _saveCharacter([String? successMessage]) {
     // Update all character data from controllers
     final updatedCharacter = widget.character.copyWith(
       name: _nameController.text.trim(),
@@ -3315,9 +3343,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Character saved successfully!')),
+      SnackBar(content: Text(successMessage ?? 'Character saved successfully!')),
     );
 
-    Navigator.pop(context);
+   // Navigator.pop(context);
   }
 }
