@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/spell_model.dart';
+import '../../models/character_model.dart';
 import '../../viewmodels/spells_viewmodel.dart';
+import '../../viewmodels/characters_viewmodel.dart';
 import '../debug/debug_screen.dart';
 
 class SpellsListScreen extends StatefulWidget {
@@ -368,6 +370,32 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                   '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
+                const SizedBox(height: 16),
+                
+                // Action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.person_add),
+                        label: const Text('Add to Character'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showCharacterSelectionDialog(context, spell);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.info_outline),
+                        label: const Text('Details Only'),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 const Divider(),
                 
                 // Casting Time
@@ -435,6 +463,92 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
     return components.join(', ');
   }
 }
+
+  void _showCharacterSelectionDialog(BuildContext context, Spell spell) {
+    final charactersViewModel = context.read<CharactersViewModel>();
+    final characters = charactersViewModel.characters;
+    
+    if (characters.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('No Characters'),
+          content: const Text('You need to create a character first before adding spells.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add "${spell.name}" to Character'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: characters.map((character) {
+              return RadioListTile<Character>(
+                title: Text(character.name),
+                subtitle: Text(character.characterClass),
+                value: character,
+                groupValue: null,
+                onChanged: (selectedCharacter) {
+                  if (selectedCharacter != null) {
+                    Navigator.pop(context);
+                    _addSpellToCharacter(context, selectedCharacter, spell);
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addSpellToCharacter(BuildContext context, Character character, Spell spell) {
+    final charactersViewModel = context.read<CharactersViewModel>();
+    
+    // Check if character already knows this spell
+    if (character.spells.contains(spell.name)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${character.name} already knows ${spell.name}'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    // Add spell to character
+    final updatedSpells = List<String>.from(character.spells)..add(spell.name);
+    final updatedCharacter = character.copyWith(
+      spells: updatedSpells,
+      updatedAt: DateTime.now(),
+    );
+    
+    // Save updated character
+    charactersViewModel.updateCharacter(updatedCharacter);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Added ${spell.name} to ${character.name}'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
 
 extension StringExtension on String {
   String capitalize() {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/character_model.dart';
 import '../../viewmodels/characters_viewmodel.dart';
+import '../../viewmodels/spells_viewmodel.dart';
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -1091,40 +1092,135 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
   }
 
   void _showAddSpellDialog() {
+    // Load spells if not already loaded
+    context.read<SpellsViewModel>().loadSpells();
+    
     showDialog(
       context: context,
-      builder: (context) {
-        final spellController = TextEditingController();
-        
-        return AlertDialog(
-          title: const Text('Add Spell'),
-          content: TextField(
-            controller: spellController,
-            decoration: const InputDecoration(
-              labelText: 'Spell Name',
-              border: OutlineInputBorder(),
-            ),
-            autofocus: true,
+      builder: (context) => Dialog(
+        child: Container(
+          width: double.maxFinite,
+          height: 500,
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.auto_awesome),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Add Spell to ${widget.character.name}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Consumer<SpellsViewModel>(
+                  builder: (context, spellsViewModel, child) {
+                    return TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Search spells...',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (query) {
+                        spellsViewModel.setSearchQuery(query);
+                      },
+                    );
+                  },
+                ),
+              ),
+              
+              // Spells list
+              Expanded(
+                child: Consumer<SpellsViewModel>(
+                  builder: (context, spellsViewModel, child) {
+                    if (spellsViewModel.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    
+                    if (spellsViewModel.error != null) {
+                      return Center(
+                        child: Text('Error: ${spellsViewModel.error}'),
+                      );
+                    }
+                    
+                    final spells = spellsViewModel.spells;
+                    if (spells.isEmpty) {
+                      return const Center(
+                        child: Text('No spells found'),
+                      );
+                    }
+                    
+                    return ListView.builder(
+                      itemCount: spells.length,
+                      itemBuilder: (context, index) {
+                        final spell = spells[index];
+                        final isKnown = _spells.contains(spell.name);
+                        
+                        return ListTile(
+                          title: Text(spell.name),
+                          subtitle: Text(
+                            '${spell.schoolName.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                          ),
+                          trailing: isKnown 
+                            ? const Icon(Icons.check, color: Colors.green)
+                            : const Icon(Icons.add),
+                          enabled: !isKnown,
+                          onTap: isKnown ? null : () {
+                            setState(() {
+                              _spells.add(spell.name);
+                            });
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Added ${spell.name} to ${widget.character.name}'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              
+              // Footer
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    Text(
+                      '${_spells.length} spells known',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (spellController.text.trim().isNotEmpty) {
-                  setState(() {
-                    _spells.add(spellController.text.trim());
-                  });
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
+        ),
+      ),
     );
   }
 
