@@ -10,6 +10,7 @@ class Character extends BaseModel {
   final CharacterSkillChecks skillChecks;
   final CharacterHealth health;
   final String characterClass;
+  final int level;
   final String? subclass;
   final String? race;
   final List<CharacterAttack> attacks;
@@ -33,6 +34,7 @@ class Character extends BaseModel {
     required this.skillChecks,
     required this.health,
     required this.characterClass,
+    required this.level,
     this.subclass,
     this.race,
     this.attacks = const [],
@@ -61,6 +63,7 @@ class Character extends BaseModel {
         'skill_checks': skillChecks.toJson(),
         'health': health.toJson(),
         'class': {'value': characterClass},
+        'level': {'value': level},
         if (subclass != null) 'subclass': {'value': subclass},
         if (race != null) 'race': {'value': race},
         'attacks': attacks.map((attack) => attack.toJson()).toList(),
@@ -90,6 +93,7 @@ class Character extends BaseModel {
       skillChecks: CharacterSkillChecks.fromJson(_getValue<Map<String, dynamic>>(stats, 'skill_checks')),
       health: CharacterHealth.fromJson(_getValue<Map<String, dynamic>>(stats, 'health')),
       characterClass: _getValue<String>(stats, 'class'),
+      level: _getValue<int>(stats, 'level', defaultValue: 1),
       subclass: _getValueNullable<String?>(stats, 'subclass', defaultValue: null),
       race: _getValueNullable<String?>(stats, 'race', defaultValue: null),
       attacks: _getValue<List<dynamic>>(stats, 'attacks', defaultValue: const [])
@@ -188,6 +192,7 @@ class Character extends BaseModel {
     CharacterSkillChecks? skillChecks,
     CharacterHealth? health,
     String? characterClass,
+    int? level,
     String? subclass,
     String? race,
     List<CharacterAttack>? attacks,
@@ -211,6 +216,7 @@ class Character extends BaseModel {
       skillChecks: skillChecks ?? this.skillChecks,
       health: health ?? this.health,
       characterClass: characterClass ?? this.characterClass,
+      level: level ?? this.level,
       subclass: subclass ?? this.subclass,
       race: race ?? this.race,
       attacks: attacks ?? this.attacks,

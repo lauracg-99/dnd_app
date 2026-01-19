@@ -36,6 +36,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   // Form controllers
   final _nameController = TextEditingController();
+  final _levelController = TextEditingController();
   final _classController = TextEditingController();
   final _subclassController = TextEditingController();
   final _raceController = TextEditingController();
@@ -112,6 +113,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Initialize controllers
     _nameController.text = character.name;
+    _levelController.text = character.level.toString();
+    _levelController.addListener(_autoSaveCharacter);
     _selectedClass = character.characterClass;
     _classController.text = character.characterClass;
     _subclassController.text = character.subclass ?? '';
@@ -238,6 +241,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Dispose all controllers
     _nameController.dispose();
+    _levelController.dispose();
     _classController.dispose();
     _subclassController.dispose();
     _raceController.dispose();
@@ -374,6 +378,18 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             controller: _nameController,
             decoration: const InputDecoration(
               labelText: 'Character Name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Level field
+          TextField(
+            controller: _levelController,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              labelText: 'Character Level',
               border: OutlineInputBorder(),
             ),
           ),
@@ -715,6 +731,28 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.blue.shade800,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                const SizedBox(height: 12),
+                
+                // Character Level
+                _isEditingCharacterCover
+                    ? TextField(
+                        controller: _levelController,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                        decoration: const InputDecoration(
+                          labelText: 'Character Level',
+                          border: OutlineInputBorder(),
+                        ),
+                      )
+                    : Text(
+                        'Level ${_levelController.text.isNotEmpty ? _levelController.text : '1'}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -6201,6 +6239,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       name: _nameController.text.trim(),
       customImagePath: _customImagePath,
       characterClass: _classController.text.trim(),
+      level: int.tryParse(_levelController.text) ?? 1,
       subclass:
           _subclassController.text.trim().isEmpty
               ? null

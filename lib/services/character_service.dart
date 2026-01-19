@@ -271,6 +271,7 @@ class CharacterService {
       skillChecks: defaultSkillChecks,
       health: defaultHealth,
       characterClass: characterClass,
+      level: 1, // Default level for new characters
       subclass: subclass,
       race: race,
       spellSlots: defaultSpellSlots,
