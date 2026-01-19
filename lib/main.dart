@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'viewmodels/items_viewmodel.dart';
 import 'viewmodels/spells_viewmodel.dart';
+import 'viewmodels/characters_viewmodel.dart';
 import 'views/items_list_screen.dart';
 import 'views/spells/spells_list_screen.dart';
+import 'views/characters/characters_list_screen.dart';
 import 'views/information/information_screen.dart';
 import 'viewmodels/feats_viewmodel.dart';
 import 'viewmodels/class_viewmodel.dart';
@@ -17,6 +19,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ItemsViewModel()),
         ChangeNotifierProvider(create: (_) => SpellsViewModel()),
+        ChangeNotifierProvider(create: (_) => CharactersViewModel()),
         ChangeNotifierProvider(create: (_) => FeatsViewModel()),
         ChangeNotifierProvider(create: (_) => ClassesViewModel()),
       ],
@@ -66,6 +69,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   static const List<Widget> _screens = [
     InformationScreen(),
     SpellsListScreen(),
+    CharactersListScreen(),
     ItemsListScreen(),
   ];
 
@@ -75,6 +79,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       icon: Icon(Icons.auto_awesome_motion),
       label: 'Spells',
     ),
+    NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),
     NavigationDestination(icon: Icon(Icons.inventory), label: 'Items'),
   ];
 
