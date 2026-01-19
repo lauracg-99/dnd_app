@@ -28,6 +28,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   bool _isPickingImage = false;
   bool _hasUnsavedAbilityChanges = false;
   bool _hasUnsavedClassChanges = false;
+  String _selectedClass = 'Fighter';
 
   // Form controllers
   final _nameController = TextEditingController();
@@ -88,6 +89,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Initialize controllers
     _nameController.text = character.name;
+    _selectedClass = character.characterClass;
     _classController.text = character.characterClass;
     _subclassController.text = character.subclass ?? '';
     _quickGuideController.text = character.quickGuide;
@@ -330,12 +332,29 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: _classController,
-                  decoration: const InputDecoration(
-                    labelText: 'Class',
-                    border: OutlineInputBorder(),
-                  ),
+                child: Consumer<CharactersViewModel>(
+                  builder: (context, viewModel, child) {
+                    return DropdownButtonFormField<String>(
+                      value: _selectedClass,
+                      decoration: const InputDecoration(
+                        labelText: 'Class',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: viewModel.availableClasses.map((className) {
+                        return DropdownMenuItem(
+                          value: className,
+                          child: Text(className),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedClass = value!;
+                          _classController.text = value;
+                          _hasUnsavedClassChanges = true;
+                        });
+                      },
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 16),
