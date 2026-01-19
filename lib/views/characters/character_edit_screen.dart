@@ -7,8 +7,10 @@ import 'package:vibration/vibration.dart';
 import 'dart:io';
 import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
+import '../../models/feat_model.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
+import '../../viewmodels/feats_viewmodel.dart';
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -67,11 +69,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   late CharacterPillars _pillars;
   late List<CharacterAttack> _attacks;
   late List<String> _spells;
+  late List<String> _feats;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 7, vsync: this);
+    _tabController = TabController(length: 8, vsync: this);
     _initializeCharacterData();
   }
 
@@ -118,6 +121,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Initialize spell slots and spells
     _spellSlots = character.spellSlots;
     _spells = List.from(character.spells);
+    _feats = List.from(character.feats);
 
     // Initialize pillars
     _pillars = character.pillars;
@@ -210,6 +214,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             Tab(text: 'Health', icon: Icon(Icons.favorite)),
             Tab(text: 'Spell Slots', icon: Icon(Icons.grid_view)),
             Tab(text: 'Spells', icon: Icon(Icons.auto_awesome)),
+            Tab(text: 'Feats', icon: Icon(Icons.military_tech)),
             Tab(text: 'Notes', icon: Icon(Icons.note)),
           ],
         ),
@@ -226,6 +231,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _buildHealthTab(),
           _buildSpellSlotsTab(),
           _buildSpellsTab(),
+          _buildFeatsTab(),
           _buildNotesTab(),
         ],
       ),
@@ -2499,6 +2505,81 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     }
   }
 
+  Widget _buildFeatsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Character Feats',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your character\'s feats',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+
+          // Feats list
+          ..._feats.asMap().entries.map((entry) {
+            final index = entry.key;
+            final featName = entry.value;
+
+            // Try to find feat details
+            final featsViewModel = context.read<FeatsViewModel>();
+            final feat = featsViewModel.feats.firstWhere(
+              (f) => f.name.toLowerCase() == featName.toLowerCase(),
+              orElse: () => Feat(
+                id: 'unknown',
+                name: featName,
+                description: 'Custom feat',
+                source: 'Unknown',
+              ),
+            );
+
+            return Card(
+              child: ListTile(
+                title: InkWell(
+                  child: Text(
+                    feat.name,
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                  onTap: () => _showFeatDetails(feat),
+                ),
+                subtitle: Text(
+                  feat.source,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      _feats.removeAt(index);
+                    });
+
+                    // Auto-save the character when a feat is removed
+                    _autoSaveCharacter();
+                  },
+                ),
+              ),
+            );
+          }),
+
+          TextButton.icon(
+            onPressed: _showAddFeatDialog,
+            icon: const Icon(Icons.add),
+            label: const Text('Add Feat'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNotesTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -3109,6 +3190,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       attacks: _attacks,
       spellSlots: _spellSlots,
       spells: _spells,
+      feats: _feats,
       quickGuide: _quickGuideController.text.trim(),
       backstory: _backstoryController.text.trim(),
       pillars: CharacterPillars(
@@ -3126,6 +3208,311 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     
     // Clear unsaved changes flag
     _hasUnsavedAbilityChanges = false;
+  }
+
+  void _showAddFeatDialog() {
+    // Load feats if not already loaded
+    context.read<FeatsViewModel>().loadFeats();
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          width: double.maxFinite,
+          height: 500,
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.military_tech),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Add Feat to ${widget.character.name}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Consumer<FeatsViewModel>(
+                  builder: (context, featsViewModel, child) {
+                    return TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Search feats...',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (query) {
+                        // Filter feats based on search
+                        // Note: FeatsViewModel doesn't have setSearchQuery, so we'll handle search locally
+                        setState(() {});
+                      },
+                    );
+                  },
+                ),
+              ),
+
+              // Feats list
+              Expanded(
+                child: Consumer<FeatsViewModel>(
+                  builder: (context, featsViewModel, child) {
+                    if (featsViewModel.isLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+
+                    if (featsViewModel.error != null) {
+                      return Center(
+                        child: Text('Error: ${featsViewModel.error}'),
+                      );
+                    }
+
+                    final feats = featsViewModel.feats;
+                    if (feats.isEmpty) {
+                      return const Center(child: Text('No feats found'));
+                    }
+
+                    return ListView.builder(
+                      itemCount: feats.length,
+                      itemBuilder: (context, index) {
+                        final feat = feats[index];
+                        final isKnown = _feats.contains(feat.name);
+
+                        return ListTile(
+                          title: Text(feat.name),
+                          subtitle: Text(
+                            feat.source,
+                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                          trailing: isKnown
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.green,
+                                )
+                              : const Icon(Icons.add),
+                          enabled: !isKnown,
+                          onTap: isKnown
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _feats.add(feat.name);
+                                  });
+                                  Navigator.pop(context);
+
+                                  // Auto-save the character when a feat is added
+                                  _autoSaveCharacter();
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Added ${feat.name} to ${widget.character.name}',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+
+              // Footer
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    Text(
+                      '${_feats.length} feats known',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showFeatDetails(Feat feat) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              // Header
+              Row(
+                children: [
+                  const Icon(Icons.military_tech, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      feat.name,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Source
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.book, size: 16, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Source: ${feat.source}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Prerequisite
+              if (feat.prerequisite != null && feat.prerequisite!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Prerequisite:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(feat.prerequisite!),
+                    ],
+                  ),
+                ),
+              if (feat.prerequisite != null && feat.prerequisite!.isNotEmpty)
+                const SizedBox(height: 16),
+
+              // Description
+              const Text(
+                'Description',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                feat.description,
+                style: const TextStyle(fontSize: 16, height: 1.5),
+              ),
+              const SizedBox(height: 16),
+
+              // Effects
+              if (feat.effects.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Effects',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Text(
+                        feat.formattedEffects,
+                        style: const TextStyle(fontSize: 16, height: 1.5),
+                      ),
+                    ),
+                  ],
+                ),
+
+              const SizedBox(height: 16),
+
+              // Character info
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.person, size: 16, color: Colors.green),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Known by: ${widget.character.name}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _takeLongRest() {
@@ -3328,6 +3715,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       attacks: _attacks,
       spellSlots: _spellSlots,
       spells: _spells,
+      feats: _feats,
       quickGuide: _quickGuideController.text.trim(),
       backstory: _backstoryController.text.trim(),
       pillars: CharacterPillars(

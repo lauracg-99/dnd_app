@@ -14,6 +14,7 @@ class Character extends BaseModel {
   final List<CharacterAttack> attacks;
   final CharacterSpellSlots spellSlots;
   final List<String> spells;
+  final List<String> feats;
   final String quickGuide;
   final String backstory;
   final CharacterPillars pillars;
@@ -33,6 +34,7 @@ class Character extends BaseModel {
     this.attacks = const [],
     required this.spellSlots,
     this.spells = const [],
+    this.feats = const [],
     this.quickGuide = '',
     this.backstory = '',
     required this.pillars,
@@ -57,6 +59,7 @@ class Character extends BaseModel {
         'attacks': attacks.map((attack) => attack.toJson()).toList(),
         'spell_slots': spellSlots.toJson(),
         'spells': {'value': spells},
+        'feats': {'value': feats},
         'quick_guide': {'value': quickGuide},
         'backstory': {'value': backstory},
         'pillars': pillars.toJson(),
@@ -84,6 +87,7 @@ class Character extends BaseModel {
           .toList(),
       spellSlots: CharacterSpellSlots.fromJson(_getValue<Map<String, dynamic>>(stats, 'spell_slots')),
       spells: List<String>.from(_getValue<List<dynamic>>(stats, 'spells', defaultValue: const [])),
+      feats: List<String>.from(_getValue<List<dynamic>>(stats, 'feats', defaultValue: const [])),
       quickGuide: _getValue<String>(stats, 'quick_guide', defaultValue: ''),
       backstory: _getValue<String>(stats, 'backstory', defaultValue: ''),
       pillars: CharacterPillars.fromJson(_getValue<Map<String, dynamic>>(stats, 'pillars')),
@@ -174,6 +178,7 @@ class Character extends BaseModel {
     List<CharacterAttack>? attacks,
     CharacterSpellSlots? spellSlots,
     List<String>? spells,
+    List<String>? feats,
     String? quickGuide,
     String? backstory,
     CharacterPillars? pillars,
@@ -193,6 +198,7 @@ class Character extends BaseModel {
       attacks: attacks ?? this.attacks,
       spellSlots: spellSlots ?? this.spellSlots,
       spells: spells ?? this.spells,
+      feats: feats ?? this.feats,
       quickGuide: quickGuide ?? this.quickGuide,
       backstory: backstory ?? this.backstory,
       pillars: pillars ?? this.pillars,
