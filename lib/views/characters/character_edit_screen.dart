@@ -78,7 +78,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 10, vsync: this);
+    _tabController = TabController(length: 9, vsync: this);
     _initializeCharacterData();
   }
 
@@ -240,7 +240,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             Tab(text: 'Attacks', icon: Icon(Icons.gavel)),
             Tab(text: 'Stats', icon: Icon(Icons.bar_chart)),
             Tab(text: 'Skills', icon: Icon(Icons.psychology)),
-            Tab(text: 'Health', icon: Icon(Icons.favorite)),
             Tab(text: 'Spell Slots', icon: Icon(Icons.grid_view)),
             Tab(text: 'Spells', icon: Icon(Icons.auto_awesome)),
             Tab(text: 'Feats', icon: Icon(Icons.military_tech)),
@@ -259,7 +258,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _buildAttacksTab(),
           _buildStatsTab(),
           _buildSkillsTab(),
-          _buildHealthTab(),
           _buildSpellSlotsTab(),
           _buildSpellsTab(),
           _buildFeatsTab(),
@@ -447,6 +445,82 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ),
             ],
           ),
+          const SizedBox(height: 24),
+
+          // Health Section
+          const Text(
+            'Health',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _maxHpController,
+                  decoration: const InputDecoration(
+                    labelText: 'Max HP',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextField(
+                  controller: _currentHpController,
+                  decoration: const InputDecoration(
+                    labelText: 'Current HP',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          TextField(
+            controller: _tempHpController,
+            decoration: const InputDecoration(
+              labelText: 'Temporary HP',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+          ),
+
+          const SizedBox(height: 24),
+          const Text(
+            'Hit Dice',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _hitDiceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Number of Hit Dice',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextField(
+                  controller: _hitDiceTypeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Hit Dice Type',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           
           // Class save button
@@ -470,7 +544,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ),
               ),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           // Long Rest section
           Container(
