@@ -74,6 +74,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   late List<String> _spells;
   late List<String> _feats;
   late List<CharacterPersonalizedSlot> _personalizedSlots;
+  
+  // Character Cover tab edit state
+  bool _isEditingCharacterCover = false;
+  
+  // Inspiration state
+  bool _hasInspiration = false;
 
   @override
   void initState() {
@@ -129,6 +135,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _proficiencyBonusController.text = _stats.proficiencyBonus.toString();
     _armorClassController.text = _stats.armorClass.toString();
     _speedController.text = _stats.speed.toString();
+    _hasInspiration = _stats.inspiration;
 
     // Initialize saving throws and skill checks
     _savingThrows = character.savingThrows;
@@ -236,7 +243,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           controller: _tabController,
           isScrollable: true,
           tabs: const [
-            Tab(text: 'Basic', icon: Icon(Icons.person)),
+            Tab(text: 'Character', icon: Icon(Icons.shield)),            
             Tab(text: 'Attacks', icon: Icon(Icons.gavel)),
             Tab(text: 'Stats', icon: Icon(Icons.bar_chart)),
             Tab(text: 'Skills', icon: Icon(Icons.psychology)),
@@ -254,7 +261,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildBasicInfoTab(),
+          _buildCharacterCoverTab(),      
           _buildAttacksTab(),
           _buildStatsTab(),
           _buildSkillsTab(),
@@ -362,7 +369,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   },
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,82 +452,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ),
             ],
           ),
-          const SizedBox(height: 24),
-
-          // Health Section
-          const Text(
-            'Health',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _maxHpController,
-                  decoration: const InputDecoration(
-                    labelText: 'Max HP',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextField(
-                  controller: _currentHpController,
-                  decoration: const InputDecoration(
-                    labelText: 'Current HP',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          TextField(
-            controller: _tempHpController,
-            decoration: const InputDecoration(
-              labelText: 'Temporary HP',
-              border: OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
-          ),
-
-          const SizedBox(height: 24),
-          const Text(
-            'Hit Dice',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _hitDiceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Number of Hit Dice',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextField(
-                  controller: _hitDiceTypeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Hit Dice Type',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 8),
           
           // Class save button
@@ -544,6 +475,503 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ),
               ),
             ),
+          const SizedBox(height: 24),
+
+          // Long Rest section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.bedtime,
+                      color: Colors.blue.shade700,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Long Rest',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Take a long rest to restore hit points, spell slots, and all class resources.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _takeComprehensiveLongRest,
+                    icon: const Icon(Icons.night_shelter),
+                    label: const Text('Take Long Rest'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCharacterCoverTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Character Header Section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade50, Colors.indigo.shade50],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              children: [
+                // Header with Edit Button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox(width: 48), // Space for profile image alignment                    
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _isEditingCharacterCover = !_isEditingCharacterCover;
+                        });
+                      },
+                      icon: Icon(
+                        _isEditingCharacterCover ? Icons.check : Icons.edit,
+                        color: Colors.blue.shade700,
+                      ),
+                      tooltip: _isEditingCharacterCover ? 'Done' : 'Edit Character',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                
+                // Profile Image
+                GestureDetector(
+                  onTap: _isEditingCharacterCover ? _showImageOptionsDialog : null,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(40),
+                          border: Border.all(
+                            color: _isEditingCharacterCover 
+                                ? Colors.green.shade300 
+                                : Colors.blue.shade300, 
+                            width: 2,
+                          ),
+                        ),
+                        child: _customImagePath != null
+                            ? ClipOval(
+                                child: Image.file(
+                                  File(_customImagePath!),
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.person,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    );
+                                  },
+                                ),
+                              )
+                            : const Icon(
+                                Icons.person,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
+                      ),
+                      if (_isEditingCharacterCover)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: _buildPickImageButton(),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Character Name
+                _isEditingCharacterCover
+                    ? TextField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Character Name',
+                          border: OutlineInputBorder(),
+                        ),
+                      )
+                    : Text(
+                        _nameController.text.isNotEmpty 
+                            ? _nameController.text 
+                            : 'Character Name',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade800,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                const SizedBox(height: 12),
+                
+                // Class and Subclass
+                _isEditingCharacterCover
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: Consumer<CharactersViewModel>(
+                              builder: (context, viewModel, child) {
+                                return DropdownButtonFormField<String>(
+                                  value: _selectedClass,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Class',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: viewModel.availableClasses.map((className) {
+                                    return DropdownMenuItem(
+                                      value: className,
+                                      child: Text(className),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _selectedClass = value!;
+                                      _classController.text = value;
+                                      _useCustomSubclass = false;
+                                      _hasUnsavedClassChanges = true;
+                                    });
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_useCustomSubclass)
+                                  TextField(
+                                    controller: _subclassController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Custom Subclass',
+                                      border: const OutlineInputBorder(),
+                                      suffixIcon: IconButton(
+                                        icon: const Icon(Icons.list),
+                                        onPressed: () {
+                                          setState(() {
+                                            _useCustomSubclass = false;
+                                            _hasUnsavedClassChanges = true;
+                                          });
+                                        },
+                                        tooltip: 'Choose from preset subclasses',
+                                      ),
+                                    ),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _hasUnsavedClassChanges = true;
+                                      });
+                                    },
+                                  )
+                                else
+                                  DropdownButtonFormField<String>(
+                                    value: _useCustomSubclass || _subclassController.text.isEmpty || !_getSubclassesForClass(_selectedClass).contains(_subclassController.text) ? null : _subclassController.text,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Subclass (Optional)',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    isExpanded: true,
+                                    items: [
+                                      ..._getSubclassesForClass(_selectedClass).map((subclass) {
+                                        return DropdownMenuItem(
+                                          value: subclass,
+                                          child: SizedBox(
+                                            width: 200,
+                                            child: Text(
+                                              subclass,
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                      const DropdownMenuItem(
+                                        value: 'custom',
+                                        child: Text('Custom Subclass'),
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      if (value == 'custom') {
+                                        setState(() {
+                                          _useCustomSubclass = true;
+                                          _hasUnsavedClassChanges = true;
+                                        });
+                                      } else {
+                                        setState(() {
+                                          _subclassController.text = value!;
+                                          _useCustomSubclass = false;
+                                          _hasUnsavedClassChanges = true;
+                                        });
+                                      }
+                                    },
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        _classController.text.isNotEmpty 
+                            ? (_subclassController.text.isNotEmpty 
+                                ? '${_classController.text} • ${_subclassController.text}'
+                                : _classController.text)
+                            : 'Class • Subclass',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue.shade600,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Combat Stats Row
+          Row(
+            children: [
+              Expanded(
+                child: _buildInspirationField(),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildArmorClassField(),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildSpeedField(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Health Section
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [                                
+                // Hit Points
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _maxHpController,
+                          decoration: const InputDecoration(
+                            labelText: 'Max HP',
+                            prefixIcon: Icon(Icons.health_and_safety, color: Colors.blue),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.all(12),
+                          ),
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _currentHpController,
+                          decoration: const InputDecoration(
+                            labelText: 'Current HP',
+                            prefixIcon: Icon(Icons.favorite_border, color: Colors.blue),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.all(12),
+                          ),
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _tempHpController,
+                    decoration: const InputDecoration(
+                      labelText: 'Temporary HP',
+                      prefixIcon: Icon(Icons.shield, color: Colors.indigo),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(12),
+                    ),
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Hit Dice
+                const Text(
+                  'Hit Dice',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.blue),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _hitDiceController,
+                          decoration: const InputDecoration(
+                            labelText: 'Number of Hit Dice',
+                            prefixIcon: Icon(Icons.casino, color: Colors.blue),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.all(12),
+                          ),
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _hitDiceTypeController,
+                          decoration: const InputDecoration(
+                            labelText: 'Hit Dice Type',
+                            prefixIcon: Icon(Icons.category, color: Colors.blue),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.all(12),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
 
           // Long Rest section
@@ -727,7 +1155,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ],
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -1126,28 +1554,126 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _buildStatField('CHARISMA', _charismaController),
             ],
           ),
-
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           const Text(
-            'Combat Stats',
+            'Saving Throws',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
 
-          // Combat stats using separate combat field method
-          Row(
+          // Saving throws with calculated modifiers
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            childAspectRatio: 3,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
             children: [
-              Expanded(
-                child: _buildCombatField('Proficiency', _proficiencyBonusController),
+              _buildSavingThrowRow('STR', _savingThrows.strengthProficiency, (
+                value,
+              ) {
+                setState(() {
+                  _savingThrows = CharacterSavingThrows(
+                    strengthProficiency: value ?? false,
+                    dexterityProficiency: _savingThrows.dexterityProficiency,
+                    constitutionProficiency:
+                        _savingThrows.constitutionProficiency,
+                    intelligenceProficiency:
+                        _savingThrows.intelligenceProficiency,
+                    wisdomProficiency: _savingThrows.wisdomProficiency,
+                    charismaProficiency: _savingThrows.charismaProficiency,
+                  );
+                  _autoSaveCharacter(); // Auto-save saving throws
+                });
+              }),
+              _buildSavingThrowRow('DEX', _savingThrows.dexterityProficiency, (
+                value,
+              ) {
+                setState(() {
+                  _savingThrows = CharacterSavingThrows(
+                    strengthProficiency: _savingThrows.strengthProficiency,
+                    dexterityProficiency: value ?? false,
+                    constitutionProficiency:
+                        _savingThrows.constitutionProficiency,
+                    intelligenceProficiency:
+                        _savingThrows.intelligenceProficiency,
+                    wisdomProficiency: _savingThrows.wisdomProficiency,
+                    charismaProficiency: _savingThrows.charismaProficiency,
+                  );
+                  _autoSaveCharacter(); // Auto-save saving throws
+                });
+              }),
+              _buildSavingThrowRow(
+                'CON',
+                _savingThrows.constitutionProficiency,
+                (value) {
+                  setState(() {
+                    _savingThrows = CharacterSavingThrows(
+                      strengthProficiency: _savingThrows.strengthProficiency,
+                      dexterityProficiency: _savingThrows.dexterityProficiency,
+                      constitutionProficiency: value ?? false,
+                      intelligenceProficiency:
+                          _savingThrows.intelligenceProficiency,
+                      wisdomProficiency: _savingThrows.wisdomProficiency,
+                      charismaProficiency: _savingThrows.charismaProficiency,
+                    );
+                    _autoSaveCharacter(); // Auto-save saving throws
+                  });
+                },
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCombatField('Armor Class', _armorClassController),
+              _buildSavingThrowRow(
+                'INT',
+                _savingThrows.intelligenceProficiency,
+                (value) {
+                  setState(() {
+                    _savingThrows = CharacterSavingThrows(
+                      strengthProficiency: _savingThrows.strengthProficiency,
+                      dexterityProficiency: _savingThrows.dexterityProficiency,
+                      constitutionProficiency:
+                          _savingThrows.constitutionProficiency,
+                      intelligenceProficiency: value ?? false,
+                      wisdomProficiency: _savingThrows.wisdomProficiency,
+                      charismaProficiency: _savingThrows.charismaProficiency,
+                    );
+                    _autoSaveCharacter(); // Auto-save saving throws
+                  });
+                },
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCombatField('Speed', _speedController),
-              ),
+              _buildSavingThrowRow('WIS', _savingThrows.wisdomProficiency, (
+                value,
+              ) {
+                setState(() {
+                  _savingThrows = CharacterSavingThrows(
+                    strengthProficiency: _savingThrows.strengthProficiency,
+                    dexterityProficiency: _savingThrows.dexterityProficiency,
+                    constitutionProficiency:
+                        _savingThrows.constitutionProficiency,
+                    intelligenceProficiency:
+                        _savingThrows.intelligenceProficiency,
+                    wisdomProficiency: value ?? false,
+                    charismaProficiency: _savingThrows.charismaProficiency,
+                  );
+                  _autoSaveCharacter(); // Auto-save saving throws
+                });
+              }),
+              _buildSavingThrowRow('CHA', _savingThrows.charismaProficiency, (
+                value,
+              ) {
+                setState(() {
+                  _savingThrows = CharacterSavingThrows(
+                    strengthProficiency: _savingThrows.strengthProficiency,
+                    dexterityProficiency: _savingThrows.dexterityProficiency,
+                    constitutionProficiency:
+                        _savingThrows.constitutionProficiency,
+                    intelligenceProficiency:
+                        _savingThrows.intelligenceProficiency,
+                    wisdomProficiency: _savingThrows.wisdomProficiency,
+                    charismaProficiency: value ?? false,
+                  );
+                  _autoSaveCharacter(); // Auto-save saving throws
+                });
+              }),
             ],
           ),
         ],
@@ -1303,6 +1829,211 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
+  Widget _buildInspirationField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Icon(
+              _hasInspiration ? Icons.lightbulb : Icons.lightbulb_outline,
+              color: Colors.blue.shade600,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Inspiration',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue.shade700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade100),
+              ),
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _hasInspiration = !_hasInspiration;
+                    _autoSaveCharacter();
+                  });
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _hasInspiration ? Icons.check_circle : Icons.circle_outlined,
+                        color: _hasInspiration ? Colors.blue.shade800 : Colors.grey.shade400,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _hasInspiration ? 'Has' : 'None',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _hasInspiration ? Colors.blue.shade800 : Colors.grey.shade400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArmorClassField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Icon(
+              Icons.shield,
+              color: Colors.blue.shade600,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Armor Class',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue.shade700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade100),
+              ),
+              child: TextField(
+                controller: _armorClassController,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+                  isDense: true,
+                ),
+                keyboardType: TextInputType.number,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpeedField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Icon(
+              Icons.directions_run,
+              color: Colors.blue.shade600,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Speed',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue.shade700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade100),
+              ),
+              child: TextField(
+                controller: _speedController,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+                  isDense: true,
+                ),
+                keyboardType: TextInputType.number,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _getModifier(String scoreText) {
     try {
       final score = int.tryParse(scoreText) ?? 10;
@@ -1319,127 +2050,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Saving Throws',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          // Saving throws with calculated modifiers
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            childAspectRatio: 3,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            children: [
-              _buildSavingThrowRow('STR', _savingThrows.strengthProficiency, (
-                value,
-              ) {
-                setState(() {
-                  _savingThrows = CharacterSavingThrows(
-                    strengthProficiency: value ?? false,
-                    dexterityProficiency: _savingThrows.dexterityProficiency,
-                    constitutionProficiency:
-                        _savingThrows.constitutionProficiency,
-                    intelligenceProficiency:
-                        _savingThrows.intelligenceProficiency,
-                    wisdomProficiency: _savingThrows.wisdomProficiency,
-                    charismaProficiency: _savingThrows.charismaProficiency,
-                  );
-                  _autoSaveCharacter(); // Auto-save saving throws
-                });
-              }),
-              _buildSavingThrowRow('DEX', _savingThrows.dexterityProficiency, (
-                value,
-              ) {
-                setState(() {
-                  _savingThrows = CharacterSavingThrows(
-                    strengthProficiency: _savingThrows.strengthProficiency,
-                    dexterityProficiency: value ?? false,
-                    constitutionProficiency:
-                        _savingThrows.constitutionProficiency,
-                    intelligenceProficiency:
-                        _savingThrows.intelligenceProficiency,
-                    wisdomProficiency: _savingThrows.wisdomProficiency,
-                    charismaProficiency: _savingThrows.charismaProficiency,
-                  );
-                  _autoSaveCharacter(); // Auto-save saving throws
-                });
-              }),
-              _buildSavingThrowRow(
-                'CON',
-                _savingThrows.constitutionProficiency,
-                (value) {
-                  setState(() {
-                    _savingThrows = CharacterSavingThrows(
-                      strengthProficiency: _savingThrows.strengthProficiency,
-                      dexterityProficiency: _savingThrows.dexterityProficiency,
-                      constitutionProficiency: value ?? false,
-                      intelligenceProficiency:
-                          _savingThrows.intelligenceProficiency,
-                      wisdomProficiency: _savingThrows.wisdomProficiency,
-                      charismaProficiency: _savingThrows.charismaProficiency,
-                    );
-                    _autoSaveCharacter(); // Auto-save saving throws
-                  });
-                },
-              ),
-              _buildSavingThrowRow(
-                'INT',
-                _savingThrows.intelligenceProficiency,
-                (value) {
-                  setState(() {
-                    _savingThrows = CharacterSavingThrows(
-                      strengthProficiency: _savingThrows.strengthProficiency,
-                      dexterityProficiency: _savingThrows.dexterityProficiency,
-                      constitutionProficiency:
-                          _savingThrows.constitutionProficiency,
-                      intelligenceProficiency: value ?? false,
-                      wisdomProficiency: _savingThrows.wisdomProficiency,
-                      charismaProficiency: _savingThrows.charismaProficiency,
-                    );
-                    _autoSaveCharacter(); // Auto-save saving throws
-                  });
-                },
-              ),
-              _buildSavingThrowRow('WIS', _savingThrows.wisdomProficiency, (
-                value,
-              ) {
-                setState(() {
-                  _savingThrows = CharacterSavingThrows(
-                    strengthProficiency: _savingThrows.strengthProficiency,
-                    dexterityProficiency: _savingThrows.dexterityProficiency,
-                    constitutionProficiency:
-                        _savingThrows.constitutionProficiency,
-                    intelligenceProficiency:
-                        _savingThrows.intelligenceProficiency,
-                    wisdomProficiency: value ?? false,
-                    charismaProficiency: _savingThrows.charismaProficiency,
-                  );
-                  _autoSaveCharacter(); // Auto-save saving throws
-                });
-              }),
-              _buildSavingThrowRow('CHA', _savingThrows.charismaProficiency, (
-                value,
-              ) {
-                setState(() {
-                  _savingThrows = CharacterSavingThrows(
-                    strengthProficiency: _savingThrows.strengthProficiency,
-                    dexterityProficiency: _savingThrows.dexterityProficiency,
-                    constitutionProficiency:
-                        _savingThrows.constitutionProficiency,
-                    intelligenceProficiency:
-                        _savingThrows.intelligenceProficiency,
-                    wisdomProficiency: _savingThrows.wisdomProficiency,
-                    charismaProficiency: value ?? false,
-                  );
-                  _autoSaveCharacter(); // Auto-save saving throws
-                });
-              }),
-            ],
-          ),
+          
 
           const SizedBox(height: 24),
           const Text(
@@ -2306,7 +2917,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   keyboardType: TextInputType.number,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               Expanded(
                 child: TextField(
                   controller: _currentHpController,
@@ -2349,7 +2960,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   keyboardType: TextInputType.number,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               Expanded(
                 child: TextField(
                   controller: _hitDiceTypeController,
@@ -3025,7 +3636,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         _autoSaveCharacter(); // Auto-save on decrement
                       },
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 8),
                     Container(
                       width: 80,
                       child: TextField(
@@ -3053,7 +3664,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         },
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(Icons.add),
                       onPressed: () {
@@ -4089,6 +4700,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         proficiencyBonus: int.tryParse(_proficiencyBonusController.text) ?? 2,
         armorClass: int.tryParse(_armorClassController.text) ?? 10,
         speed: int.tryParse(_speedController.text) ?? 30,
+        inspiration: _hasInspiration,
       ),
       savingThrows: _savingThrows,
       skillChecks: _skillChecks,
@@ -4900,6 +5512,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         proficiencyBonus: int.tryParse(_proficiencyBonusController.text) ?? 2,
         armorClass: int.tryParse(_armorClassController.text) ?? 10,
         speed: int.tryParse(_speedController.text) ?? 30,
+        inspiration: _hasInspiration,
       ),
       savingThrows: _savingThrows,
       skillChecks: _skillChecks,
