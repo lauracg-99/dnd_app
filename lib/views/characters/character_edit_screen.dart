@@ -1347,7 +1347,42 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
+          const Text(
+            'Attacks',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your character\'s attacks and weapons',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+
+          // Attacks list
+          ..._attacks.asMap().entries.map((entry) {
+            final index = entry.key;
+            final attack = entry.value;
+            return Card(
+              child: ListTile(
+                title: Text(attack.name),
+                subtitle: Text(
+                  '${attack.attackBonus} | ${attack.damage} ${attack.damageType}',
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      _attacks.removeAt(index);
+                    });
+
+                    // Auto-save the character when an attack is removed
+                    _autoSaveCharacter();
+                  },
+                ),
+              ),
+            );
+          }),
+
+          const SizedBox(height: 16),
           
           // Debug: Always show spellcasting section for testing
           Container(
@@ -1444,44 +1479,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Attacks',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s attacks and weapons',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-
-          // Attacks list
-          ..._attacks.asMap().entries.map((entry) {
-            final index = entry.key;
-            final attack = entry.value;
-            return Card(
-              child: ListTile(
-                title: Text(attack.name),
-                subtitle: Text(
-                  '${attack.attackBonus} | ${attack.damage} ${attack.damageType}',
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _attacks.removeAt(index);
-                    });
-
-                    // Auto-save the character when an attack is removed
-                    _autoSaveCharacter();
-                  },
-                ),
-              ),
-            );
-          }),
-
-          const SizedBox(height: 16),
-          
-
 
           TextButton.icon(
             onPressed: _showAddAttackDialog,
@@ -3171,59 +3168,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           ),
           const SizedBox(height: 16),
 
-          // Spells list
-          ..._spells.asMap().entries.map((entry) {
-            final index = entry.key;
-            final spellName = entry.value;
-
-            // Try to find spell details
-            final spellsViewModel = context.read<SpellsViewModel>();
-            final spell = spellsViewModel.spells.firstWhere(
-              (s) => s.name.toLowerCase() == spellName.toLowerCase(),
-              orElse:
-                  () => Spell(
-                    id: 'unknown',
-                    name: spellName,
-                    castingTime: 'Unknown',
-                    range: 'Unknown',
-                    duration: 'Unknown',
-                    description: 'Custom spell',
-                    classes: [],
-                    dice: [],
-                    updatedAt: DateTime.now(),
-                  ),
-            );
-
-            return Card(
-              child: ListTile(
-                title: InkWell(
-                  child: Text(
-                    spell.name,
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  onTap: () => _showSpellDetails(spell.name),
-                ),
-                subtitle: Text(
-                  '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _spells.removeAt(index);
-                    });
-
-                    // Auto-save the character when a spell is removed
-                    _autoSaveCharacter();
-                  },
-                ),
-              ),
-            );
-          }),
+          // Group spells by level
+          ..._buildSpellsByLevel(),
 
           TextButton.icon(
             onPressed: _showAddSpellDialog,
@@ -3233,6 +3179,188 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ],
       ),
     );
+  }
+
+  IconData _getSpellLevelIcon(int level) {
+    switch (level) {
+      case 0:
+        return Icons.auto_awesome;
+      case 1:
+        return Icons.filter_1;
+      case 2:
+        return Icons.filter_2;
+      case 3:
+        return Icons.filter_3;
+      case 4:
+        return Icons.filter_4;
+      case 5:
+        return Icons.filter_5;
+      case 6:
+        return Icons.filter_6;
+      case 7:
+        return Icons.filter_7;
+      case 8:
+        return Icons.filter_8;
+      case 9:
+        return Icons.filter_9;
+      default:
+        return Icons.star;
+    }
+  }
+
+  List<Widget> _buildSpellsByLevel() {
+    if (_spells.isEmpty) {
+      return [
+        const Center(
+          child: Text(
+            'No spells added yet',
+            style: TextStyle(color: Colors.grey, fontSize: 16),
+          ),
+        ),
+      ];
+    }
+
+    final spellsViewModel = context.read<SpellsViewModel>();
+    final Map<int, List<Map<String, dynamic>>> spellsByLevel = {};
+
+    // Group spells by level
+    for (int i = 0; i < _spells.length; i++) {
+      final spellName = _spells[i];
+      final spell = spellsViewModel.spells.firstWhere(
+        (s) => s.name.toLowerCase() == spellName.toLowerCase(),
+        orElse: () => Spell(
+          id: 'unknown',
+          name: spellName,
+          castingTime: 'Unknown',
+          range: 'Unknown',
+          duration: 'Unknown',
+          description: 'Custom spell',
+          classes: [],
+          dice: [],
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      final level = spell.levelNumber;
+      if (!spellsByLevel.containsKey(level)) {
+        spellsByLevel[level] = [];
+      }
+      spellsByLevel[level]!.add({
+        'index': i,
+        'spell': spell,
+      });
+    }
+
+    // Sort levels (0-9, where 0 is cantrips)
+    final sortedLevels = spellsByLevel.keys.toList()..sort();
+
+    final List<Widget> widgets = [];
+
+    for (final level in sortedLevels) {
+      final spellsInLevel = spellsByLevel[level]!;
+      
+      // Add level header
+      widgets.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: level == 0 
+                ? [Colors.purple.shade50, Colors.purple.shade100]
+                : [Colors.blue.shade50, Colors.blue.shade100],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: level == 0 ? Colors.purple.shade200 : Colors.blue.shade200,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _getSpellLevelIcon(level),
+                color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                level == 0 ? 'Cantrips' : 'Level $level Spells',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: (level == 0 ? Colors.purple : Colors.blue).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${spellsInLevel.length}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      // Add spells in this level
+      for (final spellData in spellsInLevel) {
+        final index = spellData['index'] as int;
+        final spell = spellData['spell'] as Spell;
+
+        widgets.add(
+          Card(
+            margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+            child: ListTile(
+              title: InkWell(
+                child: Text(
+                  spell.name,
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                onTap: () => _showSpellDetails(spell.name),
+              ),
+              subtitle: Text(
+                '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}',
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  setState(() {
+                    _spells.removeAt(index);
+                  });
+
+                  // Auto-save the character when a spell is removed
+                  _autoSaveCharacter();
+                },
+              ),
+            ),
+          ),
+        );
+      }
+
+      // Add spacing between levels
+      if (level != sortedLevels.last) {
+        widgets.add(const SizedBox(height: 16));
+      }
+    }
+
+    return widgets;
   }
 
   Widget _buildSpellSlotField(String label, int level) {
@@ -4338,148 +4466,187 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Load spells if not already loaded
     context.read<SpellsViewModel>().loadSpells();
 
+    final Set<String> selectedSpells = <String>{};
+
     showDialog(
       context: context,
       builder:
-          (context) => Dialog(
-            child: Container(
-              width: double.maxFinite,
-              height: 500,
-              child: Column(
-                children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.auto_awesome),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Add Spell to ${widget.character.name}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+          (context) => StatefulBuilder(
+            builder: (context, setState) => Dialog(
+              child: Container(
+                width: double.maxFinite,
+                height: 500,
+                child: Column(
+                  children: [
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.auto_awesome),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Add Spells to ${widget.character.name}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-
-                  // Search bar
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Consumer<SpellsViewModel>(
-                      builder: (context, spellsViewModel, child) {
-                        return TextField(
-                          decoration: const InputDecoration(
-                            labelText: 'Search spells...',
-                            prefixIcon: Icon(Icons.search),
-                            border: OutlineInputBorder(),
-                          ),
-                          onChanged: (query) {
-                            spellsViewModel.setSearchQuery(query);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-
-                  // Spells list
-                  Expanded(
-                    child: Consumer<SpellsViewModel>(
-                      builder: (context, spellsViewModel, child) {
-                        if (spellsViewModel.isLoading) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-
-                        if (spellsViewModel.error != null) {
-                          return Center(
-                            child: Text('Error: ${spellsViewModel.error}'),
-                          );
-                        }
-
-                        final spells = spellsViewModel.spells;
-                        if (spells.isEmpty) {
-                          return const Center(child: Text('No spells found'));
-                        }
-
-                        return ListView.builder(
-                          itemCount: spells.length,
-                          itemBuilder: (context, index) {
-                            final spell = spells[index];
-                            final isKnown = _spells.contains(spell.name);
-
-                            return ListTile(
-                              title: Text(spell.name),
-                              subtitle: Text(
-                                '${spell.schoolName.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                          if (selectedSpells.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade100,
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              trailing:
-                                  isKnown
-                                      ? const Icon(
-                                        Icons.check,
-                                        color: Colors.green,
-                                      )
-                                      : const Icon(Icons.add),
-                              enabled: !isKnown,
-                              onTap:
-                                  isKnown
-                                      ? null
-                                      : () {
-                                        setState(() {
-                                          _spells.add(spell.name);
-                                        });
-                                        Navigator.pop(context);
+                              child: Text(
+                                '${selectedSpells.length} selected',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
 
-                                        // Auto-save the character when a spell is added
-                                        _autoSaveCharacter();
+                    // Search bar
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Consumer<SpellsViewModel>(
+                        builder: (context, spellsViewModel, child) {
+                          return TextField(
+                            decoration: const InputDecoration(
+                              labelText: 'Search spells...',
+                              prefixIcon: Icon(Icons.search),
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (query) {
+                              spellsViewModel.setSearchQuery(query);
+                            },
+                          );
+                        },
+                      ),
+                    ),
 
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Added ${spell.name} to ${widget.character.name}',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      },
+                    // Spells list
+                    Expanded(
+                      child: Consumer<SpellsViewModel>(
+                        builder: (context, spellsViewModel, child) {
+                          if (spellsViewModel.isLoading) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
                             );
-                          },
-                        );
-                      },
-                    ),
-                  ),
+                          }
 
-                  // Footer
-                  const Divider(height: 1),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        Text(
-                          '${_spells.length} spells known',
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      ],
+                          if (spellsViewModel.error != null) {
+                            return Center(
+                              child: Text('Error: ${spellsViewModel.error}'),
+                            );
+                          }
+
+                          final spells = spellsViewModel.spells;
+                          if (spells.isEmpty) {
+                            return const Center(child: Text('No spells found'));
+                          }
+
+                          return ListView.builder(
+                            itemCount: spells.length,
+                            itemBuilder: (context, index) {
+                              final spell = spells[index];
+                              final isKnown = _spells.contains(spell.name);
+                              final isSelected = selectedSpells.contains(spell.name);
+
+                              return CheckboxListTile(
+                                value: isSelected,
+                                onChanged: isKnown ? null : (bool? value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      selectedSpells.add(spell.name);
+                                    } else {
+                                      selectedSpells.remove(spell.name);
+                                    }
+                                  });
+                                },
+                                title: Text(
+                                  spell.name,
+                                  style: TextStyle(
+                                    color: isKnown ? Colors.grey : null,
+                                    decoration: isKnown ? TextDecoration.lineThrough : null,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${spell.schoolName.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                ),
+                                secondary: isKnown 
+                                  ? const Icon(Icons.check, color: Colors.green)
+                                  : Icon(
+                                      isSelected ? Icons.check_circle : Icons.check_circle_outline,
+                                      color: isSelected ? Colors.blue : Colors.grey,
+                                    ),
+                                enabled: !isKnown,
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+
+                    // Footer
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '${_spells.length} spells known',
+                              style: const TextStyle(color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: selectedSpells.isEmpty ? null : () {
+                              // Update the parent state first
+                              this.setState(() {
+                                _spells.addAll(selectedSpells);
+                              });
+                              Navigator.pop(context);
+
+                              // Auto-save the character when spells are added
+                              _autoSaveCharacter();
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Added ${selectedSpells.length} spell${selectedSpells.length == 1 ? '' : 's'} to ${widget.character.name}',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            },
+                            child: Text('Add ${selectedSpells.isEmpty ? 'Spells' : '${selectedSpells.length} Spell${selectedSpells.length == 1 ? '' : 's'}'}'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
