@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'feats_screen.dart';
 import 'classes_screen.dart';
+import 'races_screen.dart';
 
 class InformationScreen extends StatelessWidget {
   const InformationScreen({super.key});
@@ -55,9 +56,9 @@ class InformationScreen extends StatelessWidget {
             title: 'Races',
             icon: Icons.people,
             onTap: () {
-              // Will be implemented later
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Races section coming soon!')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const RacesScreen()),
               );
             },
           ),

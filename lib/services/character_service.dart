@@ -242,6 +242,7 @@ class CharacterService {
     required String name,
     String characterClass = 'Fighter',
     String? subclass,
+    String? race,
   }) async {
     final now = DateTime.now();
     final characterId = '${name.toLowerCase().replaceAll(' ', '_')}_${now.millisecondsSinceEpoch}';
@@ -271,6 +272,7 @@ class CharacterService {
       health: defaultHealth,
       characterClass: characterClass,
       subclass: subclass,
+      race: race,
       spellSlots: defaultSpellSlots,
       pillars: defaultPillars,
       createdAt: now,

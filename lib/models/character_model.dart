@@ -11,6 +11,7 @@ class Character extends BaseModel {
   final CharacterHealth health;
   final String characterClass;
   final String? subclass;
+  final String? race;
   final List<CharacterAttack> attacks;
   final CharacterSpellSlots spellSlots;
   final List<String> spells;
@@ -32,6 +33,7 @@ class Character extends BaseModel {
     required this.health,
     required this.characterClass,
     this.subclass,
+    this.race,
     this.attacks = const [],
     required this.spellSlots,
     this.spells = const [],
@@ -58,6 +60,7 @@ class Character extends BaseModel {
         'health': health.toJson(),
         'class': {'value': characterClass},
         if (subclass != null) 'subclass': {'value': subclass},
+        if (race != null) 'race': {'value': race},
         'attacks': attacks.map((attack) => attack.toJson()).toList(),
         'spell_slots': spellSlots.toJson(),
         'spells': {'value': spells},
@@ -85,6 +88,7 @@ class Character extends BaseModel {
       health: CharacterHealth.fromJson(_getValue<Map<String, dynamic>>(stats, 'health')),
       characterClass: _getValue<String>(stats, 'class'),
       subclass: _getValueNullable<String?>(stats, 'subclass', defaultValue: null),
+      race: _getValueNullable<String?>(stats, 'race', defaultValue: null),
       attacks: _getValue<List<dynamic>>(stats, 'attacks', defaultValue: const [])
           .map((attack) => CharacterAttack.fromJson(attack as Map<String, dynamic>))
           .toList(),
@@ -181,6 +185,7 @@ class Character extends BaseModel {
     CharacterHealth? health,
     String? characterClass,
     String? subclass,
+    String? race,
     List<CharacterAttack>? attacks,
     CharacterSpellSlots? spellSlots,
     List<String>? spells,
@@ -202,6 +207,7 @@ class Character extends BaseModel {
       health: health ?? this.health,
       characterClass: characterClass ?? this.characterClass,
       subclass: subclass ?? this.subclass,
+      race: race ?? this.race,
       attacks: attacks ?? this.attacks,
       spellSlots: spellSlots ?? this.spellSlots,
       spells: spells ?? this.spells,

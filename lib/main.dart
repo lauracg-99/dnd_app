@@ -9,6 +9,7 @@ import 'views/characters/characters_list_screen.dart';
 import 'views/information/information_screen.dart';
 import 'viewmodels/feats_viewmodel.dart';
 import 'viewmodels/class_viewmodel.dart';
+import 'viewmodels/races_viewmodel.dart';
 import 'services/character_service.dart';
 
 Future<void> main() async {
@@ -26,6 +27,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => CharactersViewModel()),
         ChangeNotifierProvider(create: (_) => FeatsViewModel()),
         ChangeNotifierProvider(create: (_) => ClassesViewModel()),
+        ChangeNotifierProvider(create: (_) => RacesViewModel()),
       ],
       child: const MyApp(),
     ),

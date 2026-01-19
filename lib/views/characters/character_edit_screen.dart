@@ -8,9 +8,11 @@ import 'dart:io';
 import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
 import '../../models/feat_model.dart';
+import '../../models/race_model.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/feats_viewmodel.dart';
+import '../../viewmodels/races_viewmodel.dart';
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -30,11 +32,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   bool _hasUnsavedClassChanges = false;
   String _selectedClass = 'Fighter';
   bool _useCustomSubclass = false;
+  String _selectedRace = '';
 
   // Form controllers
   final _nameController = TextEditingController();
   final _classController = TextEditingController();
   final _subclassController = TextEditingController();
+  final _raceController = TextEditingController();
   final _quickGuideController = TextEditingController();
   final _backstoryController = TextEditingController();
 
@@ -92,6 +96,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     super.initState();
     _tabController = TabController(length: 9, vsync: this);
     _initializeCharacterData();
+    
+    // Load races data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<RacesViewModel>().loadRaces();
+    });
   }
 
   void _initializeCharacterData() {
@@ -105,6 +114,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _selectedClass = character.characterClass;
     _classController.text = character.characterClass;
     _subclassController.text = character.subclass ?? '';
+    _raceController.text = character.race ?? '';
+    _selectedRace = character.race ?? '';
     
     // Check if current subclass is custom (not in preset list)
     final availableSubclasses = _getSubclassesForClass(character.characterClass);
@@ -124,6 +135,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     _subclassController.addListener(() {
       if (_subclassController.text != (character.subclass ?? '')) {
+        setState(() {
+          _hasUnsavedClassChanges = true;
+        });
+      }
+    });
+
+    _raceController.addListener(() {
+      if (_raceController.text != (character.race ?? '')) {
         setState(() {
           _hasUnsavedClassChanges = true;
         });
@@ -215,6 +234,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _nameController.dispose();
     _classController.dispose();
     _subclassController.dispose();
+    _raceController.dispose();
     _quickGuideController.dispose();
     _backstoryController.dispose();
     _gimmickController.dispose();
@@ -457,6 +477,33 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+
+          // Race selection
+          Consumer<RacesViewModel>(
+            builder: (context, racesViewModel, child) {
+              return DropdownButtonFormField<String>(
+                value: _raceController.text.isEmpty ? null : _raceController.text,
+                decoration: const InputDecoration(
+                  labelText: 'Race (Optional)',
+                  border: OutlineInputBorder(),
+                ),
+                items: racesViewModel.races.map((race) {
+                  return DropdownMenuItem(
+                    value: race.name,
+                    child: Text(race.name),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _raceController.text = value ?? '';
+                    _selectedRace = value ?? '';
+                    _hasUnsavedClassChanges = true;
+                  });
+                },
+              );
+            },
           ),
           const SizedBox(height: 8),
           
@@ -778,6 +825,59 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         ),
                         textAlign: TextAlign.center,
                       ),
+              
+              // Race selection
+              Consumer<RacesViewModel>(
+                builder: (context, racesViewModel, child) {
+                  // Create unique race items by using race name + source if needed
+                  final Map<String, Race> uniqueRaces = {};
+                  for (final race in racesViewModel.races) {
+                    final key = race.name;
+                    if (!uniqueRaces.containsKey(key)) {
+                      uniqueRaces[key] = race;
+                    }
+                  }
+                  
+                  return _isEditingCharacterCover
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 16.0),
+                          child: DropdownButtonFormField<String>(
+                              value: _raceController.text.isEmpty ? null : _raceController.text,
+                              decoration: const InputDecoration(
+                                labelText: 'Race (Optional)',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: uniqueRaces.values.map<DropdownMenuItem<String>>((race) {
+                                return DropdownMenuItem<String>(
+                                  value: race.name,
+                                  child: Text(race.name),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _raceController.text = value ?? '';
+                                  _selectedRace = value ?? '';
+                                  _hasUnsavedClassChanges = true;
+                                });
+                              },
+                            ),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                              _raceController.text.isNotEmpty 
+                                  ? _raceController.text
+                                  : 'Race',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.blue.shade600,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                        );
+                },
+              ),
               ],
             ),
           ),
@@ -5095,6 +5195,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _subclassController.text.trim().isEmpty
               ? null
               : _subclassController.text.trim(),
+      race:
+          _raceController.text.trim().isEmpty
+              ? null
+              : _raceController.text.trim(),
       stats: CharacterStats(
         strength: int.tryParse(_strengthController.text) ?? 10,
         dexterity: int.tryParse(_dexterityController.text) ?? 10,
@@ -5907,6 +6011,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _subclassController.text.trim().isEmpty
               ? null
               : _subclassController.text.trim(),
+      race:
+          _raceController.text.trim().isEmpty
+              ? null
+              : _raceController.text.trim(),
       stats: CharacterStats(
         strength: int.tryParse(_strengthController.text) ?? 10,
         dexterity: int.tryParse(_dexterityController.text) ?? 10,

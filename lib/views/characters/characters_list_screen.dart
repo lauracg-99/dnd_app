@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import '../../models/character_model.dart';
+import '../../models/race_model.dart';
 import '../../viewmodels/characters_viewmodel.dart';
+import '../../viewmodels/races_viewmodel.dart';
 import 'character_edit_screen.dart';
 
 class CharactersListScreen extends StatefulWidget {
@@ -223,7 +225,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
         ),
         title: Text(character.name),
         subtitle: Text(
-          '${character.characterClass}${character.subclass != "" ? ' (${character.subclass})' : ''}',
+          '${character.characterClass}${character.subclass != null && character.subclass!.isNotEmpty ? ' (${character.subclass})' : ''}${character.race != null && character.race!.isNotEmpty ? ' • ${character.race}' : ''}',
         ),
         trailing: PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
@@ -380,7 +382,17 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
   final _nameController = TextEditingController();
   String _selectedClass = 'Fighter';
   final _subclassController = TextEditingController();
+  final _raceController = TextEditingController();
   bool _useCustomSubclass = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load races data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<RacesViewModel>().loadRaces();
+    });
+  }
 
   // Helper method to get subclasses for each class
   List<String> _getSubclassesForClass(String className) {
@@ -546,6 +558,7 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
   void dispose() {
     _nameController.dispose();
     _subclassController.dispose();
+    _raceController.dispose();
     super.dispose();
   }
 
@@ -835,6 +848,96 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
                   },
                 ),
               ),
+            const SizedBox(height: 16),
+
+            // Race selection
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Consumer<RacesViewModel>(
+                builder: (context, racesViewModel, child) {
+                  // Find matching race for initial value
+                  Race? matchingRace;
+                  if (_raceController.text.isNotEmpty) {
+                    matchingRace = racesViewModel.races.firstWhere(
+                      (race) => race.name == _raceController.text,
+                      orElse: () => racesViewModel.races.first,
+                    );
+                  }
+                  
+                  return DropdownButtonFormField<String>(
+                    value: matchingRace != null ? '${matchingRace.name}_${matchingRace.source}' : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Race (Optional)',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(16),
+                    ),
+                    isExpanded: true,
+                    items: [
+                      if (_raceController.text.isNotEmpty)
+                        DropdownMenuItem(
+                          value: '__CLEAR__',
+                          child: Row(
+                            children: [
+                              Icon(Icons.clear, color: Colors.red, size: 20),
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: Text(
+                                  'Clear Race',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ...racesViewModel.races.map((race) {
+                        return DropdownMenuItem(
+                          value: '${race.name}_${race.source}', // Make unique with source
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: Text(
+                                  race.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        if (value == '__CLEAR__') {
+                          _raceController.text = '';
+                        } else if (value != null) {
+                          // Extract race name from unique value (remove source suffix)
+                          final raceName = value.contains('_') ? value.split('_').first : value;
+                          _raceController.text = raceName;
+                        }
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Action Buttons
@@ -873,6 +976,9 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
                               subclass: _subclassController.text.trim().isEmpty
                                   ? null
                                   : _subclassController.text.trim(),
+                              race: _raceController.text.trim().isEmpty
+                                  ? null
+                                  : _raceController.text.trim(),
                             );
                           },
                     style: ElevatedButton.styleFrom(

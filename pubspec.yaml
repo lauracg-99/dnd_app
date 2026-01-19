@@ -66,7 +66,8 @@ flutter:
     - assets/data/
     - assets/data/spells/
     - assets/data/feats/
-    - assets/data/classes/  # Add this line
+    - assets/data/classes/  
+    - assets/data/races/  
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

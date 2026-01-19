@@ -57,6 +57,7 @@ class CharactersViewModel extends ChangeNotifier {
     required String name,
     String characterClass = 'Fighter',
     String? subclass,
+    String? race,
   }) async {
     _isLoading = true;
     _error = null;
@@ -67,6 +68,7 @@ class CharactersViewModel extends ChangeNotifier {
         name: name,
         characterClass: characterClass,
         subclass: subclass,
+        race: race,
       );
       
       _allCharacters.add(newCharacter);
