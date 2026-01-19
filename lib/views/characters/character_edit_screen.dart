@@ -1347,42 +1347,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Attacks',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s attacks and weapons',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-
-          // Attacks list
-          ..._attacks.asMap().entries.map((entry) {
-            final index = entry.key;
-            final attack = entry.value;
-            return Card(
-              child: ListTile(
-                title: Text(attack.name),
-                subtitle: Text(
-                  '${attack.attackBonus} | ${attack.damage} ${attack.damageType}',
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _attacks.removeAt(index);
-                    });
-
-                    // Auto-save the character when an attack is removed
-                    _autoSaveCharacter();
-                  },
-                ),
-              ),
-            );
-          }),
-
-          const SizedBox(height: 16),
+          
           
           // Debug: Always show spellcasting section for testing
           Container(
@@ -1479,6 +1444,44 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ),
           ),
           const SizedBox(height: 16),
+          const Text(
+            'Attacks',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your character\'s attacks and weapons',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+
+          // Attacks list
+          ..._attacks.asMap().entries.map((entry) {
+            final index = entry.key;
+            final attack = entry.value;
+            return Card(
+              child: ListTile(
+                title: Text(attack.name),
+                subtitle: Text(
+                  '${attack.attackBonus} | ${attack.damage} ${attack.damageType}',
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      _attacks.removeAt(index);
+                    });
+
+                    // Auto-save the character when an attack is removed
+                    _autoSaveCharacter();
+                  },
+                ),
+              ),
+            );
+          }),
+
+          const SizedBox(height: 16),
+          
+
 
           TextButton.icon(
             onPressed: _showAddAttackDialog,
