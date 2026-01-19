@@ -238,53 +238,50 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Profile image section
-          Column(
-            children: [
-              Center(
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(60),
-                  ),
-                  child:
-                      _customImagePath != null
-                          ? ClipOval(
-                            child: Image.file(
-                              File(_customImagePath!),
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.person,
-                                  size: 60,
-                                  color: Colors.grey,
-                                );
-                              },
-                            ),
-                          )
-                          : const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.grey,
-                          ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Camera buttons centered under profile picture
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+          Center(
+            child: GestureDetector(
+              onTap: _showImageOptionsDialog,
+              child: Stack(
                 children: [
-                  if (_customImagePath != null)
-                    _buildDeleteButton(),
-                  if (_customImagePath != null)
-                    const SizedBox(width: 12),
-                  _buildPickImageButton(),
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(60),
+                    ),
+                    child:
+                        _customImagePath != null
+                            ? ClipOval(
+                              child: Image.file(
+                                File(_customImagePath!),
+                                width: 120,
+                                height: 120,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors.grey,
+                                  );
+                                },
+                              ),
+                            )
+                            : const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.grey,
+                              ),
+                  ),
+                  // Camera button overlay
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: _buildPickImageButton(),
+                  ),
                 ],
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -943,7 +940,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 color: Colors.white,
                 size: 20,
               ),
-        onPressed: _isPickingImage ? null : _triggerHapticAndPickImage,
+        onPressed: _isPickingImage ? null : _triggerHapticAndShowOptions,
         tooltip: 'Change image',
       ),
     );
@@ -952,6 +949,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   Future<void> _triggerHapticAndConfirm() async {
     await _triggerHapticFeedback();
     _showDeleteConfirmation();
+  }
+
+  Future<void> _triggerHapticAndShowOptions() async {
+    await _triggerHapticFeedback();
+    _showImageOptionsDialog();
   }
 
   Future<void> _triggerHapticAndPickImage() async {
@@ -993,6 +995,47 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 foregroundColor: Colors.red,
               ),
               child: const Text('Remove'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showImageOptionsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Profile Image Options'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Choose New Image'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage();
+                },
+              ),
+              if (_customImagePath != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  title: const Text('Remove Image', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _showDeleteConfirmation();
+                  },
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
             ),
           ],
         );
