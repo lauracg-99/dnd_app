@@ -102,6 +102,7 @@ class Character extends BaseModel {
         if (value is Map && value.containsKey('value')) {
           final nestedValue = value['value'];
           if (nestedValue == null || nestedValue == '') return defaultValue;
+          return nestedValue as T?;
         }
         return value as T?;
       }

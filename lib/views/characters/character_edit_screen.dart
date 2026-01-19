@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:vibration/vibration.dart';
 import 'dart:io';
 import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
@@ -22,6 +23,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String? _customImagePath;
+  bool _isPickingImage = false;
 
   // Form controllers
   final _nameController = TextEditingController();
@@ -236,10 +238,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Profile image section
-          Center(
-            child: Stack(
-              children: [
-                Container(
+          Column(
+            children: [
+              Center(
+                child: Container(
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
@@ -269,49 +271,20 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                             color: Colors.grey,
                           ),
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_customImagePath != null)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            onPressed: _removeImage,
-                            tooltip: 'Remove image',
-                          ),
-                        ),
-                      const SizedBox(width: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          onPressed: _pickImage,
-                          tooltip: 'Change image',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              // Camera buttons centered under profile picture
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_customImagePath != null)
+                    _buildDeleteButton(),
+                  if (_customImagePath != null)
+                    const SizedBox(width: 12),
+                  _buildPickImageButton(),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 
@@ -905,6 +878,125 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDeleteButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.red.shade600,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: _isPickingImage
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Icon(
+                Icons.delete_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+        onPressed: _isPickingImage ? null : () => _triggerHapticAndConfirm(),
+        tooltip: 'Remove image',
+      ),
+    );
+  }
+
+  Widget _buildPickImageButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue.shade600,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: _isPickingImage
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+                size: 20,
+              ),
+        onPressed: _isPickingImage ? null : _triggerHapticAndPickImage,
+        tooltip: 'Change image',
+      ),
+    );
+  }
+
+  Future<void> _triggerHapticAndConfirm() async {
+    await _triggerHapticFeedback();
+    _showDeleteConfirmation();
+  }
+
+  Future<void> _triggerHapticAndPickImage() async {
+    await _triggerHapticFeedback();
+    _pickImage();
+  }
+
+  Future<void> _triggerHapticFeedback() async {
+    try {
+      bool? hasVibrator = await Vibration.hasVibrator();
+      if (hasVibrator == true) {
+        await Vibration.vibrate(duration: 50, amplitude: 100);
+      }
+    } catch (e) {
+      // Ignore haptic feedback errors
+    }
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Remove Profile Image'),
+          content: const Text('Are you sure you want to remove this character\'s profile image?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _removeImage();
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Remove'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -2709,6 +2801,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Future<void> _pickImage() async {
+    if (_isPickingImage) return; // Prevent multiple calls
+    
+    setState(() {
+      _isPickingImage = true;
+    });
+
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
@@ -2773,6 +2871,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             backgroundColor: Colors.red,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingImage = false;
+        });
       }
     }
   }
