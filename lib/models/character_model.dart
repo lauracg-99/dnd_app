@@ -78,7 +78,7 @@ class Character extends BaseModel {
       skillChecks: CharacterSkillChecks.fromJson(_getValue<Map<String, dynamic>>(stats, 'skill_checks')),
       health: CharacterHealth.fromJson(_getValue<Map<String, dynamic>>(stats, 'health')),
       characterClass: _getValue<String>(stats, 'class'),
-      subclass: _getValue<String?>(stats, 'subclass', defaultValue: null),
+      subclass: _getValueNullable<String?>(stats, 'subclass', defaultValue: null),
       attacks: _getValue<List<dynamic>>(stats, 'attacks', defaultValue: const [])
           .map((attack) => CharacterAttack.fromJson(attack as Map<String, dynamic>))
           .toList(),
@@ -92,6 +92,44 @@ class Character extends BaseModel {
     );
   }
 
+  static T? _getValueNullable<T>(Map<String, dynamic> map, String key, {T? defaultValue}) {
+    try {
+      // Special handling for custom_image_path field
+      if (key == 'custom_image_path') {
+        if (!map.containsKey(key)) return defaultValue;
+        final value = map[key];
+        if (value == null) return defaultValue;
+        if (value is Map && value.containsKey('value')) {
+          final nestedValue = value['value'];
+          if (nestedValue == null || nestedValue == '') return defaultValue;
+        }
+        return value as T?;
+      }
+      
+      // For all other fields
+      if (!map.containsKey(key)) {
+        return defaultValue;
+      }
+      
+      final value = map[key];
+      
+      if (value == null) {
+        return defaultValue;
+      }
+      
+      if (value is Map && value.containsKey('value')) {
+        final nestedValue = value['value'];
+        if (nestedValue == null && defaultValue != null) return defaultValue;
+        return nestedValue as T?;
+      }
+      
+      return value as T?;
+    } catch (e) {
+      debugPrint('Error parsing field $key: $e');
+      return defaultValue;
+    }
+  }
+
   static T _getValue<T>(Map<String, dynamic> map, String key, {T? defaultValue}) {
     try {
       // Special handling for custom_image_path field
@@ -102,9 +140,7 @@ class Character extends BaseModel {
         if (value is Map && value.containsKey('value')) {
           final nestedValue = value['value'];
           if (nestedValue == null || nestedValue == '') return defaultValue as T;
-          return nestedValue as T;
         }
-        if (value == '' || value == null) return defaultValue as T;
         return value as T;
       }
       
@@ -129,8 +165,8 @@ class Character extends BaseModel {
       
       return value as T;
     } catch (e) {
-      if (defaultValue != null) return defaultValue;
       debugPrint('Error parsing field $key: $e');
+      if (defaultValue != null) return defaultValue;
       rethrow;
     }
   }

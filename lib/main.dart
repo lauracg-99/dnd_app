@@ -9,10 +9,14 @@ import 'views/characters/characters_list_screen.dart';
 import 'views/information/information_screen.dart';
 import 'viewmodels/feats_viewmodel.dart';
 import 'viewmodels/class_viewmodel.dart';
+import 'services/character_service.dart';
 
 Future<void> main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize storage system
+  await CharacterService.initializeStorage();
 
   runApp(
     MultiProvider(

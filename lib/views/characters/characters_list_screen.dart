@@ -51,6 +51,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'characters_fab',
         onPressed: _showCreateCharacterDialog,
         tooltip: 'Create Character',
         child: const Icon(Icons.add),

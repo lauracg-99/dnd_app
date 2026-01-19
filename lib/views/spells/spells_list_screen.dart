@@ -51,6 +51,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'spells_fab',
         onPressed: () {
           Navigator.push(
             context,
