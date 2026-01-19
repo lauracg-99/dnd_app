@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/character_model.dart';
+import '../../models/spell_model.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
 
@@ -828,13 +829,25 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
             final spell = entry.value;
             return Card(
               child: ListTile(
-                title: Text(spell),
+                title: InkWell(
+                  child: Text(
+                    spell,
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                  onTap: () => _showSpellDetails(spell),
+                ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () {
                     setState(() {
                       _spells.removeAt(index);
                     });
+                    
+                    // Auto-save the character when a spell is removed
+                    _autoSaveCharacter();
                   },
                 ),
               ),
@@ -1185,6 +1198,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
                               _spells.add(spell.name);
                             });
                             Navigator.pop(context);
+                            
+                            // Auto-save the character when a spell is added
+                            _autoSaveCharacter();
+                            
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Added ${spell.name} to ${widget.character.name}'),
@@ -1222,6 +1239,255 @@ class _CharacterEditScreenState extends State<CharacterEditScreen> with SingleTi
         ),
       ),
     );
+  }
+
+  void _showSpellDetails(String spellName) {
+    // Load spells if not already loaded
+    context.read<SpellsViewModel>().loadSpells();
+    
+    // Find the spell by name with proper error handling
+    final spellsViewModel = context.read<SpellsViewModel>();
+    Spell? spell;
+    
+    try {
+      final spells = spellsViewModel.spells;
+      if (spells.isNotEmpty) {
+        spell = spells.firstWhere(
+          (s) => s.name.toLowerCase() == spellName.toLowerCase(),
+        );
+      } else {
+        // Create fallback spell if no spells are loaded
+        spell = _createFallbackSpell(spellName);
+      }
+    } catch (e) {
+      // Handle case where spell is not found or other errors
+      spell = _createFallbackSpell(spellName);
+    }
+    
+    // Show spell details using the same modal as the spell list
+    _showSpellDetailsModal(spell);
+  }
+
+  Spell _createFallbackSpell(String spellName) {
+    return Spell(
+      id: 'unknown',
+      name: spellName,
+      castingTime: 'Unknown',
+      range: 'Unknown',
+      duration: 'Unknown',
+      description: 'This spell details are not available in the spell database. It may be a custom spell or homebrew content.',
+      classes: [],
+      dice: [],
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  void _showSpellDetailsModal(Spell spell) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, controller) {
+          try {
+            return SingleChildScrollView(
+              controller: controller,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[400],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      spell.name,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Character info
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.person, color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Known by: ${widget.character.name}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    
+                    // Casting Time
+                    _buildDetailRow('Casting Time', spell.castingTime),
+                    
+                    // Range
+                    _buildDetailRow('Range', spell.range),
+                    
+                    // Components
+                    _buildDetailRow('Components', _formatComponents(spell)),
+                    
+                    // Duration
+                    _buildDetailRow('Duration', spell.duration),
+                    
+                    // Ritual
+                    if (spell.ritual)
+                      _buildDetailRow('Ritual', 'Yes'),
+                    
+                    // Classes
+                    _buildDetailRow(
+                      'Classes', 
+                      spell.classes.isNotEmpty 
+                        ? spell.classes.map((c) => c.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')).join(', ')
+                        : 'None',
+                    ),
+                    
+                    const Divider(),
+                    
+                    // Description
+                    Text(
+                      spell.description,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.edit),
+                            label: const Text('Remove Spell'),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              setState(() {
+                                _spells.remove(spell.name);
+                              });
+                              
+                              // Auto-save the character when a spell is removed
+                              _autoSaveCharacter();
+                              
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Removed ${spell.name} from ${widget.character.name}'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.close),
+                            label: const Text('Close'),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          } catch (e) {
+            // Fallback UI in case of any errors
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error displaying spell details',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'There was an error loading the spell details for "${spell.name}".',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+
+  String _formatComponents(Spell spell) {
+    final components = <String>[];
+    if (spell.verbal) components.add('V');
+    if (spell.somatic) components.add('S');
+    if (spell.material && spell.components != null) {
+      components.add('M (${spell.components})');
+    }
+    return components.join(', ');
+  }
+
+  void _autoSaveCharacter() {
+    // Create updated character with current spell list
+    final updatedCharacter = widget.character.copyWith(
+      spells: _spells,
+      updatedAt: DateTime.now(),
+    );
+    
+    // Save the character silently (no success message)
+    context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
   }
 
   void _saveCharacter() {
