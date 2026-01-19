@@ -19,6 +19,7 @@ class Character extends BaseModel {
   final List<CharacterPersonalizedSlot> personalizedSlots;
   final String quickGuide;
   final String backstory;
+  final String featNotes;
   final CharacterPillars pillars;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -42,6 +43,7 @@ class Character extends BaseModel {
     this.quickGuide = '',
     this.backstory = '',
     required this.pillars,
+    this.featNotes = '',
     required this.createdAt,
     required this.updatedAt,
   });
@@ -69,6 +71,7 @@ class Character extends BaseModel {
         'quick_guide': {'value': quickGuide},
         'backstory': {'value': backstory},
         'pillars': pillars.toJson(),
+        'feat_notes': {'value': featNotes},
         'created_at': {'value': createdAt.toIso8601String()},
         'updated_at': {'value': updatedAt.toIso8601String()},
       },
@@ -101,6 +104,7 @@ class Character extends BaseModel {
       quickGuide: _getValue<String>(stats, 'quick_guide', defaultValue: ''),
       backstory: _getValue<String>(stats, 'backstory', defaultValue: ''),
       pillars: CharacterPillars.fromJson(_getValue<Map<String, dynamic>>(stats, 'pillars')),
+      featNotes: _getValue<String>(stats, 'feat_notes', defaultValue: ''),
       createdAt: DateTime.parse(_getValue<String>(stats, 'created_at')),
       updatedAt: DateTime.parse(_getValue<String>(stats, 'updated_at')),
     );
@@ -194,6 +198,7 @@ class Character extends BaseModel {
     String? quickGuide,
     String? backstory,
     CharacterPillars? pillars,
+    String? featNotes,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -216,6 +221,7 @@ class Character extends BaseModel {
       quickGuide: quickGuide ?? this.quickGuide,
       backstory: backstory ?? this.backstory,
       pillars: pillars ?? this.pillars,
+      featNotes: featNotes ?? this.featNotes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

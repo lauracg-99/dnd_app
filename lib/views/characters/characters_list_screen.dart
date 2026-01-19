@@ -573,21 +573,23 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
       elevation: 8,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.shade50,
-              Colors.purple.shade50,
-            ],
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.blue.shade50,
+                  Colors.purple.shade50,
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
             // Header
             Row(
               children: [
@@ -1009,6 +1011,8 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
               ],
             ),
           ],
+            ),
+          ),
         ),
       ),
     );

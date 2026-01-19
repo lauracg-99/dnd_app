@@ -41,6 +41,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _raceController = TextEditingController();
   final _quickGuideController = TextEditingController();
   final _backstoryController = TextEditingController();
+  final _featNotesController = TextEditingController();
 
   // Pillars controllers
   final _gimmickController = TextEditingController();
@@ -191,6 +192,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _needsController.text = _pillars.needs;
     _conflictController.text = _pillars.conflict;
 
+    // Initialize feat notes
+    _featNotesController.text = character.featNotes ?? '';
+
     // Set up auto-save listeners
     _setupAutoSaveListeners();
   }
@@ -203,6 +207,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _raceController.addListener(_autoSaveCharacter);
     _quickGuideController.addListener(_autoSaveCharacter);
     _backstoryController.addListener(_autoSaveCharacter);
+    _featNotesController.addListener(_autoSaveCharacter);
 
     _gimmickController.addListener(_autoSaveCharacter);
     _quirkController.addListener(_autoSaveCharacter);
@@ -238,6 +243,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _raceController.dispose();
     _quickGuideController.dispose();
     _backstoryController.dispose();
+    _featNotesController.dispose();
     _gimmickController.dispose();
     _quirkController.dispose();
     _wantsController.dispose();
@@ -285,19 +291,26 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           IconButton(icon: const Icon(Icons.save), onPressed: _saveCharacter),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildCharacterCoverTab(),      
-          _buildAttacksTab(),
-          _buildStatsTab(),
-          _buildSkillsTab(),
-          _buildSpellSlotsTab(),
-          _buildSpellsTab(),
-          _buildFeatsTab(),
-          _buildPersonalizedSlotsTab(),
-          _buildNotesTab(),
-        ],
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          // Dismiss keyboard when tapping anywhere on screen
+          FocusScope.of(context).unfocus();
+        },
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildCharacterCoverTab(),      
+            _buildAttacksTab(),
+            _buildStatsTab(),
+            _buildSkillsTab(),
+            _buildSpellSlotsTab(),
+            _buildSpellsTab(),
+            _buildFeatsTab(),
+            _buildPersonalizedSlotsTab(),
+            _buildNotesTab(),
+          ],
+        ),
       ),
     );
   }
@@ -1802,7 +1815,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         side: BorderSide(color: Colors.grey.shade300, width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(6.0), // Reduced padding from 8.0 to 6.0
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
@@ -1815,71 +1828,79 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 color: Colors.black,
               ),
             ),
-            const SizedBox(height: 4),
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.black54, width: 1),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: 46, 
-                    child: TextField(
-                      controller: controller,
-                      decoration: InputDecoration(
-                        hintText: '10',
-                        hintStyle: TextStyle(color: Colors.grey.shade400),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 10),
-                        isDense: true,
+            const SizedBox(height: 2), // Reduced height from 4 to 2
+            Expanded( // Make the container expand to fit available space
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.black54, width: 1),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Expanded( // Make TextField expand
+                      child: Center( // Center the TextField within the Expanded space
+                        child: TextField(
+                          controller: controller,
+                          decoration: InputDecoration(
+                            hintText: '10',
+                            hintStyle: TextStyle(color: Colors.grey.shade400),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero, // Remove content padding for better centering
+                            isDense: true,
+                          ),
+                          keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done, // Show "Done" button on keyboard
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                          textAlign: TextAlign.center,
+                          onChanged: (value) {
+                            // Mark as having unsaved changes and force rebuild
+                            setState(() {
+                              _hasUnsavedAbilityChanges = true;
+                            });
+                            // Force rebuild to update modifier
+                            (context as Element).markNeedsBuild();
+                          },
+                          onSubmitted: (value) {
+                            // Dismiss keyboard when Done is pressed
+                            FocusScope.of(context).unfocus();
+                          },
+                        ),
                       ),
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    ),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2, // Reduced vertical padding from 3 to 2
+                      ),
+                      decoration: BoxDecoration(
                         color: Colors.black87,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(8),
+                          bottomRight: Radius.circular(8),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                      onChanged: (value) {
-                        // Mark as having unsaved changes and force rebuild
-                        setState(() {
-                          _hasUnsavedAbilityChanges = true;
-                        });
-                        // Force rebuild to update modifier
-                        (context as Element).markNeedsBuild();
-                      },
-                    ),
-                  ),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(8),
-                        bottomRight: Radius.circular(8),
+                      child: Text(
+                        _getModifier(controller.text),
+                        style: const TextStyle(
+                          fontSize: 11, 
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          height: 1.0, 
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.visible,
                       ),
                     ),
-                    child: Text(
-                      _getModifier(controller.text),
-                      style: const TextStyle(
-                        fontSize: 11, 
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        height: 1.0, 
-                      ),
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.visible,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -2605,17 +2626,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Future<void> _triggerHapticAndConfirm() async {
-    await _triggerHapticFeedback();
+    //await _triggerHapticFeedback();
     _showDeleteConfirmation();
   }
 
   Future<void> _triggerHapticAndShowOptions() async {
-    await _triggerHapticFeedback();
+   // await _triggerHapticFeedback();
     _showImageOptionsDialog();
   }
 
   Future<void> _triggerHapticAndPickImage() async {
-    await _triggerHapticFeedback();
+   // await _triggerHapticFeedback();
     _pickImage();
   }
 
@@ -4192,6 +4213,50 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             icon: const Icon(Icons.add),
             label: const Text('Add Feat'),
           ),
+          const SizedBox(height: 16),
+          
+          // Feat Notes Section
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.note_alt,
+                      color: Colors.blue.shade700,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Notes',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _featNotesController,
+                  decoration: const InputDecoration(
+                    labelText: 'Write here...',
+                    border: OutlineInputBorder(),
+                    alignLabelWithHint: true,
+                  ),
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -4435,8 +4500,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               hintText: 'Add quick notes about your character...',
-            ),
-            maxLines: 5,
+            ),            
           ),
 
           const SizedBox(height: 24),
@@ -4450,8 +4514,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               hintText: 'Write your character\'s backstory...',
-            ),
-            maxLines: 8,
+            ),            
           ),
 
           const SizedBox(height: 24),
@@ -4483,8 +4546,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         const SizedBox(height: 4),
         TextField(
           controller: controller,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-          maxLines: 3,
+          decoration: const InputDecoration(border: OutlineInputBorder()),          
         ),
       ],
     );
@@ -4553,7 +4615,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     labelText: 'Description (Optional)',
                     border: OutlineInputBorder(),
                   ),
-                  maxLines: 2,
+                  maxLines: 10,
                 ),
               ],
             ),
@@ -5418,27 +5480,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ),
               const Divider(height: 1),
 
-              // Search bar
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Consumer<FeatsViewModel>(
-                  builder: (context, featsViewModel, child) {
-                    return TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Search feats...',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (query) {
-                        // Filter feats based on search
-                        // Note: FeatsViewModel doesn't have setSearchQuery, so we'll handle search locally
-                        setState(() {});
-                      },
-                    );
-                  },
-                ),
-              ),
-
               // Feats list
               Expanded(
                 child: Consumer<FeatsViewModel>(
@@ -5456,14 +5497,19 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     }
 
                     final feats = featsViewModel.feats;
-                    if (feats.isEmpty) {
+                    final searchQuery = '';
+                    final filteredFeats = searchQuery.isEmpty 
+                        ? feats
+                        : feats.where((feat) => feat.name.toLowerCase().contains(searchQuery.toLowerCase())).toList();
+                    
+                    if (filteredFeats.isEmpty) {
                       return const Center(child: Text('No feats found'));
                     }
-
+                    
                     return ListView.builder(
-                      itemCount: feats.length,
+                      itemCount: filteredFeats.length,
                       itemBuilder: (context, index) {
-                        final feat = feats[index];
+                        final feat = filteredFeats[index];
                         final isKnown = _feats.contains(feat.name);
 
                         return ListTile(
