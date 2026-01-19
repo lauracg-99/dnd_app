@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import '../../models/character_model.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import 'character_edit_screen.dart';
@@ -92,19 +93,20 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            viewModel.setSearchQuery('');
-                          },
-                        )
-                      : null,
+                  suffixIcon:
+                      _searchController.text.isNotEmpty
+                          ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              viewModel.setSearchQuery('');
+                            },
+                          )
+                          : null,
                 ),
                 onChanged: viewModel.setSearchQuery,
               ),
-              
+
               // Expandable filter section
               if (_isFilterExpanded) ..._buildFilterControls(viewModel),
             ],
@@ -123,7 +125,10 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
         child: ListView(
           scrollDirection: Axis.horizontal,
           children: [
-            const Text('Class: ', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Class: ',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             FilterChip(
               label: const Text('All'),
               selected: viewModel.selectedClass.isEmpty,
@@ -201,19 +206,20 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: ListTile(
         leading: CircleAvatar(
-          child: character.customImagePath != null
-              ? ClipOval(
-                  child: Image.asset(
-                    character.customImagePath!,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.person);
-                    },
-                  ),
-                )
-              : const Icon(Icons.person),
+          child:
+              character.customImagePath != null
+                  ? ClipOval(
+                    child: Image.file(
+                      File(character.customImagePath!),
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.person);
+                      },
+                    ),
+                  )
+                  : const Icon(Icons.person),
         ),
         title: Text(character.name),
         subtitle: Text(
@@ -237,48 +243,49 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
                 break;
             }
           },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [
-                  Icon(Icons.edit),
-                  SizedBox(width: 8),
-                  Text('Edit'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'duplicate',
-              child: Row(
-                children: [
-                  Icon(Icons.copy),
-                  SizedBox(width: 8),
-                  Text('Duplicate'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'export',
-              child: Row(
-                children: [
-                  Icon(Icons.share),
-                  SizedBox(width: 8),
-                  Text('Export'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
-                ],
-              ),
-            ),
-          ],
+          itemBuilder:
+              (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit),
+                      SizedBox(width: 8),
+                      Text('Edit'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'duplicate',
+                  child: Row(
+                    children: [
+                      Icon(Icons.copy),
+                      SizedBox(width: 8),
+                      Text('Duplicate'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'export',
+                  child: Row(
+                    children: [
+                      Icon(Icons.share),
+                      SizedBox(width: 8),
+                      Text('Export'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
         ),
         onTap: () {
           _navigateToEditCharacter(character);
@@ -306,24 +313,29 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
   void _showDeleteConfirmation(Character character) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Character'),
-        content: Text('Are you sure you want to delete ${character.name}? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Character'),
+            content: Text(
+              'Are you sure you want to delete ${character.name}? This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.read<CharactersViewModel>().deleteCharacter(
+                    character.id,
+                  );
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<CharactersViewModel>().deleteCharacter(character.id);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -334,14 +346,14 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
-    
+
     context.read<CharactersViewModel>().updateCharacter(duplicatedCharacter);
   }
 
   void _exportCharacter(Character character) {
     final viewModel = context.read<CharactersViewModel>();
     viewModel.exportCharacter(character);
-    
+
     // TODO: Implement proper file sharing
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -379,7 +391,7 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.read<CharactersViewModel>();
-    
+
     return AlertDialog(
       title: const Text('Create New Character'),
       content: SizedBox(
@@ -402,12 +414,13 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
                 labelText: 'Class',
                 border: OutlineInputBorder(),
               ),
-              items: viewModel.availableClasses.map((className) {
-                return DropdownMenuItem(
-                  value: className,
-                  child: Text(className),
-                );
-              }).toList(),
+              items:
+                  viewModel.availableClasses.map((className) {
+                    return DropdownMenuItem(
+                      value: className,
+                      child: Text(className),
+                    );
+                  }).toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedClass = value!;
@@ -431,18 +444,20 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: _nameController.text.trim().isEmpty
-              ? null
-              : () {
-                  Navigator.pop(context);
-                  viewModel.createCharacter(
-                    name: _nameController.text.trim(),
-                    characterClass: _selectedClass,
-                    subclass: _subclassController.text.trim().isEmpty
-                        ? null
-                        : _subclassController.text.trim(),
-                  );
-                },
+          onPressed:
+              _nameController.text.trim().isEmpty
+                  ? null
+                  : () {
+                    Navigator.pop(context);
+                    viewModel.createCharacter(
+                      name: _nameController.text.trim(),
+                      characterClass: _selectedClass,
+                      subclass:
+                          _subclassController.text.trim().isEmpty
+                              ? null
+                              : _subclassController.text.trim(),
+                    );
+                  },
           child: const Text('Create'),
         ),
       ],

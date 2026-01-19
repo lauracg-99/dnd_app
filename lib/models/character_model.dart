@@ -72,7 +72,7 @@ class Character extends BaseModel {
     return Character(
       id: _getValue<String>(stats, 'id'),
       name: _getValue<String>(stats, 'name'),
-      customImagePath: _getValue<String?>(stats, 'custom_image_path', defaultValue: null),
+      customImagePath: _getValueNullable<String?>(stats, 'custom_image_path', defaultValue: null),
       stats: CharacterStats.fromJson(_getValue<Map<String, dynamic>>(stats, 'stats')),
       savingThrows: CharacterSavingThrows.fromJson(_getValue<Map<String, dynamic>>(stats, 'saving_throws')),
       skillChecks: CharacterSkillChecks.fromJson(_getValue<Map<String, dynamic>>(stats, 'skill_checks')),
@@ -132,19 +132,7 @@ class Character extends BaseModel {
 
   static T _getValue<T>(Map<String, dynamic> map, String key, {T? defaultValue}) {
     try {
-      // Special handling for custom_image_path field
-      if (key == 'custom_image_path') {
-        if (!map.containsKey(key)) return defaultValue as T;
-        final value = map[key];
-        if (value == null) return defaultValue as T;
-        if (value is Map && value.containsKey('value')) {
-          final nestedValue = value['value'];
-          if (nestedValue == null || nestedValue == '') return defaultValue as T;
-        }
-        return value as T;
-      }
-      
-      // For all other fields
+      // For all fields
       if (!map.containsKey(key)) {
         if (defaultValue != null) return defaultValue;
         throw ArgumentError('Missing required field: $key');
@@ -157,15 +145,16 @@ class Character extends BaseModel {
         throw ArgumentError('Field $key is null and no default value provided');
       }
       
+      // Special handling for fields with nested structure like custom_image_path
       if (value is Map && value.containsKey('value')) {
         final nestedValue = value['value'];
-        if (nestedValue == null && defaultValue != null) return defaultValue;
+        if (nestedValue == null || nestedValue == '') return defaultValue as T;
         return nestedValue as T;
       }
       
       return value as T;
     } catch (e) {
-      debugPrint('Error parsing field $key: $e');
+      // Handle type casting errors gracefully
       if (defaultValue != null) return defaultValue;
       rethrow;
     }
