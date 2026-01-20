@@ -9,17 +9,18 @@ class SpellService {
   /// Loads all spell files from the spells directory
   static Future<List<Spell>> loadAllSpells() async {
     try {
-      // Get all spell files from the assets
-      final manifestContent = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-      
-      // Filter spell files (spell_*.rpg.json)
-      final spellFiles = manifestMap.keys.where(
-        (key) => key.startsWith(_spellsPath) && 
-                key.endsWith('.rpg.json') &&
-                key.contains('spell_')
-      ).toList();
-      
+      // Get all spell files from the assets      
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+
+      final spellFiles = manifest
+          .listAssets()
+          .where(
+            (key) =>
+              key.startsWith('assets/data/spells/') &&
+              key.endsWith('.rpg.json') &&
+              key.contains('spell_'))
+          .toList();
+
       // Load and parse each spell file
       final List<Spell> spells = [];
       for (final file in spellFiles) {

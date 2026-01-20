@@ -4,12 +4,12 @@ import '../models/race_model.dart';
 
 class RaceService {
   static Future<List<Race>> loadRaces() async {
-    try {
-      final manifestContent = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-      final raceFiles = manifestMap.keys
-          .where((key) => 
-              key.startsWith('assets/data/races/') && 
+    try {      
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final raceFiles = manifest
+          .listAssets()
+          .where((key) =>
+              key.startsWith('assets/data/races/') &&
               key.endsWith('.rpg.json'))
           .toList();
 

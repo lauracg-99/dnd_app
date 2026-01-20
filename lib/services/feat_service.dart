@@ -5,11 +5,12 @@ import '../models/feat_model.dart';
 class FeatService {
   static Future<List<Feat>> loadFeats() async {
     try {
-      final manifestContent = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-      final featFiles = manifestMap.keys
-          .where((key) => 
-              key.startsWith('assets/data/feats/') && 
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+
+      final featFiles = manifest
+          .listAssets()
+          .where((key) =>
+              key.startsWith('assets/data/feats/') &&
               key.endsWith('.rpg.json'))
           .toList();
 

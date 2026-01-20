@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-import 'package:vibration/vibration.dart';
 import 'dart:io';
 import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
@@ -3510,30 +3509,17 @@ Widget _buildIniciativeField() {
   }
 
   Future<void> _triggerHapticAndConfirm() async {
-    //await _triggerHapticFeedback();
     _showDeleteConfirmation();
   }
 
   Future<void> _triggerHapticAndShowOptions() async {
-   // await _triggerHapticFeedback();
     _showImageOptionsDialog();
   }
 
   Future<void> _triggerHapticAndPickImage() async {
-   // await _triggerHapticFeedback();
     _pickImage();
   }
 
-  Future<void> _triggerHapticFeedback() async {
-    try {
-      bool? hasVibrator = await Vibration.hasVibrator();
-      if (hasVibrator == true) {
-        await Vibration.vibrate(duration: 50, amplitude: 100);
-      }
-    } catch (e) {
-      // Ignore haptic feedback errors
-    }
-  }
 
   void _showDeleteConfirmation() {
     showDialog(

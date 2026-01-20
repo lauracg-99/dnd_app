@@ -11,19 +11,16 @@ class ClassService {
   static Future<List<DndClass>> loadAllClasses() async {
     try {
       // Get all class files from the assets
-      final manifestContent = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
 
-      // Filter class files (class_*.rpg.json)
-      final classFiles =
-          manifestMap.keys
-              .where(
-                (key) =>
-                    key.startsWith(_classesPath) &&
-                    key.endsWith('.rpg.json') &&
-                    key.contains('class_'),
-              )
-              .toList();
+      final classFiles = manifest
+          .listAssets()
+          .where(
+            (key) =>
+              key.startsWith('assets/data/classes/') &&
+              key.endsWith('.rpg.json') &&
+              key.contains('class_'))
+          .toList();
 
       //  debugPrint('Found ${classFiles.length} class files to load');
 
