@@ -55,6 +55,7 @@ class CharactersViewModel extends ChangeNotifier {
   /// Create a new character
   Future<void> createCharacter({
     required String name,
+    int level = 1,
     String characterClass = 'Fighter',
     String? subclass,
     String? race,
@@ -66,6 +67,7 @@ class CharactersViewModel extends ChangeNotifier {
     try {
       final newCharacter = await CharacterService.createCharacter(
         name: name,
+        level: level,
         characterClass: characterClass,
         subclass: subclass,
         race: race,

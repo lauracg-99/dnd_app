@@ -380,6 +380,7 @@ class CreateCharacterDialog extends StatefulWidget {
 
 class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
   final _nameController = TextEditingController();
+  final _levelController = TextEditingController(text: '1');
   String _selectedClass = 'Fighter';
   final _subclassController = TextEditingController();
   final _raceController = TextEditingController();
@@ -557,6 +558,7 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
   @override
   void dispose() {
     _nameController.dispose();
+    _levelController.dispose();
     _subclassController.dispose();
     _raceController.dispose();
     super.dispose();
@@ -647,6 +649,36 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
                   contentPadding: const EdgeInsets.all(16),
                 ),
                 autofocus: true,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Character Level Field
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _levelController,
+                decoration: InputDecoration(
+                  labelText: 'Character Level',
+                  prefixIcon: const Icon(Icons.format_list_numbered, color: Colors.green),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                keyboardType: TextInputType.number,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
@@ -968,12 +1000,24 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: _nameController.text.trim().isEmpty
+                    onPressed: (_nameController.text.trim().isEmpty || _levelController.text.trim().isEmpty)
                         ? null
                         : () {
+                            final level = int.tryParse(_levelController.text.trim());
+                            if (level == null || level < 1 || level > 20) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please enter a valid level between 1 and 20'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+                            
                             Navigator.pop(context);
                             viewModel.createCharacter(
                               name: _nameController.text.trim(),
+                              level: level,
                               characterClass: _selectedClass,
                               subclass: _subclassController.text.trim().isEmpty
                                   ? null

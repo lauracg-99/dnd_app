@@ -240,12 +240,18 @@ class CharacterService {
   /// Create a new character
   static Future<Character> createCharacter({
     required String name,
+    int level = 1,
     String characterClass = 'Fighter',
     String? subclass,
     String? race,
   }) async {
     final now = DateTime.now();
     final characterId = '${name.toLowerCase().replaceAll(' ', '_')}_${now.millisecondsSinceEpoch}';
+    
+    // Validate level is within D&D 5e bounds (1-20)
+    if (level < 1 || level > 20) {
+      throw ArgumentError('Character level must be between 1 and 20');
+    }
     
     // Create default character with basic stats
     final defaultStats = CharacterStats(
@@ -275,7 +281,7 @@ class CharacterService {
       skillChecks: defaultSkillChecks,
       health: defaultHealth,
       characterClass: characterClass,
-      level: 1, // Default level for new characters
+      level: level, // Use provided level instead of defaulting to 1
       subclass: subclass,
       race: race,
       spellSlots: defaultSpellSlots,
