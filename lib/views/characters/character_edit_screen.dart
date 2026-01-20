@@ -5153,45 +5153,68 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           const SizedBox(height: 16),
           
           // Feat Notes Section
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.note_alt,
-                      color: Colors.blue.shade700,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Notes',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade700,
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.note_alt,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _featNotesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Write here...',
-                    border: OutlineInputBorder(),
-                    alignLabelWithHint: true,
+                      const SizedBox(width: 8),
+                      Text(
+                        'Notes',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Additional notes about your feats and abilities.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _featNotesController,
+                      decoration: const InputDecoration(
+                        hintText: 'Add notes about your feats...\n\n'
+                            'Examples:\n'
+                            '• Feat descriptions and mechanics\n'
+                            '• Synergies with other abilities\n'
+                            '• Combat strategies using feats\n'
+                            '• Roleplaying aspects of feats\n'
+                            '• Feat progression plans',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 12,
+                      minLines: 3,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -6497,6 +6520,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       spellPreparation: _spellPreparation,
       quickGuide: _quickGuideController.text.trim(),
       backstory: _backstoryController.text.trim(),
+      featNotes: _featNotesController.text.trim(),
       pillars: CharacterPillars(
         gimmick: _gimmickController.text.trim(),
         quirk: _quirkController.text.trim(),
@@ -7436,6 +7460,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       spellPreparation: _spellPreparation,
       quickGuide: _quickGuideController.text.trim(),
       backstory: _backstoryController.text.trim(),
+      featNotes: _featNotesController.text.trim(),
       pillars: CharacterPillars(
         gimmick: _gimmickController.text.trim(),
         quirk: _quirkController.text.trim(),
