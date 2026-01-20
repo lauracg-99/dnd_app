@@ -1198,12 +1198,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           const SizedBox(height: 16),
           
           // Concentration Row - only show for spellcasting classes
-          if (_canCastSpells())
+          if (_canCastSpells())           
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: _buildConcentrationField(),
+              child: 
+              Column(children:[                
+                _buildConcentrationField(),
+                const SizedBox(height: 24)
+                ]),
             ),
-          const SizedBox(height: 24),
 
           // Health Section
           Container(
