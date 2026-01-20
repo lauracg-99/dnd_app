@@ -245,8 +245,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   void _setupAutoSaveListeners() {
     // Add listeners to all text controllers for auto-save
     _nameController.addListener(_autoSaveCharacter);
-    _classController.addListener(_autoSaveCharacter);
-    _subclassController.addListener(_autoSaveCharacter);
+    _classController.addListener(() {
+      _autoSaveCharacter();
+      setState(() {}); // Rebuild to show/hide concentration field
+    });
+    _subclassController.addListener(() {
+      _autoSaveCharacter();
+      setState(() {}); // Rebuild to show/hide concentration field
+    });
     _raceController.addListener(_autoSaveCharacter);
     _quickGuideController.addListener(_autoSaveCharacter);
     _backstoryController.addListener(_autoSaveCharacter);
@@ -1016,11 +1022,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           ),
           const SizedBox(height: 16),
           
-          // Concentration Row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: _buildConcentrationField(),
-          ),
+          // Concentration Row - only show for spellcasting classes
+          if (_canCastSpells())
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: _buildConcentrationField(),
+            ),
           const SizedBox(height: 24),
 
           // Health Section
@@ -2492,6 +2499,48 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ),
       ),
     );
+  }
+
+  // Check if the current class or subclass can cast spells
+  bool _canCastSpells() {
+    final characterClass = _classController.text.trim().toLowerCase();
+    final subclass = _subclassController.text.trim().toLowerCase();
+    
+    // Debug log to track spellcasting detection
+    debugPrint('Checking spellcasting for class: "$characterClass", subclass: "$subclass"');
+    
+    // Full spellcasting classes
+    final spellcastingClasses = {
+      'wizard', 'sorcerer', 'warlock', 'bard', 'cleric', 'druid', 
+      'artificer', 'blood hunter', 'mystic'
+    };
+    
+    // Partial spellcasting classes (subclasses that grant spellcasting)
+    final spellcastingSubclasses = {
+      'eldritch knight', // Fighter subclass
+      'arcane trickster', // Rogue subclass
+    };
+    
+    // Check if main class is a spellcasting class
+    if (spellcastingClasses.contains(characterClass)) {
+      debugPrint('Class "$characterClass" is a spellcasting class');
+      return true;
+    }
+    
+    // Check if subclass grants spellcasting
+    if (spellcastingSubclasses.contains(subclass)) {
+      debugPrint('Subclass "$subclass" grants spellcasting');
+      return true;
+    }
+    
+    // Special case: Ranger and Paladin are spellcasting classes
+    if (characterClass == 'ranger' || characterClass == 'paladin') {
+      debugPrint('Class "$characterClass" is a spellcasting class (special case)');
+      return true;
+    }
+    
+    debugPrint('Class "$characterClass" with subclass "$subclass" cannot cast spells');
+    return false;
   }
 
   Widget _buildConcentrationField() {
