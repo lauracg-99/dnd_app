@@ -869,12 +869,14 @@ class CharacterAppearance {
   final String age;
   final String eyeColor;
   final String additionalDetails;
+  final String appearanceImagePath;
 
   const CharacterAppearance({
     this.height = '',
     this.age = '',
     this.eyeColor = '',
     this.additionalDetails = '',
+    this.appearanceImagePath = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -882,6 +884,7 @@ class CharacterAppearance {
     'age': {'value': age},
     'eye_color': {'value': eyeColor},
     'additional_details': {'value': additionalDetails},
+    'appearance_image_path': {'value': appearanceImagePath},
   };
 
   factory CharacterAppearance.fromJson(Map<String, dynamic> json) {
@@ -890,6 +893,7 @@ class CharacterAppearance {
       age: Character._getValue<String>(json, 'age', defaultValue: ''),
       eyeColor: Character._getValue<String>(json, 'eye_color', defaultValue: ''),
       additionalDetails: Character._getValue<String>(json, 'additional_details', defaultValue: ''),
+      appearanceImagePath: Character._getValue<String>(json, 'appearance_image_path', defaultValue: ''),
     );
   }
 
@@ -898,12 +902,14 @@ class CharacterAppearance {
     String? age,
     String? eyeColor,
     String? additionalDetails,
+    String? appearanceImagePath,
   }) {
     return CharacterAppearance(
       height: height ?? this.height,
       age: age ?? this.age,
       eyeColor: eyeColor ?? this.eyeColor,
       additionalDetails: additionalDetails ?? this.additionalDetails,
+      appearanceImagePath: appearanceImagePath ?? this.appearanceImagePath,
     );
   }
 }

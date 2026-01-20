@@ -27,6 +27,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String? _customImagePath;
+  String? _appearanceImagePath;
   bool _isPickingImage = false;
   bool _hasUnsavedAbilityChanges = false;
   bool _hasUnsavedClassChanges = false;
@@ -117,6 +118,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Initialize profile image
     _customImagePath = character.customImagePath;
+    _appearanceImagePath = character.appearance.appearanceImagePath;
 
     // Initialize controllers
     _nameController.text = character.name;
@@ -6082,6 +6084,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         age: _ageController.text.trim(),
         eyeColor: _eyeColorController.text.trim(),
         additionalDetails: _additionalDetailsController.text.trim(),
+        appearanceImagePath: _appearanceImagePath ?? '',
       ),
       updatedAt: DateTime.now(),
     );
@@ -6833,6 +6836,114 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     }
   }
 
+  Future<void> _pickAppearanceImage() async {
+    if (_isPickingImage) return; // Prevent multiple calls
+
+    setState(() {
+      _isPickingImage = true;
+    });
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 75,
+      );
+
+      if (image != null) {
+        final directory = await getApplicationDocumentsDirectory();
+        final appearanceImagesDir = Directory(
+          path.join(directory.path, 'appearance_images'),
+        );
+        if (!await appearanceImagesDir.exists()) {
+          await appearanceImagesDir.create(recursive: true);
+        }
+
+        final String fileName = path.basename(image.path);
+        final String savedImagePath = path.join(appearanceImagesDir.path, fileName);
+        final File sourceFile = File(image.path);
+        final File savedFile = await sourceFile.copy(savedImagePath);
+
+        // Clean up old appearance image if exists
+        if (_appearanceImagePath != null &&
+            _appearanceImagePath!.startsWith(appearanceImagesDir.path)) {
+          try {
+            await File(_appearanceImagePath!).delete();
+          } catch (e) {
+            debugPrint('Error deleting old appearance image: $e');
+          }
+        }
+
+        setState(() {
+          _appearanceImagePath = savedFile.path;
+        });
+
+        if (mounted) {
+          _autoSaveCharacter();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking appearance image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking appearance image: $e')),
+        );
+      }
+    } finally {
+      setState(() {
+        _isPickingImage = false;
+      });
+    }
+  }
+
+  void _removeAppearanceImage() async {
+    try {
+      // Delete the appearance image file if it exists in our appearance_images directory
+      if (_appearanceImagePath != null) {
+        final directory = await getApplicationDocumentsDirectory();
+        final appearanceImagesDir = Directory(
+          path.join(directory.path, 'appearance_images'),
+        );
+
+        if (_appearanceImagePath!.startsWith(appearanceImagesDir.path)) {
+          try {
+            await File(_appearanceImagePath!).delete();
+          } catch (e) {
+            debugPrint('Error deleting appearance image file: $e');
+          }
+        }
+      }
+
+      setState(() {
+        _appearanceImagePath = null;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Appearance image removed'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+
+      // Auto-save after image removal
+      _autoSaveCharacter();
+    } catch (e) {
+      debugPrint('Error removing appearance image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error removing appearance image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _saveCharacter([String? successMessage]) {
     // Update all character data from controllers
     final updatedCharacter = widget.character.copyWith(
@@ -6892,6 +7003,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         age: _ageController.text.trim(),
         eyeColor: _eyeColorController.text.trim(),
         additionalDetails: _additionalDetailsController.text.trim(),
+        appearanceImagePath: _appearanceImagePath ?? '',
       ),
       updatedAt: DateTime.now(),
     );
@@ -7098,26 +7210,29 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     child: Column(
                       children: [
                         Container(
-                          width: 150,
-                          height: 150,
+                          width: 200,
+                          height: 200,
                           decoration: BoxDecoration(
                             color: Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.grey.shade400),
                           ),
-                          child: _customImagePath != null
-                              ? Image.file(
-                                  File(_customImagePath!),
-                                  width: 150,
-                                  height: 150,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: Colors.grey,
-                                    );
-                                  },
+                          child: _appearanceImagePath != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    File(_appearanceImagePath!),
+                                    width: 200,
+                                    height: 200,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: Colors.grey,
+                                      );
+                                    },
+                                  ),
                                 )
                               : const Icon(
                                   Icons.person,
@@ -7130,20 +7245,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             ElevatedButton.icon(
-                              onPressed: _isPickingImage ? null : _pickImage,
+                              onPressed: _isPickingImage ? null : _pickAppearanceImage,
                               icon: const Icon(Icons.photo_library),
-                              label: Text(_customImagePath != null ? 'Change' : 'Add'),
+                              label: Text(_appearanceImagePath != null ? 'Change' : 'Add'),
                             ),
-                            if (_customImagePath != null) ...[
+                            if (_appearanceImagePath != null) ...[
                               const SizedBox(width: 8),
                               ElevatedButton.icon(
-                                onPressed: _removeImage,
+                                onPressed: _removeAppearanceImage,
                                 icon: const Icon(Icons.delete),
                                 label: const Text('Remove'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red.shade100,
-                                  foregroundColor: Colors.red.shade700,
-                                ),
                               ),
                             ],
                           ],
