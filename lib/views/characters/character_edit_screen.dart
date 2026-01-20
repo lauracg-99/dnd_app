@@ -3495,7 +3495,23 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           child: IconButton(
                             onPressed: () {
                               setState(() {
-                                _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: 0);
+                                // Calculate the new max (calculated value)
+                                final newMax = calculatedMax;
+                                
+                                // Get current prepared spells (excluding always prepared)
+                                final currentPrepared = _spellPreparation.preparedSpells;
+                                
+                                // If we have more prepared spells than the new max, uncheck excess
+                                if (currentPrepared.length > newMax) {
+                                  final spellsToKeep = currentPrepared.take(newMax).toList();
+                                  _spellPreparation = _spellPreparation.copyWith(
+                                    maxPreparedSpells: 0, // Reset to calculated
+                                    preparedSpells: spellsToKeep, // Keep only up to new max
+                                  );
+                                } else {
+                                  // Just reset max, keep current prepared spells
+                                  _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: 0);
+                                }
                               });
                               _autoSaveCharacter();
                             },
@@ -3549,6 +3565,36 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       default:
         return Icons.star;
     }
+  }
+
+  /// Get the count of prepared spells for a specific level
+  int _getPreparedSpellsCountForLevel(int level) {
+    final spellsViewModel = context.read<SpellsViewModel>();
+    int count = 0;
+    for (final spellName in _spells) {
+      if (_spellPreparation.isSpellPrepared(spellName)) {
+        // Get spell level from cached spells list instead of context.read
+        final spell = spellsViewModel.spells.firstWhere(
+          (s) => s.name.toLowerCase() == spellName.toLowerCase(),
+          orElse: () => Spell(
+            id: 'unknown',
+            name: spellName,
+            castingTime: 'Unknown',
+            range: 'Unknown',
+            duration: 'Unknown',
+            description: 'Custom spell',
+            classes: [],
+            dice: [],
+            updatedAt: DateTime.now(),
+          ),
+        );
+        
+        if (spell.levelNumber == level) {
+          count++;
+        }
+      }
+    }
+    return count;
   }
 
   List<Widget> _buildSpellsByLevel() {
@@ -3653,6 +3699,30 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   ),
                 ),
               ),
+              if (level > 0) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${spellsInLevel.where((spellData) {
+                      final spell = spellData['spell'] as Spell;
+                      final spellId = spell.id; // Use spell.id instead of spell.name
+                      final isPrepared = _spellPreparation.isSpellPrepared(spellId);
+                      debugPrint('Spell: ${spell.name}, ID: $spellId, Prepared: $isPrepared');
+                      return isPrepared;
+                    }).length} prepared',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
