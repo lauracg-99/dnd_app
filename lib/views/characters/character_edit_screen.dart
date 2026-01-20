@@ -4059,63 +4059,78 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     for (final level in sortedLevels) {
       final spellsInLevel = spellsByLevel[level]!;
       
+      // Calculate max prepared spells for this class (used for header and individual spells)
+      final currentCalculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
+        _classController.text.trim(), // Use current class from controller
+        int.tryParse(_levelController.text) ?? 1, // Use current level from controller
+        CharacterSpellPreparation.getSpellcastingModifier(widget.character),
+      );
+      
       // Add level header
       widgets.add(
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: level == 0 
-                ? [Colors.purple.shade50, Colors.purple.shade100]
-                : [Colors.blue.shade50, Colors.blue.shade100],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: level == 0 ? Colors.purple.shade200 : Colors.blue.shade200,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                _getSpellLevelIcon(level),
-                color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                level == 0 ? 'Cantrips' : 'Level $level Spells',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
+        Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: level == 0 
+                    ? [Colors.purple.shade50, Colors.purple.shade100]
+                    : [Colors.blue.shade50, Colors.blue.shade100],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: level == 0 ? Colors.purple.shade200 : Colors.blue.shade200,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: (level == 0 ? Colors.purple : Colors.blue).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${spellsInLevel.length}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+              child: Row(
+                children: [
+                  Icon(
+                    _getSpellLevelIcon(level),
                     color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
+                    size: 20,
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    level == 0 ? 'Cantrips' : 'Level $level Spells',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: (level == 0 ? Colors.purple : Colors.blue).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${spellsInLevel.length}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              if (level > 0) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            ),
+            // Only show prepared count if class can prepare spells and level > 0
+            if (level > 0 && currentCalculatedMax > 0)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.2),
+                    color: Colors.green.shade100,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -4133,9 +4148,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     ),
                   ),
                 ),
-              ],
-            ],
-          ),
+              ),
+          ],
         ),
       );
 
@@ -4145,12 +4159,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         final spell = spellData['spell'] as Spell;
         
         // Check if spell can be prepared (only for classes that prepare spells and non-cantrips)
-        final currentCalculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
-          _classController.text.trim(), // Use current class from controller
-          int.tryParse(_levelController.text) ?? 1, // Use current level from controller
-          CharacterSpellPreparation.getSpellcastingModifier(widget.character),
-        );
-        
         final currentMaxPrepared = _spellPreparation.maxPreparedSpells == 0 
             ? currentCalculatedMax 
             : _spellPreparation.maxPreparedSpells;
