@@ -1224,7 +1224,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         contentPadding: EdgeInsets.all(16),
                         alignLabelWithHint: true,
                       ),
-                      maxLines: 6,
+                      maxLines: 12,
                       minLines: 3,
                       style: const TextStyle(
                         fontSize: 15,
@@ -5123,25 +5123,29 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           const SizedBox(height: 16),
           
           // Auto-save info
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 16,
-                color: Colors.grey.shade600,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'All notes auto-save automatically • No character limit • Rich text supported',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
-                    fontStyle: FontStyle.italic,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Colors.grey.shade600,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'All notes auto-save automatically • No character limit • Rich text supported',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(height: 56),
         ],
       ),
     );
@@ -5176,8 +5180,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
             ),
-            maxLines: 3,
-            minLines: 2,
+            maxLines: 6,
+            minLines: 3,
             style: const TextStyle(
               fontSize: 15,
               height: 1.4,
@@ -7098,24 +7102,22 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           height: 150,
                           decoration: BoxDecoration(
                             color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(75),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.grey.shade400),
                           ),
                           child: _customImagePath != null
-                              ? ClipOval(
-                                  child: Image.file(
-                                    File(_customImagePath!),
-                                    width: 150,
-                                    height: 150,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(
-                                        Icons.person,
-                                        size: 60,
-                                        color: Colors.grey,
-                                      );
-                                    },
-                                  ),
+                              ? Image.file(
+                                  File(_customImagePath!),
+                                  width: 150,
+                                  height: 150,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: Colors.grey,
+                                    );
+                                  },
                                 )
                               : const Icon(
                                   Icons.person,
@@ -7299,6 +7301,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       ),
                     ],
                   ),
+                  
                 ],
               ),
             ),
