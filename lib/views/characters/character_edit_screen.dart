@@ -3375,13 +3375,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Known Spells',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          
           const SizedBox(height: 8),
           const Text(
-            'Manage your character\'s known spells',
+            'Manage your character\'s known spells.',
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
           const SizedBox(height: 8),
@@ -3423,6 +3420,28 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           fontWeight: FontWeight.bold,
                           color: Colors.indigo.shade700,
                         ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Spell Preparation Info'),
+                              content: const Text(
+                                'You can establish if a spell is always prepared or you can cast it for free. Always prepared spells don\'t count against your maximum prepared spells limit.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Got it'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.info_outline, size: 16),
+                        color: Colors.indigo.shade700,
                       ),
                     ],
                   ),
