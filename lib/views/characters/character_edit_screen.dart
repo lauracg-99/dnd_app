@@ -3365,6 +3365,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ? calculatedMax 
         : _spellPreparation.maxPreparedSpells;
     
+    // Check if user has modified the max (for visual indicator)
+    final isModified = _spellPreparation.maxPreparedSpells != 0 && _spellPreparation.maxPreparedSpells != calculatedMax;
+    
     final canPrepare = maxPrepared > 0;
 
     return SingleChildScrollView(
@@ -3416,36 +3419,55 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Maximum prepared spells: $maxPrepared (${_classController.text.trim()} level ${int.tryParse(_levelController.text) ?? 1} + $modifier modifier)',
+                    'Maximum prepared spells: $maxPrepared (${_classController.text.trim()} level ${int.tryParse(_levelController.text) ?? 1} + ${_getModifierName(modifier)} $modifier modifier = $calculatedMax)${maxPrepared != calculatedMax ? ' (modified: +${(maxPrepared - calculatedMax).abs()})' : ''}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.indigo.shade600,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Currently prepared: ${_spellPreparation.currentPreparedCount}/$maxPrepared',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: _spellPreparation.currentPreparedCount < maxPrepared ? Colors.green.shade700 : Colors.blue.shade700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _showMaxPreparedDialog,
-                          icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Modify Maximum'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.indigo.shade700,
-                            elevation: 2,
+                        child: Text(
+                          'Currently prepared: ${_spellPreparation.currentPreparedCount}/$maxPrepared',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _spellPreparation.currentPreparedCount < maxPrepared ? Colors.green.shade700 : Colors.blue.shade700,
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: _showMaxPreparedDialog,
+                        icon: const Icon(Icons.edit, size: 14),
+                        label: const Text('Modify', style: TextStyle(fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.indigo.shade700,
+                          elevation: 2,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        ),
+                      ),
+                      if (isModified) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: 0);
+                            });
+                            _autoSaveCharacter();
+                          },
+                          icon: const Icon(Icons.refresh, size: 16),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.green.shade50,
+                            foregroundColor: Colors.green.shade700,
+                            padding: const EdgeInsets.all(8),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -6614,9 +6636,40 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _autoSaveCharacter();
   }
 
+  /// Get the name of the modifier based on character class
+  String _getModifierName(int modifier) {
+    final className = _classController.text.trim().toLowerCase();
+    
+    switch (className) {
+      case 'wizard':
+      case 'artificer':
+        return 'Intelligence';
+      case 'cleric':
+      case 'druid':
+      case 'ranger':
+        return 'Wisdom';
+      case 'paladin':
+      case 'sorcerer':
+      case 'bard':
+      case 'warlock':
+        return 'Charisma';
+      default:
+        return 'Intelligence'; // Default fallback
+    }
+  }
+
   /// Show dialog to modify maximum prepared spells
   void _showMaxPreparedDialog() {
-    final controller = TextEditingController(text: _spellPreparation.maxPreparedSpells.toString());
+    // Calculate current max to show in dialog
+    final currentMax = _spellPreparation.maxPreparedSpells == 0 
+        ? CharacterSpellPreparation.calculateMaxPreparedSpells(
+            _classController.text.trim(),
+            int.tryParse(_levelController.text) ?? 1,
+            CharacterSpellPreparation.getSpellcastingModifier(widget.character),
+          )
+        : _spellPreparation.maxPreparedSpells;
+    
+    final controller = TextEditingController(text: currentMax.toString());
     
     showDialog(
       context: context,
