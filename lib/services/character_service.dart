@@ -262,6 +262,7 @@ class CharacterService {
     final defaultHealth = CharacterHealth(maxHitPoints: 10, currentHitPoints: 10);
     final defaultSpellSlots = CharacterSpellSlots();
     final defaultPillars = CharacterPillars();
+    final defaultAppearance = CharacterAppearance();
     
     final character = Character(
       id: characterId,
@@ -276,6 +277,7 @@ class CharacterService {
       race: race,
       spellSlots: defaultSpellSlots,
       pillars: defaultPillars,
+      appearance: defaultAppearance,
       createdAt: now,
       updatedAt: now,
     );

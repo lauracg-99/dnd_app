@@ -23,6 +23,7 @@ class Character extends BaseModel {
   final String backstory;
   final String featNotes;
   final CharacterPillars pillars;
+  final CharacterAppearance appearance;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -47,6 +48,7 @@ class Character extends BaseModel {
     this.quickGuide = '',
     this.backstory = '',
     required this.pillars,
+    required this.appearance,
     this.featNotes = '',
     required this.createdAt,
     required this.updatedAt,
@@ -77,6 +79,7 @@ class Character extends BaseModel {
         'quick_guide': {'value': quickGuide},
         'backstory': {'value': backstory},
         'pillars': pillars.toJson(),
+        'appearance': appearance.toJson(),
         'feat_notes': {'value': featNotes},
         'created_at': {'value': createdAt.toIso8601String()},
         'updated_at': {'value': updatedAt.toIso8601String()},
@@ -112,6 +115,7 @@ class Character extends BaseModel {
       quickGuide: _getValue<String>(stats, 'quick_guide', defaultValue: ''),
       backstory: _getValue<String>(stats, 'backstory', defaultValue: ''),
       pillars: CharacterPillars.fromJson(_getValue<Map<String, dynamic>>(stats, 'pillars')),
+      appearance: CharacterAppearance.fromJson(_getValue<Map<String, dynamic>>(stats, 'appearance', defaultValue: const {})),
       featNotes: _getValue<String>(stats, 'feat_notes', defaultValue: ''),
       createdAt: DateTime.parse(_getValue<String>(stats, 'created_at')),
       updatedAt: DateTime.parse(_getValue<String>(stats, 'updated_at')),
@@ -208,6 +212,7 @@ class Character extends BaseModel {
     String? quickGuide,
     String? backstory,
     CharacterPillars? pillars,
+    CharacterAppearance? appearance,
     String? featNotes,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -233,6 +238,7 @@ class Character extends BaseModel {
       quickGuide: quickGuide ?? this.quickGuide,
       backstory: backstory ?? this.backstory,
       pillars: pillars ?? this.pillars,
+      appearance: appearance ?? this.appearance,
       featNotes: featNotes ?? this.featNotes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -854,6 +860,50 @@ class CharacterPillars {
       wants: Character._getValue<String>(json, 'wants', defaultValue: ''),
       needs: Character._getValue<String>(json, 'needs', defaultValue: ''),
       conflict: Character._getValue<String>(json, 'conflict', defaultValue: ''),
+    );
+  }
+}
+
+class CharacterAppearance {
+  final String height;
+  final String age;
+  final String eyeColor;
+  final String additionalDetails;
+
+  const CharacterAppearance({
+    this.height = '',
+    this.age = '',
+    this.eyeColor = '',
+    this.additionalDetails = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'height': {'value': height},
+    'age': {'value': age},
+    'eye_color': {'value': eyeColor},
+    'additional_details': {'value': additionalDetails},
+  };
+
+  factory CharacterAppearance.fromJson(Map<String, dynamic> json) {
+    return CharacterAppearance(
+      height: Character._getValue<String>(json, 'height', defaultValue: ''),
+      age: Character._getValue<String>(json, 'age', defaultValue: ''),
+      eyeColor: Character._getValue<String>(json, 'eye_color', defaultValue: ''),
+      additionalDetails: Character._getValue<String>(json, 'additional_details', defaultValue: ''),
+    );
+  }
+
+  CharacterAppearance copyWith({
+    String? height,
+    String? age,
+    String? eyeColor,
+    String? additionalDetails,
+  }) {
+    return CharacterAppearance(
+      height: height ?? this.height,
+      age: age ?? this.age,
+      eyeColor: eyeColor ?? this.eyeColor,
+      additionalDetails: additionalDetails ?? this.additionalDetails,
     );
   }
 }

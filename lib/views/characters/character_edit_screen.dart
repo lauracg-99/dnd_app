@@ -44,6 +44,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _backstoryController = TextEditingController();
   final _featNotesController = TextEditingController();
 
+  // Appearance controllers
+  final _heightController = TextEditingController();
+  final _ageController = TextEditingController();
+  final _eyeColorController = TextEditingController();
+  final _additionalDetailsController = TextEditingController();
+
   // Pillars controllers
   final _gimmickController = TextEditingController();
   final _quirkController = TextEditingController();
@@ -97,7 +103,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 9, vsync: this);
+    _tabController = TabController(length: 10, vsync: this);
     _initializeCharacterData();
     
     // Load races data
@@ -200,6 +206,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Initialize feat notes
     _featNotesController.text = character.featNotes ?? '';
 
+    // Initialize appearance
+    _heightController.text = character.appearance.height;
+    _ageController.text = character.appearance.age;
+    _eyeColorController.text = character.appearance.eyeColor;
+    _additionalDetailsController.text = character.appearance.additionalDetails;
+
     // Set up auto-save listeners
     _setupAutoSaveListeners();
   }
@@ -290,6 +302,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             Tab(text: 'Spells', icon: Icon(Icons.auto_awesome)),
             Tab(text: 'Feats', icon: Icon(Icons.military_tech)),
             Tab(text: 'Class Slots', icon: Icon(Icons.casino)),
+            Tab(text: 'Appearance', icon: Icon(Icons.face)),
             Tab(text: 'Notes', icon: Icon(Icons.note)),
           ],
         ),
@@ -314,6 +327,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             _buildSpellsTab(),
             _buildFeatsTab(),
             _buildPersonalizedSlotsTab(),
+            _buildAppearanceTab(),
             _buildNotesTab(),
           ],
         ),
@@ -1157,6 +1171,74 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Quick Guide Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.bookmark,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Quick Guide',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Essential character information for quick reference during gameplay.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _quickGuideController,
+                      decoration: const InputDecoration(
+                        hintText: 'Add quick notes about your character...\n\n'
+                            'Examples:\n'
+                            '• Key abilities and combat tactics\n'
+                            '• Important spells and their effects\n'
+                            '• Equipment and inventory highlights\n'
+                            '• Character motivations and goals\n'
+                            '• Important relationships and alliances',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 6,
+                      minLines: 3,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           const SizedBox(height: 24),
 
           // Long Rest section
@@ -4919,63 +5001,190 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Quick Guide',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _quickGuideController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'Add quick notes about your character...',
-            ),            
+          // Backstory Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.history_edu,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Character Backstory',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'The complete history and background story of your character.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _backstoryController,
+                      decoration: const InputDecoration(
+                        hintText: 'Write your character\'s backstory...\n\n'
+                            'Consider including:\n'
+                            '• Place of birth and family background\n'
+                            '• Life events that shaped their personality\n'
+                            '• How they became an adventurer\n'
+                            '• Significant relationships and experiences\n'
+                            '• Secrets, traumas, or triumphs\n'
+                            '• Hopes for the future',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 12,
+                      minLines: 6,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
 
-          const SizedBox(height: 24),
-          const Text(
-            'Backstory',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _backstoryController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'Write your character\'s backstory...',
-            ),            
+          const SizedBox(height: 16),
+
+          // Character Pillars Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.foundation,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Character Pillars',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Core elements that define your character\'s role in the story.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildEnhancedPillarField('Gimmick', _gimmickController, 
+                    'What makes your character unique or memorable?'),
+                  const SizedBox(height: 16),
+                  _buildEnhancedPillarField('Quirk', _quirkController,
+                    'Odd habits or mannerisms that define your character.'),
+                  const SizedBox(height: 16),
+                  _buildEnhancedPillarField('Wants', _wantsController,
+                    'What does your character desire most in the world?'),
+                  const SizedBox(height: 16),
+                  _buildEnhancedPillarField('Needs', _needsController,
+                    'What must your character accomplish or obtain?'),
+                  const SizedBox(height: 16),
+                  _buildEnhancedPillarField('Conflict', _conflictController,
+                    'What internal or external struggles drive your character?'),
+                ],
+              ),
+            ),
           ),
 
-          const SizedBox(height: 24),
-          const Text(
-            'Character Pillars',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          const SizedBox(height: 16),
+          
+          // Auto-save info
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: Colors.grey.shade600,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'All notes auto-save automatically • No character limit • Rich text supported',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey.shade600,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-
-          _buildPillarField('Gimmick', _gimmickController),
-          const SizedBox(height: 16),
-          _buildPillarField('Quirk', _quirkController),
-          const SizedBox(height: 16),
-          _buildPillarField('Wants', _wantsController),
-          const SizedBox(height: 16),
-          _buildPillarField('Needs', _needsController),
-          const SizedBox(height: 16),
-          _buildPillarField('Conflict', _conflictController),
         ],
       ),
     );
   }
 
-  Widget _buildPillarField(String label, TextEditingController controller) {
+  Widget _buildEnhancedPillarField(String label, TextEditingController controller, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        TextField(
-          controller: controller,
-          decoration: const InputDecoration(border: OutlineInputBorder()),          
+        Row(
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.grey.shade50,
+          ),
+          child: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: hint,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(16),
+            ),
+            maxLines: 3,
+            minLines: 2,
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.4,
+              color: Colors.black87,
+            ),
+            onChanged: (value) => _autoSaveCharacter(),
+          ),
         ),
       ],
     );
@@ -5864,6 +6073,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         needs: _needsController.text.trim(),
         conflict: _conflictController.text.trim(),
       ),
+      appearance: CharacterAppearance(
+        height: _heightController.text.trim(),
+        age: _ageController.text.trim(),
+        eyeColor: _eyeColorController.text.trim(),
+        additionalDetails: _additionalDetailsController.text.trim(),
+      ),
       updatedAt: DateTime.now(),
     );
 
@@ -6668,6 +6883,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         needs: _needsController.text.trim(),
         conflict: _conflictController.text.trim(),
       ),
+      appearance: CharacterAppearance(
+        height: _heightController.text.trim(),
+        age: _ageController.text.trim(),
+        eyeColor: _eyeColorController.text.trim(),
+        additionalDetails: _additionalDetailsController.text.trim(),
+      ),
       updatedAt: DateTime.now(),
     );
 
@@ -6845,6 +7066,242 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               }
             },
             child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppearanceTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Character Image Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Character Image',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(75),
+                            border: Border.all(color: Colors.grey.shade400),
+                          ),
+                          child: _customImagePath != null
+                              ? ClipOval(
+                                  child: Image.file(
+                                    File(_customImagePath!),
+                                    width: 150,
+                                    height: 150,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: Colors.grey,
+                                      );
+                                    },
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: Colors.grey,
+                                ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: _isPickingImage ? null : _pickImage,
+                              icon: const Icon(Icons.photo_library),
+                              label: Text(_customImagePath != null ? 'Change' : 'Add'),
+                            ),
+                            if (_customImagePath != null) ...[
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                onPressed: _removeImage,
+                                icon: const Icon(Icons.delete),
+                                label: const Text('Remove'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red.shade100,
+                                  foregroundColor: Colors.red.shade700,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Physical Traits Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Physical Traits',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Height Field
+                  TextField(
+                    controller: _heightController,
+                    decoration: const InputDecoration(
+                      labelText: 'Height',
+                      hintText: 'e.g., 5\'10" or 178 cm',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.height),
+                    ),
+                    onChanged: (value) => _autoSaveCharacter(),
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Age Field
+                  TextField(
+                    controller: _ageController,
+                    decoration: const InputDecoration(
+                      labelText: 'Age',
+                      hintText: 'e.g., 25 years old',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.cake),
+                    ),
+                    onChanged: (value) => _autoSaveCharacter(),
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Eye Color Field
+                  TextField(
+                    controller: _eyeColorController,
+                    decoration: const InputDecoration(
+                      labelText: 'Eye Color',
+                      hintText: 'e.g., Blue, Green, Brown',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.visibility),
+                    ),
+                    onChanged: (value) => _autoSaveCharacter(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Additional Details Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.description,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Character Appereance',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Describe your character\'s appearance.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _additionalDetailsController,
+                      decoration: const InputDecoration(
+                        hintText: 'Start writing your character\'s story...\n\n'
+                            'You can describe:\n'
+                            '• Physical appearance beyond basic traits\n'
+                            '• Clothing and equipment style\n'
+                            '• Notable scars, tattoos, or markings\n'
+                            '• Personality traits and mannerisms\n'
+                            '• Background story and history\n'
+                            '• Goals, dreams, and motivations\n'
+                            '• Relationships and connections\n'
+                            '• Any other details that bring your character to life',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 12,
+                      minLines: 8,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Colors.grey.shade600,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Auto-saves automatically • No character limit • Supports rich text descriptions',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
