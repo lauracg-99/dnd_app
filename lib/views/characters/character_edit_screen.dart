@@ -3384,8 +3384,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             'Manage your character\'s known spells',
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
-          const SizedBox(height: 16),
-
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: _showAddSpellDialog,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Spell'),
+              ),
+            ],
+          ),
           // Spell preparation section - only show for classes that prepare spells
           if (canPrepare) ...[
             Container(
@@ -3487,15 +3496,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ),
             const SizedBox(height: 16),
           ],
-
+          
           // Group spells by level
           ..._buildSpellsByLevel(),
-
-          TextButton.icon(
-            onPressed: _showAddSpellDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Spell'),
-          ),
+          const SizedBox(height: 70),
         ],
       ),
     );
