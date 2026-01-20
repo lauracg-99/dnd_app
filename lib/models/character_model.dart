@@ -18,6 +18,7 @@ class Character extends BaseModel {
   final List<String> spells;
   final List<String> feats;
   final List<CharacterPersonalizedSlot> personalizedSlots;
+  final CharacterSpellPreparation spellPreparation;
   final String quickGuide;
   final String backstory;
   final String featNotes;
@@ -42,6 +43,7 @@ class Character extends BaseModel {
     this.spells = const [],
     this.feats = const [],
     this.personalizedSlots = const [],
+    this.spellPreparation = const CharacterSpellPreparation(),
     this.quickGuide = '',
     this.backstory = '',
     required this.pillars,
@@ -71,6 +73,7 @@ class Character extends BaseModel {
         'spells': {'value': spells},
         'feats': {'value': feats},
         'personalized_slots': {'value': personalizedSlots.map((slot) => slot.toJson()).toList()},
+        'spell_preparation': spellPreparation.toJson(),
         'quick_guide': {'value': quickGuide},
         'backstory': {'value': backstory},
         'pillars': pillars.toJson(),
@@ -105,6 +108,7 @@ class Character extends BaseModel {
       personalizedSlots: (_getValue<List<dynamic>>(stats, 'personalized_slots', defaultValue: const []))
           .map((slot) => CharacterPersonalizedSlot.fromJson(slot as Map<String, dynamic>))
           .toList(),
+      spellPreparation: CharacterSpellPreparation.fromJson(_getValue<Map<String, dynamic>>(stats, 'spell_preparation', defaultValue: const {})),
       quickGuide: _getValue<String>(stats, 'quick_guide', defaultValue: ''),
       backstory: _getValue<String>(stats, 'backstory', defaultValue: ''),
       pillars: CharacterPillars.fromJson(_getValue<Map<String, dynamic>>(stats, 'pillars')),
@@ -200,6 +204,7 @@ class Character extends BaseModel {
     List<String>? spells,
     List<String>? feats,
     List<CharacterPersonalizedSlot>? personalizedSlots,
+    CharacterSpellPreparation? spellPreparation,
     String? quickGuide,
     String? backstory,
     CharacterPillars? pillars,
@@ -224,6 +229,7 @@ class Character extends BaseModel {
       spells: spells ?? this.spells,
       feats: feats ?? this.feats,
       personalizedSlots: personalizedSlots ?? this.personalizedSlots,
+      spellPreparation: spellPreparation ?? this.spellPreparation,
       quickGuide: quickGuide ?? this.quickGuide,
       backstory: backstory ?? this.backstory,
       pillars: pillars ?? this.pillars,
@@ -849,5 +855,148 @@ class CharacterPillars {
       needs: Character._getValue<String>(json, 'needs', defaultValue: ''),
       conflict: Character._getValue<String>(json, 'conflict', defaultValue: ''),
     );
+  }
+}
+
+class CharacterSpellPreparation {
+  final List<String> preparedSpells;
+  final List<String> alwaysPreparedSpells;
+  final List<String> freeUseSpells;
+  final int maxPreparedSpells;
+  final bool enablePreparation;
+
+  const CharacterSpellPreparation({
+    this.preparedSpells = const [],
+    this.alwaysPreparedSpells = const [],
+    this.freeUseSpells = const [],
+    this.maxPreparedSpells = 0,
+    this.enablePreparation = true,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'prepared_spells': {'value': preparedSpells},
+    'always_prepared_spells': {'value': alwaysPreparedSpells},
+    'free_use_spells': {'value': freeUseSpells},
+    'max_prepared_spells': {'value': maxPreparedSpells},
+    'enable_preparation': {'value': enablePreparation},
+  };
+
+  factory CharacterSpellPreparation.fromJson(Map<String, dynamic> json) {
+    return CharacterSpellPreparation(
+      preparedSpells: List<String>.from(Character._getValue<List<dynamic>>(json, 'prepared_spells', defaultValue: const [])),
+      alwaysPreparedSpells: List<String>.from(Character._getValue<List<dynamic>>(json, 'always_prepared_spells', defaultValue: const [])),
+      freeUseSpells: List<String>.from(Character._getValue<List<dynamic>>(json, 'free_use_spells', defaultValue: const [])),
+      maxPreparedSpells: Character._getValue<int>(json, 'max_prepared_spells', defaultValue: 0),
+      enablePreparation: Character._getValue<bool>(json, 'enable_preparation', defaultValue: true),
+    );
+  }
+
+  CharacterSpellPreparation copyWith({
+    List<String>? preparedSpells,
+    List<String>? alwaysPreparedSpells,
+    List<String>? freeUseSpells,
+    int? maxPreparedSpells,
+    bool? enablePreparation,
+  }) {
+    return CharacterSpellPreparation(
+      preparedSpells: preparedSpells ?? this.preparedSpells,
+      alwaysPreparedSpells: alwaysPreparedSpells ?? this.alwaysPreparedSpells,
+      freeUseSpells: freeUseSpells ?? this.freeUseSpells,
+      maxPreparedSpells: maxPreparedSpells ?? this.maxPreparedSpells,
+      enablePreparation: enablePreparation ?? this.enablePreparation,
+    );
+  }
+
+  /// Calculate the maximum number of prepared spells based on class, level, and modifier
+  static int calculateMaxPreparedSpells(String characterClass, int level, int modifier) {
+    // Classes that don't prepare spells
+    const nonPreparingClasses = ['sorcerer', 'warlock', 'bard', 'ranger', 'fighter', 'barbarian', 'monk', 'rogue'];
+    
+    if (nonPreparingClasses.contains(characterClass.toLowerCase())) {
+      return 0;
+    }
+
+    // Wizard: Intelligence modifier + wizard level
+    if (characterClass.toLowerCase() == 'wizard') {
+      return modifier + level;
+    }
+
+    // Cleric, Druid: Wisdom modifier + class level
+    if (['cleric', 'druid'].contains(characterClass.toLowerCase())) {
+      return modifier + level;
+    }
+
+    // Paladin: Charisma modifier + paladin level (minimum 1)
+    if (characterClass.toLowerCase() == 'paladin') {
+      return (modifier + level).clamp(1, 999);
+    }
+
+    // Artificer: Intelligence modifier + artificer level (minimum 1)
+    if (characterClass.toLowerCase() == 'artificer') {
+      return (modifier + level).clamp(1, 999);
+    }
+
+    // Default: modifier + level
+    return modifier + level;
+  }
+
+  /// Get the appropriate ability modifier for spell preparation
+  static int getSpellcastingModifier(Character character) {
+    final className = character.characterClass.toLowerCase();
+    
+    switch (className) {
+      case 'wizard':
+      case 'artificer':
+        return character.stats.getModifier(character.stats.intelligence);
+      case 'cleric':
+      case 'druid':
+      case 'ranger':
+        return character.stats.getModifier(character.stats.wisdom);
+      case 'paladin':
+      case 'sorcerer':
+      case 'bard':
+      case 'warlock':
+        return character.stats.getModifier(character.stats.charisma);
+      default:
+        // Default to intelligence for unknown classes
+        return character.stats.getModifier(character.stats.intelligence);
+    }
+  }
+
+  /// Get the current number of prepared spells (excluding always prepared)
+  int get currentPreparedCount {
+    return preparedSpells.where((spellId) => !alwaysPreparedSpells.contains(spellId)).length;
+  }
+
+  /// Get the total number of prepared spells (including always prepared)
+  int get totalPreparedCount {
+    return preparedSpells.length;
+  }
+
+  /// Check if a spell is prepared
+  bool isSpellPrepared(String spellId) {
+    return preparedSpells.contains(spellId) || alwaysPreparedSpells.contains(spellId);
+  }
+
+  /// Check if a spell is always prepared
+  bool isSpellAlwaysPrepared(String spellId) {
+    return alwaysPreparedSpells.contains(spellId);
+  }
+
+  /// Check if a spell can be used for free
+  bool isSpellFreeUse(String spellId) {
+    return freeUseSpells.contains(spellId);
+  }
+
+  /// Check if the character can prepare more spells
+  bool get canPrepareMore {
+    if (!enablePreparation) return false;
+    return currentPreparedCount < maxPreparedSpells;
+  }
+
+  /// Get remaining preparation slots
+  int get remainingSlots {
+    if (!enablePreparation) return 0;
+    return (maxPreparedSpells - currentPreparedCount).clamp(0, maxPreparedSpells);
   }
 }

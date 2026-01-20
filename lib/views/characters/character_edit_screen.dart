@@ -75,6 +75,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   late CharacterSkillChecks _skillChecks;
   late CharacterHealth _health;
   late CharacterSpellSlots _spellSlots;
+  late CharacterSpellPreparation _spellPreparation;
   late CharacterPillars _pillars;
   late List<CharacterAttack> _attacks;
   late List<String> _spells;
@@ -183,6 +184,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Initialize spell slots and spells
     _spellSlots = character.spellSlots;
+    _spellPreparation = character.spellPreparation;
     _spells = List.from(character.spells);
     _feats = List.from(character.feats);
     _personalizedSlots = List.from(character.personalizedSlots);
@@ -3350,6 +3352,21 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildSpellsTab() {
+    // Calculate maximum prepared spells using current state
+    final modifier = CharacterSpellPreparation.getSpellcastingModifier(widget.character);
+    final calculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
+      _classController.text.trim(), // Use current class from controller
+      int.tryParse(_levelController.text) ?? 1, // Use current level from controller
+      modifier,
+    );
+    
+    // Use the stored max if it's different from calculated (user modified it)
+    final maxPrepared = _spellPreparation.maxPreparedSpells == 0 
+        ? calculatedMax 
+        : _spellPreparation.maxPreparedSpells;
+    
+    final canPrepare = maxPrepared > 0;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -3365,6 +3382,77 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
           const SizedBox(height: 16),
+
+          // Spell preparation section - only show for classes that prepare spells
+          if (canPrepare) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.indigo.shade50, Colors.indigo.shade100],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.indigo.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.auto_stories, color: Colors.indigo.shade700, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Spell Preparation',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.indigo.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Maximum prepared spells: $maxPrepared (${_classController.text.trim()} level ${int.tryParse(_levelController.text) ?? 1} + $modifier modifier)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.indigo.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Currently prepared: ${_spellPreparation.currentPreparedCount}/$maxPrepared',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _spellPreparation.currentPreparedCount < maxPrepared ? Colors.green.shade700 : Colors.blue.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _showMaxPreparedDialog,
+                          icon: const Icon(Icons.edit, size: 16),
+                          label: const Text('Modify Maximum'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.indigo.shade700,
+                            elevation: 2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Group spells by level
           ..._buildSpellsByLevel(),
@@ -3517,11 +3605,54 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       for (final spellData in spellsInLevel) {
         final index = spellData['index'] as int;
         final spell = spellData['spell'] as Spell;
+        
+        // Check if spell can be prepared (only for classes that prepare spells and non-cantrips)
+        final currentCalculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
+          _classController.text.trim(), // Use current class from controller
+          int.tryParse(_levelController.text) ?? 1, // Use current level from controller
+          CharacterSpellPreparation.getSpellcastingModifier(widget.character),
+        );
+        
+        final currentMaxPrepared = _spellPreparation.maxPreparedSpells == 0 
+            ? currentCalculatedMax 
+            : _spellPreparation.maxPreparedSpells;
+        
+        final canPrepare = spell.levelNumber > 0 && // Cantrips (level 0) cannot be prepared
+            currentMaxPrepared > 0;
+        
+        // Check spell status
+        final isPrepared = _spellPreparation.isSpellPrepared(spell.id);
+        final isAlwaysPrepared = _spellPreparation.isSpellAlwaysPrepared(spell.id);
+        final isFreeUse = _spellPreparation.isSpellFreeUse(spell.id);
+        
+        // Check if we can prepare more spells
+        final canPrepareMore = _spellPreparation.currentPreparedCount < currentMaxPrepared || isAlwaysPrepared;
 
         widgets.add(
           Card(
             margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
             child: ListTile(
+              leading: canPrepare 
+                ? Checkbox(
+                    value: isPrepared,
+                    onChanged: (bool? value) {
+                      if (value == true) {
+                        if (canPrepareMore || isAlwaysPrepared) {
+                          _toggleSpellPreparation(spell.id, true);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Cannot prepare more spells. Maximum: $currentMaxPrepared'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } else {
+                        _toggleSpellPreparation(spell.id, false);
+                      }
+                    },
+                  )
+                : null,
               title: InkWell(
                 child: Text(
                   spell.name,
@@ -3532,20 +3663,138 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ),
                 onTap: () => _showSpellDetails(spell.name),
               ),
-              subtitle: Text(
-                '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}',
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                  if (isAlwaysPrepared || isFreeUse) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (isAlwaysPrepared) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star, size: 12, color: Colors.purple.shade700),
+                                const SizedBox(width: 2),
+                                Text(
+                                  'Always',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.purple.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        if (isFreeUse) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.bolt, size: 12, color: Colors.green.shade700),
+                                const SizedBox(width: 2),
+                                Text(
+                                  'Free',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.green.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ],
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () {
-                  setState(() {
-                    _spells.removeAt(index);
-                  });
+              trailing: SizedBox(
+                width: 80,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (canPrepare) ...[
+                      // Always prepared toggle
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: Icon(
+                            isAlwaysPrepared ? Icons.star : Icons.star_border,
+                            color: Colors.purple,
+                            size: 16,
+                          ),
+                          onPressed: () => _toggleAlwaysPrepared(spell.id),
+                          tooltip: 'Always prepared',
+                        ),
+                      ),
+                      // Free use toggle
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: Icon(
+                            isFreeUse ? Icons.bolt : Icons.bolt_outlined,
+                            color: Colors.green,
+                            size: 16,
+                          ),
+                          onPressed: () => _toggleFreeUse(spell.id),
+                          tooltip: 'Free use once per day',
+                        ),
+                      ),
+                    ],
+                    // Delete button
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.delete, size: 16),
+                        onPressed: () {
+                          setState(() {
+                            _spells.removeAt(index);
+                            // Remove from preparation lists if it was prepared
+                            if (isPrepared) {
+                              _toggleSpellPreparation(spell.id, false);
+                            }
+                            if (isAlwaysPrepared) {
+                              _toggleAlwaysPrepared(spell.id);
+                            }
+                            if (isFreeUse) {
+                              _toggleFreeUse(spell.id);
+                            }
+                          });
 
-                  // Auto-save the character when a spell is removed
-                  _autoSaveCharacter();
-                },
+                          // Auto-save the character when a spell is removed
+                          _autoSaveCharacter();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -5475,6 +5724,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       spells: _spells,
       feats: _feats,
       personalizedSlots: _personalizedSlots,
+      spellPreparation: _spellPreparation,
       quickGuide: _quickGuideController.text.trim(),
       backstory: _backstoryController.text.trim(),
       pillars: CharacterPillars(
@@ -6278,6 +6528,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       spells: _spells,
       feats: _feats,
       personalizedSlots: _personalizedSlots,
+      spellPreparation: _spellPreparation,
       quickGuide: _quickGuideController.text.trim(),
       backstory: _backstoryController.text.trim(),
       pillars: CharacterPillars(
@@ -6297,5 +6548,145 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
 
    // Navigator.pop(context);
+  }
+
+  /// Toggle spell preparation status
+  void _toggleSpellPreparation(String spellId, bool prepare) {
+    setState(() {
+      if (prepare) {
+        if (!_spellPreparation.preparedSpells.contains(spellId)) {
+          _spellPreparation = _spellPreparation.copyWith(
+            preparedSpells: [..._spellPreparation.preparedSpells, spellId],
+          );
+        }
+      } else {
+        _spellPreparation = _spellPreparation.copyWith(
+          preparedSpells: _spellPreparation.preparedSpells.where((id) => id != spellId).toList(),
+        );
+      }
+    });
+    _autoSaveCharacter();
+  }
+
+  /// Toggle always prepared status
+  void _toggleAlwaysPrepared(String spellId) {
+    setState(() {
+      if (_spellPreparation.isSpellAlwaysPrepared(spellId)) {
+        // Remove from always prepared
+        final newAlwaysPrepared = _spellPreparation.alwaysPreparedSpells.where((id) => id != spellId).toList();
+        _spellPreparation = _spellPreparation.copyWith(alwaysPreparedSpells: newAlwaysPrepared);
+        
+        // Also remove from regular prepared if it's there
+        if (_spellPreparation.preparedSpells.contains(spellId)) {
+          final newPrepared = _spellPreparation.preparedSpells.where((id) => id != spellId).toList();
+          _spellPreparation = _spellPreparation.copyWith(preparedSpells: newPrepared);
+        }
+      } else {
+        // Add to always prepared
+        _spellPreparation = _spellPreparation.copyWith(
+          alwaysPreparedSpells: [..._spellPreparation.alwaysPreparedSpells, spellId],
+        );
+        
+        // Also add to prepared if not already there
+        if (!_spellPreparation.preparedSpells.contains(spellId)) {
+          _spellPreparation = _spellPreparation.copyWith(
+            preparedSpells: [..._spellPreparation.preparedSpells, spellId],
+          );
+        }
+      }
+    });
+    _autoSaveCharacter();
+  }
+
+  /// Toggle free use status
+  void _toggleFreeUse(String spellId) {
+    setState(() {
+      if (_spellPreparation.isSpellFreeUse(spellId)) {
+        _spellPreparation = _spellPreparation.copyWith(
+          freeUseSpells: _spellPreparation.freeUseSpells.where((id) => id != spellId).toList(),
+        );
+      } else {
+        _spellPreparation = _spellPreparation.copyWith(
+          freeUseSpells: [..._spellPreparation.freeUseSpells, spellId],
+        );
+      }
+    });
+    _autoSaveCharacter();
+  }
+
+  /// Show dialog to modify maximum prepared spells
+  void _showMaxPreparedDialog() {
+    final controller = TextEditingController(text: _spellPreparation.maxPreparedSpells.toString());
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Modify Maximum Prepared Spells'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter the maximum number of spells this character can prepare:'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Maximum Prepared Spells',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Calculated maximum: ${CharacterSpellPreparation.calculateMaxPreparedSpells(
+                widget.character.characterClass,
+                widget.character.level,
+                CharacterSpellPreparation.getSpellcastingModifier(widget.character),
+              )}',
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final newMax = int.tryParse(controller.text);
+              if (newMax != null && newMax >= 0) {
+                setState(() {
+                  // If reducing max, uncheck ALL regular prepared spells
+                  final alwaysPreparedOnly = _spellPreparation.preparedSpells.where((spellId) => 
+                    _spellPreparation.alwaysPreparedSpells.contains(spellId)
+                  ).toList();
+                  
+                  if (newMax < _spellPreparation.currentPreparedCount) {
+                    // Clear all regular prepared spells, keep only always prepared
+                    _spellPreparation = _spellPreparation.copyWith(
+                      maxPreparedSpells: newMax,
+                      preparedSpells: [...alwaysPreparedOnly],
+                    );
+                  } else {
+                    // Just update max if no reduction needed
+                    _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: newMax);
+                  }
+                });
+                _autoSaveCharacter();
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a valid number'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 }
