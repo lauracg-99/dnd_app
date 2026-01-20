@@ -1308,6 +1308,73 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           const SizedBox(height: 16),
 
+          // Quick Guide Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.bookmark,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Quick Guide',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Essential character information for quick reference during gameplay.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _quickGuideController,
+                      decoration: const InputDecoration(
+                        hintText: 'Add quick notes about your character...\n\n'
+                            'Examples:\n'
+                            '• Key abilities and combat tactics\n'
+                            '• Important spells and their effects\n'
+                            '• Equipment and inventory highlights\n'
+                            '• Character motivations and goals\n'
+                            '• Important relationships and alliances',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 12,
+                      minLines: 3,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Languages Section
           Card(
             child: Padding(
@@ -1501,75 +1568,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ),
           ),
 
-          const SizedBox(height: 24),
-
-          // Quick Guide Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.bookmark,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Quick Guide',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Essential character information for quick reference during gameplay.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _quickGuideController,
-                      decoration: const InputDecoration(
-                        hintText: 'Add quick notes about your character...\n\n'
-                            'Examples:\n'
-                            '• Key abilities and combat tactics\n'
-                            '• Important spells and their effects\n'
-                            '• Equipment and inventory highlights\n'
-                            '• Character motivations and goals\n'
-                            '• Important relationships and alliances',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 3,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 24),
+          const SizedBox(height: 30),
 
           // Long Rest section
           Container(
