@@ -83,6 +83,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _proficiencyBonusController = TextEditingController();
   final _armorClassController = TextEditingController();
   final _speedController = TextEditingController();
+  final _initiativeController = TextEditingController();
 
   // Health controllers
   final _maxHpController = TextEditingController();
@@ -210,6 +211,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _proficiencyBonusController.text = _stats.proficiencyBonus.toString();
     _armorClassController.text = _stats.armorClass.toString();
     _speedController.text = _stats.speed.toString();
+    _initiativeController.text = _stats.initiative.toString();
     _hasInspiration = _stats.inspiration;
     _hasConcentration = _stats.hasConcentration;
 
@@ -323,6 +325,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _proficiencyBonusController.dispose();
     _armorClassController.dispose();
     _speedController.dispose();
+    _initiativeController.dispose();
     _maxHpController.dispose();
     _currentHpController.dispose();
     _tempHpController.dispose();
@@ -1196,7 +1199,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ],
           ),
           const SizedBox(height: 16),
-          
+
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: 
+              Column(children:[                
+                _buildIniciativeField(),
+                const SizedBox(height: 24)
+                ]),
+            ),
+
           // Concentration Row - only show for spellcasting classes
           if (_canCastSpells())           
             Padding(
@@ -1207,7 +1219,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 const SizedBox(height: 24)
                 ]),
             ),
-
+            
           // Health Section
           Container(
             padding: const EdgeInsets.all(16.0),
@@ -2719,6 +2731,92 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     
     debugPrint('Class "$characterClass" with subclass "$subclass" cannot cast spells');
     return false;
+  }
+
+Widget _buildIniciativeField() {
+    final currentInitiative = int.tryParse(_initiativeController.text) ?? 0;
+    final dexterityModifier = _stats.getModifier(_stats.dexterity);
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Initiative Modifier:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: _showInitiativeDialog,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: 60,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade300),
+                    ),
+                    child: Center(
+                      child: Text(
+                        currentInitiative.toString(),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Colors.blue.shade600,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Current: $currentInitiative (Dex modifier: $dexterityModifier). Usually equals dexterity modifier but can be modified by feats, items, or special abilities.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.blue.shade700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildConcentrationField() {
@@ -6878,6 +6976,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         proficiencyBonus: int.tryParse(_proficiencyBonusController.text) ?? 2,
         armorClass: int.tryParse(_armorClassController.text) ?? 10,
         speed: int.tryParse(_speedController.text) ?? 30,
+        initiative: int.tryParse(_initiativeController.text) ?? 0,
         inspiration: _hasInspiration,
         hasConcentration: _hasConcentration,
       ),
@@ -7827,6 +7926,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         proficiencyBonus: int.tryParse(_proficiencyBonusController.text) ?? 2,
         armorClass: int.tryParse(_armorClassController.text) ?? 10,
         speed: int.tryParse(_speedController.text) ?? 30,
+        initiative: int.tryParse(_initiativeController.text) ?? 0,
         inspiration: _hasInspiration,
         hasConcentration: _hasConcentration,
       ),
@@ -7984,6 +8084,66 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       default:
         return 'Intelligence'; // Default fallback
     }
+  }
+
+  /// Show dialog to modify initiative modifier
+  void _showInitiativeDialog() {
+    final currentInitiative = int.tryParse(_initiativeController.text) ?? 0;
+    final dexterityModifier = _stats.getModifier(_stats.dexterity);
+    
+    final controller = TextEditingController(text: currentInitiative.toString());
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Modify Initiative Modifier'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter initiative modifier for this character:'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Initiative Modifier',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Dexterity modifier: $dexterityModifier',
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final newInitiative = int.tryParse(controller.text);
+              if (newInitiative != null) {
+                setState(() {
+                  _initiativeController.text = newInitiative.toString();
+                });
+                _autoSaveCharacter();
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a valid number'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Show dialog to modify maximum prepared spells

@@ -52,7 +52,7 @@ class MyApp extends StatelessWidget {
           }
         },
       child: MaterialApp(
-        title: 'D&D Items Catalog',
+        title: 'D&D',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
