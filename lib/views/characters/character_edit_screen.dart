@@ -3667,24 +3667,28 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
             child: ListTile(
               leading: canPrepare 
-                ? Checkbox(
-                    value: isPrepared,
-                    onChanged: (bool? value) {
-                      if (value == true) {
-                        if (canPrepareMore || isAlwaysPrepared) {
-                          _toggleSpellPreparation(spell.id, true);
+                ? Transform.scale(
+                    scale: 1.2,
+                    child: Checkbox(
+                      shape: CircleBorder(),
+                      value: isPrepared,
+                      onChanged: (bool? value) {
+                        if (value == true) {
+                          if (canPrepareMore || isAlwaysPrepared) {
+                            _toggleSpellPreparation(spell.id, true);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Cannot prepare more spells. Maximum: $currentMaxPrepared'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Cannot prepare more spells. Maximum: $currentMaxPrepared'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          _toggleSpellPreparation(spell.id, false);
                         }
-                      } else {
-                        _toggleSpellPreparation(spell.id, false);
-                      }
-                    },
+                      },
+                    ),
                   )
                 : null,
               title: InkWell(
@@ -3692,7 +3696,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   spell.name,
                   style: const TextStyle(
                     color: Colors.blue,
-                    decoration: TextDecoration.underline,
                   ),
                 ),
                 onTap: () => _showSpellDetails(spell.name),
