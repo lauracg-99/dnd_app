@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'feats_screen.dart';
 import 'classes_screen.dart';
 import 'races_screen.dart';
+import 'backgrounds_screen.dart';
 
 class InformationScreen extends StatelessWidget {
   const InformationScreen({super.key});
@@ -78,9 +79,9 @@ class InformationScreen extends StatelessWidget {
             title: 'Backgrounds',
             icon: Icons.history_edu,
             onTap: () {
-              // Will be implemented later
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Backgrounds section coming soon!')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const BackgroundsScreen()),
               );
             },
           ),
