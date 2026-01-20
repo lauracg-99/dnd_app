@@ -244,6 +244,7 @@ class CharacterService {
     String characterClass = 'Fighter',
     String? subclass,
     String? race,
+    String? background,
   }) async {
     final now = DateTime.now();
     final characterId = '${name.toLowerCase().replaceAll(' ', '_')}_${now.millisecondsSinceEpoch}';
@@ -284,6 +285,7 @@ class CharacterService {
       level: level, // Use provided level instead of defaulting to 1
       subclass: subclass,
       race: race,
+      background: background,
       spellSlots: defaultSpellSlots,
       pillars: defaultPillars,
       appearance: defaultAppearance,

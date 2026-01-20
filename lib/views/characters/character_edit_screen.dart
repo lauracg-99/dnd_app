@@ -9,10 +9,12 @@ import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
 import '../../models/feat_model.dart';
 import '../../models/race_model.dart';
+import '../../models/background_model.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/feats_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
+import '../../viewmodels/backgrounds_viewmodel.dart';
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -34,6 +36,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   String _selectedClass = 'Fighter';
   bool _useCustomSubclass = false;
   String _selectedRace = '';
+  String _selectedBackground = '';
 
   // Death saves controllers
   List<bool> _deathSaveSuccesses = [false, false, false];
@@ -52,6 +55,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _classController = TextEditingController();
   final _subclassController = TextEditingController();
   final _raceController = TextEditingController();
+  final _backgroundController = TextEditingController();
   final _quickGuideController = TextEditingController();
   final _backstoryController = TextEditingController();
   final _featNotesController = TextEditingController();
@@ -121,9 +125,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _tabController = TabController(length: 10, vsync: this);
     _initializeCharacterData();
     
-    // Load races data
+    // Load races and backgrounds data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RacesViewModel>().loadRaces();
+      context.read<BackgroundsViewModel>().loadBackgrounds();
     });
   }
 
@@ -142,7 +147,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _classController.text = character.characterClass;
     _subclassController.text = character.subclass ?? '';
     _raceController.text = character.race ?? '';
+    _backgroundController.text = character.background ?? '';
     _selectedRace = character.race ?? '';
+    _selectedBackground = character.background ?? '';
     
     // Check if current subclass is custom (not in preset list)
     final availableSubclasses = _getSubclassesForClass(character.characterClass);
@@ -179,6 +186,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     _raceController.addListener(() {
       if (_raceController.text != (character.race ?? '')) {
+        setState(() {
+          _hasUnsavedClassChanges = true;
+        });
+      }
+    });
+    _backgroundController.addListener(() {
+      if (_backgroundController.text != (character.background ?? '')) {
         setState(() {
           _hasUnsavedClassChanges = true;
         });
@@ -291,6 +305,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _classController.dispose();
     _subclassController.dispose();
     _raceController.dispose();
+    _backgroundController.dispose();
     _quickGuideController.dispose();
     _backstoryController.dispose();
     _featNotesController.dispose();
@@ -583,6 +598,37 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               );
             },
           ),
+          const SizedBox(height: 16),
+
+          // Background selection
+          Consumer<BackgroundsViewModel>(
+            builder: (context, backgroundsViewModel, child) {
+              return DropdownButtonFormField<String>(
+                value: _backgroundController.text.isEmpty ? null : _backgroundController.text,
+                decoration: const InputDecoration(
+                  labelText: 'Background (Optional)',
+                  border: OutlineInputBorder(),
+                ),
+                items: backgroundsViewModel.backgrounds.map((background) {
+                  return DropdownMenuItem(
+                    value: background.name,
+                    child: Text(background.name),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  debugPrint('Background dropdown changed to: $value');
+                  setState(() {
+                    _backgroundController.text = value ?? '';
+                    _selectedBackground = value ?? '';
+                    _hasUnsavedClassChanges = true;
+                    debugPrint('_backgroundController.text: "${_backgroundController.text}"');
+                    debugPrint('_selectedBackground: "${_selectedBackground}"');
+                    debugPrint('_hasUnsavedClassChanges: $_hasUnsavedClassChanges');
+                  });
+                },
+              );
+            },
+          ),
           const SizedBox(height: 8),
           
           // Class save button
@@ -698,6 +744,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     IconButton(
                       onPressed: () {
                         setState(() {
+                          // If exiting edit mode (clicking "Done"), save changes
+                          if (_isEditingCharacterCover && _hasUnsavedClassChanges) {
+                            _saveCharacter('Character updated!');
+                          }
                           _isEditingCharacterCover = !_isEditingCharacterCover;
                         });
                       },
@@ -943,67 +993,192 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       : null;
                   
                   return _isEditingCharacterCover
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 16.0),
-                          child: DropdownButtonFormField<String>(
-                              value: _raceController.text.isEmpty ? null : _raceController.text,
-                              decoration: InputDecoration(
-                                labelText: 'Race (Optional)',
-                                border: OutlineInputBorder(),
-                                suffixIcon: selectedRace != null 
-                                    ? IconButton(
-                                        icon: const Icon(Icons.info_outline),
-                                        onPressed: () => _showRaceDetailsModal(selectedRace),
-                                        tooltip: 'View race details',
-                                      )
-                                    : null,
-                              ),
-                              items: uniqueRaces.values.map<DropdownMenuItem<String>>((race) {
-                                return DropdownMenuItem<String>(
-                                  value: race.name,
-                                  child: Text(race.name),
+                      ? Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 16.0),
+                              child: DropdownButtonFormField<String>(
+                                  value: _raceController.text.isEmpty ? null : _raceController.text,
+                                  decoration: InputDecoration(
+                                    labelText: 'Race (Optional)',
+                                    border: OutlineInputBorder(),
+                                    suffixIcon: selectedRace != null 
+                                        ? IconButton(
+                                            icon: const Icon(Icons.info_outline),
+                                            onPressed: () => _showRaceDetailsModal(selectedRace),
+                                            tooltip: 'View race details',
+                                          )
+                                        : null,
+                                  ),
+                                  items: uniqueRaces.values.map<DropdownMenuItem<String>>((race) {
+                                    return DropdownMenuItem<String>(
+                                      value: race.name,
+                                      child: Text(race.name),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _raceController.text = value ?? '';
+                                      _selectedRace = value ?? '';
+                                      _hasUnsavedClassChanges = true;
+                                    });
+                                  },
+                                ),
+                            ),
+                            const SizedBox(height: 16),
+                            Consumer<BackgroundsViewModel>(
+                              builder: (context, backgroundsViewModel, child) {
+                                Background? selectedBackground;
+                                if (_backgroundController.text.isNotEmpty && backgroundsViewModel.backgrounds.isNotEmpty) {
+                                  try {
+                                    selectedBackground = backgroundsViewModel.backgrounds.firstWhere(
+                                      (background) => background.name == _backgroundController.text,
+                                    );
+                                  } catch (e) {
+                                    // Background not found, keep selectedBackground as null
+                                    debugPrint('Background "${_backgroundController.text}" not found in list');
+                                  }
+                                }
+                                
+                                return DropdownButtonFormField<String>(
+                                  value: _backgroundController.text.isEmpty ? null : _backgroundController.text,
+                                  decoration: InputDecoration(
+                                    labelText: 'Background (Optional)',
+                                    border: OutlineInputBorder(),
+                                    suffixIcon: selectedBackground != null 
+                                        ? IconButton(
+                                            icon: const Icon(Icons.info_outline),
+                                            onPressed: () => _showBackgroundDetailsModal(selectedBackground!),
+                                            tooltip: 'View background details',
+                                          )
+                                        : null,
+                                  ),
+                                  items: backgroundsViewModel.backgrounds.map((background) {
+                                    return DropdownMenuItem(
+                                      value: background.name,
+                                      child: Text(background.name),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    debugPrint('Character cover background dropdown changed to: $value');
+                                    setState(() {
+                                      _backgroundController.text = value ?? '';
+                                      _selectedBackground = value ?? '';
+                                      _hasUnsavedClassChanges = true;
+                                      debugPrint('Cover _backgroundController.text: "${_backgroundController.text}"');
+                                      debugPrint('Cover _selectedBackground: "${_selectedBackground}"');
+                                      debugPrint('Cover _hasUnsavedClassChanges: $_hasUnsavedClassChanges');
+                                    });
+                                  },
                                 );
-                              }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _raceController.text = value ?? '';
-                                  _selectedRace = value ?? '';
-                                  _hasUnsavedClassChanges = true;
-                                });
                               },
                             ),
+                          ],
                         )
                       : GestureDetector(
                           onTap: selectedRace != null 
                               ? () => _showRaceDetailsModal(selectedRace)
                               : null,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                                _raceController.text.isNotEmpty 
-                                    ? _raceController.text
-                                    : 'Race',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: selectedRace != null 
-                                      ? Colors.blue.shade600
-                                      : Colors.grey.shade600,
-                                  fontStyle: FontStyle.italic,
-                                  decoration: selectedRace != null 
-                                      ? TextDecoration.underline
+                          child: Consumer<BackgroundsViewModel>(
+                          builder: (context, backgroundsViewModel, child) {
+                            Background? selectedBackground;
+                            if (_backgroundController.text.isNotEmpty && backgroundsViewModel.backgrounds.isNotEmpty) {
+                              try {
+                                selectedBackground = backgroundsViewModel.backgrounds.firstWhere(
+                                  (background) => background.name == _backgroundController.text,
+                                );
+                              } catch (e) {
+                                // Background not found, keep selectedBackground as null
+                                debugPrint('Background "${_backgroundController.text}" not found in list');
+                              }
+                            }
+                            
+                            final hasRace = _raceController.text.isNotEmpty;
+                            final hasBackground = _backgroundController.text.isNotEmpty;
+                            
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Race display
+                                if (hasRace) ...[
+                                  
+                                GestureDetector(
+                                  onTap: selectedRace != null 
+                                      ? () => _showRaceDetailsModal(selectedRace)
                                       : null,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                          ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                        _raceController.text.isNotEmpty 
+                                            ? _raceController.text
+                                            : 'Race',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: selectedRace != null 
+                                              ? Colors.blue.shade600
+                                              : Colors.grey.shade600,
+                                          fontStyle: FontStyle.italic,
+                                          decoration: selectedRace != null 
+                                              ? TextDecoration.underline
+                                              : null,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                  ),
+                                ),],
+                                
+                                // Background display
+                                if (hasBackground) ...[ 
+                                  Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Text(
+                                          ' • ',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: selectedBackground != null 
+                                                ? Colors.blue.shade600
+                                                : Colors.grey.shade600,
+                                            fontStyle: FontStyle.italic,                                            
+                                          ),
+                                          textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                                                  
+                                  GestureDetector(
+                                    onTap: selectedBackground != null
+                                        ? () => _showBackgroundDetailsModal(selectedBackground!)
+                                        : null,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Text(
+                                          _backgroundController.text,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: selectedBackground != null 
+                                                ? Colors.blue.shade600
+                                                : const Color.fromARGB(255, 117, 117, 117),
+                                            fontStyle: FontStyle.italic,
+                                            decoration: selectedBackground != null 
+                                                ? TextDecoration.underline
+                                                : null,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            );
+                          },
+                        ),
                         );
                 },
               ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          
+          const SizedBox(height: 16),
+
           // Combat Stats Row
           Row(
             children: [
@@ -6312,6 +6487,156 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
+  void _showBackgroundDetailsModal(Background background) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            expand: false,
+            builder: (_, controller) {
+              return SingleChildScrollView(
+                controller: controller,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[400],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        background.name,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Source: ${background.source}',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Background info
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.history_edu,
+                              color: Colors.purple.shade700,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Background Information',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.purple.shade700,
+                                    ),
+                                  ),
+                                  if (background.goldPieces != null)
+                                    Text(
+                                      'Starting Gold: ${background.goldPieces} gp',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.purple.shade600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Features
+                      if (background.features.isNotEmpty) ...[
+                        Text(
+                          'Features:',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        ...background.features.map((feature) => Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                feature.name,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                feature.description,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        )),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Description (if available from features)
+                      if (background.features.isNotEmpty && background.features.first.description.isNotEmpty) ...[
+                        Text(
+                          'Description:',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          background.features.first.description,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Close button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Close'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+    );
+  }
+
   void _showSpellDetailsModal(Spell spell) {
     showModalBottomSheet(
       context: context,
@@ -6536,6 +6861,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _raceController.text.trim().isEmpty
               ? null
               : _raceController.text.trim(),
+      background:
+          _backgroundController.text.trim().isEmpty
+              ? null
+              : _backgroundController.text.trim(),
       stats: CharacterStats(
         strength: int.tryParse(_strengthController.text) ?? 10,
         dexterity: int.tryParse(_dexterityController.text) ?? 10,
@@ -7463,6 +7792,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   void _saveCharacter([String? successMessage]) {
     // Update all character data from controllers
+    debugPrint('=== SAVE CHARACTER DEBUG ===');
+    debugPrint('Background controller text: "${_backgroundController.text}"');
+    debugPrint('Selected background: "$_selectedBackground"');
+    debugPrint('Has unsaved changes: $_hasUnsavedClassChanges');
+    
     final updatedCharacter = widget.character.copyWith(
       name: _nameController.text.trim(),
       customImagePath: _customImagePath,
@@ -7476,6 +7810,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _raceController.text.trim().isEmpty
               ? null
               : _raceController.text.trim(),
+      background:
+          _backgroundController.text.trim().isEmpty
+              ? null
+              : _backgroundController.text.trim(),
       stats: CharacterStats(
         strength: int.tryParse(_strengthController.text) ?? 10,
         dexterity: int.tryParse(_dexterityController.text) ?? 10,
@@ -7545,6 +7883,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       ),
       updatedAt: DateTime.now(),
     );
+
+    debugPrint('=== SAVING CHARACTER ===');
+    debugPrint('Updated character background: ${updatedCharacter.background}');
+    debugPrint('========================');
 
     context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
 

@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'dart:io';
 import '../../models/character_model.dart';
 import '../../models/race_model.dart';
+import '../../models/background_model.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
+import '../../viewmodels/backgrounds_viewmodel.dart';
 import 'character_edit_screen.dart';
 
 class CharactersListScreen extends StatefulWidget {
@@ -384,14 +386,16 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
   String _selectedClass = 'Fighter';
   final _subclassController = TextEditingController();
   final _raceController = TextEditingController();
+  final _backgroundController = TextEditingController();
   bool _useCustomSubclass = false;
 
   @override
   void initState() {
     super.initState();
-    // Load races data
+    // Load races and backgrounds data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RacesViewModel>().loadRaces();
+      context.read<BackgroundsViewModel>().loadBackgrounds();
     });
   }
 
@@ -561,6 +565,7 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
     _levelController.dispose();
     _subclassController.dispose();
     _raceController.dispose();
+    _backgroundController.dispose();
     super.dispose();
   }
 
@@ -972,6 +977,85 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
                 },
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Background selection
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Consumer<BackgroundsViewModel>(
+                builder: (context, backgroundsViewModel, child) {
+                  return DropdownButtonFormField<String>(
+                    value: _backgroundController.text.isEmpty ? null : _backgroundController.text,
+                    decoration: const InputDecoration(
+                      labelText: 'Background (Optional)',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(16),
+                    ),
+                    isExpanded: true,
+                    items: [
+                      if (_backgroundController.text.isNotEmpty)
+                        DropdownMenuItem(
+                          value: '__CLEAR__',
+                          child: Row(
+                            children: [
+                              Icon(Icons.clear, color: Colors.red, size: 20),
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: Text(
+                                  'Clear Background',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ...backgroundsViewModel.backgrounds.map((background) {
+                        return DropdownMenuItem(
+                          value: background.name,
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: Text(
+                                  background.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        if (value == '__CLEAR__') {
+                          _backgroundController.text = '';
+                        } else {
+                          _backgroundController.text = value ?? '';
+                        }
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Action Buttons
@@ -1025,6 +1109,9 @@ class _CreateCharacterDialogState extends State<CreateCharacterDialog> {
                               race: _raceController.text.trim().isEmpty
                                   ? null
                                   : _raceController.text.trim(),
+                              background: _backgroundController.text.trim().isEmpty
+                                  ? null
+                                  : _backgroundController.text.trim(),
                             );
                           },
                     style: ElevatedButton.styleFrom(

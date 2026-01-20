@@ -13,6 +13,7 @@ class Character extends BaseModel {
   final int level;
   final String? subclass;
   final String? race;
+  final String? background;
   final List<CharacterAttack> attacks;
   final CharacterSpellSlots spellSlots;
   final List<String> spells;
@@ -42,6 +43,7 @@ class Character extends BaseModel {
     required this.level,
     this.subclass,
     this.race,
+    this.background,
     this.attacks = const [],
     required this.spellSlots,
     this.spells = const [],
@@ -76,6 +78,7 @@ class Character extends BaseModel {
         'level': {'value': level},
         if (subclass != null) 'subclass': {'value': subclass},
         if (race != null) 'race': {'value': race},
+        if (background != null) 'background': {'value': background},
         'attacks': attacks.map((attack) => attack.toJson()).toList(),
         'spell_slots': spellSlots.toJson(),
         'spells': {'value': spells},
@@ -111,6 +114,7 @@ class Character extends BaseModel {
       level: _getValue<int>(stats, 'level', defaultValue: 1),
       subclass: _getValueNullable<String?>(stats, 'subclass', defaultValue: null),
       race: _getValueNullable<String?>(stats, 'race', defaultValue: null),
+      background: _getValueNullable<String?>(stats, 'background', defaultValue: null),
       attacks: _getValue<List<dynamic>>(stats, 'attacks', defaultValue: const [])
           .map((attack) => CharacterAttack.fromJson(attack as Map<String, dynamic>))
           .toList(),
@@ -215,6 +219,7 @@ class Character extends BaseModel {
     int? level,
     String? subclass,
     String? race,
+    String? background,
     List<CharacterAttack>? attacks,
     CharacterSpellSlots? spellSlots,
     List<String>? spells,
@@ -244,6 +249,7 @@ class Character extends BaseModel {
       level: level ?? this.level,
       subclass: subclass ?? this.subclass,
       race: race ?? this.race,
+      background: background ?? this.background,
       attacks: attacks ?? this.attacks,
       spellSlots: spellSlots ?? this.spellSlots,
       spells: spells ?? this.spells,
