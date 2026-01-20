@@ -84,6 +84,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _armorClassController = TextEditingController();
   final _speedController = TextEditingController();
   final _initiativeController = TextEditingController();
+  
+  // Flag to track if initiative has been manually modified
+  bool _initiativeManuallyModified = false;
 
   // Health controllers
   final _maxHpController = TextEditingController();
@@ -211,7 +214,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _proficiencyBonusController.text = _stats.proficiencyBonus.toString();
     _armorClassController.text = _stats.armorClass.toString();
     _speedController.text = _stats.speed.toString();
-    _initiativeController.text = _stats.initiative.toString();
+    // Initialize initiative - check if it matches dexterity modifier to determine if manually modified
+    final dexterityModifier = _stats.getModifier(_stats.dexterity);
+    if (_stats.initiative == dexterityModifier) {
+      _initiativeController.text = dexterityModifier.toString();
+      _initiativeManuallyModified = false;
+    } else {
+      _initiativeController.text = _stats.initiative.toString();
+      _initiativeManuallyModified = true;
+    }
     _hasInspiration = _stats.inspiration;
     _hasConcentration = _stats.hasConcentration;
 
@@ -281,7 +292,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _conflictController.addListener(_autoSaveCharacter);
 
     _strengthController.addListener(_autoSaveCharacter);
-    _dexterityController.addListener(_autoSaveCharacter);
+    _dexterityController.addListener(_onDexterityChanged);
     _constitutionController.addListener(_autoSaveCharacter);
     _intelligenceController.addListener(_autoSaveCharacter);
     _wisdomController.addListener(_autoSaveCharacter);
@@ -2735,7 +2746,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
 Widget _buildIniciativeField() {
     final currentInitiative = int.tryParse(_initiativeController.text) ?? 0;
-    final dexterityModifier = _stats.getModifier(_stats.dexterity);
+    final currentDexterity = int.tryParse(_dexterityController.text) ?? 10;
+    final dexterityModifier = ((currentDexterity - 10) / 2).floor();
     
     return Container(
       decoration: BoxDecoration(
@@ -8128,6 +8140,7 @@ Widget _buildIniciativeField() {
               if (newInitiative != null) {
                 setState(() {
                   _initiativeController.text = newInitiative.toString();
+                  _initiativeManuallyModified = true;
                 });
                 _autoSaveCharacter();
                 Navigator.pop(context);
@@ -8144,6 +8157,17 @@ Widget _buildIniciativeField() {
         ],
       ),
     );
+  }
+
+  /// Handle dexterity stat changes - always reset initiative to match new dexterity modifier
+  void _onDexterityChanged() {
+    setState(() {
+      final currentDexterity = int.tryParse(_dexterityController.text) ?? 10;
+      final newDexterityModifier = ((currentDexterity - 10) / 2).floor();
+      _initiativeController.text = newDexterityModifier.toString();
+      _initiativeManuallyModified = false; // Reset to auto-calculated state
+    });
+    _autoSaveCharacter();
   }
 
   /// Show dialog to modify maximum prepared spells
