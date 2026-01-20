@@ -105,6 +105,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   
   // Inspiration state
   bool _hasInspiration = false;
+  
+  // Concentration state
+  bool _hasConcentration = false;
 
   // Spell filter states
   bool _filterByCharacterClass = true;
@@ -194,6 +197,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _armorClassController.text = _stats.armorClass.toString();
     _speedController.text = _stats.speed.toString();
     _hasInspiration = _stats.inspiration;
+    _hasConcentration = _stats.hasConcentration;
 
     // Initialize saving throws and skill checks
     _savingThrows = character.savingThrows;
@@ -1010,6 +1014,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          
+          // Concentration Row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: _buildConcentrationField(),
+          ),
           const SizedBox(height: 24),
 
           // Health Section
@@ -1252,7 +1263,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         'Failures:',
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                       ),
-                      const SizedBox(width: 36),
+                      const SizedBox(width: 35),
                       ...List.generate(3, (index) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -2420,14 +2431,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildInspirationField() {
+    final isActiveColor = _hasInspiration ? Colors.green : Colors.blue;
+    
     return Container(
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
+        color: _hasInspiration ? Colors.green.shade50 : Colors.blue.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade200),
+        border: Border.all(color: _hasInspiration ? Colors.green.shade200 : Colors.blue.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
+            color: (_hasInspiration ? Colors.green : Colors.blue).withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -2439,7 +2452,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           children: [
             Icon(
               _hasInspiration ? Icons.lightbulb : Icons.lightbulb_outline,
-              color: Colors.blue.shade600,
+              color: isActiveColor.shade600,
               size: 24,
             ),
             const SizedBox(height: 8),
@@ -2448,7 +2461,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Colors.blue.shade700,
+                color: isActiveColor.shade700,
               ),
             ),
             const SizedBox(height: 4),
@@ -2458,7 +2471,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade100),
+                border: Border.all(color: isActiveColor.shade100),
               ),
               child: InkWell(
                 onTap: () {
@@ -2470,10 +2483,86 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 borderRadius: BorderRadius.circular(8),
                 child: Icon(
                         _hasInspiration ? Icons.check_circle : Icons.circle_outlined,
-                        color: _hasInspiration ? Colors.blue.shade800 : Colors.grey.shade400,
+                        color: _hasInspiration ? Colors.green.shade800 : Colors.grey.shade400,
                         size: 20,
                       ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConcentrationField() {
+    final isActiveColor = _hasConcentration ? Colors.green : Colors.purple;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: _hasConcentration ? Colors.green.shade50 : Colors.purple.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _hasConcentration ? Colors.green.shade200 : Colors.purple.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: (_hasConcentration ? Colors.green : Colors.purple).withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Spell Concentration',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _hasConcentration ? Colors.green.shade700 : Colors.purple.shade700,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _hasConcentration = !_hasConcentration;
+                      _autoSaveCharacter();
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Icon(
+                    _hasConcentration ? Icons.check_circle : Icons.circle_outlined,
+                    color: _hasConcentration ? Colors.green.shade800 : Colors.grey.shade400,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: isActiveColor.shade600,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'You must pass a Constitution Saving Throw (CON ST) when you take damage (DC 10 or half the damage, whichever is greater) and you can only maintain one concentration spell at a time, losing it if you are incapacitated, die, or cast another spell that requires it.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isActiveColor.shade700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -6386,6 +6475,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         armorClass: int.tryParse(_armorClassController.text) ?? 10,
         speed: int.tryParse(_speedController.text) ?? 30,
         inspiration: _hasInspiration,
+        hasConcentration: _hasConcentration,
       ),
       savingThrows: _savingThrows,
       skillChecks: _skillChecks,
@@ -7324,6 +7414,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         armorClass: int.tryParse(_armorClassController.text) ?? 10,
         speed: int.tryParse(_speedController.text) ?? 30,
         inspiration: _hasInspiration,
+        hasConcentration: _hasConcentration,
       ),
       savingThrows: _savingThrows,
       skillChecks: _skillChecks,

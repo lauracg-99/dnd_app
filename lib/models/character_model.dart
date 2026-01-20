@@ -275,6 +275,7 @@ class CharacterStats {
   final int armorClass;
   final int speed;
   final bool inspiration;
+  final bool hasConcentration;
 
   const CharacterStats({
     required this.strength,
@@ -287,6 +288,7 @@ class CharacterStats {
     this.armorClass = 10,
     this.speed = 30,
     this.inspiration = false,
+    this.hasConcentration = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -300,6 +302,7 @@ class CharacterStats {
     'armor_class': {'value': armorClass},
     'speed': {'value': speed},
     'inspiration': {'value': inspiration},
+    'has_concentration': {'value': hasConcentration},
   };
 
   factory CharacterStats.fromJson(Map<String, dynamic> json) {
@@ -314,6 +317,7 @@ class CharacterStats {
       armorClass: Character._getValue<int>(json, 'armor_class', defaultValue: 10),
       speed: Character._getValue<int>(json, 'speed', defaultValue: 30),
       inspiration: Character._getValue<bool>(json, 'inspiration', defaultValue: false),
+      hasConcentration: Character._getValue<bool>(json, 'has_concentration', defaultValue: false),
     );
   }
 
