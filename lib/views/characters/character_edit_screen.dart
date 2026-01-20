@@ -2840,33 +2840,33 @@ Widget _buildIniciativeField() {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Spell Concentration',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: _hasConcentration ? Colors.green.shade700 : Colors.purple.shade700,
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _hasConcentration = !_hasConcentration;
+                  _autoSaveCharacter();
+                });
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Spell Concentration',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _hasConcentration ? Colors.green.shade700 : Colors.purple.shade700,
+                      ),
                     ),
                   ),
-                ),
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      _hasConcentration = !_hasConcentration;
-                      _autoSaveCharacter();
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Icon(
+                  Icon(
                     _hasConcentration ? Icons.check_circle : Icons.circle_outlined,
                     color: _hasConcentration ? Colors.green.shade800 : Colors.grey.shade400,
                     size: 24,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 8),
             Row(
