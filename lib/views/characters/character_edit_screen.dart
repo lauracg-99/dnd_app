@@ -35,6 +35,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   bool _useCustomSubclass = false;
   String _selectedRace = '';
 
+  // Death saves controllers
+  List<bool> _deathSaveSuccesses = [false, false, false];
+  List<bool> _deathSaveFailures = [false, false, false];
+
+  // Languages controller
+  final _languagesController = TextEditingController();
+
+  // Money and items controllers
+  final _moneyController = TextEditingController();
+  final _itemsController = TextEditingController();
+
   // Form controllers
   final _nameController = TextEditingController();
   final _levelController = TextEditingController();
@@ -136,6 +147,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     
     _quickGuideController.text = character.quickGuide;
     _backstoryController.text = character.backstory;
+
+    // Initialize death saves
+    _deathSaveSuccesses = List.from(character.deathSaves.successes);
+    _deathSaveFailures = List.from(character.deathSaves.failures);
+
+    // Initialize languages and money/items
+    _languagesController.text = character.languages.languages.join(', ');
+    _moneyController.text = character.moneyItems.money;
+    _itemsController.text = character.moneyItems.items.join('\n');
 
     // Add listeners for class changes
     _classController.addListener(() {
@@ -1173,6 +1193,314 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Death Saving Throws Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Death Saving Throws',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
+                  ),
+                  const SizedBox(height: 16),
+                  // Successes row
+                  Row(
+                    children: [
+                      Text(
+                        'Successes:',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 16),
+                      ...List.generate(3, (index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _deathSaveSuccesses[index] = !_deathSaveSuccesses[index];
+                              });
+                              _autoSaveCharacter();
+                            },
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: _deathSaveSuccesses[index] ? Colors.green : Colors.grey.shade300,
+                                border: Border.all(color: Colors.grey.shade400),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: _deathSaveSuccesses[index] 
+                                  ? Icon(Icons.check, color: Colors.white, size: 16)
+                                  : const SizedBox.shrink(),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Failures row
+                  Row(
+                    children: [
+                      Text(
+                        'Failures:',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 36),
+                      ...List.generate(3, (index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _deathSaveFailures[index] = !_deathSaveFailures[index];
+                              });
+                              _autoSaveCharacter();
+                            },
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: _deathSaveFailures[index] ? Colors.red : Colors.grey.shade300,
+                                border: Border.all(color: Colors.grey.shade400),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: _deathSaveFailures[index] 
+                                  ? Icon(Icons.close, color: Colors.white, size: 16)
+                                  : const SizedBox.shrink(),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Clear button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _deathSaveSuccesses = [false, false, false];
+                          _deathSaveFailures = [false, false, false];
+                        });
+                        _autoSaveCharacter();
+                      },                      
+                      label: const Text('Clear All'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade100,
+                        foregroundColor: Colors.blue.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Languages Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.language,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Languages',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'List all languages your character can speak and understand.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _languagesController,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter your character\'s languages...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 4,
+                      minLines: 1,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Money and Items Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.monetization_on,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Money & Items',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Track your character\'s wealth and possessions.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Money field
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _moneyController,
+                      decoration: const InputDecoration(
+                        labelText: 'Money',
+                        hintText: 'Enter your character\'s wealth...\n\n'
+                            'Examples:\n'
+                            '• 150 gp, 50 sp, 25 cp\n'
+                            '• 2,000 gp\n'
+                            '• Pocket change: 5 gp, 12 sp, 8 cp\n'
+                            '• Bank funds: 10,000 gp',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Items field
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _itemsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Items & Equipment',
+                        hintText: 'List your character\'s equipment and possessions...\n\n'
+                            'Weapons:\n'
+                            '• Longsword +1, Shield +1\n'
+                            '• Shortbow with 20 arrows\n'
+                            '• Dagger +2\n\n'
+                            'Armor:\n'
+                            '• Chain mail armor\n'
+                            '• Steel shield\n'
+                            '• Helmet of protection\n\n'
+                            'Magic Items:\n'
+                            '• Ring of invisibility\n'
+                            '• Amulet of health\n'
+                            '• Boots of speed\n'
+                            '• Cloak of elvenkind\n\n'
+                            'Tools & Equipment:\n'
+                            '• Thieves\' tools\n'
+                            '• Climbing gear\n'
+                            '• Rope 50ft\n'
+                            '• Rations for 1 week\n'
+                            '• Waterskin\n'
+                            '• Bedroll and blanket',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 12,
+                      minLines: 6,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Colors.grey.shade600,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Auto-saves automatically • No character limit • Rich text supported',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           const SizedBox(height: 24),
 
           // Quick Guide Section
@@ -6086,6 +6414,25 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         additionalDetails: _additionalDetailsController.text.trim(),
         appearanceImagePath: _appearanceImagePath ?? '',
       ),
+      deathSaves: CharacterDeathSaves(
+        successes: _deathSaveSuccesses,
+        failures: _deathSaveFailures,
+      ),
+      languages: CharacterLanguages(
+        languages: _languagesController.text
+            .split(',')
+            .map((lang) => lang.trim())
+            .where((lang) => lang.isNotEmpty)
+            .toList(),
+      ),
+      moneyItems: CharacterMoneyItems(
+        money: _moneyController.text.trim(),
+        items: _itemsController.text
+            .split('\n')
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty)
+            .toList(),
+      ),
       updatedAt: DateTime.now(),
     );
 
@@ -7004,6 +7351,25 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         eyeColor: _eyeColorController.text.trim(),
         additionalDetails: _additionalDetailsController.text.trim(),
         appearanceImagePath: _appearanceImagePath ?? '',
+      ),
+      deathSaves: CharacterDeathSaves(
+        successes: _deathSaveSuccesses,
+        failures: _deathSaveFailures,
+      ),
+      languages: CharacterLanguages(
+        languages: _languagesController.text
+            .split(',')
+            .map((lang) => lang.trim())
+            .where((lang) => lang.isNotEmpty)
+            .toList(),
+      ),
+      moneyItems: CharacterMoneyItems(
+        money: _moneyController.text.trim(),
+        items: _itemsController.text
+            .split('\n')
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty)
+            .toList(),
       ),
       updatedAt: DateTime.now(),
     );

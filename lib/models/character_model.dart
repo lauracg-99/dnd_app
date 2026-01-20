@@ -24,6 +24,9 @@ class Character extends BaseModel {
   final String featNotes;
   final CharacterPillars pillars;
   final CharacterAppearance appearance;
+  final CharacterDeathSaves deathSaves;
+  final CharacterLanguages languages;
+  final CharacterMoneyItems moneyItems;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -49,6 +52,9 @@ class Character extends BaseModel {
     this.backstory = '',
     required this.pillars,
     required this.appearance,
+    required this.deathSaves,
+    required this.languages,
+    required this.moneyItems,
     this.featNotes = '',
     required this.createdAt,
     required this.updatedAt,
@@ -80,6 +86,9 @@ class Character extends BaseModel {
         'backstory': {'value': backstory},
         'pillars': pillars.toJson(),
         'appearance': appearance.toJson(),
+        'death_saves': deathSaves.toJson(),
+        'languages': languages.toJson(),
+        'money_items': moneyItems.toJson(),
         'feat_notes': {'value': featNotes},
         'created_at': {'value': createdAt.toIso8601String()},
         'updated_at': {'value': updatedAt.toIso8601String()},
@@ -116,6 +125,9 @@ class Character extends BaseModel {
       backstory: _getValue<String>(stats, 'backstory', defaultValue: ''),
       pillars: CharacterPillars.fromJson(_getValue<Map<String, dynamic>>(stats, 'pillars')),
       appearance: CharacterAppearance.fromJson(_getValue<Map<String, dynamic>>(stats, 'appearance', defaultValue: const {})),
+      deathSaves: CharacterDeathSaves.fromJson(_getValue<Map<String, dynamic>>(stats, 'death_saves', defaultValue: const {})),
+      languages: CharacterLanguages.fromJson(_getValue<Map<String, dynamic>>(stats, 'languages', defaultValue: const {})),
+      moneyItems: CharacterMoneyItems.fromJson(_getValue<Map<String, dynamic>>(stats, 'money_items', defaultValue: const {})),
       featNotes: _getValue<String>(stats, 'feat_notes', defaultValue: ''),
       createdAt: DateTime.parse(_getValue<String>(stats, 'created_at')),
       updatedAt: DateTime.parse(_getValue<String>(stats, 'updated_at')),
@@ -213,6 +225,9 @@ class Character extends BaseModel {
     String? backstory,
     CharacterPillars? pillars,
     CharacterAppearance? appearance,
+    CharacterDeathSaves? deathSaves,
+    CharacterLanguages? languages,
+    CharacterMoneyItems? moneyItems,
     String? featNotes,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -239,6 +254,9 @@ class Character extends BaseModel {
       backstory: backstory ?? this.backstory,
       pillars: pillars ?? this.pillars,
       appearance: appearance ?? this.appearance,
+      deathSaves: deathSaves ?? this.deathSaves,
+      languages: languages ?? this.languages,
+      moneyItems: moneyItems ?? this.moneyItems,
       featNotes: featNotes ?? this.featNotes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1054,5 +1072,99 @@ class CharacterSpellPreparation {
   int get remainingSlots {
     if (!enablePreparation) return 0;
     return (maxPreparedSpells - currentPreparedCount).clamp(0, maxPreparedSpells);
+  }
+}
+
+class CharacterDeathSaves {
+  final List<bool> successes;
+  final List<bool> failures;
+
+  const CharacterDeathSaves({
+    this.successes = const [false, false, false],
+    this.failures = const [false, false, false],
+  });
+
+  Map<String, dynamic> toJson() => {
+    'successes': successes,
+    'failures': failures,
+  };
+
+  factory CharacterDeathSaves.fromJson(Map<String, dynamic> json) {
+    return CharacterDeathSaves(
+      successes: List<bool>.from(json['successes'] ?? [false, false, false]),
+      failures: List<bool>.from(json['failures'] ?? [false, false, false]),
+    );
+  }
+
+  CharacterDeathSaves copyWith({
+    List<bool>? successes,
+    List<bool>? failures,
+  }) {
+    return CharacterDeathSaves(
+      successes: successes ?? this.successes,
+      failures: failures ?? this.failures,
+    );
+  }
+
+  void clearAll() {
+    // This method is called from UI to clear all saves
+  }
+}
+
+class CharacterLanguages {
+  final List<String> languages;
+
+  const CharacterLanguages({
+    this.languages = const [],
+  });
+
+  Map<String, dynamic> toJson() => {
+    'languages': languages,
+  };
+
+  factory CharacterLanguages.fromJson(Map<String, dynamic> json) {
+    return CharacterLanguages(
+      languages: List<String>.from(json['languages'] ?? []),
+    );
+  }
+
+  CharacterLanguages copyWith({
+    List<String>? languages,
+  }) {
+    return CharacterLanguages(
+      languages: languages ?? this.languages,
+    );
+  }
+}
+
+class CharacterMoneyItems {
+  final String money;
+  final List<String> items;
+
+  const CharacterMoneyItems({
+    this.money = '',
+    this.items = const [],
+  });
+
+  Map<String, dynamic> toJson() => {
+    'money': money,
+    'items': items,
+  };
+
+  factory CharacterMoneyItems.fromJson(Map<String, dynamic> json) {
+    return CharacterMoneyItems(
+      money: json['money'] ?? '',
+      items: List<String>.from(json['items'] ?? []),
+    );
+  }
+
+  CharacterMoneyItems copyWith({
+    String? money,
+    List<String>? items,
+  }) {
+    return CharacterMoneyItems(
+      money: money ?? this.money,
+      items: items ?? this.items,
+    );
   }
 }

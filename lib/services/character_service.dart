@@ -263,6 +263,9 @@ class CharacterService {
     final defaultSpellSlots = CharacterSpellSlots();
     final defaultPillars = CharacterPillars();
     final defaultAppearance = CharacterAppearance();
+    final defaultDeathSaves = CharacterDeathSaves();
+    final defaultLanguages = CharacterLanguages();
+    final defaultMoneyItems = CharacterMoneyItems();
     
     final character = Character(
       id: characterId,
@@ -278,6 +281,9 @@ class CharacterService {
       spellSlots: defaultSpellSlots,
       pillars: defaultPillars,
       appearance: defaultAppearance,
+      deathSaves: defaultDeathSaves,
+      languages: defaultLanguages,
+      moneyItems: defaultMoneyItems,
       createdAt: now,
       updatedAt: now,
     );
