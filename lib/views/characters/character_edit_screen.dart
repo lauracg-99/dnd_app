@@ -3453,18 +3453,30 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       ),
                       if (isModified) ...[
                         const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: 0);
-                            });
-                            _autoSaveCharacter();
-                          },
-                          icon: const Icon(Icons.refresh, size: 16),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.green.shade50,
-                            foregroundColor: Colors.green.shade700,
-                            padding: const EdgeInsets.all(8),
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 2,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: 0);
+                              });
+                              _autoSaveCharacter();
+                            },
+                            icon: const Icon(Icons.refresh, size: 16),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.indigo.shade700,
+                              padding: const EdgeInsets.all(8),
+                            ),
                           ),
                         ),
                       ],
