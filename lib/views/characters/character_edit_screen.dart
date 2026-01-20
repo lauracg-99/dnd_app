@@ -326,10 +326,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           controller: _tabController,
           isScrollable: true,
           tabs: const [
-            Tab(text: 'Character', icon: Icon(Icons.shield)),            
-            Tab(text: 'Attacks', icon: Icon(Icons.gavel)),
+            Tab(text: 'Character', icon: Icon(Icons.shield)),                        
             Tab(text: 'Stats', icon: Icon(Icons.bar_chart)),
             Tab(text: 'Skills', icon: Icon(Icons.psychology)),
+            Tab(text: 'Attacks', icon: Icon(Icons.gavel)),
             Tab(text: 'Spell Slots', icon: Icon(Icons.grid_view)),
             Tab(text: 'Spells', icon: Icon(Icons.auto_awesome)),
             Tab(text: 'Feats', icon: Icon(Icons.military_tech)),
@@ -352,9 +352,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           controller: _tabController,
           children: [
             _buildCharacterCoverTab(),      
-            _buildAttacksTab(),
             _buildStatsTab(),
             _buildSkillsTab(),
+            _buildAttacksTab(),
             _buildSpellSlotsTab(),
             _buildSpellsTab(),
             _buildFeatsTab(),
