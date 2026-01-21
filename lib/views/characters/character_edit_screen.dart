@@ -4633,6 +4633,29 @@ Widget _buildIniciativeField() {
         ),
       );
 
+      // Sort spells within each level: always prepared first, then prepared spells, then others
+      spellsInLevel.sort((a, b) {
+        final spellA = a['spell'] as Spell;
+        final spellB = b['spell'] as Spell;
+        
+        final isAlwaysPreparedA = _spellPreparation.isSpellAlwaysPrepared(spellA.id);
+        final isAlwaysPreparedB = _spellPreparation.isSpellAlwaysPrepared(spellB.id);
+        
+        // Always prepared spells come first
+        if (isAlwaysPreparedA && !isAlwaysPreparedB) return -1;
+        if (!isAlwaysPreparedA && isAlwaysPreparedB) return 1;
+        
+        // If both are always prepared or both are not, sort by prepared status
+        final isPreparedA = _spellPreparation.isSpellPrepared(spellA.id);
+        final isPreparedB = _spellPreparation.isSpellPrepared(spellB.id);
+        
+        if (isPreparedA && !isPreparedB) return -1;
+        if (!isPreparedA && isPreparedB) return 1;
+        
+        // If both have same preparation status, sort alphabetically
+        return spellA.name.compareTo(spellB.name);
+      });
+
       // Add spells in this level
       for (final spellData in spellsInLevel) {
         final index = spellData['index'] as int;
