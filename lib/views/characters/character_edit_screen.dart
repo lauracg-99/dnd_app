@@ -145,7 +145,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Initialize controllers
     _nameController.text = character.name;
     _levelController.text = character.level.toString();
-    _levelController.addListener(_autoSaveCharacter);
+    _levelController.addListener(() {
+      _autoSaveCharacter();
+      setState(() {}); // Rebuild to update proficiency bonus display
+    });
     _selectedClass = character.characterClass;
     _classController.text = character.characterClass;
     _subclassController.text = character.subclass ?? '';
@@ -1903,7 +1906,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     final spellcastingAbility = _getSpellcastingAbility();
     if (spellcastingAbility == null) return 0;
     
-    final proficiencyBonus = int.tryParse(_proficiencyBonusController.text) ?? 2;
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
     final abilityModifier = _getAbilityModifier(spellcastingAbility);
     
     return 8 + proficiencyBonus + abilityModifier;
@@ -1913,7 +1916,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     final spellcastingAbility = _getSpellcastingAbility();
     if (spellcastingAbility == null) return 0;
     
-    final proficiencyBonus = int.tryParse(_proficiencyBonusController.text) ?? 2;
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
     final abilityModifier = _getAbilityModifier(spellcastingAbility);
     
     return proficiencyBonus + abilityModifier;
@@ -2313,9 +2316,23 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Ability Scores',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ability Scores',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    ' Level ${_levelController.text.isNotEmpty ? _levelController.text : '1'} • proficiency bonus: +${CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
               if (_hasUnsavedAbilityChanges)
                 ElevatedButton.icon(
@@ -3286,8 +3303,7 @@ Widget _buildIniciativeField() {
   ) {
     final abilityScore = _getAbilityScore(ability);
     final modifier = _stats.getModifier(abilityScore);
-    final proficiencyBonus =
-        int.tryParse(_proficiencyBonusController.text) ?? 2;
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
     final total = modifier + (isProficient ? proficiencyBonus : 0);
 
     return Container(
@@ -3342,8 +3358,7 @@ Widget _buildIniciativeField() {
   ) {
     final abilityScore = _getAbilityScore(ability);
     final modifier = _stats.getModifier(abilityScore);
-    final proficiencyBonus =
-        int.tryParse(_proficiencyBonusController.text) ?? 2;
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
     final total = _skillChecks.calculateSkillModifier(
       skillKey,
       _stats,
@@ -6971,7 +6986,7 @@ Widget _buildIniciativeField() {
         intelligence: int.tryParse(_intelligenceController.text) ?? 10,
         wisdom: int.tryParse(_wisdomController.text) ?? 10,
         charisma: int.tryParse(_charismaController.text) ?? 10,
-        proficiencyBonus: int.tryParse(_proficiencyBonusController.text) ?? 2,
+        proficiencyBonus: CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1),
         armorClass: int.tryParse(_armorClassController.text) ?? 10,
         speed: int.tryParse(_speedController.text) ?? 30,
         initiative: int.tryParse(_initiativeController.text) ?? 0,
@@ -7921,7 +7936,7 @@ Widget _buildIniciativeField() {
         intelligence: int.tryParse(_intelligenceController.text) ?? 10,
         wisdom: int.tryParse(_wisdomController.text) ?? 10,
         charisma: int.tryParse(_charismaController.text) ?? 10,
-        proficiencyBonus: int.tryParse(_proficiencyBonusController.text) ?? 2,
+        proficiencyBonus: CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1),
         armorClass: int.tryParse(_armorClassController.text) ?? 10,
         speed: int.tryParse(_speedController.text) ?? 30,
         initiative: int.tryParse(_initiativeController.text) ?? 0,

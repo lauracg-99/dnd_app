@@ -299,6 +299,37 @@ class CharacterStats {
     this.hasConcentration = false,
   });
 
+  /// Factory constructor that automatically calculates proficiency bonus based on level
+  factory CharacterStats.withLevel({
+    required int strength,
+    required int dexterity,
+    required int constitution,
+    required int intelligence,
+    required int wisdom,
+    required int charisma,
+    required int level,
+    int armorClass = 10,
+    int speed = 30,
+    int initiative = 0,
+    bool inspiration = false,
+    bool hasConcentration = false,
+  }) {
+    return CharacterStats(
+      strength: strength,
+      dexterity: dexterity,
+      constitution: constitution,
+      intelligence: intelligence,
+      wisdom: wisdom,
+      charisma: charisma,
+      proficiencyBonus: calculateProficiencyBonus(level),
+      armorClass: armorClass,
+      speed: speed,
+      initiative: initiative,
+      inspiration: inspiration,
+      hasConcentration: hasConcentration,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'strength': {'value': strength},
     'dexterity': {'value': dexterity},
@@ -332,6 +363,16 @@ class CharacterStats {
   }
 
   int getModifier(int score) => ((score - 10) / 2).floor();
+
+  /// Calculate proficiency bonus based on character level (D&D 5e rules)
+  /// Level 1-4: +2, Level 5-8: +3, Level 9-12: +4, Level 13-16: +5, Level 17-20: +6
+  static int calculateProficiencyBonus(int level) {
+    if (level >= 17) return 6;
+    if (level >= 13) return 5;
+    if (level >= 9) return 4;
+    if (level >= 5) return 3;
+    return 2; // Level 1-4
+  }
 }
 
 class CharacterSavingThrows {
