@@ -115,6 +115,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   
   // Concentration state
   bool _hasConcentration = false;
+  
+  // Shield state
+  bool _hasShield = false;
 
   // Spell filter states
   bool _filterByCharacterClass = true;
@@ -227,6 +230,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     }
     _hasInspiration = _stats.inspiration;
     _hasConcentration = _stats.hasConcentration;
+    _hasShield = _stats.hasShield;
 
     // Initialize saving throws and skill checks
     _savingThrows = character.savingThrows;
@@ -1212,7 +1216,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ],
           ),
           const SizedBox(height: 16),
-
           Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: 
@@ -2924,14 +2927,15 @@ Widget _buildIniciativeField() {
   }
 
   Widget _buildArmorClassField() {
+    final isActiveColor = _hasShield ? Colors.red : Colors.blue;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
+        color:  isActiveColor.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade200),
+        border: Border.all(color: isActiveColor.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
+            color: isActiveColor.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -2943,7 +2947,7 @@ Widget _buildIniciativeField() {
           children: [
             Icon(
               Icons.shield,
-              color: Colors.blue.shade600,
+              color: isActiveColor.shade600,
               size: 24,
             ),
             const SizedBox(height: 8),
@@ -2952,7 +2956,7 @@ Widget _buildIniciativeField() {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Colors.blue.shade700,
+                color: isActiveColor.shade700,
               ),
             ),
             const SizedBox(height: 4),
@@ -2962,7 +2966,7 @@ Widget _buildIniciativeField() {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade100),
+                border: Border.all(color: isActiveColor.shade100),
               ),
               child: TextField(
                 controller: _armorClassController,
@@ -2972,13 +2976,59 @@ Widget _buildIniciativeField() {
                   isDense: true,
                 ),
                 keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.done, // Show "Done" button on keyboard
+                textInputAction: TextInputAction.done,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade800,
+                  color: isActiveColor.shade800,
                 ),
                 textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Shield checkbox row
+            Container(
+              width: double.infinity,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: isActiveColor.shade100),
+              ),
+              padding: EdgeInsets.all(4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,            
+                children: [
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _hasShield = !_hasShield;
+                          _autoSaveCharacter();
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Icon(
+                        _hasShield ? Icons.check_circle : Icons.circle_outlined,
+                        color: _hasShield ? isActiveColor.shade800 : Colors.grey.shade400,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Shield',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isActiveColor.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -6995,6 +7045,7 @@ Widget _buildIniciativeField() {
         initiative: int.tryParse(_initiativeController.text) ?? 0,
         inspiration: _hasInspiration,
         hasConcentration: _hasConcentration,
+        hasShield: _hasShield,
       ),
       savingThrows: _savingThrows,
       skillChecks: _skillChecks,
@@ -7945,6 +7996,7 @@ Widget _buildIniciativeField() {
         initiative: int.tryParse(_initiativeController.text) ?? 0,
         inspiration: _hasInspiration,
         hasConcentration: _hasConcentration,
+        hasShield: _hasShield,
       ),
       savingThrows: _savingThrows,
       skillChecks: _skillChecks,

@@ -287,6 +287,7 @@ class CharacterStats {
   final int initiative;
   final bool inspiration;
   final bool hasConcentration;
+  final bool hasShield;
 
   const CharacterStats({
     required this.strength,
@@ -301,6 +302,7 @@ class CharacterStats {
     this.initiative = 0,
     this.inspiration = false,
     this.hasConcentration = false,
+    this.hasShield = false,
   });
 
   /// Factory constructor that automatically calculates proficiency bonus based on level
@@ -317,6 +319,7 @@ class CharacterStats {
     int initiative = 0,
     bool inspiration = false,
     bool hasConcentration = false,
+    bool hasShield = false,
   }) {
     return CharacterStats(
       strength: strength,
@@ -331,6 +334,7 @@ class CharacterStats {
       initiative: initiative,
       inspiration: inspiration,
       hasConcentration: hasConcentration,
+      hasShield: hasShield,
     );
   }
 
@@ -347,6 +351,7 @@ class CharacterStats {
     'initiative': {'value': initiative},
     'inspiration': {'value': inspiration},
     'has_concentration': {'value': hasConcentration},
+    'has_shield': {'value': hasShield},
   };
 
   factory CharacterStats.fromJson(Map<String, dynamic> json) {
@@ -363,6 +368,7 @@ class CharacterStats {
       initiative: Character._getValue<int>(json, 'initiative', defaultValue: 0),
       inspiration: Character._getValue<bool>(json, 'inspiration', defaultValue: false),
       hasConcentration: Character._getValue<bool>(json, 'has_concentration', defaultValue: false),
+      hasShield: Character._getValue<bool>(json, 'has_shield', defaultValue: false),
     );
   }
 
