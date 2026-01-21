@@ -3,18 +3,16 @@ import 'package:provider/provider.dart';
 import 'dart:io';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
-import 'character_edit_screen.dart';
-import 'character_create_screen.dart';
 import 'diary_list_screen.dart';
 
-class CharactersListScreen extends StatefulWidget {
-  const CharactersListScreen({super.key});
+class DiariesOverviewScreen extends StatefulWidget {
+  const DiariesOverviewScreen({super.key});
 
   @override
-  State<CharactersListScreen> createState() => _CharactersListScreenState();
+  State<DiariesOverviewScreen> createState() => _DiariesOverviewScreenState();
 }
 
-class _CharactersListScreenState extends State<CharactersListScreen> {
+class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
   final _searchController = TextEditingController();
   bool _isFilterExpanded = false;
 
@@ -37,7 +35,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('D&D Characters'),
+        title: const Text('Character Diaries'),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -52,12 +50,6 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
           preferredSize: Size.fromHeight(_isFilterExpanded ? 120 : 80),
           child: _buildSearchAndFilters(),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'characters_fab',
-        onPressed: _navigateToCreateCharacter,
-        tooltip: 'Create Character',
-        child: const Icon(Icons.add),
       ),
       body: Consumer<CharactersViewModel>(
         builder: (context, viewModel, child) {
@@ -177,11 +169,14 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
         children: [
           const Icon(Icons.person_off, size: 48, color: Colors.grey),
           const SizedBox(height: 16),
-          const Text('No characters found. Create your first character!'),
+          const Text('No characters found. Create your first character to start writing diaries!'),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: _navigateToCreateCharacter,
-            child: const Text('Create Character'),
+            onPressed: () {
+              // Navigate to characters tab
+              DefaultTabController.of(context).animateTo(0);
+            },
+            child: const Text('Go to Characters'),
           ),
         ],
       ),
@@ -198,14 +193,14 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
       itemCount: viewModel.characters.length,
       itemBuilder: (context, index) {
         final character = viewModel.characters[index];
-        return _buildCharacterItem(character, context);
+        return _buildCharacterDiaryCard(character, context);
       },
     );
   }
 
-  Widget _buildCharacterItem(Character character, BuildContext context) {
+  Widget _buildCharacterDiaryCard(Character character, BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: ListTile(
         leading: CircleAvatar(
           child:
@@ -223,173 +218,41 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
                   )
                   : const Icon(Icons.person),
         ),
-        title: Text(character.name),
-        subtitle: Text(
-          '${character.characterClass}${character.subclass != null && character.subclass!.isNotEmpty ? ' (${character.subclass})' : ''}${character.race != null && character.race!.isNotEmpty ? ' • ${character.race}' : ''}',
+        title: Text(
+          character.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (value) {
-            switch (value) {
-              case 'edit':
-                _navigateToEditCharacter(character);
-                break;
-              case 'diary':
-                _navigateToDiary(character);
-                break;
-              case 'delete':
-                _showDeleteConfirmation(character);
-                break;
-              case 'duplicate':
-                _duplicateCharacter(character);
-                break;
-              case 'export':
-                _exportCharacter(character);
-                break;
-            }
-          },
-          itemBuilder:
-              (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit),
-                      SizedBox(width: 8),
-                      Text('Edit'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'diary',
-                  child: Row(
-                    children: [
-                      Icon(Icons.book),
-                      SizedBox(width: 8),
-                      Text('Diary'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'duplicate',
-                  child: Row(
-                    children: [
-                      Icon(Icons.copy),
-                      SizedBox(width: 8),
-                      Text('Duplicate'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'export',
-                  child: Row(
-                    children: [
-                      Icon(Icons.share),
-                      SizedBox(width: 8),
-                      Text('Export'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
-                    ],
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${character.characterClass}${character.subclass != null && character.subclass!.isNotEmpty ? ' (${character.subclass})' : ''}${character.race != null && character.race!.isNotEmpty ? ' • ${character.race}' : ''}',
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.book, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  'View diary entries',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
                   ),
                 ),
               ],
-        ),
-        onTap: () {
-          _navigateToEditCharacter(character);
-        },
-      ),
-    );
-  }
-
-  void _navigateToEditCharacter(Character character) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CharacterEditScreen(character: character),
-      ),
-    );
-  }
-
-  void _navigateToDiary(Character character) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => DiaryListScreen(character: character),
-      ),
-    );
-  }
-
-  void _navigateToCreateCharacter() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CharacterCreateScreen(),
-      ),
-    );
-  }
-
-  void _showDeleteConfirmation(Character character) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Character'),
-            content: Text(
-              'Are you sure you want to delete ${character.name}? This action cannot be undone.',
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.read<CharactersViewModel>().deleteCharacter(
-                    character.id,
-                  );
-                },
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void _duplicateCharacter(Character character) {
-    final duplicatedCharacter = character.copyWith(
-      id: '${character.id}_copy_${DateTime.now().millisecondsSinceEpoch}',
-      name: '${character.name} (Copy)',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    context.read<CharactersViewModel>().updateCharacter(duplicatedCharacter);
-  }
-
-  void _exportCharacter(Character character) {
-    final viewModel = context.read<CharactersViewModel>();
-    viewModel.exportCharacter(character);
-
-    // TODO: Implement proper file sharing
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Exported ${character.name} to clipboard'),
-        action: SnackBarAction(
-          label: 'Copy',
-          onPressed: () {
-            // TODO: Copy to clipboard
-          },
+          ],
         ),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DiaryListScreen(character: character),
+            ),
+          );
+        },
       ),
     );
   }

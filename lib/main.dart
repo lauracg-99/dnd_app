@@ -3,22 +3,24 @@ import 'package:provider/provider.dart';
 import 'viewmodels/items_viewmodel.dart';
 import 'viewmodels/spells_viewmodel.dart';
 import 'viewmodels/characters_viewmodel.dart';
-import 'views/items_list_screen.dart';
 import 'views/spells/spells_list_screen.dart';
 import 'views/characters/characters_list_screen.dart';
+import 'views/characters/diaries_overview_screen.dart';
 import 'views/information/information_screen.dart';
 import 'viewmodels/feats_viewmodel.dart';
 import 'viewmodels/class_viewmodel.dart';
 import 'viewmodels/races_viewmodel.dart';
 import 'viewmodels/backgrounds_viewmodel.dart';
 import 'services/character_service.dart';
+import 'services/diary_service.dart';
 
 Future<void> main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize storage system
+  // Initialize storage systems
   await CharacterService.initializeStorage();
+  await DiaryService.initializeStorage();
 
   runApp(
     MultiProvider(
@@ -87,6 +89,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   static const List<Widget> _screens = [
     CharactersListScreen(),
+    DiariesOverviewScreen(),
     SpellsListScreen(),
     InformationScreen(),
    // ItemsListScreen(),
@@ -94,6 +97,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   static const List<NavigationDestination> _destinations = [
     NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),    
+    NavigationDestination(icon: Icon(Icons.book), label: 'Diaries'),
     NavigationDestination(
       icon: Icon(Icons.auto_awesome_motion),
       label: 'Spells',
