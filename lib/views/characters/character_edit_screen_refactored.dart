@@ -242,7 +242,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       
       // Images
       customImagePath: _state.customImagePath,
-      appearanceImagePath: _state.appearanceImagePath,
+      appearance: widget.character.appearance.copyWith(
+        appearanceImagePath: _state.appearanceImagePath,
+      ),
       
       // States
       hasInspiration: _state.hasInspiration,

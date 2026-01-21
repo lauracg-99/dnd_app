@@ -152,8 +152,10 @@ class CharacterEditAutoSaveService {
       items: controllers.itemsController.text.trim(),
       
       // Images
-      profileImagePath: stateManager.customImagePath,
-      appearanceImagePath: stateManager.appearanceImagePath,
+      customImagePath: stateManager.customImagePath,
+      appearance: originalCharacter.appearance.copyWith(
+        appearanceImagePath: stateManager.appearanceImagePath,
+      ),
       
       // States
       hasInspiration: stateManager.hasInspiration,

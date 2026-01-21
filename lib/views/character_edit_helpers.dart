@@ -195,13 +195,13 @@ class CharacterEditState {
   /// Initialize state from character data
   void initializeFromCharacter(Character character) {
     // Initialize profile image
-    if (character.profileImagePath != null && character.profileImagePath!.isNotEmpty) {
-      customImagePath = character.profileImagePath;
+    if (character.customImagePath != null && character.customImagePath!.isNotEmpty) {
+      customImagePath = character.customImagePath;
     }
 
     // Initialize appearance image
-    if (character.appearanceImagePath != null && character.appearanceImagePath!.isNotEmpty) {
-      appearanceImagePath = character.appearanceImagePath;
+    if (character.appearance.appearanceImagePath != null && character.appearance.appearanceImagePath!.isNotEmpty) {
+      appearanceImagePath = character.appearance.appearanceImagePath;
     }
 
     // Initialize selection states
