@@ -21,6 +21,7 @@ class Character extends BaseModel {
   final List<CharacterPersonalizedSlot> personalizedSlots;
   final CharacterSpellPreparation spellPreparation;
   final String quickGuide;
+  final String proficiencies;
   final String backstory;
   final String featNotes;
   final CharacterPillars pillars;
@@ -51,6 +52,7 @@ class Character extends BaseModel {
     this.personalizedSlots = const [],
     this.spellPreparation = const CharacterSpellPreparation(),
     this.quickGuide = '',
+    this.proficiencies = '',
     this.backstory = '',
     required this.pillars,
     required this.appearance,
@@ -86,6 +88,7 @@ class Character extends BaseModel {
         'personalized_slots': {'value': personalizedSlots.map((slot) => slot.toJson()).toList()},
         'spell_preparation': spellPreparation.toJson(),
         'quick_guide': {'value': quickGuide},
+        'proficiencies': {'value': proficiencies},
         'backstory': {'value': backstory},
         'pillars': pillars.toJson(),
         'appearance': appearance.toJson(),
@@ -130,6 +133,7 @@ class Character extends BaseModel {
           .toList(),
       spellPreparation: CharacterSpellPreparation.fromJson(_getValue<Map<String, dynamic>>(stats, 'spell_preparation', defaultValue: const {})),
       quickGuide: _getValue<String>(stats, 'quick_guide', defaultValue: ''),
+      proficiencies: _getValue<String>(stats, 'proficiencies', defaultValue: ''),
       backstory: _getValue<String>(stats, 'backstory', defaultValue: ''),
       pillars: CharacterPillars.fromJson(_getValue<Map<String, dynamic>>(stats, 'pillars')),
       appearance: CharacterAppearance.fromJson(_getValue<Map<String, dynamic>>(stats, 'appearance', defaultValue: const {})),
@@ -231,6 +235,7 @@ class Character extends BaseModel {
     List<CharacterPersonalizedSlot>? personalizedSlots,
     CharacterSpellPreparation? spellPreparation,
     String? quickGuide,
+    String? proficiencies,
     String? backstory,
     CharacterPillars? pillars,
     CharacterAppearance? appearance,
@@ -261,6 +266,7 @@ class Character extends BaseModel {
       personalizedSlots: personalizedSlots ?? this.personalizedSlots,
       spellPreparation: spellPreparation ?? this.spellPreparation,
       quickGuide: quickGuide ?? this.quickGuide,
+      proficiencies: proficiencies ?? this.proficiencies,
       backstory: backstory ?? this.backstory,
       pillars: pillars ?? this.pillars,
       appearance: appearance ?? this.appearance,

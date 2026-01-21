@@ -56,6 +56,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _raceController = TextEditingController();
   final _backgroundController = TextEditingController();
   final _quickGuideController = TextEditingController();
+  final _proficienciesController = TextEditingController();
   final _backstoryController = TextEditingController();
   final _featNotesController = TextEditingController();
 
@@ -128,7 +129,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 10, vsync: this);
+    _tabController = TabController(length: 11, vsync: this);
     _initializeCharacterData();
     
     // Load races and backgrounds data
@@ -165,6 +166,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _useCustomSubclass = character.subclass != null && !availableSubclasses.contains(character.subclass);
     
     _quickGuideController.text = character.quickGuide;
+    _proficienciesController.text = character.proficiencies;
     _backstoryController.text = character.backstory;
 
     // Initialize death saves
@@ -288,6 +290,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     });
     _raceController.addListener(_autoSaveCharacter);
     _quickGuideController.addListener(_autoSaveCharacter);
+    _proficienciesController.addListener(_autoSaveCharacter);
     _backstoryController.addListener(_autoSaveCharacter);
     _featNotesController.addListener(_autoSaveCharacter);
 
@@ -326,6 +329,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _raceController.dispose();
     _backgroundController.dispose();
     _quickGuideController.dispose();
+    _proficienciesController.dispose();
     _backstoryController.dispose();
     _featNotesController.dispose();
     _gimmickController.dispose();
@@ -362,6 +366,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           isScrollable: true,
           tabs: const [
             Tab(text: 'Character', icon: Icon(Icons.shield)),                        
+            Tab(text: 'Quick Guide', icon: Icon(Icons.description)),
             Tab(text: 'Stats', icon: Icon(Icons.bar_chart)),
             Tab(text: 'Skills', icon: Icon(Icons.psychology)),
             Tab(text: 'Attacks', icon: Icon(Icons.gavel)),
@@ -387,6 +392,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           controller: _tabController,
           children: [
             _buildCharacterCoverTab(),      
+            _buildQuickGuideTab(),
             _buildStatsTab(),
             _buildSkillsTab(),
             _buildAttacksTab(),
@@ -1563,15 +1569,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       color: Colors.grey.shade50,
                     ),
                     child: TextField(
-                      controller: _quickGuideController,
+                      controller: _proficienciesController,
                       decoration: const InputDecoration(
-                        hintText: 'Add quick notes about your character...\n\n'
+                        hintText: 'Add other proficiencies and bonuses...\n\n'
                             'Examples:\n'
-                            '• Key abilities and combat tactics\n'
-                            '• Important spells and their effects\n'
-                            '• Equipment and inventory highlights\n'
-                            '• Character motivations and goals\n'
-                            '• Important relationships and alliances',
+                            '• Tool proficiencies (smith\'s tools, herbalism kit, etc.)\n'
+                            '• Weapon proficiencies not covered by class/race\n'
+                            '• Armor proficiencies from special training\n'
+                            '• Skill proficiencies from background or feats\n'
+                            '• Languages and special abilities\n'
+                            '• Other bonuses or special features',
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.all(16),
                         alignLabelWithHint: true,
@@ -2297,6 +2304,85 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             onPressed: _showAddAttackDialog,
             icon: const Icon(Icons.add),
             label: const Text('Add Attack'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickGuideTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Quick Guide Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.description,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Character Quick Guide',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'A quick reference guide for your character\'s key information, abilities, and gameplay notes.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _quickGuideController,
+                      decoration: const InputDecoration(
+                        hintText: 'Create your character quick guide...\n\n'
+                            'Consider including:\n'
+                            '• Character concept and role in the party\n'
+                            '• Key abilities and combat tactics\n'
+                            '• Important spells or features\n'
+                            '• Equipment and magic items\n'
+                            '• Roleplaying notes and personality traits\n'
+                            '• Goals and motivations\n'
+                            '• Relationships with other party members\n'
+                            '• Weaknesses and limitations',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 15,
+                      minLines: 8,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -7082,6 +7168,7 @@ Widget _buildIniciativeField() {
       personalizedSlots: _personalizedSlots,
       spellPreparation: _spellPreparation,
       quickGuide: _quickGuideController.text.trim(),
+      proficiencies: _proficienciesController.text.trim(),
       backstory: _backstoryController.text.trim(),
       featNotes: _featNotesController.text.trim(),
       pillars: CharacterPillars(
@@ -8033,6 +8120,7 @@ Widget _buildIniciativeField() {
       personalizedSlots: _personalizedSlots,
       spellPreparation: _spellPreparation,
       quickGuide: _quickGuideController.text.trim(),
+      proficiencies: _proficienciesController.text.trim(),
       backstory: _backstoryController.text.trim(),
       featNotes: _featNotesController.text.trim(),
       pillars: CharacterPillars(
