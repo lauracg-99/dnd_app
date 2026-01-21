@@ -3223,7 +3223,7 @@ Widget _buildIniciativeField() {
     // Get the ability modifier for this group
     final abilityAbbreviation = _getAbilityAbbreviation(abilityName);
     final abilityScore = _getAbilityScore(abilityAbbreviation);
-    final modifier = _stats.getModifier(abilityScore);
+    final modifier = ((abilityScore - 10) / 2).floor();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3302,7 +3302,7 @@ Widget _buildIniciativeField() {
     Function(bool?) onChanged,
   ) {
     final abilityScore = _getAbilityScore(ability);
-    final modifier = _stats.getModifier(abilityScore);
+    final modifier = ((abilityScore - 10) / 2).floor();
     final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
     final total = modifier + (isProficient ? proficiencyBonus : 0);
 
@@ -3357,13 +3357,16 @@ Widget _buildIniciativeField() {
     String skillKey,
   ) {
     final abilityScore = _getAbilityScore(ability);
-    final modifier = _stats.getModifier(abilityScore);
+    final modifier = ((abilityScore - 10) / 2).floor();
     final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
-    final total = _skillChecks.calculateSkillModifier(
-      skillKey,
-      _stats,
-      proficiencyBonus,
-    );
+    
+    // Calculate total bonus directly instead of using old _stats object
+    int total = modifier;
+    if (hasExpertise) {
+      total += proficiencyBonus * 2; // Expertise adds double proficiency bonus
+    } else if (isProficient) {
+      total += proficiencyBonus;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -8102,7 +8105,8 @@ Widget _buildIniciativeField() {
   /// Show dialog to modify initiative modifier
   void _showInitiativeDialog() {
     final currentInitiative = int.tryParse(_initiativeController.text) ?? 0;
-    final dexterityModifier = _stats.getModifier(_stats.dexterity);
+    final dexterityScore = int.tryParse(_dexterityController.text) ?? 10;
+    final dexterityModifier = ((dexterityScore - 10) / 2).floor();
     
     final controller = TextEditingController(text: currentInitiative.toString());
     

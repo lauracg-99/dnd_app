@@ -116,13 +116,17 @@ class Character extends BaseModel {
       race: _getValueNullable<String?>(stats, 'race', defaultValue: null),
       background: _getValueNullable<String?>(stats, 'background', defaultValue: null),
       attacks: _getValue<List<dynamic>>(stats, 'attacks', defaultValue: const [])
-          .map((attack) => CharacterAttack.fromJson(attack as Map<String, dynamic>))
+          .where((item) => item != null && item is Map)
+          .cast<Map>()
+          .map((attack) => CharacterAttack.fromJson(attack.cast<String, dynamic>()))
           .toList(),
       spellSlots: CharacterSpellSlots.fromJson(_getValue<Map<String, dynamic>>(stats, 'spell_slots')),
       spells: List<String>.from(_getValue<List<dynamic>>(stats, 'spells', defaultValue: const [])),
       feats: List<String>.from(_getValue<List<dynamic>>(stats, 'feats', defaultValue: const [])),
       personalizedSlots: (_getValue<List<dynamic>>(stats, 'personalized_slots', defaultValue: const []))
-          .map((slot) => CharacterPersonalizedSlot.fromJson(slot as Map<String, dynamic>))
+          .where((item) => item != null && item is Map)
+          .cast<Map>()
+          .map((slot) => CharacterPersonalizedSlot.fromJson(slot.cast<String, dynamic>()))
           .toList(),
       spellPreparation: CharacterSpellPreparation.fromJson(_getValue<Map<String, dynamic>>(stats, 'spell_preparation', defaultValue: const {})),
       quickGuide: _getValue<String>(stats, 'quick_guide', defaultValue: ''),
@@ -763,12 +767,12 @@ class CharacterAttack {
 
   factory CharacterAttack.fromJson(Map<String, dynamic> json) {
     return CharacterAttack(
-      id: json['id'] as String,
-      name: Character._getValue<String>(json, 'name'),
-      attackBonus: Character._getValue<String>(json, 'attack_bonus'),
-      damage: Character._getValue<String>(json, 'damage'),
-      damageType: Character._getValue<String>(json, 'damage_type'),
-      description: Character._getValue<String>(json, 'description', defaultValue: ''),
+      id: Character._getValueNullable<String>(json, 'id', defaultValue: '') ?? '',
+      name: Character._getValueNullable<String>(json, 'name', defaultValue: '') ?? '',
+      attackBonus: Character._getValueNullable<String>(json, 'attack_bonus', defaultValue: '') ?? '',
+      damage: Character._getValueNullable<String>(json, 'damage', defaultValue: '') ?? '',
+      damageType: Character._getValueNullable<String>(json, 'damage_type', defaultValue: '') ?? '',
+      description: Character._getValueNullable<String>(json, 'description', defaultValue: '') ?? '',
     );
   }
 }
