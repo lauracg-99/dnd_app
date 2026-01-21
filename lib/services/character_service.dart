@@ -110,11 +110,12 @@ class CharacterService {
         }
         debugPrint('Saved character to memory storage: ${updatedCharacter.name}');
       } else {
-        // File-based storage
+        // File-based storage with integrity validation
         final jsonString = json.encode(updatedCharacter.toJson());
         final file = await _getCharacterFile(updatedCharacter.id);
-        await file.writeAsString(jsonString);
-        debugPrint('Successfully saved character to file: ${updatedCharacter.name} at ${file.path}');
+        
+        // Validate JSON before writing
+        await _writeCharacterFileWithValidation(file, jsonString, updatedCharacter.name);
         
         // Update memory cache
         final index = _memoryCache.indexWhere((c) => c.id == updatedCharacter.id);
@@ -227,12 +228,106 @@ class CharacterService {
   static Future<Character> _loadCharacterFromFile(File file) async {
     try {
       final jsonString = await file.readAsString();
-      final jsonData = json.decode(jsonString) as Map<String, dynamic>;
+      
+      // Validate JSON structure before parsing
+      final validatedJson = _validateAndRecoverJson(jsonString, file.path);
+      final jsonData = json.decode(validatedJson) as Map<String, dynamic>;
       
       return Character.fromJson(jsonData);
     } catch (e, stackTrace) {
       debugPrint('Error loading character from ${file.path}: $e');
       debugPrint('Stack trace: $stackTrace');
+      
+      // Attempt to create backup of corrupted file
+      await _createCorruptedFileBackup(file);
+      
+      rethrow;
+    }
+  }
+
+  /// Validate and attempt to recover from JSON corruption
+  static String _validateAndRecoverJson(String jsonString, String filePath) {
+    try {
+      // Try to decode first to check if it's valid
+      json.decode(jsonString);
+      return jsonString;
+    } catch (e) {
+      debugPrint('JSON corruption detected in $filePath, attempting recovery...');
+      
+      // Common corruption pattern: extra closing braces
+      String recoveredJson = jsonString;
+      
+      // Remove extra closing braces at the end
+      while (recoveredJson.endsWith('}')) {
+        try {
+          json.decode(recoveredJson);
+          break; // Valid JSON found
+        } catch (e) {
+          recoveredJson = recoveredJson.substring(0, recoveredJson.length - 1).trim();
+        }
+      }
+      
+      // Try the recovered JSON
+      try {
+        json.decode(recoveredJson);
+        debugPrint('Successfully recovered JSON from corruption');
+        return recoveredJson;
+      } catch (e) {
+        debugPrint('JSON recovery failed, original error: $e');
+        rethrow;
+      }
+    }
+  }
+
+  /// Create backup of corrupted file for debugging
+  static Future<void> _createCorruptedFileBackup(File originalFile) async {
+    try {
+      final backupPath = '${originalFile.path}.corrupted.${DateTime.now().millisecondsSinceEpoch}';
+      final backupFile = File(backupPath);
+      await backupFile.writeAsString(await originalFile.readAsString());
+      debugPrint('Created backup of corrupted file: $backupPath');
+    } catch (e) {
+      debugPrint('Failed to create backup of corrupted file: $e');
+    }
+  }
+
+  /// Write character file with validation and atomic operation
+  static Future<void> _writeCharacterFileWithValidation(
+    File file, 
+    String jsonString, 
+    String characterName
+  ) async {
+    try {
+      // Validate the JSON string before writing
+      json.decode(jsonString); // This will throw if JSON is invalid
+      
+      // Create temporary file for atomic write
+      final tempFile = File('${file.path}.tmp.${DateTime.now().millisecondsSinceEpoch}');
+      
+      // Write to temporary file first
+      await tempFile.writeAsString(jsonString);
+      
+      // Verify the written file can be read and parsed
+      final testRead = await tempFile.readAsString();
+      json.decode(testRead); // Verify integrity
+      
+      // Atomic operation: replace original file with temp file
+      await tempFile.rename(file.path);
+      
+      debugPrint('Successfully saved character to file: $characterName at ${file.path}');
+    } catch (e) {
+      debugPrint('Failed to write character file with validation: $e');
+      
+      // Clean up temp file if it exists
+      try {
+        final tempFile = File('${file.path}.tmp');
+        if (await tempFile.exists()) {
+          await tempFile.delete();
+        }
+      } catch (cleanupError) {
+        debugPrint('Failed to cleanup temp file: $cleanupError');
+      }
+      
       rethrow;
     }
   }

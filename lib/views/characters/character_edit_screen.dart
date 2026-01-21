@@ -2429,7 +2429,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         contentPadding: EdgeInsets.all(16),
                         alignLabelWithHint: true,
                       ),
-                      maxLines: 15,
+                      maxLines: 20,
                       minLines: 8,
                       style: const TextStyle(
                         fontSize: 15,
