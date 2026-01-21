@@ -22,6 +22,7 @@ class Character extends BaseModel {
   final CharacterSpellPreparation spellPreparation;
   final String quickGuide;
   final String proficiencies;
+  final String featuresTraits;
   final String backstory;
   final String featNotes;
   final CharacterPillars pillars;
@@ -53,6 +54,7 @@ class Character extends BaseModel {
     this.spellPreparation = const CharacterSpellPreparation(),
     this.quickGuide = '',
     this.proficiencies = '',
+    this.featuresTraits = '',
     this.backstory = '',
     required this.pillars,
     required this.appearance,
@@ -89,6 +91,7 @@ class Character extends BaseModel {
         'spell_preparation': spellPreparation.toJson(),
         'quick_guide': {'value': quickGuide},
         'proficiencies': {'value': proficiencies},
+        'features_traits': {'value': featuresTraits},
         'backstory': {'value': backstory},
         'pillars': pillars.toJson(),
         'appearance': appearance.toJson(),
@@ -134,6 +137,7 @@ class Character extends BaseModel {
       spellPreparation: CharacterSpellPreparation.fromJson(_getValue<Map<String, dynamic>>(stats, 'spell_preparation', defaultValue: const {})),
       quickGuide: _getValue<String>(stats, 'quick_guide', defaultValue: ''),
       proficiencies: _getValue<String>(stats, 'proficiencies', defaultValue: ''),
+      featuresTraits: _getValue<String>(stats, 'features_traits', defaultValue: ''),
       backstory: _getValue<String>(stats, 'backstory', defaultValue: ''),
       pillars: CharacterPillars.fromJson(_getValue<Map<String, dynamic>>(stats, 'pillars')),
       appearance: CharacterAppearance.fromJson(_getValue<Map<String, dynamic>>(stats, 'appearance', defaultValue: const {})),
@@ -236,6 +240,7 @@ class Character extends BaseModel {
     CharacterSpellPreparation? spellPreparation,
     String? quickGuide,
     String? proficiencies,
+    String? featuresTraits,
     String? backstory,
     CharacterPillars? pillars,
     CharacterAppearance? appearance,
@@ -267,6 +272,7 @@ class Character extends BaseModel {
       spellPreparation: spellPreparation ?? this.spellPreparation,
       quickGuide: quickGuide ?? this.quickGuide,
       proficiencies: proficiencies ?? this.proficiencies,
+      featuresTraits: featuresTraits ?? this.featuresTraits,
       backstory: backstory ?? this.backstory,
       pillars: pillars ?? this.pillars,
       appearance: appearance ?? this.appearance,

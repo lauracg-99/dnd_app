@@ -57,6 +57,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _backgroundController = TextEditingController();
   final _quickGuideController = TextEditingController();
   final _proficienciesController = TextEditingController();
+  final _featuresTraitsController = TextEditingController();
   final _backstoryController = TextEditingController();
   final _featNotesController = TextEditingController();
 
@@ -129,7 +130,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 12, vsync: this);
+    _tabController = TabController(length: 11, vsync: this);
     _initializeCharacterData();
     
     // Load races and backgrounds data
@@ -167,6 +168,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     
     _quickGuideController.text = character.quickGuide;
     _proficienciesController.text = character.proficiencies;
+    _featuresTraitsController.text = character.featuresTraits;
     _backstoryController.text = character.backstory;
 
     // Initialize death saves
@@ -291,6 +293,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _raceController.addListener(_autoSaveCharacter);
     _quickGuideController.addListener(_autoSaveCharacter);
     _proficienciesController.addListener(_autoSaveCharacter);
+    _featuresTraitsController.addListener(_autoSaveCharacter);
     _backstoryController.addListener(_autoSaveCharacter);
     _featNotesController.addListener(_autoSaveCharacter);
 
@@ -330,6 +333,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _backgroundController.dispose();
     _quickGuideController.dispose();
     _proficienciesController.dispose();
+    _featuresTraitsController.dispose();
     _backstoryController.dispose();
     _featNotesController.dispose();
     _gimmickController.dispose();
@@ -1537,8 +1541,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           ),
 
           const SizedBox(height: 16),
-
-          // Quick Guide Section
+          // Other proficiencies Section
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -1597,8 +1600,64 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ),
             ),
           ),
+          
+           const SizedBox(height: 16),
+          // Other proficiencies Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.bookmark,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Features & traits',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),                  
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _featuresTraitsController,
+                      decoration: const InputDecoration(
+                        hintText: 'Add features and traits...\n\n'
+                            'Examples:\n'
+                            '• Specific abilities from your Race, Class, Background, or Feats',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 12,
+                      minLines: 6,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
           const SizedBox(height: 16),
-
           // Languages Section
           Card(
             child: Padding(
@@ -7169,6 +7228,7 @@ Widget _buildIniciativeField() {
       spellPreparation: _spellPreparation,
       quickGuide: _quickGuideController.text.trim(),
       proficiencies: _proficienciesController.text.trim(),
+      featuresTraits: _featuresTraitsController.text.trim(),
       backstory: _backstoryController.text.trim(),
       featNotes: _featNotesController.text.trim(),
       pillars: CharacterPillars(
@@ -8121,6 +8181,7 @@ Widget _buildIniciativeField() {
       spellPreparation: _spellPreparation,
       quickGuide: _quickGuideController.text.trim(),
       proficiencies: _proficienciesController.text.trim(),
+      featuresTraits: _featuresTraitsController.text.trim(),
       backstory: _backstoryController.text.trim(),
       featNotes: _featNotesController.text.trim(),
       pillars: CharacterPillars(
