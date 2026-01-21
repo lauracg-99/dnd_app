@@ -1548,20 +1548,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Quick Guide',
+                        'Other proficiencies',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Essential character information for quick reference during gameplay.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
+                  ),                  
                   const SizedBox(height: 16),
                   Container(
                     decoration: BoxDecoration(
@@ -1644,8 +1637,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         contentPadding: EdgeInsets.all(16),
                         alignLabelWithHint: true,
                       ),
-                      maxLines: 4,
-                      minLines: 1,
+                      maxLines: 6,
+                      minLines: 4,
                       style: const TextStyle(
                         fontSize: 15,
                         height: 1.5,
