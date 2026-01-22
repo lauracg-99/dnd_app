@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 import 'dart:io';
+import 'dart:convert';
 import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
 import '../../models/feat_model.dart';
@@ -14,6 +13,20 @@ import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/feats_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
+import '../../services/character_service.dart';
+
+/// Convert image file to base64 string
+Future<String?> _imageFileToBase64(File? imageFile) async {
+  if (imageFile == null || !await imageFile.exists()) return null;
+  
+  try {
+    final bytes = await imageFile.readAsBytes();
+    return base64Encode(bytes);
+  } catch (e) {
+    debugPrint('Error converting image to base64: $e');
+    return null;
+  }
+}
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -27,8 +40,8 @@ class CharacterEditScreen extends StatefulWidget {
 class _CharacterEditScreenState extends State<CharacterEditScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String? _customImagePath;
-  String? _appearanceImagePath;
+  String? _customImageData; // Base64 encoded profile image data
+  String? _appearanceImageData; // Base64 encoded appearance image data
   bool _isPickingImage = false;
   bool _hasUnsavedAbilityChanges = false;
   bool _hasUnsavedClassChanges = false;
@@ -140,12 +153,58 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     });
   }
 
+  // Helper function to convert base64 string to Image widget
+  Widget _base64ToImage(String? base64String, {double width = 120, double height = 120, BoxFit? fit, Widget? placeholder}) {
+    if (base64String == null || base64String.isEmpty) {
+      return placeholder ?? const Icon(Icons.person, size: 60, color: Colors.grey);
+    }
+    
+    try {
+      // Remove data URL prefix if present
+      String pureBase64 = base64String;
+      if (base64String.contains(',')) {
+        pureBase64 = base64String.split(',')[1];
+      }
+      
+      final imageBytes = base64.decode(pureBase64);
+      return Image.memory(
+        imageBytes,
+        width: width,
+        height: height,
+        fit: fit ?? BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('Error loading base64 image: $error');
+          return placeholder ?? Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(width / 2),
+            ),
+            child: Icon(Icons.person, size: width / 2, color: Colors.grey),
+          );
+        },
+      );
+    } catch (e) {
+      debugPrint('Error decoding base64 image: $e');
+      return placeholder ?? const Icon(Icons.person, size: 60, color: Colors.grey);
+    }
+  }
+
   void _initializeCharacterData() {
     final character = widget.character;
 
-    // Initialize profile image
-    _customImagePath = character.customImagePath;
-    _appearanceImagePath = character.appearance.appearanceImagePath;
+    // Load base64 image data for profile image
+    _customImageData = character.customImageData;
+    if (_customImageData != null) {
+      debugPrint('Profile image data loaded from JSON (${_customImageData!.length} characters)');
+    }
+
+    // Load base64 image data for appearance image
+    _appearanceImageData = character.appearance.appearanceImageData;
+    if (_appearanceImageData != null) {
+      debugPrint('Appearance image data loaded from JSON (${_appearanceImageData!.length} characters)');
+    }
 
     // Initialize controllers
     _nameController.text = character.name;
@@ -431,28 +490,27 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(60),
                     ),
-                    child:
-                        _customImagePath != null
-                            ? ClipOval(
-                              child: Image.file(
-                                File(_customImagePath!),
-                                width: 120,
-                                height: 120,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.grey,
-                                  );
-                                },
-                              ),
-                            )
-                            : const Icon(
+                    child: _customImageData != null
+                        ? ClipOval(
+                            child: _base64ToImage(
+                              _customImageData,
+                              width: 120,
+                              height: 120,
+                            ),
+                          )
+                        : Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(60),
+                            ),
+                            child: const Icon(
                               Icons.person,
                               size: 60,
                               color: Colors.grey,
                             ),
+                          ),
                   ),
                   // Camera button overlay
                   Positioned(
@@ -809,20 +867,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                             width: 2,
                           ),
                         ),
-                        child: _customImagePath != null
+                        child: _customImageData != null
                             ? ClipOval(
-                                child: Image.file(
-                                  File(_customImagePath!),
+                                child: _base64ToImage(
+                                  _customImageData,
                                   width: 80,
                                   height: 80,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(
-                                      Icons.person,
-                                      size: 40,
-                                      color: Colors.grey,
-                                    );
-                                  },
                                 ),
                               )
                             : const Icon(
@@ -3677,7 +3727,7 @@ Widget _buildIniciativeField() {
                   color: Colors.white,
                   size: 20,
                 ),
-        onPressed: _isPickingImage ? null : () => _triggerHapticAndConfirm(),
+        onPressed: _isPickingImage ? null : () => _showDeleteConfirmation(),
         tooltip: 'Remove image',
       ),
     );
@@ -3708,22 +3758,10 @@ Widget _buildIniciativeField() {
                   ),
                 )
                 : const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-        onPressed: _isPickingImage ? null : _triggerHapticAndShowOptions,
+        onPressed: _showImageOptionsDialog,
         tooltip: 'Change image',
       ),
     );
-  }
-
-  Future<void> _triggerHapticAndConfirm() async {
-    _showDeleteConfirmation();
-  }
-
-  Future<void> _triggerHapticAndShowOptions() async {
-    _showImageOptionsDialog();
-  }
-
-  Future<void> _triggerHapticAndPickImage() async {
-    _pickImage();
   }
 
 
@@ -3874,7 +3912,7 @@ Widget _buildIniciativeField() {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      if (_customImagePath != null) ...[
+                      if (_customImageData != null) ...[
                         // Divider
                         Divider(height: 1, color: Colors.grey.shade200),
 
@@ -7178,7 +7216,7 @@ Widget _buildIniciativeField() {
     // Create updated character with all current data
     final updatedCharacter = widget.character.copyWith(
       name: _nameController.text.trim(),
-      customImagePath: _customImagePath,
+      customImageData: _customImageData,
       characterClass: _classController.text.trim(),
       level: int.tryParse(_levelController.text) ?? 1,
       subclass:
@@ -7243,7 +7281,7 @@ Widget _buildIniciativeField() {
         age: _ageController.text.trim(),
         eyeColor: _eyeColorController.text.trim(),
         additionalDetails: _additionalDetailsController.text.trim(),
-        appearanceImagePath: _appearanceImagePath ?? '',
+                appearanceImageData: _appearanceImageData,
       ),
       deathSaves: CharacterDeathSaves(
         successes: _deathSaveSuccesses,
@@ -7905,39 +7943,14 @@ Widget _buildIniciativeField() {
       );
 
       if (image != null && mounted) {
-        // Create a permanent directory for character images
-        final directory = await getApplicationDocumentsDirectory();
-        final characterImagesDir = Directory(
-          path.join(directory.path, 'character_images'),
-        );
-
-        // Create directory if it doesn't exist
-        if (!await characterImagesDir.exists()) {
-          await characterImagesDir.create(recursive: true);
+        // Convert image to base64 and save to character data
+        final base64Data = await _imageFileToBase64(File(image.path));
+        if (base64Data != null) {
+          setState(() {
+            _customImageData = base64Data;
+          });
+          debugPrint('Profile image converted to base64 (${base64Data.length} characters)');
         }
-
-        // Generate unique filename
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fileName = '${widget.character.id}_$timestamp.jpg';
-        final savedImagePath = path.join(characterImagesDir.path, fileName);
-
-        // Copy image to permanent location
-        final File sourceFile = File(image.path);
-        final File savedFile = await sourceFile.copy(savedImagePath);
-
-        // Clean up old image if exists
-        if (_customImagePath != null &&
-            _customImagePath!.startsWith(characterImagesDir.path)) {
-          try {
-            await File(_customImagePath!).delete();
-          } catch (e) {
-            // Error deleting old image: $e
-          }
-        }
-
-        setState(() {
-          _customImagePath = savedFile.path;
-        });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -7971,24 +7984,8 @@ Widget _buildIniciativeField() {
 
   void _removeImage() async {
     try {
-      // Delete the image file if it exists in our character_images directory
-      if (_customImagePath != null) {
-        final directory = await getApplicationDocumentsDirectory();
-        final characterImagesDir = Directory(
-          path.join(directory.path, 'character_images'),
-        );
-
-        if (_customImagePath!.startsWith(characterImagesDir.path)) {
-          try {
-            await File(_customImagePath!).delete();
-          } catch (e) {
-            // Error deleting image file: $e
-          }
-        }
-      }
-
       setState(() {
-        _customImagePath = null;
+        _customImageData = null;
       });
 
       if (mounted) {
@@ -8031,32 +8028,14 @@ Widget _buildIniciativeField() {
       );
 
       if (image != null) {
-        final directory = await getApplicationDocumentsDirectory();
-        final appearanceImagesDir = Directory(
-          path.join(directory.path, 'appearance_images'),
-        );
-        if (!await appearanceImagesDir.exists()) {
-          await appearanceImagesDir.create(recursive: true);
+        // Convert image to base64 and save to character data
+        final base64Data = await _imageFileToBase64(File(image.path));
+        if (base64Data != null) {
+          setState(() {
+            _appearanceImageData = base64Data;
+          });
+          debugPrint('Appearance image converted to base64 (${base64Data.length} characters)');
         }
-
-        final String fileName = path.basename(image.path);
-        final String savedImagePath = path.join(appearanceImagesDir.path, fileName);
-        final File sourceFile = File(image.path);
-        final File savedFile = await sourceFile.copy(savedImagePath);
-
-        // Clean up old appearance image if exists
-        if (_appearanceImagePath != null &&
-            _appearanceImagePath!.startsWith(appearanceImagesDir.path)) {
-          try {
-            await File(_appearanceImagePath!).delete();
-          } catch (e) {
-            debugPrint('Error deleting old appearance image: $e');
-          }
-        }
-
-        setState(() {
-          _appearanceImagePath = savedFile.path;
-        });
 
         if (mounted) {
           _autoSaveCharacter();
@@ -8078,24 +8057,8 @@ Widget _buildIniciativeField() {
 
   void _removeAppearanceImage() async {
     try {
-      // Delete the appearance image file if it exists in our appearance_images directory
-      if (_appearanceImagePath != null) {
-        final directory = await getApplicationDocumentsDirectory();
-        final appearanceImagesDir = Directory(
-          path.join(directory.path, 'appearance_images'),
-        );
-
-        if (_appearanceImagePath!.startsWith(appearanceImagesDir.path)) {
-          try {
-            await File(_appearanceImagePath!).delete();
-          } catch (e) {
-            debugPrint('Error deleting appearance image file: $e');
-          }
-        }
-      }
-
       setState(() {
-        _appearanceImagePath = null;
+        _appearanceImageData = null;
       });
 
       if (mounted) {
@@ -8131,7 +8094,6 @@ Widget _buildIniciativeField() {
     
     final updatedCharacter = widget.character.copyWith(
       name: _nameController.text.trim(),
-      customImagePath: _customImagePath,
       characterClass: _classController.text.trim(),
       level: int.tryParse(_levelController.text) ?? 1,
       subclass:
@@ -8196,7 +8158,7 @@ Widget _buildIniciativeField() {
         age: _ageController.text.trim(),
         eyeColor: _eyeColorController.text.trim(),
         additionalDetails: _additionalDetailsController.text.trim(),
-        appearanceImagePath: _appearanceImagePath ?? '',
+                appearanceImageData: _appearanceImageData,
       ),
       deathSaves: CharacterDeathSaves(
         successes: _deathSaveSuccesses,
@@ -8506,28 +8468,16 @@ Widget _buildIniciativeField() {
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.grey.shade400),
                           ),
-                          child: _appearanceImagePath != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(
-                                    File(_appearanceImagePath!),
-                                    width: 200,
-                                    height: 200,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(
-                                        Icons.person,
-                                        size: 60,
-                                        color: Colors.grey,
-                                      );
-                                    },
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.person,
-                                  size: 60,
-                                  color: Colors.grey,
-                                ),
+                          child: _base64ToImage(
+                            _appearanceImageData,
+                            width: 200,
+                            height: 200,
+                            placeholder: const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -8536,9 +8486,9 @@ Widget _buildIniciativeField() {
                             ElevatedButton.icon(
                               onPressed: _isPickingImage ? null : _pickAppearanceImage,
                               icon: const Icon(Icons.photo_library),
-                              label: Text(_appearanceImagePath != null ? 'Change' : 'Add'),
+                              label: Text(_appearanceImageData != null ? 'Change' : 'Add'),
                             ),
-                            if (_appearanceImagePath != null) ...[
+                            if (_appearanceImageData != null) ...[
                               const SizedBox(width: 8),
                               ElevatedButton.icon(
                                 onPressed: _removeAppearanceImage,

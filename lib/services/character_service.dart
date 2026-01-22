@@ -4,47 +4,52 @@ import 'package:flutter/foundation.dart';
 import '../models/character_model.dart';
 
 // Conditional import for path_provider
-import 'package:path_provider/path_provider.dart' if (dart.library.io) 'package:path_provider/path_provider.dart';
+import 'package:path_provider/path_provider.dart';
+
 
 class CharacterService {
   static const String _charactersDirName = 'characters';
   static List<Character> _memoryCache = [];
   static bool _useMemoryStorage = false;
+  static bool get _isIOSRelease =>
+    !kIsWeb && Platform.isIOS && kReleaseMode;
+
   
   /// Initialize storage system
+  static bool _initialized = false;
+
   static Future<void> initializeStorage() async {
-    try {
-      if (kIsWeb) {
-        _useMemoryStorage = true;
-        debugPrint('Web platform detected, using memory-only storage');
-        return;
-      }
-      
-      // Test if file operations work
-      final testDir = Directory.systemTemp;
-      final testFile = File('${testDir.path}/test_${DateTime.now().millisecondsSinceEpoch}.tmp');
-      
-      try {
-        await testFile.writeAsString('test');
-        await testFile.delete();
-        _useMemoryStorage = false;
-        debugPrint('File system operations available, using file storage');
-      } catch (e) {
-        _useMemoryStorage = true;
-        debugPrint('File system operations failed, using memory storage: $e');
-      }
-    } catch (e) {
+    if (kIsWeb) {
       _useMemoryStorage = true;
-      debugPrint('Storage initialization failed, using memory storage: $e');
+      _initialized = true;
+      return;
     }
+
+
+    final dir = await getApplicationDocumentsDirectory();
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+
+    _useMemoryStorage = false;
+    _initialized = true;
   }
+
+  static Future<void> ensureInitialized() async {
+    if (_initialized) return;
+    await initializeStorage();
+  }
+
+
   
   /// Get the directory where character files are stored
   static Future<Directory> _getCharactersDirectory() async {
+    await ensureInitialized();
+
     if (_useMemoryStorage) {
-      throw Exception('Memory storage in use');
+      throw StateError('Filesystem access while using memory storage');
     }
-    
+
     try {
       // Try to get the application documents directory first (mobile/desktop)
       final appDir = await getApplicationDocumentsDirectory();
@@ -59,23 +64,8 @@ class CharacterService {
       debugPrint('Using documents directory for character storage: ${charactersDir.path}');
       return charactersDir;
     } catch (e) {
-      debugPrint('Documents directory failed, falling back to temp: $e');
-      // Fallback to temporary directory
-      final tempDir = Directory.systemTemp;
-      final charactersDir = Directory('${tempDir.path}/$_charactersDirName');
-      
-      try {
-        if (!await charactersDir.exists()) {
-          await charactersDir.create(recursive: true);
-        }
-        debugPrint('Using temp directory for character storage: ${charactersDir.path}');
-        return charactersDir;
-      } catch (fallbackError) {
-        debugPrint('Temp directory also failed: $fallbackError');
-        // Switch to memory storage
         _useMemoryStorage = true;
-        throw Exception('All directory options failed, switching to memory storage');
-      }
+        throw Exception('Failed to access documents directory');
     }
   }
   
@@ -89,12 +79,8 @@ class CharacterService {
   
   /// Save a character to local storage
   static Future<void> saveCharacter(Character character) async {
+    await ensureInitialized();
     try {
-      // Initialize storage if not already done
-      if (!_useMemoryStorage && kIsWeb) {
-        await initializeStorage();
-      }
-      
       // Update the updatedAt timestamp
       final updatedCharacter = character.copyWith(
         updatedAt: DateTime.now(),
@@ -130,22 +116,15 @@ class CharacterService {
     } catch (e) {
       debugPrint('Error saving character ${character.name}: $e');
       
-      // Fallback to memory storage
-      if (!_useMemoryStorage) {
-        debugPrint('Falling back to memory storage due to error');
-        _useMemoryStorage = true;
-        await saveCharacter(character);
-        return;
+      if (_isIOSRelease) {
+        rethrow; // NO caer a memoria en iOS release
       }
-      
-      // Still update memory cache even if everything else fails
-      final index = _memoryCache.indexWhere((c) => c.id == character.id);
-      if (index != -1) {
-        _memoryCache[index] = character;
-      } else {
-        _memoryCache.add(character);
+      if (_useMemoryStorage) {
+        rethrow; // ⬅️ evita recursión infinita
       }
-      rethrow; // Re-throw to let the caller know there was an issue
+    // Solo fallback en debug / Android
+      _useMemoryStorage = true;
+      await saveCharacter(character);
     }
   }
   
@@ -153,9 +132,7 @@ class CharacterService {
   static Future<List<Character>> loadAllCharacters() async {
     try {
       // Initialize storage if not already done
-      if (!_useMemoryStorage && kIsWeb) {
-        await initializeStorage();
-      }
+      await ensureInitialized();
       
       List<Character> characters = [];
       
@@ -164,6 +141,7 @@ class CharacterService {
         characters = List.from(_memoryCache);
         debugPrint('Loaded ${characters.length} characters from memory storage');
       } else {
+        _memoryCache.clear();
         // File-based storage
         final dir = await _getCharactersDirectory();
         
@@ -183,8 +161,9 @@ class CharacterService {
             }
           }
         } catch (e) {
-          debugPrint('Error listing files: $e');
-          debugPrint('Falling back to memory storage');
+          if (_isIOSRelease) {
+            rethrow; // no ocultar errores en iOS
+          }
           _useMemoryStorage = true;
           return List.from(_memoryCache);
         }
@@ -210,17 +189,14 @@ class CharacterService {
       debugPrint('Loaded ${characters.length} characters from storage');
       return characters;
     } catch (e) {
-      debugPrint('Error loading characters: $e');
-      
-      // Fallback to memory storage
-      if (!_useMemoryStorage) {
-        debugPrint('Falling back to memory storage due to error');
+        debugPrint('Error loading characters: $e');
+
+        if (_isIOSRelease) {
+          rethrow;
+        }
+
         _useMemoryStorage = true;
         return List.from(_memoryCache);
-      }
-      
-      // Return memory cache as final fallback
-      return List.from(_memoryCache);
     }
   }
   
@@ -258,7 +234,8 @@ class CharacterService {
       String recoveredJson = jsonString;
       
       // Remove extra closing braces at the end
-      while (recoveredJson.endsWith('}')) {
+      int attempts = 3;
+      while (attempts-- > 0 && recoveredJson.endsWith('}')) {
         try {
           json.decode(recoveredJson);
           break; // Valid JSON found
@@ -284,7 +261,11 @@ class CharacterService {
     try {
       final backupPath = '${originalFile.path}.corrupted.${DateTime.now().millisecondsSinceEpoch}';
       final backupFile = File(backupPath);
-      await backupFile.writeAsString(await originalFile.readAsString());
+      await backupFile.writeAsString(
+        await originalFile.readAsString(),
+        flush: true,
+      );
+
       debugPrint('Created backup of corrupted file: $backupPath');
     } catch (e) {
       debugPrint('Failed to create backup of corrupted file: $e');
@@ -297,38 +278,35 @@ class CharacterService {
     String jsonString, 
     String characterName
   ) async {
+    String? tempPath;
     try {
       // Validate the JSON string before writing
       json.decode(jsonString); // This will throw if JSON is invalid
       
       // Create temporary file for atomic write
-      final tempFile = File('${file.path}.tmp.${DateTime.now().millisecondsSinceEpoch}');
-      
+      tempPath = '${file.path}.tmp.${DateTime.now().millisecondsSinceEpoch}';
+      final tempFile = File(tempPath);
+
       // Write to temporary file first
-      await tempFile.writeAsString(jsonString);
-      
-      // Verify the written file can be read and parsed
-      final testRead = await tempFile.readAsString();
-      json.decode(testRead); // Verify integrity
-      
-      // Atomic operation: replace original file with temp file
-      await tempFile.rename(file.path);
-      
+      await tempFile.writeAsString(jsonString, flush: true);
+
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      await tempFile.copy(file.path);
+      await tempFile.delete();
+      await file.stat();
+            
       debugPrint('Successfully saved character to file: $characterName at ${file.path}');
     } catch (e) {
-      debugPrint('Failed to write character file with validation: $e');
-      
-      // Clean up temp file if it exists
-      try {
-        final tempFile = File('${file.path}.tmp');
-        if (await tempFile.exists()) {
-          await tempFile.delete();
+      if (tempPath != null) {
+          final tempFile = File(tempPath);
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
         }
-      } catch (cleanupError) {
-        debugPrint('Failed to cleanup temp file: $cleanupError');
-      }
-      
-      rethrow;
+        rethrow;
     }
   }
   
@@ -399,9 +377,7 @@ class CharacterService {
   static Future<void> deleteCharacter(String characterId) async {
     try {
       // Initialize storage if not already done
-      if (!_useMemoryStorage && kIsWeb) {
-        await initializeStorage();
-      }
+      await ensureInitialized();
       
       if (_useMemoryStorage) {
         // Memory-based deletion
@@ -428,16 +404,14 @@ class CharacterService {
       debugPrint('Error deleting character $characterId: $e');
       
       // Fallback to memory storage
-      if (!_useMemoryStorage) {
-        debugPrint('Falling back to memory storage for deletion');
-        _useMemoryStorage = true;
-        await deleteCharacter(characterId);
-        return;
+      if (_isIOSRelease) {
+        rethrow;
       }
-      
+
+      _useMemoryStorage = true;
+
       // Still remove from memory cache even if file deletion fails
       _memoryCache.removeWhere((c) => c.id == characterId);
-      rethrow; // Re-throw to let the caller know there was an issue
     }
   }
   
@@ -509,6 +483,13 @@ class CharacterService {
   
   /// Debug method to check character storage
   static Future<void> debugCheckCharacterStorage() async {
+    if (_useMemoryStorage) {
+      debugPrint('\n=== Character Storage Debug Report ===');
+      debugPrint('Using memory storage');
+      debugPrint('Memory cache size: ${_memoryCache.length}');
+      debugPrint('=====================================\n');
+      return;
+    }
     try {
       final dir = await _getCharactersDirectory();
       final files = await dir.list().toList();

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
@@ -209,10 +210,10 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
       child: ListTile(
         leading: CircleAvatar(
           child:
-              character.customImagePath != null
+              character.customImageData != null && character.customImageData!.isNotEmpty
                   ? ClipOval(
-                    child: Image.file(
-                      File(character.customImagePath!),
+                    child: Image.memory(
+                      base64Decode(character.customImageData!),
                       width: 40,
                       height: 40,
                       fit: BoxFit.cover,

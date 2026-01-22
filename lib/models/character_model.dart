@@ -5,6 +5,7 @@ class Character extends BaseModel {
   final String id;
   final String name;
   final String? customImagePath;
+  final String? customImageData; // Base64 encoded profile image data
   final CharacterStats stats;
   final CharacterSavingThrows savingThrows;
   final CharacterSkillChecks skillChecks;
@@ -37,6 +38,7 @@ class Character extends BaseModel {
     required this.id,
     required this.name,
     this.customImagePath,
+    this.customImageData,
     required this.stats,
     required this.savingThrows,
     required this.skillChecks,
@@ -74,6 +76,7 @@ class Character extends BaseModel {
         'id': {'value': id},
         'name': {'value': name},
         if (customImagePath != null) 'custom_image_path': {'value': customImagePath},
+        if (customImageData != null) 'custom_image_data': {'value': customImageData},
         'stats': stats.toJson(),
         'saving_throws': savingThrows.toJson(),
         'skill_checks': skillChecks.toJson(),
@@ -112,6 +115,7 @@ class Character extends BaseModel {
       id: _getValue<String>(stats, 'id'),
       name: _getValue<String>(stats, 'name'),
       customImagePath: _getValueNullable<String?>(stats, 'custom_image_path', defaultValue: null),
+      customImageData: _getValueNullable<String?>(stats, 'custom_image_data', defaultValue: null),
       stats: CharacterStats.fromJson(_getValue<Map<String, dynamic>>(stats, 'stats')),
       savingThrows: CharacterSavingThrows.fromJson(_getValue<Map<String, dynamic>>(stats, 'saving_throws')),
       skillChecks: CharacterSkillChecks.fromJson(_getValue<Map<String, dynamic>>(stats, 'skill_checks')),
@@ -223,6 +227,7 @@ class Character extends BaseModel {
     String? id,
     String? name,
     String? customImagePath,
+    String? customImageData,
     CharacterStats? stats,
     CharacterSavingThrows? savingThrows,
     CharacterSkillChecks? skillChecks,
@@ -255,6 +260,7 @@ class Character extends BaseModel {
       id: id ?? this.id,
       name: name ?? this.name,
       customImagePath: customImagePath ?? this.customImagePath,
+      customImageData: customImageData ?? this.customImageData,
       stats: stats ?? this.stats,
       savingThrows: savingThrows ?? this.savingThrows,
       skillChecks: skillChecks ?? this.skillChecks,
@@ -283,6 +289,50 @@ class Character extends BaseModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  // Image-related getters for better image management
+  
+  /// Check if character has a profile image
+  bool get hasProfileImage => customImagePath != null && customImagePath!.isNotEmpty;
+  
+  /// Check if character has an appearance image  
+  bool get hasAppearanceImage => appearance.appearanceImagePath != null && appearance.appearanceImagePath!.isNotEmpty;
+  
+  /// Check if character has any images
+  bool get hasAnyImages => hasProfileImage || hasAppearanceImage;
+  
+  /// Get profile image filename from path
+  String? get profileImageFilename {
+    if (!hasProfileImage) return null;
+    return customImagePath!.split('/').last;
+  }
+  
+  /// Get appearance image filename from path
+  String? get appearanceImageFilename {
+    if (!hasAppearanceImage) return null;
+    return appearance.appearanceImagePath!.split('/').last;
+  }
+  
+  /// Check if profile image uses character ID naming (new format)
+  bool get isProfileImageNamedWithId {
+    if (!hasProfileImage) return false;
+    final filename = profileImageFilename!;
+    return filename.startsWith('${id}_profile_') && filename.endsWith('.jpg');
+  }
+  
+  /// Check if appearance image uses character ID naming (new format)
+  bool get isAppearanceImageNamedWithId {
+    if (!hasAppearanceImage) return false;
+    final filename = appearanceImageFilename!;
+    return filename.startsWith('${id}_appearance_') && filename.endsWith('.jpg');
+  }
+  
+  /// Check if both images use the new character ID naming format
+  bool get areImagesNamedWithId {
+    final profileCheck = !hasProfileImage || isProfileImageNamedWithId;
+    final appearanceCheck = !hasAppearanceImage || isAppearanceImageNamedWithId;
+    return profileCheck && appearanceCheck;
   }
 }
 
@@ -965,6 +1015,7 @@ class CharacterAppearance {
   final String eyeColor;
   final String additionalDetails;
   final String appearanceImagePath;
+  final String? appearanceImageData; // Base64 encoded appearance image data
 
   const CharacterAppearance({
     this.height = '',
@@ -972,6 +1023,7 @@ class CharacterAppearance {
     this.eyeColor = '',
     this.additionalDetails = '',
     this.appearanceImagePath = '',
+    this.appearanceImageData,
   });
 
   Map<String, dynamic> toJson() => {
@@ -980,6 +1032,7 @@ class CharacterAppearance {
     'eye_color': {'value': eyeColor},
     'additional_details': {'value': additionalDetails},
     'appearance_image_path': {'value': appearanceImagePath},
+    if (appearanceImageData != null) 'appearance_image_data': {'value': appearanceImageData},
   };
 
   factory CharacterAppearance.fromJson(Map<String, dynamic> json) {
@@ -989,6 +1042,7 @@ class CharacterAppearance {
       eyeColor: Character._getValue<String>(json, 'eye_color', defaultValue: ''),
       additionalDetails: Character._getValue<String>(json, 'additional_details', defaultValue: ''),
       appearanceImagePath: Character._getValue<String>(json, 'appearance_image_path', defaultValue: ''),
+      appearanceImageData: Character._getValueNullable<String?>(json, 'appearance_image_data', defaultValue: null),
     );
   }
 
@@ -998,6 +1052,7 @@ class CharacterAppearance {
     String? eyeColor,
     String? additionalDetails,
     String? appearanceImagePath,
+    String? appearanceImageData,
   }) {
     return CharacterAppearance(
       height: height ?? this.height,
@@ -1005,6 +1060,7 @@ class CharacterAppearance {
       eyeColor: eyeColor ?? this.eyeColor,
       additionalDetails: additionalDetails ?? this.additionalDetails,
       appearanceImagePath: appearanceImagePath ?? this.appearanceImagePath,
+      appearanceImageData: appearanceImageData ?? this.appearanceImageData,
     );
   }
 }
