@@ -34,7 +34,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   bool _hasUnsavedClassChanges = false;
   String _selectedClass = 'Fighter';
   bool _useCustomSubclass = false;
-  String _selectedRace = '';
   String _selectedBackground = '';
 
   // Death saves controllers
@@ -85,9 +84,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _armorClassController = TextEditingController();
   final _speedController = TextEditingController();
   final _initiativeController = TextEditingController();
-  
-  // Flag to track if initiative has been manually modified
-  bool _initiativeManuallyModified = false;
 
   // Health controllers
   final _maxHpController = TextEditingController();
@@ -159,7 +155,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _subclassController.text = character.subclass ?? '';
     _raceController.text = character.race ?? '';
     _backgroundController.text = character.background ?? '';
-    _selectedRace = character.race ?? '';
     _selectedBackground = character.background ?? '';
     
     // Check if current subclass is custom (not in preset list)
@@ -227,10 +222,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     final dexterityModifier = _stats.getModifier(_stats.dexterity);
     if (_stats.initiative == dexterityModifier) {
       _initiativeController.text = dexterityModifier.toString();
-      _initiativeManuallyModified = false;
     } else {
       _initiativeController.text = _stats.initiative.toString();
-      _initiativeManuallyModified = true;
     }
     _hasInspiration = _stats.inspiration;
     _hasConcentration = _stats.hasConcentration;
@@ -408,339 +401,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             _buildNotesTab(),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBasicInfoTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Profile image section
-          Center(
-            child: GestureDetector(
-              onTap: _showImageOptionsDialog,
-              child: Stack(
-                children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(60),
-                    ),
-                    child:
-                        _customImagePath != null
-                            ? ClipOval(
-                              child: Image.file(
-                                File(_customImagePath!),
-                                width: 120,
-                                height: 120,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.grey,
-                                  );
-                                },
-                              ),
-                            )
-                            : const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.grey,
-                            ),
-                  ),
-                  // Camera button overlay
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: _buildPickImageButton(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Name field
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Character Name',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Level field
-          TextField(
-            controller: _levelController,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              labelText: 'Character Level',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Class and subclass
-          Row(
-            children: [
-              Expanded(
-                child: Consumer<CharactersViewModel>(
-                  builder: (context, viewModel, child) {
-                    return DropdownButtonFormField<String>(
-                      value: _selectedClass,
-                      decoration: const InputDecoration(
-                        labelText: 'Class',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: viewModel.availableClasses.map((className) {
-                        return DropdownMenuItem(
-                          value: className,
-                          child: Text(className),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedClass = value!;
-                          _classController.text = value;
-                          _useCustomSubclass = false;
-                          _hasUnsavedClassChanges = true;
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_useCustomSubclass)
-                      TextField(
-                        controller: _subclassController,
-                        decoration: InputDecoration(
-                          labelText: 'Custom Subclass',
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.list),
-                            onPressed: () {
-                              setState(() {
-                                _useCustomSubclass = false;
-                                _hasUnsavedClassChanges = true;
-                              });
-                            },
-                            tooltip: 'Choose from preset subclasses',
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            _hasUnsavedClassChanges = true;
-                          });
-                        },
-                      )
-                    else
-                      DropdownButtonFormField<String>(
-                        value: _useCustomSubclass || _subclassController.text.isEmpty || !_getSubclassesForClass(_selectedClass).contains(_subclassController.text) ? null : _subclassController.text,
-                        decoration: const InputDecoration(
-                          labelText: 'Subclass (Optional)',
-                          border: OutlineInputBorder(),
-                        ),
-                        isExpanded: true,
-                        items: [
-                          ..._getSubclassesForClass(_selectedClass).map((subclass) {
-                            return DropdownMenuItem(
-                              value: subclass,
-                              child: SizedBox(
-                                width: 200,
-                                child: Text(
-                                  subclass,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            );
-                          }),
-                          DropdownMenuItem(
-                            value: '__CUSTOM__',
-                            child: SizedBox(
-                              width: 200,
-                              child: Text(
-                                'Custom Subclass...',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                style: const TextStyle(
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            if (value == '__CUSTOM__') {
-                              _useCustomSubclass = true;
-                              _subclassController.text = '';
-                            } else {
-                              _subclassController.text = value ?? '';
-                            }
-                            _hasUnsavedClassChanges = true;
-                          });
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Race selection
-          Consumer<RacesViewModel>(
-            builder: (context, racesViewModel, child) {
-              return DropdownButtonFormField<String>(
-                value: _raceController.text.isEmpty ? null : _raceController.text,
-                decoration: const InputDecoration(
-                  labelText: 'Race (Optional)',
-                  border: OutlineInputBorder(),
-                ),
-                items: racesViewModel.races.map((race) {
-                  return DropdownMenuItem(
-                    value: race.name,
-                    child: Text(race.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _raceController.text = value ?? '';
-                    _selectedRace = value ?? '';
-                    _hasUnsavedClassChanges = true;
-                  });
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Background selection
-          Consumer<BackgroundsViewModel>(
-            builder: (context, backgroundsViewModel, child) {
-              return DropdownButtonFormField<String>(
-                value: _backgroundController.text.isEmpty ? null : _backgroundController.text,
-                decoration: const InputDecoration(
-                  labelText: 'Background (Optional)',
-                  border: OutlineInputBorder(),
-                ),
-                items: backgroundsViewModel.backgrounds.map((background) {
-                  return DropdownMenuItem(
-                    value: background.name,
-                    child: Text(background.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  debugPrint('Background dropdown changed to: $value');
-                  setState(() {
-                    _backgroundController.text = value ?? '';
-                    _selectedBackground = value ?? '';
-                    _hasUnsavedClassChanges = true;
-                    debugPrint('_backgroundController.text: "${_backgroundController.text}"');
-                    debugPrint('_selectedBackground: "${_selectedBackground}"');
-                    debugPrint('_hasUnsavedClassChanges: $_hasUnsavedClassChanges');
-                  });
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          
-          // Class save button
-          if (_hasUnsavedClassChanges)
-            Align(
-              alignment: Alignment.center,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  _saveCharacter('Information saved!');
-                  setState(() {
-                    _hasUnsavedClassChanges = false;
-                  });
-                },
-                icon: const Icon(Icons.save, size: 16),
-                label: const Text('Save Changes'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  textStyle: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-          const SizedBox(height: 24),
-
-          // Long Rest section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.bedtime,
-                      color: Colors.blue.shade700,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Long Rest',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Take a long rest to restore hit points, spell slots, and all class resources.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _takeComprehensiveLongRest,
-                    icon: const Icon(Icons.night_shelter),
-                    label: const Text('Take Long Rest'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1049,7 +709,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                   onChanged: (value) {
                                     setState(() {
                                       _raceController.text = value ?? '';
-                                      _selectedRace = value ?? '';
                                       _hasUnsavedClassChanges = true;
                                     });
                                   },
@@ -1899,325 +1558,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
-  // Helper methods for spellcasting information
-  String? _getSpellcastingAbility() {
-    final className = _classController.text.toLowerCase();
-    final subclass = _subclassController.text.toLowerCase();
-    
-    // Define spellcasting abilities for different classes
-    final Map<String, String> classSpellcasting = {
-      'wizard': 'INT',
-      'sorcerer': 'CHA',
-      'warlock': 'CHA',
-      'bard': 'CHA',
-      'cleric': 'WIS',
-      'druid': 'WIS',
-      'paladin': 'CHA',
-      'ranger': 'WIS',
-      'artificer': 'INT',
-    };
-    
-    // Check main class first
-    if (classSpellcasting.containsKey(className)) {
-      return classSpellcasting[className];
-    }
-    
-    // Check subclasses that grant spellcasting
-    final Map<String, String> subclassSpellcasting = {
-      'eldritch knight': 'INT',
-      'arcane trickster': 'INT',
-      'divine soul': 'CHA',
-      'favored soul': 'CHA',
-      'shadow monk': 'WIS',
-      'four elements monk': 'WIS',
-      'way of mercy monk': 'WIS',
-    };
-    
-    if (subclassSpellcasting.containsKey(subclass)) {
-      return subclassSpellcasting[subclass];
-    }
-    
-    return null;
-  }
-  
-  int _getAbilityScore(String ability) {
-    switch (ability) {
-      case 'STR':
-        return int.tryParse(_strengthController.text) ?? 10;
-      case 'DEX':
-        return int.tryParse(_dexterityController.text) ?? 10;
-      case 'CON':
-        return int.tryParse(_constitutionController.text) ?? 10;
-      case 'INT':
-        return int.tryParse(_intelligenceController.text) ?? 10;
-      case 'WIS':
-        return int.tryParse(_wisdomController.text) ?? 10;
-      case 'CHA':
-        return int.tryParse(_charismaController.text) ?? 10;
-      default:
-        return 10;
-    }
-  }
-  
-  int _getAbilityModifier(String ability) {
-    final score = _getAbilityScore(ability);
-    return ((score - 10) / 2).floor();
-  }
-  
-  int _getSpellSaveDC() {
-    final spellcastingAbility = _getSpellcastingAbility();
-    if (spellcastingAbility == null) return 0;
-    
-    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
-    final abilityModifier = _getAbilityModifier(spellcastingAbility);
-    
-    return 8 + proficiencyBonus + abilityModifier;
-  }
-  
-  int _getSpellAttackBonus() {
-    final spellcastingAbility = _getSpellcastingAbility();
-    if (spellcastingAbility == null) return 0;
-    
-    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
-    final abilityModifier = _getAbilityModifier(spellcastingAbility);
-    
-    return proficiencyBonus + abilityModifier;
-  }
-
-  Widget _buildSpellcastingInfoRow(String label, String description, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.purple.shade300),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.purple,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.purple.shade600,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  String _getAbilityName(String ability) {
-    switch (ability) {
-      case 'STR':
-        return 'Strength';
-      case 'DEX':
-        return 'Dexterity';
-      case 'CON':
-        return 'Constitution';
-      case 'INT':
-        return 'Intelligence';
-      case 'WIS':
-        return 'Wisdom';
-      case 'CHA':
-        return 'Charisma';
-      default:
-        return ability;
-    }
-  }
-  
-  List<String> _getSubclassesForClass(String className) {
-    switch (className.toLowerCase()) {
-      case 'fighter':
-        return [
-          'Battle Master',
-          'Champion',
-          'Eldritch Knight',
-          'Psi Warrior',
-          'Rune Knight',
-          'Samurai',
-          'Cavalier',
-          'Gunslinger',
-          'Banneret',
-        ];
-      case 'wizard':
-        return [
-          'School of Abjuration',
-          'School of Conjuration',
-          'School of Divination',
-          'School of Enchantment',
-          'School of Evocation',
-          'School of Illusion',
-          'School of Necromancy',
-          'School of Transmutation',
-          'School of Bladesinging',
-          'School of Chronurgy',
-          'School of Graviturgy',
-          'School of Scribes',
-          'School of Order',
-          'School of Invention',
-          'School of War Magic',
-        ];
-      case 'cleric':
-        return [
-          'Knowledge Domain',
-          'Life Domain',
-          'Light Domain',
-          'Nature Domain',
-          'Order Domain',
-          'Peace Domain',
-          'Trickery Domain',
-          'War Domain',
-          'Forge Domain',
-          'Grave Domain',
-          'Twilight Domain',
-          'Arcana Domain',
-        ];
-      case 'rogue':
-        return [
-          'Thief',
-          'Assassin',
-          'Arcane Trickster',
-          'Inquisitive',
-          'Mastermind',
-          'Scout',
-          'Soulknife',
-          'Swashbuckler',
-          'Phantom',
-        ];
-      case 'ranger':
-        return [
-          'Hunter',
-          'Beast Master',
-          'Gloom Stalker',
-          'Horizon Walker',
-          'Monster Slayer',
-          'Fey Wanderer',
-          'Druidic Warrior',
-          'Swarmkeeper',
-        ];
-      case 'paladin':
-        return [
-          'Devotion',
-          'Ancients',
-          'Vengeance',
-          'Oathbreaker',
-          'Glory',
-          'Crown',
-          'Watchers',
-        ];
-      case 'barbarian':
-        return [
-          'Path of the Berserker',
-          'Path of the Totem Warrior',
-          'Path of the Zealot',
-          'Path of the Wild Magic',
-          'Path of the Storm Herald',
-          'Path of the Ancestral Guardian',
-          'Path of the Battlerager',
-          'Path of the Beast',
-          'Path of the Wild Soul',
-        ];
-      case 'bard':
-        return [
-          'College of Lore',
-          'College of Valor',
-          'College of Glamour',
-          'College of Swords',
-          'College of Whispers',
-          'College of Creation',
-          'College of Eloquence',
-          'College of Spirits',
-        ];
-      case 'druid':
-        return [
-          'Circle of the Land',
-          'Circle of the Moon',
-          'Circle of the Shepherd',
-          'Circle of Spores',
-          'Circle of Stars',
-          'Circle of Wildfire',
-          'Circle of Dreams',
-          'Circle of the Coast',
-        ];
-      case 'monk':
-        return [
-          'Way of the Open Hand',
-          'Way of Shadow',
-          'Way of the Four Elements',
-          'Way of the Long Death',
-          'Way of Mercy',
-          'Way of the Drunken Master',
-          'Way of the Kensei',
-          'Way of the Astral Self',
-        ];
-      case 'sorcerer':
-        return [
-          'Draconic Bloodline',
-          'Wild Magic',
-          'Divine Soul',
-          'Shadow Magic',
-          'Storm Sorcery',
-          'Clockwork Soul',
-          'Aberrant Mind',
-        ];
-      case 'warlock':
-        return [
-          'The Fiend',
-          'The Great Old One',
-          'The Celestial',
-          'The Hexblade',
-          'The Archfey',
-          'The Undying',
-          'The Genie',
-          'The Fathomless',
-          'The Undead',
-        ];
-      case 'artificer':
-        return [
-          'Alchemist',
-          'Armorer',
-          'Artillerist',
-          'Battle Smith',
-        ];
-      default:
-        return [];
-    }
-  }
-
   Widget _buildAttacksTab() {
     final spellcastingAbility = _getSpellcastingAbility();
     
@@ -2740,61 +2080,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
-  Widget _buildCombatField(String label, TextEditingController controller) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade300, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              width: double.infinity,
-              height: 46,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.black54, width: 1),
-              ),
-              child: TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  hintText: '10',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
-                  isDense: true,
-                ),
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildInspirationField() {
     final isActiveColor = _hasInspiration ? Colors.green : Colors.blue;
     
@@ -2859,6 +2144,918 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
+  Widget _buildSkillsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // Skills grouped by ability scores
+          _buildSkillGroup('Strength', [
+            _buildSkillRow(
+              'Athletics',
+              'STR',
+              _skillChecks.athleticsProficiency,
+              _skillChecks.athleticsExpertise,
+              'athletics',
+            ),
+          ]),
+
+          const SizedBox(height: 24),
+          _buildSkillGroup('Dexterity', [
+            _buildSkillRow(
+              'Acrobatics',
+              'DEX',
+              _skillChecks.acrobaticsProficiency,
+              _skillChecks.acrobaticsExpertise,
+              'acrobatics',
+            ),
+            _buildSkillRow(
+              'Sleight of Hand',
+              'DEX',
+              _skillChecks.sleightOfHandProficiency,
+              _skillChecks.sleightOfHandExpertise,
+              'sleight_of_hand',
+            ),
+            _buildSkillRow(
+              'Stealth',
+              'DEX',
+              _skillChecks.stealthProficiency,
+              _skillChecks.stealthExpertise,
+              'stealth',
+            ),
+          ]),
+
+          const SizedBox(height: 24),
+          _buildSkillGroup('Intelligence', [
+            _buildSkillRow(
+              'Arcana',
+              'INT',
+              _skillChecks.arcanaProficiency,
+              _skillChecks.arcanaExpertise,
+              'arcana',
+            ),
+            _buildSkillRow(
+              'History',
+              'INT',
+              _skillChecks.historyProficiency,
+              _skillChecks.historyExpertise,
+              'history',
+            ),
+            _buildSkillRow(
+              'Investigation',
+              'INT',
+              _skillChecks.investigationProficiency,
+              _skillChecks.investigationExpertise,
+              'investigation',
+            ),
+            _buildSkillRow(
+              'Nature',
+              'INT',
+              _skillChecks.natureProficiency,
+              _skillChecks.natureExpertise,
+              'nature',
+            ),
+            _buildSkillRow(
+              'Religion',
+              'INT',
+              _skillChecks.religionProficiency,
+              _skillChecks.religionExpertise,
+              'religion',
+            ),
+          ]),
+
+          const SizedBox(height: 24),
+          _buildSkillGroup('Wisdom', [
+            _buildSkillRow(
+              'Animal Handling',
+              'WIS',
+              _skillChecks.animalHandlingProficiency,
+              _skillChecks.animalHandlingExpertise,
+              'animal_handling',
+            ),
+            _buildSkillRow(
+              'Insight',
+              'WIS',
+              _skillChecks.insightProficiency,
+              _skillChecks.insightExpertise,
+              'insight',
+            ),
+            _buildSkillRow(
+              'Medicine',
+              'WIS',
+              _skillChecks.medicineProficiency,
+              _skillChecks.medicineExpertise,
+              'medicine',
+            ),
+            _buildSkillRow(
+              'Perception',
+              'WIS',
+              _skillChecks.perceptionProficiency,
+              _skillChecks.perceptionExpertise,
+              'perception',
+            ),
+            _buildSkillRow(
+              'Survival',
+              'WIS',
+              _skillChecks.survivalProficiency,
+              _skillChecks.survivalExpertise,
+              'survival',
+            ),
+          ]),
+
+          const SizedBox(height: 24),
+          _buildSkillGroup('Charisma', [
+            _buildSkillRow(
+              'Deception',
+              'CHA',
+              _skillChecks.deceptionProficiency,
+              _skillChecks.deceptionExpertise,
+              'deception',
+            ),
+            _buildSkillRow(
+              'Intimidation',
+              'CHA',
+              _skillChecks.intimidationProficiency,
+              _skillChecks.intimidationExpertise,
+              'intimidation',
+            ),
+            _buildSkillRow(
+              'Performance',
+              'CHA',
+              _skillChecks.performanceProficiency,
+              _skillChecks.performanceExpertise,
+              'performance',
+            ),
+            _buildSkillRow(
+              'Persuasion',
+              'CHA',
+              _skillChecks.persuasionProficiency,
+              _skillChecks.persuasionExpertise,
+              'persuasion',
+            ),
+          ]),
+          const SizedBox(height: 45), // Extra space at bottom of screen
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpellSlotsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Spell Slots',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              ElevatedButton.icon(
+                onPressed: _takeLongRest,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Restore all slots'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Summary section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Spell Slot Summary',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Calculate total slots and used
+                  Consumer<CharactersViewModel>(
+                    builder: (context, viewModel, child) {
+                      final totalSlots =
+                          _spellSlots.level1Slots +
+                          _spellSlots.level2Slots +
+                          _spellSlots.level3Slots +
+                          _spellSlots.level4Slots +
+                          _spellSlots.level5Slots +
+                          _spellSlots.level6Slots +
+                          _spellSlots.level7Slots +
+                          _spellSlots.level8Slots +
+                          _spellSlots.level9Slots;
+
+                      final totalUsed =
+                          _spellSlots.level1Used +
+                          _spellSlots.level2Used +
+                          _spellSlots.level3Used +
+                          _spellSlots.level4Used +
+                          _spellSlots.level5Used +
+                          _spellSlots.level6Used +
+                          _spellSlots.level7Used +
+                          _spellSlots.level8Used +
+                          _spellSlots.level9Used;
+
+                      final availableSlots = totalSlots - totalUsed;
+
+                      return Column(
+                        children: [
+                          _buildSummaryRow(
+                            'Total Slots',
+                            totalSlots.toString(),
+                          ),
+                          _buildSummaryRow('Used Slots', totalUsed.toString()),
+                          _buildSummaryRow(
+                            'Available Slots',
+                            availableSlots.toString(),
+                            availableSlots > 0 ? Colors.green : Colors.red,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Spell slots grid
+          ...[
+            for (int level = 1; level <= 9; level++)
+              _buildSpellSlotField('Level $level', level),
+          ],
+
+          const SizedBox(height: 32),
+
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpellsTab() {
+    // Calculate maximum prepared spells using current state
+    final modifier = CharacterSpellPreparation.getSpellcastingModifier(widget.character);
+    final calculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
+      _classController.text.trim(), // Use current class from controller
+      int.tryParse(_levelController.text) ?? 1, // Use current level from controller
+      modifier,
+    );
+    
+    // Use the stored max if it's different from calculated (user modified it)
+    final maxPrepared = _spellPreparation.maxPreparedSpells == 0 
+        ? calculatedMax 
+        : _spellPreparation.maxPreparedSpells;
+    
+    // Check if user has modified the max (for visual indicator)
+    final isModified = _spellPreparation.maxPreparedSpells != 0 && _spellPreparation.maxPreparedSpells != calculatedMax;
+    
+    final canPrepare = maxPrepared > 0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your character\'s known spells.',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: _showAddSpellDialog,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Spell'),
+              ),
+            ],
+          ),
+          // Spell preparation section - only show for classes that prepare spells
+          if (canPrepare) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.indigo.shade50, Colors.indigo.shade100],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.indigo.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.auto_stories, color: Colors.indigo.shade700, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Spell Preparation',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.indigo.shade700,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Spell Preparation Info'),
+                              content: const Text(
+                                'You can establish if a spell is always prepared or you can cast it for free. Always prepared spells don\'t count against your maximum prepared spells limit.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Got it'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.info_outline, size: 16),
+                        color: Colors.indigo.shade700,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Maximum prepared spells: $maxPrepared (${_classController.text.trim()} level ${int.tryParse(_levelController.text) ?? 1} + ${_getModifierName(modifier)} $modifier modifier = $calculatedMax)${maxPrepared != calculatedMax ? ' (modified: +${(maxPrepared - calculatedMax).abs()})' : ''}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.indigo.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Currently prepared: ${_spellPreparation.currentPreparedCount}/$maxPrepared',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _spellPreparation.currentPreparedCount < maxPrepared ? Colors.green.shade700 : Colors.blue.shade700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: _showMaxPreparedDialog,
+                        icon: const Icon(Icons.edit, size: 14),
+                        label: const Text('Modify', style: TextStyle(fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.indigo.shade700,
+                          elevation: 2,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        ),
+                      ),
+                      if (isModified) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 2,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                // Calculate the new max (calculated value)
+                                final newMax = calculatedMax;
+                                
+                                // Get current prepared spells (excluding always prepared)
+                                final currentPrepared = _spellPreparation.preparedSpells;
+                                
+                                // If we have more prepared spells than the new max, uncheck excess
+                                if (currentPrepared.length > newMax) {
+                                  final spellsToKeep = currentPrepared.take(newMax).toList();
+                                  _spellPreparation = _spellPreparation.copyWith(
+                                    maxPreparedSpells: 0, // Reset to calculated
+                                    preparedSpells: spellsToKeep, // Keep only up to new max
+                                  );
+                                } else {
+                                  // Just reset max, keep current prepared spells
+                                  _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: 0);
+                                }
+                              });
+                              _autoSaveCharacter();
+                            },
+                            icon: const Icon(Icons.refresh, size: 16),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.indigo.shade700,
+                              padding: const EdgeInsets.all(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          
+          // Group spells by level
+          ..._buildSpellsByLevel(),
+          const SizedBox(height: 70),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Character Feats',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your character\'s feats',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+
+          // Feats list
+          ..._feats.asMap().entries.map((entry) {
+            final index = entry.key;
+            final featName = entry.value;
+
+            // Try to find feat details
+            final featsViewModel = context.read<FeatsViewModel>();
+            final feat = featsViewModel.feats.firstWhere(
+              (f) => f.name.toLowerCase() == featName.toLowerCase(),
+              orElse: () => Feat(
+                id: 'unknown',
+                name: featName,
+                description: 'Custom feat',
+                source: 'Unknown',
+              ),
+            );
+
+            return Card(
+              child: ListTile(
+                title: InkWell(
+                  child: Text(
+                    feat.name,
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                  onTap: () => _showFeatDetails(feat),
+                ),
+                subtitle: Text(
+                  feat.source,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      _feats.removeAt(index);
+                    });
+
+                    // Auto-save the character when a feat is removed
+                    _autoSaveCharacter();
+                  },
+                ),
+              ),
+            );
+          }),
+
+          TextButton.icon(
+            onPressed: _showAddFeatDialog,
+            icon: const Icon(Icons.add),
+            label: const Text('Add Feat'),
+          ),
+          const SizedBox(height: 16),
+          
+          // Feat Notes Section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.note_alt,
+                        color: Theme.of(context).primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Notes',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Additional notes about your feats and abilities.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: TextField(
+                      controller: _featNotesController,
+                      decoration: const InputDecoration(
+                        hintText: 'Add notes about your feats...\n\n'
+                            'Examples:\n'
+                            '• Feat descriptions and mechanics\n'
+                            '• Synergies with other abilities\n'
+                            '• Combat strategies using feats\n'
+                            '• Roleplaying aspects of feats\n'
+                            '• Feat progression plans',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: 12,
+                      minLines: 3,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      onChanged: (value) => _autoSaveCharacter(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper methods for spellcasting information
+  String? _getSpellcastingAbility() {
+    final className = _classController.text.toLowerCase();
+    final subclass = _subclassController.text.toLowerCase();
+    
+    // Define spellcasting abilities for different classes
+    final Map<String, String> classSpellcasting = {
+      'wizard': 'INT',
+      'sorcerer': 'CHA',
+      'warlock': 'CHA',
+      'bard': 'CHA',
+      'cleric': 'WIS',
+      'druid': 'WIS',
+      'paladin': 'CHA',
+      'ranger': 'WIS',
+      'artificer': 'INT',
+    };
+    
+    // Check main class first
+    if (classSpellcasting.containsKey(className)) {
+      return classSpellcasting[className];
+    }
+    
+    // Check subclasses that grant spellcasting
+    final Map<String, String> subclassSpellcasting = {
+      'eldritch knight': 'INT',
+      'arcane trickster': 'INT',
+      'divine soul': 'CHA',
+      'favored soul': 'CHA',
+      'shadow monk': 'WIS',
+      'four elements monk': 'WIS',
+      'way of mercy monk': 'WIS',
+    };
+    
+    if (subclassSpellcasting.containsKey(subclass)) {
+      return subclassSpellcasting[subclass];
+    }
+    
+    return null;
+  }
+  
+  int _getAbilityScore(String ability) {
+    switch (ability) {
+      case 'STR':
+        return int.tryParse(_strengthController.text) ?? 10;
+      case 'DEX':
+        return int.tryParse(_dexterityController.text) ?? 10;
+      case 'CON':
+        return int.tryParse(_constitutionController.text) ?? 10;
+      case 'INT':
+        return int.tryParse(_intelligenceController.text) ?? 10;
+      case 'WIS':
+        return int.tryParse(_wisdomController.text) ?? 10;
+      case 'CHA':
+        return int.tryParse(_charismaController.text) ?? 10;
+      default:
+        return 10;
+    }
+  }
+  
+  int _getAbilityModifier(String ability) {
+    final score = _getAbilityScore(ability);
+    return ((score - 10) / 2).floor();
+  }
+  
+  int _getSpellSaveDC() {
+    final spellcastingAbility = _getSpellcastingAbility();
+    if (spellcastingAbility == null) return 0;
+    
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
+    final abilityModifier = _getAbilityModifier(spellcastingAbility);
+    
+    return 8 + proficiencyBonus + abilityModifier;
+  }
+  
+  int _getSpellAttackBonus() {
+    final spellcastingAbility = _getSpellcastingAbility();
+    if (spellcastingAbility == null) return 0;
+    
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
+    final abilityModifier = _getAbilityModifier(spellcastingAbility);
+    
+    return proficiencyBonus + abilityModifier;
+  }
+
+  Widget _buildSpellcastingInfoRow(String label, String description, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.purple.shade300),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.purple,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.purple.shade600,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  String _getAbilityName(String ability) {
+    switch (ability) {
+      case 'STR':
+        return 'Strength';
+      case 'DEX':
+        return 'Dexterity';
+      case 'CON':
+        return 'Constitution';
+      case 'INT':
+        return 'Intelligence';
+      case 'WIS':
+        return 'Wisdom';
+      case 'CHA':
+        return 'Charisma';
+      default:
+        return ability;
+    }
+  }
+  
+  List<String> _getSubclassesForClass(String className) {
+    switch (className.toLowerCase()) {
+      case 'fighter':
+        return [
+          'Battle Master',
+          'Champion',
+          'Eldritch Knight',
+          'Psi Warrior',
+          'Rune Knight',
+          'Samurai',
+          'Cavalier',
+          'Gunslinger',
+          'Banneret',
+        ];
+      case 'wizard':
+        return [
+          'School of Abjuration',
+          'School of Conjuration',
+          'School of Divination',
+          'School of Enchantment',
+          'School of Evocation',
+          'School of Illusion',
+          'School of Necromancy',
+          'School of Transmutation',
+          'School of Bladesinging',
+          'School of Chronurgy',
+          'School of Graviturgy',
+          'School of Scribes',
+          'School of Order',
+          'School of Invention',
+          'School of War Magic',
+        ];
+      case 'cleric':
+        return [
+          'Knowledge Domain',
+          'Life Domain',
+          'Light Domain',
+          'Nature Domain',
+          'Order Domain',
+          'Peace Domain',
+          'Trickery Domain',
+          'War Domain',
+          'Forge Domain',
+          'Grave Domain',
+          'Twilight Domain',
+          'Arcana Domain',
+        ];
+      case 'rogue':
+        return [
+          'Thief',
+          'Assassin',
+          'Arcane Trickster',
+          'Inquisitive',
+          'Mastermind',
+          'Scout',
+          'Soulknife',
+          'Swashbuckler',
+          'Phantom',
+        ];
+      case 'ranger':
+        return [
+          'Hunter',
+          'Beast Master',
+          'Gloom Stalker',
+          'Horizon Walker',
+          'Monster Slayer',
+          'Fey Wanderer',
+          'Druidic Warrior',
+          'Swarmkeeper',
+        ];
+      case 'paladin':
+        return [
+          'Devotion',
+          'Ancients',
+          'Vengeance',
+          'Oathbreaker',
+          'Glory',
+          'Crown',
+          'Watchers',
+        ];
+      case 'barbarian':
+        return [
+          'Path of the Berserker',
+          'Path of the Totem Warrior',
+          'Path of the Zealot',
+          'Path of the Wild Magic',
+          'Path of the Storm Herald',
+          'Path of the Ancestral Guardian',
+          'Path of the Battlerager',
+          'Path of the Beast',
+          'Path of the Wild Soul',
+        ];
+      case 'bard':
+        return [
+          'College of Lore',
+          'College of Valor',
+          'College of Glamour',
+          'College of Swords',
+          'College of Whispers',
+          'College of Creation',
+          'College of Eloquence',
+          'College of Spirits',
+        ];
+      case 'druid':
+        return [
+          'Circle of the Land',
+          'Circle of the Moon',
+          'Circle of the Shepherd',
+          'Circle of Spores',
+          'Circle of Stars',
+          'Circle of Wildfire',
+          'Circle of Dreams',
+          'Circle of the Coast',
+        ];
+      case 'monk':
+        return [
+          'Way of the Open Hand',
+          'Way of Shadow',
+          'Way of the Four Elements',
+          'Way of the Long Death',
+          'Way of Mercy',
+          'Way of the Drunken Master',
+          'Way of the Kensei',
+          'Way of the Astral Self',
+        ];
+      case 'sorcerer':
+        return [
+          'Draconic Bloodline',
+          'Wild Magic',
+          'Divine Soul',
+          'Shadow Magic',
+          'Storm Sorcery',
+          'Clockwork Soul',
+          'Aberrant Mind',
+        ];
+      case 'warlock':
+        return [
+          'The Fiend',
+          'The Great Old One',
+          'The Celestial',
+          'The Hexblade',
+          'The Archfey',
+          'The Undying',
+          'The Genie',
+          'The Fathomless',
+          'The Undead',
+        ];
+      case 'artificer':
+        return [
+          'Alchemist',
+          'Armorer',
+          'Artillerist',
+          'Battle Smith',
+        ];
+      default:
+        return [];
+    }
+  }
+
   // Check if the current class or subclass can cast spells
   bool _canCastSpells() {
     final characterClass = _classController.text.trim().toLowerCase();
@@ -2901,7 +3098,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     return false;
   }
 
-Widget _buildIniciativeField() {
+  Widget _buildIniciativeField() {
     final currentInitiative = int.tryParse(_initiativeController.text) ?? 0;
     final currentDexterity = int.tryParse(_dexterityController.text) ?? 10;
     final dexterityModifier = ((currentDexterity - 10) / 2).floor();
@@ -3249,164 +3446,6 @@ Widget _buildIniciativeField() {
     }
   }
 
-  Widget _buildSkillsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          // Skills grouped by ability scores
-          _buildSkillGroup('Strength', [
-            _buildSkillRow(
-              'Athletics',
-              'STR',
-              _skillChecks.athleticsProficiency,
-              _skillChecks.athleticsExpertise,
-              'athletics',
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Dexterity', [
-            _buildSkillRow(
-              'Acrobatics',
-              'DEX',
-              _skillChecks.acrobaticsProficiency,
-              _skillChecks.acrobaticsExpertise,
-              'acrobatics',
-            ),
-            _buildSkillRow(
-              'Sleight of Hand',
-              'DEX',
-              _skillChecks.sleightOfHandProficiency,
-              _skillChecks.sleightOfHandExpertise,
-              'sleight_of_hand',
-            ),
-            _buildSkillRow(
-              'Stealth',
-              'DEX',
-              _skillChecks.stealthProficiency,
-              _skillChecks.stealthExpertise,
-              'stealth',
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Intelligence', [
-            _buildSkillRow(
-              'Arcana',
-              'INT',
-              _skillChecks.arcanaProficiency,
-              _skillChecks.arcanaExpertise,
-              'arcana',
-            ),
-            _buildSkillRow(
-              'History',
-              'INT',
-              _skillChecks.historyProficiency,
-              _skillChecks.historyExpertise,
-              'history',
-            ),
-            _buildSkillRow(
-              'Investigation',
-              'INT',
-              _skillChecks.investigationProficiency,
-              _skillChecks.investigationExpertise,
-              'investigation',
-            ),
-            _buildSkillRow(
-              'Nature',
-              'INT',
-              _skillChecks.natureProficiency,
-              _skillChecks.natureExpertise,
-              'nature',
-            ),
-            _buildSkillRow(
-              'Religion',
-              'INT',
-              _skillChecks.religionProficiency,
-              _skillChecks.religionExpertise,
-              'religion',
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Wisdom', [
-            _buildSkillRow(
-              'Animal Handling',
-              'WIS',
-              _skillChecks.animalHandlingProficiency,
-              _skillChecks.animalHandlingExpertise,
-              'animal_handling',
-            ),
-            _buildSkillRow(
-              'Insight',
-              'WIS',
-              _skillChecks.insightProficiency,
-              _skillChecks.insightExpertise,
-              'insight',
-            ),
-            _buildSkillRow(
-              'Medicine',
-              'WIS',
-              _skillChecks.medicineProficiency,
-              _skillChecks.medicineExpertise,
-              'medicine',
-            ),
-            _buildSkillRow(
-              'Perception',
-              'WIS',
-              _skillChecks.perceptionProficiency,
-              _skillChecks.perceptionExpertise,
-              'perception',
-            ),
-            _buildSkillRow(
-              'Survival',
-              'WIS',
-              _skillChecks.survivalProficiency,
-              _skillChecks.survivalExpertise,
-              'survival',
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Charisma', [
-            _buildSkillRow(
-              'Deception',
-              'CHA',
-              _skillChecks.deceptionProficiency,
-              _skillChecks.deceptionExpertise,
-              'deception',
-            ),
-            _buildSkillRow(
-              'Intimidation',
-              'CHA',
-              _skillChecks.intimidationProficiency,
-              _skillChecks.intimidationExpertise,
-              'intimidation',
-            ),
-            _buildSkillRow(
-              'Performance',
-              'CHA',
-              _skillChecks.performanceProficiency,
-              _skillChecks.performanceExpertise,
-              'performance',
-            ),
-            _buildSkillRow(
-              'Persuasion',
-              'CHA',
-              _skillChecks.persuasionProficiency,
-              _skillChecks.persuasionExpertise,
-              'persuasion',
-            ),
-          ]),
-          const SizedBox(height: 45), // Extra space at bottom of screen
-        ],
-      ),
-    );
-  }
-
   Widget _buildSkillGroup(String abilityName, List<Widget> skills) {
     // Get the ability modifier for this group
     final abilityAbbreviation = _getAbilityAbbreviation(abilityName);
@@ -3648,41 +3687,6 @@ Widget _buildIniciativeField() {
     );
   }
 
-  Widget _buildDeleteButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.red.shade600,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.red.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon:
-            _isPickingImage
-                ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-                : const Icon(
-                  Icons.delete_outline,
-                  color: Colors.white,
-                  size: 20,
-                ),
-        onPressed: _isPickingImage ? null : () => _triggerHapticAndConfirm(),
-        tooltip: 'Remove image',
-      ),
-    );
-  }
-
   Widget _buildPickImageButton() {
     return Container(
       decoration: BoxDecoration(
@@ -3708,24 +3712,11 @@ Widget _buildIniciativeField() {
                   ),
                 )
                 : const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-        onPressed: _isPickingImage ? null : _triggerHapticAndShowOptions,
+        onPressed: _showImageOptionsDialog,
         tooltip: 'Change image',
       ),
     );
   }
-
-  Future<void> _triggerHapticAndConfirm() async {
-    _showDeleteConfirmation();
-  }
-
-  Future<void> _triggerHapticAndShowOptions() async {
-    _showImageOptionsDialog();
-  }
-
-  Future<void> _triggerHapticAndPickImage() async {
-    _pickImage();
-  }
-
 
   void _showDeleteConfirmation() {
     showDialog(
@@ -4172,197 +4163,6 @@ Widget _buildIniciativeField() {
     });
   }
 
-  Widget _buildHealthTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Hit Points',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _maxHpController,
-                  decoration: const InputDecoration(
-                    labelText: 'Max HP',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: _currentHpController,
-                  decoration: const InputDecoration(
-                    labelText: 'Current HP',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          TextField(
-            controller: _tempHpController,
-            decoration: const InputDecoration(
-              labelText: 'Temporary HP',
-              border: OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-          ),
-
-          const SizedBox(height: 24),
-          const Text(
-            'Hit Dice',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _hitDiceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Number of Hit Dice',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: _hitDiceTypeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Hit Dice Type',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSpellSlotsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Spell Slots',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              ElevatedButton.icon(
-                onPressed: _takeLongRest,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Restore all slots'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          // Summary section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Spell Slot Summary',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Calculate total slots and used
-                  Consumer<CharactersViewModel>(
-                    builder: (context, viewModel, child) {
-                      final totalSlots =
-                          _spellSlots.level1Slots +
-                          _spellSlots.level2Slots +
-                          _spellSlots.level3Slots +
-                          _spellSlots.level4Slots +
-                          _spellSlots.level5Slots +
-                          _spellSlots.level6Slots +
-                          _spellSlots.level7Slots +
-                          _spellSlots.level8Slots +
-                          _spellSlots.level9Slots;
-
-                      final totalUsed =
-                          _spellSlots.level1Used +
-                          _spellSlots.level2Used +
-                          _spellSlots.level3Used +
-                          _spellSlots.level4Used +
-                          _spellSlots.level5Used +
-                          _spellSlots.level6Used +
-                          _spellSlots.level7Used +
-                          _spellSlots.level8Used +
-                          _spellSlots.level9Used;
-
-                      final availableSlots = totalSlots - totalUsed;
-
-                      return Column(
-                        children: [
-                          _buildSummaryRow(
-                            'Total Slots',
-                            totalSlots.toString(),
-                          ),
-                          _buildSummaryRow('Used Slots', totalUsed.toString()),
-                          _buildSummaryRow(
-                            'Available Slots',
-                            availableSlots.toString(),
-                            availableSlots > 0 ? Colors.green : Colors.red,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Spell slots grid
-          ...[
-            for (int level = 1; level <= 9; level++)
-              _buildSpellSlotField('Level $level', level),
-          ],
-
-          const SizedBox(height: 32),
-
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSummaryRow(String label, String value, [Color? valueColor]) {
     return Padding(
@@ -4380,194 +4180,6 @@ Widget _buildIniciativeField() {
     );
   }
 
-  Widget _buildSpellsTab() {
-    // Calculate maximum prepared spells using current state
-    final modifier = CharacterSpellPreparation.getSpellcastingModifier(widget.character);
-    final calculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
-      _classController.text.trim(), // Use current class from controller
-      int.tryParse(_levelController.text) ?? 1, // Use current level from controller
-      modifier,
-    );
-    
-    // Use the stored max if it's different from calculated (user modified it)
-    final maxPrepared = _spellPreparation.maxPreparedSpells == 0 
-        ? calculatedMax 
-        : _spellPreparation.maxPreparedSpells;
-    
-    // Check if user has modified the max (for visual indicator)
-    final isModified = _spellPreparation.maxPreparedSpells != 0 && _spellPreparation.maxPreparedSpells != calculatedMax;
-    
-    final canPrepare = maxPrepared > 0;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s known spells.',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: _showAddSpellDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Add Spell'),
-              ),
-            ],
-          ),
-          // Spell preparation section - only show for classes that prepare spells
-          if (canPrepare) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.indigo.shade50, Colors.indigo.shade100],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.indigo.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.auto_stories, color: Colors.indigo.shade700, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Spell Preparation',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.indigo.shade700,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Spell Preparation Info'),
-                              content: const Text(
-                                'You can establish if a spell is always prepared or you can cast it for free. Always prepared spells don\'t count against your maximum prepared spells limit.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Got it'),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.info_outline, size: 16),
-                        color: Colors.indigo.shade700,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Maximum prepared spells: $maxPrepared (${_classController.text.trim()} level ${int.tryParse(_levelController.text) ?? 1} + ${_getModifierName(modifier)} $modifier modifier = $calculatedMax)${maxPrepared != calculatedMax ? ' (modified: +${(maxPrepared - calculatedMax).abs()})' : ''}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.indigo.shade600,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Currently prepared: ${_spellPreparation.currentPreparedCount}/$maxPrepared',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _spellPreparation.currentPreparedCount < maxPrepared ? Colors.green.shade700 : Colors.blue.shade700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: _showMaxPreparedDialog,
-                        icon: const Icon(Icons.edit, size: 14),
-                        label: const Text('Modify', style: TextStyle(fontSize: 12)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.indigo.shade700,
-                          elevation: 2,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        ),
-                      ),
-                      if (isModified) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 2,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                // Calculate the new max (calculated value)
-                                final newMax = calculatedMax;
-                                
-                                // Get current prepared spells (excluding always prepared)
-                                final currentPrepared = _spellPreparation.preparedSpells;
-                                
-                                // If we have more prepared spells than the new max, uncheck excess
-                                if (currentPrepared.length > newMax) {
-                                  final spellsToKeep = currentPrepared.take(newMax).toList();
-                                  _spellPreparation = _spellPreparation.copyWith(
-                                    maxPreparedSpells: 0, // Reset to calculated
-                                    preparedSpells: spellsToKeep, // Keep only up to new max
-                                  );
-                                } else {
-                                  // Just reset max, keep current prepared spells
-                                  _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: 0);
-                                }
-                              });
-                              _autoSaveCharacter();
-                            },
-                            icon: const Icon(Icons.refresh, size: 16),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.indigo.shade700,
-                              padding: const EdgeInsets.all(8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-          
-          // Group spells by level
-          ..._buildSpellsByLevel(),
-          const SizedBox(height: 70),
-        ],
-      ),
-    );
-  }
 
   IconData _getSpellLevelIcon(int level) {
     switch (level) {
@@ -4594,36 +4206,6 @@ Widget _buildIniciativeField() {
       default:
         return Icons.star;
     }
-  }
-
-  /// Get the count of prepared spells for a specific level
-  int _getPreparedSpellsCountForLevel(int level) {
-    final spellsViewModel = context.read<SpellsViewModel>();
-    int count = 0;
-    for (final spellName in _spells) {
-      if (_spellPreparation.isSpellPrepared(spellName)) {
-        // Get spell level from cached spells list instead of context.read
-        final spell = spellsViewModel.spells.firstWhere(
-          (s) => s.name.toLowerCase() == spellName.toLowerCase(),
-          orElse: () => Spell(
-            id: 'unknown',
-            name: spellName,
-            castingTime: 'Unknown',
-            range: 'Unknown',
-            duration: 'Unknown',
-            description: 'Custom spell',
-            classes: [],
-            dice: [],
-            updatedAt: DateTime.now(),
-          ),
-        );
-        
-        if (spell.levelNumber == level) {
-          count++;
-        }
-      }
-    }
-    return count;
   }
 
   List<Widget> _buildSpellsByLevel() {
@@ -5632,147 +5214,6 @@ Widget _buildIniciativeField() {
     }
   }
 
-  Widget _buildFeatsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Character Feats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s feats',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 16),
-
-          // Feats list
-          ..._feats.asMap().entries.map((entry) {
-            final index = entry.key;
-            final featName = entry.value;
-
-            // Try to find feat details
-            final featsViewModel = context.read<FeatsViewModel>();
-            final feat = featsViewModel.feats.firstWhere(
-              (f) => f.name.toLowerCase() == featName.toLowerCase(),
-              orElse: () => Feat(
-                id: 'unknown',
-                name: featName,
-                description: 'Custom feat',
-                source: 'Unknown',
-              ),
-            );
-
-            return Card(
-              child: ListTile(
-                title: InkWell(
-                  child: Text(
-                    feat.name,
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  onTap: () => _showFeatDetails(feat),
-                ),
-                subtitle: Text(
-                  feat.source,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _feats.removeAt(index);
-                    });
-
-                    // Auto-save the character when a feat is removed
-                    _autoSaveCharacter();
-                  },
-                ),
-              ),
-            );
-          }),
-
-          TextButton.icon(
-            onPressed: _showAddFeatDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Feat'),
-          ),
-          const SizedBox(height: 16),
-          
-          // Feat Notes Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.note_alt,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Notes',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Additional notes about your feats and abilities.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _featNotesController,
-                      decoration: const InputDecoration(
-                        hintText: 'Add notes about your feats...\n\n'
-                            'Examples:\n'
-                            '• Feat descriptions and mechanics\n'
-                            '• Synergies with other abilities\n'
-                            '• Combat strategies using feats\n'
-                            '• Roleplaying aspects of feats\n'
-                            '• Feat progression plans',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 3,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildPersonalizedSlotsTab() {
     return SingleChildScrollView(
@@ -7639,15 +7080,6 @@ Widget _buildIniciativeField() {
     _autoSaveCharacter();
   }
 
-  Color _getRemainingColor(int remaining, int max) {
-    if (max == 0) return Colors.grey;
-    final ratio = remaining / max;
-    
-    if (ratio > 0.5) return Colors.green;
-    if (ratio > 0.25) return Colors.orange;
-    return Colors.red;
-  }
-
   void _togglePersonalizedSlot(int slotIndex, int dotIndex) {
     final slot = _personalizedSlots[slotIndex];
     if (dotIndex < slot.usedSlots) {
@@ -8361,8 +7793,7 @@ Widget _buildIniciativeField() {
               final newInitiative = int.tryParse(controller.text);
               if (newInitiative != null) {
                 setState(() {
-                  _initiativeController.text = newInitiative.toString();
-                  _initiativeManuallyModified = true;
+                  _initiativeController.text = newInitiative.toString();                 
                 });
                 _autoSaveCharacter();
                 Navigator.pop(context);
@@ -8387,7 +7818,6 @@ Widget _buildIniciativeField() {
       final currentDexterity = int.tryParse(_dexterityController.text) ?? 10;
       final newDexterityModifier = ((currentDexterity - 10) / 2).floor();
       _initiativeController.text = newDexterityModifier.toString();
-      _initiativeManuallyModified = false; // Reset to auto-calculated state
     });
     _autoSaveCharacter();
   }
