@@ -4,7 +4,6 @@ import 'package:dnd_app/views/characters/StatsTab/stats_tab.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/combat_stats_section.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/concentration_section.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/death_saving_throws_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/features_traits_section.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/health_section.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/initiative_section.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/languages_section.dart';
@@ -14,6 +13,7 @@ import 'package:dnd_app/views/characters/CharacterCoverTab/other_proficiencies_s
 import 'package:dnd_app/views/characters/AppeareanceTab/characters_appereance.dart';
 import 'package:dnd_app/views/characters/NotesTab/characters_notes.dart';
 import 'package:dnd_app/views/characters/PersonalizedSlotsTab/characters_personalized_tab.dart';
+import 'package:dnd_app/views/characters/FeatsTab/characters_feats_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -25,13 +25,11 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
-import '../../models/feat_model.dart';
 import '../../models/race_model.dart';
 import '../../models/background_model.dart';
 import '../../helpers/character_ability_helper.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
-import '../../viewmodels/feats_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
 import 'SpellsTab/spell_by_level.dart';
@@ -81,7 +79,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _proficienciesController = TextEditingController();
   final _featuresTraitsController = TextEditingController();
   final _backstoryController = TextEditingController();
-  final _featNotesController = TextEditingController();
+  final _featNotesController = QuillController.basic();
 
   // Appearance controllers
   final _heightController = TextEditingController();
@@ -303,8 +301,22 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _conflictController.text = _pillars.conflict;
 
     // Initialize feat notes
-    _featNotesController.text = character.featNotes ?? '';
-
+    if (character.featNotes.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.featNotes);
+        _featNotesController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.featNotes;
+        // Ensure text ends with newline as required by flutter_quill
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _featNotesController.document = Document.fromDelta(delta);
+      }
+    }
     // Initialize appearance
     _heightController.text = character.appearance.height;
     _ageController.text = character.appearance.age;
@@ -333,7 +345,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _proficienciesController.addListener(_autoSaveCharacter);
     _featuresTraitsController.addListener(_autoSaveCharacter);
     _backstoryController.addListener(_autoSaveCharacter);
-    _featNotesController.addListener(_autoSaveCharacter);
+    _featNotesController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
 
     _gimmickController.addListener(_autoSaveCharacter);
     _quirkController.addListener(_autoSaveCharacter);
@@ -1403,146 +1417,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildFeatsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Character Feats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s feats',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 16),
-
-          // Feats list
-          ..._feats.asMap().entries.map((entry) {
-            final index = entry.key;
-            final featName = entry.value;
-
-            // Try to find feat details
-            final featsViewModel = context.read<FeatsViewModel>();
-            final feat = featsViewModel.feats.firstWhere(
-              (f) => f.name.toLowerCase() == featName.toLowerCase(),
-              orElse:
-                  () => Feat(
-                    id: 'unknown',
-                    name: featName,
-                    description: 'Custom feat',
-                    source: 'Unknown',
-                  ),
-            );
-
-            return Card(
-              child: ListTile(
-                title: InkWell(
-                  child: Text(
-                    feat.name,
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  onTap: () => _showFeatDetails(feat),
-                ),
-                subtitle: Text(
-                  feat.source,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _feats.removeAt(index);
-                    });
-
-                    // Auto-save the character when a feat is removed
-                    _autoSaveCharacter();
-                  },
-                ),
-              ),
-            );
-          }),
-
-          TextButton.icon(
-            onPressed: _showAddFeatDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Feat'),
-          ),
-          const SizedBox(height: 16),
-
-          // Feat Notes Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.note_alt,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Notes',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Additional notes about your feats and abilities.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _featNotesController,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Add notes about your feats...\n\n'
-                            'Examples:\n'
-                            '• Feat descriptions and mechanics\n'
-                            '• Synergies with other abilities\n'
-                            '• Combat strategies using feats\n'
-                            '• Roleplaying aspects of feats\n'
-                            '• Feat progression plans',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 3,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    return CharactersFeatsTab(
+      feats: _feats,
+      featNotesController: _featNotesController,
+      onFeatsChanged: (newFeats) {
+        setState(() {
+          _feats = newFeats;
+        });
+      },
+      onAutoSaveCharacter: _autoSaveCharacter,
+      characterName: widget.character.name,
     );
   }
 
@@ -4618,7 +4502,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         proficiencies: _proficienciesController.text.trim(),
         featuresTraits: _featuresTraitsController.text.trim(),
         backstory: _backstoryController.text.trim(),
-        featNotes: _featNotesController.text.trim(),
+        featNotes: jsonEncode(
+          _featNotesController.document.toDelta().toJson(),
+        ),
         pillars: CharacterPillars(
           gimmick: _gimmickController.text.trim(),
           quirk: _quirkController.text.trim(),
@@ -4671,334 +4557,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       // Silent error handling for auto-save - don't show UI messages
       debugPrint('Auto-save error: $e');
     }
-  }
-
-  void _showAddFeatDialog() {
-    // Load feats if not already loaded
-    context.read<FeatsViewModel>().loadFeats();
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => Dialog(
-            child: Container(
-              width: double.maxFinite,
-              height: 500,
-              child: Column(
-                children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.military_tech),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Add Feat to ${widget.character.name}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-
-                  // Feats list
-                  Expanded(
-                    child: Consumer<FeatsViewModel>(
-                      builder: (context, featsViewModel, child) {
-                        if (featsViewModel.isLoading) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-
-                        if (featsViewModel.error != null) {
-                          return Center(
-                            child: Text('Error: ${featsViewModel.error}'),
-                          );
-                        }
-
-                        final feats = featsViewModel.feats;
-                        final searchQuery = '';
-                        final filteredFeats =
-                            searchQuery.isEmpty
-                                ? feats
-                                : feats
-                                    .where(
-                                      (feat) => feat.name
-                                          .toLowerCase()
-                                          .contains(searchQuery.toLowerCase()),
-                                    )
-                                    .toList();
-
-                        if (filteredFeats.isEmpty) {
-                          return const Center(child: Text('No feats found'));
-                        }
-
-                        return ListView.builder(
-                          itemCount: filteredFeats.length,
-                          itemBuilder: (context, index) {
-                            final feat = filteredFeats[index];
-                            final isKnown = _feats.contains(feat.name);
-
-                            return ListTile(
-                              title: Text(feat.name),
-                              subtitle: Text(
-                                feat.source,
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              trailing:
-                                  isKnown
-                                      ? const Icon(
-                                        Icons.check,
-                                        color: Colors.green,
-                                      )
-                                      : const Icon(Icons.add),
-                              enabled: !isKnown,
-                              onTap:
-                                  isKnown
-                                      ? null
-                                      : () {
-                                        setState(() {
-                                          _feats.add(feat.name);
-                                        });
-                                        Navigator.pop(context);
-
-                                        // Auto-save the character when a feat is added
-                                        _autoSaveCharacter();
-
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Added ${feat.name} to ${widget.character.name}',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      },
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-
-                  // Footer
-                  const Divider(height: 1),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        Text(
-                          '${_feats.length} feats known',
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-    );
-  }
-
-  void _showFeatDetails(Feat feat) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder:
-          (context) => DraggableScrollableSheet(
-            initialChildSize: 0.7,
-            minChildSize: 0.5,
-            maxChildSize: 0.9,
-            expand: false,
-            builder:
-                (context, scrollController) => Container(
-                  padding: const EdgeInsets.all(16),
-                  child: ListView(
-                    controller: scrollController,
-                    children: [
-                      // Header
-                      Row(
-                        children: [
-                          const Icon(Icons.military_tech, size: 28),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              feat.name,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Source
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.book,
-                              size: 16,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Source: ${feat.source}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Prerequisite
-                      if (feat.prerequisite != null &&
-                          feat.prerequisite!.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange.shade200),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Prerequisite:',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(feat.prerequisite!),
-                            ],
-                          ),
-                        ),
-                      if (feat.prerequisite != null &&
-                          feat.prerequisite!.isNotEmpty)
-                        const SizedBox(height: 16),
-
-                      // Description
-                      const Text(
-                        'Description',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        feat.description,
-                        style: const TextStyle(fontSize: 16, height: 1.5),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Effects
-                      if (feat.effects.isNotEmpty)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Effects',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: Text(
-                                feat.formattedEffects,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                      const SizedBox(height: 16),
-
-                      // Character info
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.green.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.person,
-                              size: 16,
-                              color: Colors.green,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Known by: ${widget.character.name}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-          ),
-    );
   }
 
   void _takeComprehensiveLongRest() {
@@ -5406,7 +4964,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         proficiencies: _proficienciesController.text.trim(),
         featuresTraits: _featuresTraitsController.text.trim(),
         backstory: _backstoryController.text.trim(),
-        featNotes: _featNotesController.text.trim(),
+        featNotes: 
+        jsonEncode(
+          _featNotesController.document.toDelta().toJson(),
+        ),
         pillars: CharacterPillars(
           gimmick: _gimmickController.text.trim(),
           quirk: _quirkController.text.trim(),

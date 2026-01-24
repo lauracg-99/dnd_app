@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'dart:async';
-import '../../../utils/ExpandableQuillEditor.dart';
+import '../../../utils/SimpleQuillEditor.dart';
 import '../../../utils/QuillToolbarConfigs.dart';
 
 class CharactersQuickGuide extends StatefulWidget {
@@ -136,11 +135,10 @@ class _CharactersQuickGuideState extends State<CharactersQuickGuide>
                       borderRadius: BorderRadius.circular(8),
                       color: Colors.white,
                     ),
-                    child: ExpandableQuillEditor(
+                    child: SimpleQuillEditor(
                       controller: widget.controller,
                       toolbarConfig: QuillToolbarConfigs.minimal,
-                      title: 'Tools',
-                      height: 350,
+                      height: 400,                      
                     ),
                   ),
                 ],

@@ -40,7 +40,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 */
 class QuillToolbarConfigs {
   static const minimal = QuillSimpleToolbarConfig(
-    multiRowsDisplay: true,
+    multiRowsDisplay: false,
     showDividers: false,
     showFontFamily: false,
     showFontSize: false,
@@ -67,8 +67,8 @@ class QuillToolbarConfigs {
     showQuote: false,
     showIndent: false,
     showLink: false,
-    showUndo: false,
-    showRedo: false,
+    showUndo: true,
+    showRedo: true,
     showDirection: false,
     showSearchButton: false,
     showSubscript: false,

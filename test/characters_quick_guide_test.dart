@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/SimpleQuillEditor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,7 +29,7 @@ void main() {
       expect(find.text('Character Quick Guide'), findsOneWidget);
       
       // Verify Quill editor is present
-      expect(find.byType(ExpandableQuillEditor), findsOneWidget);
+      expect(find.byType(SimpleQuillEditor), findsOneWidget);
 
       // Clean up
       controller.dispose();
