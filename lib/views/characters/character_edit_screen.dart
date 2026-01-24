@@ -12,6 +12,7 @@ import 'package:dnd_app/views/characters/CharacterCoverTab/long_rest_section.dar
 import 'package:dnd_app/views/characters/CharacterCoverTab/money_and_items_section.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/other_proficiencies_section.dart';
 import 'package:dnd_app/views/characters/AppeareanceTab/characters_appereance.dart';
+import 'package:dnd_app/views/characters/NotesTab/characters_notes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -793,7 +794,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildQuickGuideTab() {
-    return CharactersQuickGuide(controller: _quickGuideController);
+    return CharactersQuickGuide(
+      controller: _quickGuideController,
+      onSaveCharacter: _autoSaveCharacter,
+    );
   }
 
   Widget _buildStatsTab() {
@@ -3609,217 +3613,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildNotesTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Backstory Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.history_edu,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Character Backstory',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'The complete history and background story of your character.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _backstoryController,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Write your character\'s backstory...\n\n'
-                            'Consider including:\n'
-                            '• Place of birth and family background\n'
-                            '• Life events that shaped their personality\n'
-                            '• How they became an adventurer\n'
-                            '• Significant relationships and experiences\n'
-                            '• Secrets, traumas, or triumphs\n'
-                            '• Hopes for the future',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 6,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Character Pillars Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.foundation,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Character Pillars',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Core elements that define your character\'s role in the story.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField(
-                    'Gimmick',
-                    _gimmickController,
-                    'What makes your character unique or memorable?',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField(
-                    'Quirk',
-                    _quirkController,
-                    'Odd habits or mannerisms that define your character.',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField(
-                    'Wants',
-                    _wantsController,
-                    'What does your character desire most in the world?',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField(
-                    'Needs',
-                    _needsController,
-                    'What must your character accomplish or obtain?',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField(
-                    'Conflict',
-                    _conflictController,
-                    'What internal or external struggles drive your character?',
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Auto-save info
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'All notes auto-save automatically • No character limit • Rich text supported',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 56),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEnhancedPillarField(
-    String label,
-    TextEditingController controller,
-    String hint,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.grey.shade50,
-          ),
-          child: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: hint,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
-            ),
-            maxLines: 6,
-            minLines: 3,
-            style: const TextStyle(
-              fontSize: 15,
-              height: 1.4,
-              color: Colors.black87,
-            ),
-            onChanged: (value) => _autoSaveCharacter(),
-          ),
-        ),
-      ],
+    return CharactersNotes(
+      backstoryController: _backstoryController,
+      gimmickController: _gimmickController,
+      quirkController: _quirkController,
+      wantsController: _wantsController,
+      needsController: _needsController,
+      conflictController: _conflictController,
+      onSaveCharacter: _autoSaveCharacter,
     );
   }
 
@@ -4970,6 +4771,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   void _autoSaveCharacter() async {
+    // Don't proceed if widget is not mounted (context is not safe)
+    if (!mounted) return;
+    
     debugPrint("============= _autoSaveCharacter is called ======");
     try {
       // Create updated character with all current data
@@ -5069,6 +4873,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ),
         updatedAt: DateTime.now(),
       );
+
+      // Check if still mounted before accessing context
+      if (!mounted) return;
 
       // Save the character silently and wait for completion
       await context.read<CharactersViewModel>().updateCharacter(
