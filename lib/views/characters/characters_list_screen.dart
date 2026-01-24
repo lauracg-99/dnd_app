@@ -6,7 +6,7 @@ import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
 import 'character_edit_screen.dart';
 import 'character_create_screen.dart';
-import 'diary_list_screen.dart';
+import '../diaries/diary_list_screen.dart';
 
 class CharactersListScreen extends StatefulWidget {
   const CharactersListScreen({super.key});

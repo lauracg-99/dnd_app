@@ -1,32 +1,41 @@
+import 'package:dnd_app/views/characters/CharacterCoverTab/character_header_section.dart';
+import 'package:dnd_app/views/characters/QuickGuide/characters_quick_guide.dart';
+import 'package:dnd_app/views/characters/StatsTab/stats_tab.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/combat_stats_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/concentration_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/death_saving_throws_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/health_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/initiative_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/languages_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/long_rest_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/money_and_items_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/other_proficiencies_section.dart';
+import 'package:dnd_app/views/characters/AppeareanceTab/characters_appereance.dart';
+import 'package:dnd_app/views/characters/NotesTab/characters_notes.dart';
+import 'package:dnd_app/views/characters/PersonalizedSlotsTab/characters_personalized_tab.dart';
+import 'package:dnd_app/views/characters/FeatsTab/characters_feats_tab.dart';
+import 'package:dnd_app/views/characters/TabReorderDialog/tab_reorder_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
-import '../../models/feat_model.dart';
 import '../../models/race_model.dart';
 import '../../models/background_model.dart';
+import '../../models/tab_config_model.dart';
+import '../../services/user_preferences_service.dart';
+import '../../helpers/character_ability_helper.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
-import '../../viewmodels/feats_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
-import '../../services/character_service.dart';
-
-/// Convert image file to base64 string
-Future<String?> _imageFileToBase64(File? imageFile) async {
-  if (imageFile == null || !await imageFile.exists()) return null;
-  
-  try {
-    final bytes = await imageFile.readAsBytes();
-    return base64Encode(bytes);
-  } catch (e) {
-    debugPrint('Error converting image to base64: $e');
-    return null;
-  }
-}
+import 'SpellsTab/spell_by_level.dart';
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -38,17 +47,18 @@ class CharacterEditScreen extends StatefulWidget {
 }
 
 class _CharacterEditScreenState extends State<CharacterEditScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
-  String? _customImageData; // Base64 encoded profile image data
-  String? _appearanceImageData; // Base64 encoded appearance image data
+  String? _customImagePath;
+  String? _appearanceImagePath;
   bool _isPickingImage = false;
   bool _hasUnsavedAbilityChanges = false;
   bool _hasUnsavedClassChanges = false;
+  bool _isLoading = false;
   String _selectedClass = 'Fighter';
   bool _useCustomSubclass = false;
-  String _selectedRace = '';
   String _selectedBackground = '';
+  bool _toolbarExpanded = false;
 
   // Death saves controllers
   List<bool> _deathSaveSuccesses = [false, false, false];
@@ -59,7 +69,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   // Money and items controllers
   final _moneyController = TextEditingController();
-  final _itemsController = TextEditingController();
+  final _itemsController = QuillController.basic();
 
   // Form controllers
   final _nameController = TextEditingController();
@@ -68,17 +78,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _subclassController = TextEditingController();
   final _raceController = TextEditingController();
   final _backgroundController = TextEditingController();
-  final _quickGuideController = TextEditingController();
-  final _proficienciesController = TextEditingController();
+  final _quickGuideController = QuillController.basic();
+  final _proficienciesController = QuillController.basic();
   final _featuresTraitsController = TextEditingController();
-  final _backstoryController = TextEditingController();
-  final _featNotesController = TextEditingController();
+  final _backstoryController = QuillController.basic();
+  final _featNotesController = QuillController.basic();
 
   // Appearance controllers
   final _heightController = TextEditingController();
   final _ageController = TextEditingController();
   final _eyeColorController = TextEditingController();
-  final _additionalDetailsController = TextEditingController();
+  final _additionalDetailsController = QuillController.basic();
 
   // Pillars controllers
   final _gimmickController = TextEditingController();
@@ -98,9 +108,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _armorClassController = TextEditingController();
   final _speedController = TextEditingController();
   final _initiativeController = TextEditingController();
-  
-  // Flag to track if initiative has been manually modified
-  bool _initiativeManuallyModified = false;
 
   // Health controllers
   final _maxHpController = TextEditingController();
@@ -121,16 +128,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   late List<String> _spells;
   late List<String> _feats;
   late List<CharacterPersonalizedSlot> _personalizedSlots;
-  
+
   // Character Cover tab edit state
   bool _isEditingCharacterCover = false;
-  
+
   // Inspiration state
   bool _hasInspiration = false;
-  
+
   // Concentration state
   bool _hasConcentration = false;
-  
+
   // Shield state
   bool _hasShield = false;
 
@@ -140,12 +147,22 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   String? _selectedClassFilter;
   String? _selectedSchoolFilter;
 
+  // Tab customization
+  List<String> _tabOrder = [];
+  List<CharacterTabConfig> _orderedTabs = [];
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 11, vsync: this);
-    _initializeCharacterData();
     
+    // Initialize with default tabs immediately to prevent empty TabBar
+    _initializeDefaultTabs();
+    
+    // Initialize tab controller with default length first to prevent LateInitializationError
+    _tabController = TabController(length: _orderedTabs.length, vsync: this);
+    _initializeTabOrder();
+    _initializeCharacterData();
+
     // Load races and backgrounds data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RacesViewModel>().loadRaces();
@@ -153,58 +170,33 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     });
   }
 
-  // Helper function to convert base64 string to Image widget
-  Widget _base64ToImage(String? base64String, {double width = 120, double height = 120, BoxFit? fit, Widget? placeholder}) {
-    if (base64String == null || base64String.isEmpty) {
-      return placeholder ?? const Icon(Icons.person, size: 60, color: Colors.grey);
-    }
+  /// Initialize default tabs synchronously to prevent empty TabBar during initial build
+  void _initializeDefaultTabs() {
+    _tabOrder = CharacterTabManager.getDefaultTabOrder();
     
-    try {
-      // Remove data URL prefix if present
-      String pureBase64 = base64String;
-      if (base64String.contains(',')) {
-        pureBase64 = base64String.split(',')[1];
-      }
-      
-      final imageBytes = base64.decode(pureBase64);
-      return Image.memory(
-        imageBytes,
-        width: width,
-        height: height,
-        fit: fit ?? BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          debugPrint('Error loading base64 image: $error');
-          return placeholder ?? Container(
-            width: width,
-            height: height,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(width / 2),
-            ),
-            child: Icon(Icons.person, size: width / 2, color: Colors.grey),
-          );
-        },
-      );
-    } catch (e) {
-      debugPrint('Error decoding base64 image: $e');
-      return placeholder ?? const Icon(Icons.person, size: 60, color: Colors.grey);
-    }
+    final Map<String, Widget Function()> tabBuilders = {
+      'character': () => _buildCharacterCoverTab(),
+      'quick_guide': () => _buildQuickGuideTab(),
+      'stats': () => _buildStatsTab(),
+      'skills': () => _buildSkillsTab(),
+      'attacks': () => _buildAttacksTab(),
+      'spell_slots': () => _buildSpellSlotsTab(),
+      'spells': () => _buildSpellsTab(),
+      'feats': () => _buildFeatsTab(),
+      'class_slots': () => _buildPersonalizedSlotsTab(),
+      'appearance': () => _buildAppearanceTab(),
+      'notes': () => _buildNotesTab(),
+    };
+    
+    _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
   }
 
   void _initializeCharacterData() {
     final character = widget.character;
 
-    // Load base64 image data for profile image
-    _customImageData = character.customImageData;
-    if (_customImageData != null) {
-      debugPrint('Profile image data loaded from JSON (${_customImageData!.length} characters)');
-    }
-
-    // Load base64 image data for appearance image
-    _appearanceImageData = character.appearance.appearanceImageData;
-    if (_appearanceImageData != null) {
-      debugPrint('Appearance image data loaded from JSON (${_appearanceImageData!.length} characters)');
-    }
+    // Initialize profile image
+    _customImagePath = character.customImagePath;
+    _appearanceImagePath = character.appearance.appearanceImagePath;
 
     // Initialize controllers
     _nameController.text = character.name;
@@ -218,17 +210,66 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _subclassController.text = character.subclass ?? '';
     _raceController.text = character.race ?? '';
     _backgroundController.text = character.background ?? '';
-    _selectedRace = character.race ?? '';
     _selectedBackground = character.background ?? '';
-    
+
     // Check if current subclass is custom (not in preset list)
-    final availableSubclasses = _getSubclassesForClass(character.characterClass);
-    _useCustomSubclass = character.subclass != null && !availableSubclasses.contains(character.subclass);
-    
-    _quickGuideController.text = character.quickGuide;
-    _proficienciesController.text = character.proficiencies;
+    final availableSubclasses = _getSubclassesForClass(
+      character.characterClass,
+    );
+    _useCustomSubclass =
+        character.subclass != null &&
+        !availableSubclasses.contains(character.subclass);
+
+    // Initialize quick guide with Delta format from plain text
+    if (character.quickGuide.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.quickGuide);
+        _quickGuideController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.quickGuide;
+        // Ensure text ends with newline as required by flutter_quill
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _quickGuideController.document = Document.fromDelta(delta);
+      }
+    }
+    // Initialize proficiencies with rich text support
+    if (character.proficiencies.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.proficiencies);
+        _proficienciesController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.proficiencies;
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _proficienciesController.document = Document.fromDelta(delta);
+      }
+    }
     _featuresTraitsController.text = character.featuresTraits;
-    _backstoryController.text = character.backstory;
+    // Initialize backstory with rich text support
+    if (character.backstory.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.backstory);
+        _backstoryController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.backstory;
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _backstoryController.document = Document.fromDelta(delta);
+      }
+    }
 
     // Initialize death saves
     _deathSaveSuccesses = List.from(character.deathSaves.successes);
@@ -237,7 +278,23 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Initialize languages and money/items
     _languagesController.text = character.languages.languages.join(', ');
     _moneyController.text = character.moneyItems.money;
-    _itemsController.text = character.moneyItems.items.join('\n');
+    
+    // Initialize items with rich text support
+    if (character.moneyItems.items.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.moneyItems.items.first);
+        _itemsController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.moneyItems.items.join('\n');
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _itemsController.document = Document.fromDelta(delta);
+      }
+    }
 
     // Add listeners for class changes
     _classController.addListener(() {
@@ -286,10 +343,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     final dexterityModifier = _stats.getModifier(_stats.dexterity);
     if (_stats.initiative == dexterityModifier) {
       _initiativeController.text = dexterityModifier.toString();
-      _initiativeManuallyModified = false;
     } else {
       _initiativeController.text = _stats.initiative.toString();
-      _initiativeManuallyModified = true;
     }
     _hasInspiration = _stats.inspiration;
     _hasConcentration = _stats.hasConcentration;
@@ -326,13 +381,42 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _conflictController.text = _pillars.conflict;
 
     // Initialize feat notes
-    _featNotesController.text = character.featNotes ?? '';
-
+    if (character.featNotes.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.featNotes);
+        _featNotesController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.featNotes;
+        // Ensure text ends with newline as required by flutter_quill
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _featNotesController.document = Document.fromDelta(delta);
+      }
+    }
     // Initialize appearance
     _heightController.text = character.appearance.height;
     _ageController.text = character.appearance.age;
     _eyeColorController.text = character.appearance.eyeColor;
-    _additionalDetailsController.text = character.appearance.additionalDetails;
+    // Initialize appearance additional details with rich text support
+    if (character.appearance.additionalDetails.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.appearance.additionalDetails);
+        _additionalDetailsController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.appearance.additionalDetails;
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _additionalDetailsController.document = Document.fromDelta(delta);
+      }
+    }
 
     // Set up auto-save listeners
     _setupAutoSaveListeners();
@@ -350,11 +434,27 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       setState(() {}); // Rebuild to show/hide concentration field
     });
     _raceController.addListener(_autoSaveCharacter);
-    _quickGuideController.addListener(_autoSaveCharacter);
-    _proficienciesController.addListener(_autoSaveCharacter);
+    _quickGuideController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
+    _proficienciesController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
     _featuresTraitsController.addListener(_autoSaveCharacter);
-    _backstoryController.addListener(_autoSaveCharacter);
-    _featNotesController.addListener(_autoSaveCharacter);
+    _backstoryController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
+    _featNotesController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
+    _additionalDetailsController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
+
+    _moneyController.addListener(_autoSaveCharacter);
+    _itemsController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
 
     _gimmickController.addListener(_autoSaveCharacter);
     _quirkController.addListener(_autoSaveCharacter);
@@ -362,13 +462,45 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _needsController.addListener(_autoSaveCharacter);
     _conflictController.addListener(_autoSaveCharacter);
 
-    _strengthController.addListener(_autoSaveCharacter);
-    _dexterityController.addListener(_onDexterityChanged);
-    _constitutionController.addListener(_autoSaveCharacter);
-    _intelligenceController.addListener(_autoSaveCharacter);
-    _wisdomController.addListener(_autoSaveCharacter);
-    _charismaController.addListener(_autoSaveCharacter);
-    _proficiencyBonusController.addListener(_autoSaveCharacter);
+    _strengthController.addListener(() {
+      debugPrint(
+        'STRENGTH controller changed - setting _hasUnsavedAbilityChanges = true',
+      );
+      _hasUnsavedAbilityChanges = true;
+    });
+    _dexterityController.addListener(() {
+      debugPrint(
+        'DEXTERITY controller changed - setting _hasUnsavedAbilityChanges = true',
+      );
+      _hasUnsavedAbilityChanges = true;
+    });
+    _constitutionController.addListener(() {
+      debugPrint(
+        'CONSTITUTION controller changed - setting _hasUnsavedAbilityChanges = true',
+      );
+      _hasUnsavedAbilityChanges = true;
+    });
+    _intelligenceController.addListener(() {
+      debugPrint(
+        'INTELLIGENCE controller changed - setting _hasUnsavedAbilityChanges = true',
+      );
+      _hasUnsavedAbilityChanges = true;
+    });
+    _wisdomController.addListener(() {
+      debugPrint(
+        'WISDOM controller changed - setting _hasUnsavedAbilityChanges = true',
+      );
+      _hasUnsavedAbilityChanges = true;
+    });
+    _charismaController.addListener(() {
+      debugPrint(
+        'CHARISMA controller changed - setting _hasUnsavedAbilityChanges = true',
+      );
+      _hasUnsavedAbilityChanges = true;
+    });
+    _proficiencyBonusController.addListener(() {
+      _hasUnsavedAbilityChanges = true;
+    });
     _armorClassController.addListener(_autoSaveCharacter);
     _speedController.addListener(_autoSaveCharacter);
 
@@ -377,6 +509,99 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _tempHpController.addListener(_autoSaveCharacter);
     _hitDiceController.addListener(_autoSaveCharacter);
     _hitDiceTypeController.addListener(_autoSaveCharacter);
+  }
+
+  /// Initialize tab order from user preferences
+  Future<void> _initializeTabOrder() async {
+    try {
+      // Initialize user preferences service
+      await UserPreferencesService.initializeStorage();
+      
+      // Load user preferences
+      final preferences = await UserPreferencesService.loadPreferences();
+      _tabOrder = preferences.characterTabOrder;
+      
+      // Create tab builders map
+      final Map<String, Widget Function()> tabBuilders = {
+        'character': () => _buildCharacterCoverTab(),
+        'quick_guide': () => _buildQuickGuideTab(),
+        'stats': () => _buildStatsTab(),
+        'skills': () => _buildSkillsTab(),
+        'attacks': () => _buildAttacksTab(),
+        'spell_slots': () => _buildSpellSlotsTab(),
+        'spells': () => _buildSpellsTab(),
+        'feats': () => _buildFeatsTab(),
+        'class_slots': () => _buildPersonalizedSlotsTab(),
+        'appearance': () => _buildAppearanceTab(),
+        'notes': () => _buildNotesTab(),
+      };
+      
+      // Get ordered tabs
+      _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
+      
+      // Only recreate controller if length changed
+      if (_tabController.length != _orderedTabs.length) {
+        _tabController.dispose();
+        _tabController = TabController(length: _orderedTabs.length, vsync: this);
+      }
+      setState(() {});
+    } catch (e) {
+      debugPrint('Error initializing tab order: $e');
+      // Fallback to default order
+      _tabOrder = CharacterTabManager.getDefaultTabOrder();
+      final Map<String, Widget Function()> tabBuilders = {
+        'character': () => _buildCharacterCoverTab(),
+        'quick_guide': () => _buildQuickGuideTab(),
+        'stats': () => _buildStatsTab(),
+        'skills': () => _buildSkillsTab(),
+        'attacks': () => _buildAttacksTab(),
+        'spell_slots': () => _buildSpellSlotsTab(),
+        'spells': () => _buildSpellsTab(),
+        'feats': () => _buildFeatsTab(),
+        'class_slots': () => _buildPersonalizedSlotsTab(),
+        'appearance': () => _buildAppearanceTab(),
+        'notes': () => _buildNotesTab(),
+      };
+      _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
+      
+      // Only recreate controller if length changed
+      if (_tabController.length != _orderedTabs.length) {
+        _tabController.dispose();
+        _tabController = TabController(length: _orderedTabs.length, vsync: this);
+      }
+      
+      setState(() {});
+    }
+  }
+
+  /// Save tab order to user preferences
+  Future<void> _saveTabOrder(List<String> newOrder) async {
+    try {
+      final preferences = await UserPreferencesService.loadPreferences();
+      final updatedPreferences = preferences.copyWith(characterTabOrder: newOrder);
+      await UserPreferencesService.savePreferences(updatedPreferences);
+      
+      _tabOrder = newOrder;
+      debugPrint('Tab order saved: $newOrder');
+    } catch (e) {
+      debugPrint('Error saving tab order: $e');
+    }
+  }
+
+  /// Show dialog to reorder tabs
+  void _showTabReorderDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return TabReorderDialog(
+          currentOrder: _tabOrder,
+          onOrderChanged: (newOrder) async {
+            await _saveTabOrder(newOrder);
+            await _initializeTabOrder(); // Refresh the tabs
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -395,6 +620,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _featuresTraitsController.dispose();
     _backstoryController.dispose();
     _featNotesController.dispose();
+    _additionalDetailsController.dispose();
+    _moneyController.dispose();
+    _itemsController.dispose();
     _gimmickController.dispose();
     _quirkController.dispose();
     _wantsController.dispose();
@@ -427,22 +655,30 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          tabs: const [
-            Tab(text: 'Character', icon: Icon(Icons.shield)),                        
-            Tab(text: 'Quick Guide', icon: Icon(Icons.description)),
-            Tab(text: 'Stats', icon: Icon(Icons.bar_chart)),
-            Tab(text: 'Skills', icon: Icon(Icons.psychology)),
-            Tab(text: 'Attacks', icon: Icon(Icons.gavel)),
-            Tab(text: 'Spell Slots', icon: Icon(Icons.grid_view)),
-            Tab(text: 'Spells', icon: Icon(Icons.auto_awesome)),
-            Tab(text: 'Feats', icon: Icon(Icons.military_tech)),
-            Tab(text: 'Class Slots', icon: Icon(Icons.casino)),
-            Tab(text: 'Appearance', icon: Icon(Icons.face)),
-            Tab(text: 'Notes', icon: Icon(Icons.note)),
-          ],
+          tabs: _orderedTabs.map((tab) => Tab(
+            text: tab.label,
+            icon: Icon(tab.icon),
+          )).toList(),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.save), onPressed: _saveCharacter),
+          IconButton(
+            icon: const Icon(Icons.reorder),
+            onPressed: _showTabReorderDialog,
+            tooltip: 'Reorder Tabs',
+          ),
+          _isLoading
+              ? const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+              : IconButton(
+                icon: const Icon(Icons.save),
+                onPressed: _saveCharacter,
+              ),
         ],
       ),
       body: GestureDetector(
@@ -453,352 +689,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         },
         child: TabBarView(
           controller: _tabController,
-          children: [
-            _buildCharacterCoverTab(),      
-            _buildQuickGuideTab(),
-            _buildStatsTab(),
-            _buildSkillsTab(),
-            _buildAttacksTab(),
-            _buildSpellSlotsTab(),
-            _buildSpellsTab(),
-            _buildFeatsTab(),
-            _buildPersonalizedSlotsTab(),
-            _buildAppearanceTab(),
-            _buildNotesTab(),
-          ],
+          children: _orderedTabs.map((tab) => tab.builder()).toList(),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBasicInfoTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Profile image section
-          Center(
-            child: GestureDetector(
-              onTap: _showImageOptionsDialog,
-              child: Stack(
-                children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(60),
-                    ),
-                    child: _customImageData != null
-                        ? ClipOval(
-                            child: _base64ToImage(
-                              _customImageData,
-                              width: 120,
-                              height: 120,
-                            ),
-                          )
-                        : Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(60),
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.grey,
-                            ),
-                          ),
-                  ),
-                  // Camera button overlay
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: _buildPickImageButton(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Name field
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Character Name',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Level field
-          TextField(
-            controller: _levelController,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              labelText: 'Character Level',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Class and subclass
-          Row(
-            children: [
-              Expanded(
-                child: Consumer<CharactersViewModel>(
-                  builder: (context, viewModel, child) {
-                    return DropdownButtonFormField<String>(
-                      value: _selectedClass,
-                      decoration: const InputDecoration(
-                        labelText: 'Class',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: viewModel.availableClasses.map((className) {
-                        return DropdownMenuItem(
-                          value: className,
-                          child: Text(className),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedClass = value!;
-                          _classController.text = value;
-                          _useCustomSubclass = false;
-                          _hasUnsavedClassChanges = true;
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_useCustomSubclass)
-                      TextField(
-                        controller: _subclassController,
-                        decoration: InputDecoration(
-                          labelText: 'Custom Subclass',
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.list),
-                            onPressed: () {
-                              setState(() {
-                                _useCustomSubclass = false;
-                                _hasUnsavedClassChanges = true;
-                              });
-                            },
-                            tooltip: 'Choose from preset subclasses',
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            _hasUnsavedClassChanges = true;
-                          });
-                        },
-                      )
-                    else
-                      DropdownButtonFormField<String>(
-                        value: _useCustomSubclass || _subclassController.text.isEmpty || !_getSubclassesForClass(_selectedClass).contains(_subclassController.text) ? null : _subclassController.text,
-                        decoration: const InputDecoration(
-                          labelText: 'Subclass (Optional)',
-                          border: OutlineInputBorder(),
-                        ),
-                        isExpanded: true,
-                        items: [
-                          ..._getSubclassesForClass(_selectedClass).map((subclass) {
-                            return DropdownMenuItem(
-                              value: subclass,
-                              child: SizedBox(
-                                width: 200,
-                                child: Text(
-                                  subclass,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            );
-                          }),
-                          DropdownMenuItem(
-                            value: '__CUSTOM__',
-                            child: SizedBox(
-                              width: 200,
-                              child: Text(
-                                'Custom Subclass...',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                style: const TextStyle(
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            if (value == '__CUSTOM__') {
-                              _useCustomSubclass = true;
-                              _subclassController.text = '';
-                            } else {
-                              _subclassController.text = value ?? '';
-                            }
-                            _hasUnsavedClassChanges = true;
-                          });
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Race selection
-          Consumer<RacesViewModel>(
-            builder: (context, racesViewModel, child) {
-              return DropdownButtonFormField<String>(
-                value: _raceController.text.isEmpty ? null : _raceController.text,
-                decoration: const InputDecoration(
-                  labelText: 'Race (Optional)',
-                  border: OutlineInputBorder(),
-                ),
-                items: racesViewModel.races.map((race) {
-                  return DropdownMenuItem(
-                    value: race.name,
-                    child: Text(race.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _raceController.text = value ?? '';
-                    _selectedRace = value ?? '';
-                    _hasUnsavedClassChanges = true;
-                  });
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Background selection
-          Consumer<BackgroundsViewModel>(
-            builder: (context, backgroundsViewModel, child) {
-              return DropdownButtonFormField<String>(
-                value: _backgroundController.text.isEmpty ? null : _backgroundController.text,
-                decoration: const InputDecoration(
-                  labelText: 'Background (Optional)',
-                  border: OutlineInputBorder(),
-                ),
-                items: backgroundsViewModel.backgrounds.map((background) {
-                  return DropdownMenuItem(
-                    value: background.name,
-                    child: Text(background.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  debugPrint('Background dropdown changed to: $value');
-                  setState(() {
-                    _backgroundController.text = value ?? '';
-                    _selectedBackground = value ?? '';
-                    _hasUnsavedClassChanges = true;
-                    debugPrint('_backgroundController.text: "${_backgroundController.text}"');
-                    debugPrint('_selectedBackground: "${_selectedBackground}"');
-                    debugPrint('_hasUnsavedClassChanges: $_hasUnsavedClassChanges');
-                  });
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          
-          // Class save button
-          if (_hasUnsavedClassChanges)
-            Align(
-              alignment: Alignment.center,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  _saveCharacter('Information saved!');
-                  setState(() {
-                    _hasUnsavedClassChanges = false;
-                  });
-                },
-                icon: const Icon(Icons.save, size: 16),
-                label: const Text('Save Changes'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  textStyle: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-          const SizedBox(height: 24),
-
-          // Long Rest section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.bedtime,
-                      color: Colors.blue.shade700,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Long Rest',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Take a long rest to restore hit points, spell slots, and all class resources.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _takeComprehensiveLongRest,
-                    icon: const Icon(Icons.night_shelter),
-                    label: const Text('Take Long Rest'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -809,1468 +701,153 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Character Header Section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade50, Colors.indigo.shade50],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Column(
-              children: [
-                // Header with Edit Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SizedBox(width: 48), // Space for profile image alignment                    
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          // If exiting edit mode (clicking "Done"), save changes
-                          if (_isEditingCharacterCover && _hasUnsavedClassChanges) {
-                            _saveCharacter('Character updated!');
-                          }
-                          _isEditingCharacterCover = !_isEditingCharacterCover;
-                        });
-                      },
-                      icon: Icon(
-                        _isEditingCharacterCover ? Icons.check : Icons.edit,
-                        color: Colors.blue.shade700,
-                      ),
-                      tooltip: _isEditingCharacterCover ? 'Done' : 'Edit Character',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                
-                // Profile Image
-                GestureDetector(
-                  onTap: _isEditingCharacterCover ? _showImageOptionsDialog : null,
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(40),
-                          border: Border.all(
-                            color: _isEditingCharacterCover 
-                                ? Colors.green.shade300 
-                                : Colors.blue.shade300, 
-                            width: 2,
-                          ),
-                        ),
-                        child: _customImageData != null
-                            ? ClipOval(
-                                child: _base64ToImage(
-                                  _customImageData,
-                                  width: 80,
-                                  height: 80,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.person,
-                                size: 40,
-                                color: Colors.grey,
-                              ),
-                      ),
-                      if (_isEditingCharacterCover)
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: _buildPickImageButton(),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
-                // Character Name
-                _isEditingCharacterCover
-                    ? TextField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Character Name',
-                          border: OutlineInputBorder(),
-                        ),
-                      )
-                    : Text(
-                        _nameController.text.isNotEmpty 
-                            ? _nameController.text 
-                            : 'Character Name',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade800,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                const SizedBox(height: 12),
-                
-                // Character Level
-                _isEditingCharacterCover
-                    ? TextField(
-                        controller: _levelController,
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.done,
-                        decoration: const InputDecoration(
-                          labelText: 'Character Level',
-                          border: OutlineInputBorder(),
-                        ),
-                      )
-                    : Text(
-                        'Level ${_levelController.text.isNotEmpty ? _levelController.text : '1'}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade700,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                const SizedBox(height: 12),
-                
-                // Class and Subclass
-                _isEditingCharacterCover
-                    ? Row(
-                        children: [
-                          Expanded(
-                            child: Consumer<CharactersViewModel>(
-                              builder: (context, viewModel, child) {
-                                return DropdownButtonFormField<String>(
-                                  value: _selectedClass,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Class',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  items: viewModel.availableClasses.map((className) {
-                                    return DropdownMenuItem(
-                                      value: className,
-                                      child: Text(className),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedClass = value!;
-                                      _classController.text = value;
-                                      _useCustomSubclass = false;
-                                      _hasUnsavedClassChanges = true;
-                                    });
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (_useCustomSubclass)
-                                  TextField(
-                                    controller: _subclassController,
-                                    decoration: InputDecoration(
-                                      labelText: 'Custom Subclass',
-                                      border: const OutlineInputBorder(),
-                                      suffixIcon: IconButton(
-                                        icon: const Icon(Icons.list),
-                                        onPressed: () {
-                                          setState(() {
-                                            _useCustomSubclass = false;
-                                            _hasUnsavedClassChanges = true;
-                                          });
-                                        },
-                                        tooltip: 'Choose from preset subclasses',
-                                      ),
-                                    ),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _hasUnsavedClassChanges = true;
-                                      });
-                                    },
-                                  )
-                                else
-                                  DropdownButtonFormField<String>(
-                                    value: _useCustomSubclass || _subclassController.text.isEmpty || !_getSubclassesForClass(_selectedClass).contains(_subclassController.text) ? null : _subclassController.text,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Subclass (Optional)',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    isExpanded: true,
-                                    items: [
-                                      ..._getSubclassesForClass(_selectedClass).map((subclass) {
-                                        return DropdownMenuItem(
-                                          value: subclass,
-                                          child: SizedBox(
-                                            width: 200,
-                                            child: Text(
-                                              subclass,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ),
-                                        );
-                                      }),
-                                      const DropdownMenuItem(
-                                        value: 'custom',
-                                        child: Text('Custom Subclass'),
-                                      ),
-                                    ],
-                                    onChanged: (value) {
-                                      if (value == 'custom') {
-                                        setState(() {
-                                          _useCustomSubclass = true;
-                                          _hasUnsavedClassChanges = true;
-                                        });
-                                      } else {
-                                        setState(() {
-                                          _subclassController.text = value!;
-                                          _useCustomSubclass = false;
-                                          _hasUnsavedClassChanges = true;
-                                        });
-                                      }
-                                    },
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      )
-                    : Text(
-                        _classController.text.isNotEmpty 
-                            ? (_subclassController.text.isNotEmpty 
-                                ? '${_classController.text} • ${_subclassController.text}'
-                                : _classController.text)
-                            : 'Class • Subclass',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue.shade600,
-                          fontStyle: FontStyle.italic,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-              
-              // Race selection
-              Consumer<RacesViewModel>(
-                builder: (context, racesViewModel, child) {
-                  // Create unique race items by using race name + source if needed
-                  final Map<String, Race> uniqueRaces = {};
-                  for (final race in racesViewModel.races) {
-                    final key = race.name;
-                    if (!uniqueRaces.containsKey(key)) {
-                      uniqueRaces[key] = race;
-                    }
-                  }
-                  
-                  final selectedRace = _raceController.text.isNotEmpty 
-                      ? uniqueRaces[_raceController.text]
-                      : null;
-                  
-                  return _isEditingCharacterCover
-                      ? Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 16.0),
-                              child: DropdownButtonFormField<String>(
-                                  value: _raceController.text.isEmpty ? null : _raceController.text,
-                                  decoration: InputDecoration(
-                                    labelText: 'Race (Optional)',
-                                    border: OutlineInputBorder(),
-                                    suffixIcon: selectedRace != null 
-                                        ? IconButton(
-                                            icon: const Icon(Icons.info_outline),
-                                            onPressed: () => _showRaceDetailsModal(selectedRace),
-                                            tooltip: 'View race details',
-                                          )
-                                        : null,
-                                  ),
-                                  items: uniqueRaces.values.map<DropdownMenuItem<String>>((race) {
-                                    return DropdownMenuItem<String>(
-                                      value: race.name,
-                                      child: Text(race.name),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _raceController.text = value ?? '';
-                                      _selectedRace = value ?? '';
-                                      _hasUnsavedClassChanges = true;
-                                    });
-                                  },
-                                ),
-                            ),
-                            const SizedBox(height: 16),
-                            Consumer<BackgroundsViewModel>(
-                              builder: (context, backgroundsViewModel, child) {
-                                Background? selectedBackground;
-                                if (_backgroundController.text.isNotEmpty && backgroundsViewModel.backgrounds.isNotEmpty) {
-                                  try {
-                                    selectedBackground = backgroundsViewModel.backgrounds.firstWhere(
-                                      (background) => background.name == _backgroundController.text,
-                                    );
-                                  } catch (e) {
-                                    // Background not found, keep selectedBackground as null
-                                    debugPrint('Background "${_backgroundController.text}" not found in list');
-                                  }
-                                }
-                                
-                                return DropdownButtonFormField<String>(
-                                  value: _backgroundController.text.isEmpty ? null : _backgroundController.text,
-                                  decoration: InputDecoration(
-                                    labelText: 'Background (Optional)',
-                                    border: OutlineInputBorder(),
-                                    suffixIcon: selectedBackground != null 
-                                        ? IconButton(
-                                            icon: const Icon(Icons.info_outline),
-                                            onPressed: () => _showBackgroundDetailsModal(selectedBackground!),
-                                            tooltip: 'View background details',
-                                          )
-                                        : null,
-                                  ),
-                                  items: backgroundsViewModel.backgrounds.map((background) {
-                                    return DropdownMenuItem(
-                                      value: background.name,
-                                      child: Text(background.name),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    debugPrint('Character cover background dropdown changed to: $value');
-                                    setState(() {
-                                      _backgroundController.text = value ?? '';
-                                      _selectedBackground = value ?? '';
-                                      _hasUnsavedClassChanges = true;
-                                      debugPrint('Cover _backgroundController.text: "${_backgroundController.text}"');
-                                      debugPrint('Cover _selectedBackground: "${_selectedBackground}"');
-                                      debugPrint('Cover _hasUnsavedClassChanges: $_hasUnsavedClassChanges');
-                                    });
-                                  },
-                                );
-                              },
-                            ),
-                          ],
-                        )
-                      : GestureDetector(
-                          onTap: selectedRace != null 
-                              ? () => _showRaceDetailsModal(selectedRace)
-                              : null,
-                          child: Consumer<BackgroundsViewModel>(
-                          builder: (context, backgroundsViewModel, child) {
-                            Background? selectedBackground;
-                            if (_backgroundController.text.isNotEmpty && backgroundsViewModel.backgrounds.isNotEmpty) {
-                              try {
-                                selectedBackground = backgroundsViewModel.backgrounds.firstWhere(
-                                  (background) => background.name == _backgroundController.text,
-                                );
-                              } catch (e) {
-                                // Background not found, keep selectedBackground as null
-                                debugPrint('Background "${_backgroundController.text}" not found in list');
-                              }
-                            }
-                            
-                            final hasRace = _raceController.text.isNotEmpty;
-                            final hasBackground = _backgroundController.text.isNotEmpty;
-                            
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // Race display
-                                if (hasRace) ...[
-                                  
-                                GestureDetector(
-                                  onTap: selectedRace != null 
-                                      ? () => _showRaceDetailsModal(selectedRace)
-                                      : null,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text(
-                                        _raceController.text.isNotEmpty 
-                                            ? _raceController.text
-                                            : 'Race',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: selectedRace != null 
-                                              ? Colors.blue.shade600
-                                              : Colors.grey.shade600,
-                                          fontStyle: FontStyle.italic,
-                                          decoration: selectedRace != null 
-                                              ? TextDecoration.underline
-                                              : null,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                  ),
-                                ),],
-                                
-                                // Background display
-                                if (hasBackground) ...[ 
-                                  Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Text(
-                                          ' • ',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: selectedBackground != null 
-                                                ? Colors.blue.shade600
-                                                : Colors.grey.shade600,
-                                            fontStyle: FontStyle.italic,                                            
-                                          ),
-                                          textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                                                  
-                                  GestureDetector(
-                                    onTap: selectedBackground != null
-                                        ? () => _showBackgroundDetailsModal(selectedBackground!)
-                                        : null,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Text(
-                                          _backgroundController.text,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: selectedBackground != null 
-                                                ? Colors.blue.shade600
-                                                : const Color.fromARGB(255, 117, 117, 117),
-                                            fontStyle: FontStyle.italic,
-                                            decoration: selectedBackground != null 
-                                                ? TextDecoration.underline
-                                                : null,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            );
-                          },
-                        ),
-                        );
-                },
-              ),
-              ],
-            ),
+          CharacterHeaderSection(
+            isEditing: _isEditingCharacterCover,
+            hasUnsavedClassChanges: _hasUnsavedClassChanges,
+            onEditToggle: (bool isEditing) {
+              setState(() {
+                _isEditingCharacterCover = isEditing;
+              });
+            },
+            nameController: _nameController,
+            levelController: _levelController,
+            classController: _classController,
+            subclassController: _subclassController,
+            raceController: _raceController,
+            backgroundController: _backgroundController,
+            customImagePath: _customImagePath,
+            onPickImage: _showImageOptionsDialog,
+            onSave: () => _saveCharacter(successMessage: 'Character updated!'),
+            getSubclassesForClass: _getSubclassesForClass,
+            onClassChanged: (value) {
+              setState(() {
+                _selectedClass = value;
+                _hasUnsavedClassChanges = true;
+              });
+            },
+            onSubclassChanged: (value) {
+              setState(() {
+                _hasUnsavedClassChanges = true;
+              });
+            },
+            onRaceChanged: (value) {
+              setState(() {
+                _hasUnsavedClassChanges = true;
+              });
+            },
+            onBackgroundChanged: (value) {
+              debugPrint('Background changed to: $value');
+              setState(() {
+                _selectedBackground = value;
+                _hasUnsavedClassChanges = true;
+              });
+            },
+            buildPickImageButton: _buildPickImageButton,
+            showRaceDetailsModal: _showRaceDetailsModal,
+            showBackgroundDetailsModal: _showBackgroundDetailsModal,
+            selectedBackground: _selectedBackground,
           ),
+
           const SizedBox(height: 16),
 
-          // Combat Stats Row
-          Row(
-            children: [
-              Expanded(
-                child: _buildInspirationField(),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildArmorClassField(),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildSpeedField(),
-              ),
-            ],
+          CombatStatsSection(
+            buildInspiration: _buildInspirationField,
+            buildArmorClass: _buildArmorClassField,
+            buildSpeed: _buildSpeedField,
           ),
+
           const SizedBox(height: 16),
-          Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: 
-              Column(children:[                
-                _buildIniciativeField(),
-                const SizedBox(height: 24)
-                ]),
-            ),
 
-          // Concentration Row - only show for spellcasting classes
-          if (_canCastSpells())           
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: 
-              Column(children:[                
-                _buildConcentrationField(),
-                const SizedBox(height: 24)
-                ]),
-            ),
-            
-          // Health Section
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [                                
-                // Hit Points
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 2,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _maxHpController,
-                          decoration: const InputDecoration(
-                            labelText: 'Max HP',
-                            prefixIcon: Icon(Icons.health_and_safety, color: Colors.blue),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(12),
-                          ),
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 2,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _currentHpController,
-                          decoration: const InputDecoration(
-                            labelText: 'Current HP',
-                            prefixIcon: Icon(Icons.favorite_border, color: Colors.blue),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(12),
-                          ),
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 2,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _tempHpController,
-                    decoration: const InputDecoration(
-                      labelText: 'Temporary HP',
-                      prefixIcon: Icon(Icons.shield, color: Colors.indigo),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(12),
-                    ),
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Hit Dice
-                const Text(
-                  'Hit Dice',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.blue),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 2,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _hitDiceController,
-                          decoration: const InputDecoration(
-                            labelText: 'Number of Hit Dice',
-                            prefixIcon: Icon(Icons.casino, color: Colors.blue),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(12),
-                          ),
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 2,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _hitDiceTypeController,
-                          decoration: const InputDecoration(
-                            labelText: 'Hit Dice Type',
-                            prefixIcon: Icon(Icons.category, color: Colors.blue),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(12),
-                          ),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          InitiativeSection(
+            controller: _initiativeController,
+            dexterityController: _dexterityController,
+            onChanged: (value) {
+              _autoSaveCharacter();
+            },
+            showInitiativeDialog: _showInitiativeDialog,
           ),
+
+          if (_canCastSpells())
+            ConcentrationSection(
+              hasConcentration: _hasConcentration,
+              onToggle: () {
+                setState(() {
+                  _hasConcentration = !_hasConcentration;
+                });
+                _autoSaveCharacter(); // save changes
+              },
+            ),
+
+          HealthSection(
+            maxHpController: _maxHpController,
+            currentHpController: _currentHpController,
+            tempHpController: _tempHpController,
+            hitDiceController: _hitDiceController,
+            hitDiceTypeController: _hitDiceTypeController,
+          ),
+
           const SizedBox(height: 24),
 
-          // Death Saving Throws Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Death Saving Throws',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
-                  ),
-                  const SizedBox(height: 16),
-                  // Successes row
-                  Row(
-                    children: [
-                      Text(
-                        'Successes:',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(width: 16),
-                      ...List.generate(3, (index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _deathSaveSuccesses[index] = !_deathSaveSuccesses[index];
-                              });
-                              _autoSaveCharacter();
-                            },
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: _deathSaveSuccesses[index] ? Colors.green : Colors.grey.shade300,
-                                border: Border.all(color: Colors.grey.shade400),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: _deathSaveSuccesses[index] 
-                                  ? Icon(Icons.check, color: Colors.white, size: 16)
-                                  : const SizedBox.shrink(),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Failures row
-                  Row(
-                    children: [
-                      Text(
-                        'Failures:',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(width: 35),
-                      ...List.generate(3, (index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _deathSaveFailures[index] = !_deathSaveFailures[index];
-                              });
-                              _autoSaveCharacter();
-                            },
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: _deathSaveFailures[index] ? Colors.red : Colors.grey.shade300,
-                                border: Border.all(color: Colors.grey.shade400),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: _deathSaveFailures[index] 
-                                  ? Icon(Icons.close, color: Colors.white, size: 16)
-                                  : const SizedBox.shrink(),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Clear button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _deathSaveSuccesses = [false, false, false];
-                          _deathSaveFailures = [false, false, false];
-                        });
-                        _autoSaveCharacter();
-                      },                      
-                      label: const Text('Clear All'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade100,
-                        foregroundColor: Colors.blue.shade700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-          // Other proficiencies Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.bookmark,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Other proficiencies',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),                  
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _proficienciesController,
-                      decoration: const InputDecoration(
-                        hintText: 'Add other proficiencies and bonuses...\n\n'
-                            'Examples:\n'
-                            '• Tool proficiencies (smith\'s tools, herbalism kit, etc.)\n'
-                            '• Weapon proficiencies not covered by class/race\n'
-                            '• Armor proficiencies from special training\n'
-                            '• Skill proficiencies from background or feats\n'
-                            '• Languages and special abilities\n'
-                            '• Other bonuses or special features',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 3,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-           const SizedBox(height: 16),
-          // Other proficiencies Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.bookmark,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Features & traits',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),                  
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _featuresTraitsController,
-                      decoration: const InputDecoration(
-                        hintText: 'Add features and traits...\n\n'
-                            'Examples:\n'
-                            '• Specific abilities from your Race, Class, Background, or Feats',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 6,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          // Languages Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.language,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Languages',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'List all languages your character can speak and understand.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _languagesController,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter your character\'s languages...',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 6,
-                      minLines: 4,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          DeathSavingThrowsSection(
+            deathSaveSuccesses: _deathSaveSuccesses,
+            deathSaveFailures: _deathSaveFailures,
+            onToggleSuccess: (index) {
+              setState(() {
+                _deathSaveSuccesses[index] = !_deathSaveSuccesses[index];
+              });
+              _autoSaveCharacter();
+            },
+            onToggleFailure: (index) {
+              setState(() {
+                _deathSaveFailures[index] = !_deathSaveFailures[index];
+              });
+              _autoSaveCharacter();
+            },
+            onClear: () {
+              setState(() {
+                _deathSaveSuccesses = [false, false, false];
+                _deathSaveFailures = [false, false, false];
+              });
+              _autoSaveCharacter();
+            },
           ),
 
           const SizedBox(height: 16),
 
-          // Money and Items Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.monetization_on,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Money & Items',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Track your character\'s wealth and possessions.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Money field
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _moneyController,
-                      decoration: const InputDecoration(
-                        labelText: 'Money',
-                        hintText: 'Enter your character\'s wealth...\n\n'
-                            'Examples:\n'
-                            '• 150 gp, 50 sp, 25 cp\n'
-                            '• 2,000 gp\n'
-                            '• Pocket change: 5 gp, 12 sp, 8 cp\n'
-                            '• Bank funds: 10,000 gp',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                      ),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Items field
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _itemsController,
-                      decoration: const InputDecoration(
-                        labelText: 'Items & Equipment',
-                        hintText: 'List your character\'s equipment and possessions...\n\n'
-                            'Weapons:\n'
-                            '• Longsword +1, Shield +1\n'
-                            '• Shortbow with 20 arrows\n'
-                            '• Dagger +2\n\n'
-                            'Armor:\n'
-                            '• Chain mail armor\n'
-                            '• Steel shield\n'
-                            '• Helmet of protection\n\n'
-                            'Magic Items:\n'
-                            '• Ring of invisibility\n'
-                            '• Amulet of health\n'
-                            '• Boots of speed\n'
-                            '• Cloak of elvenkind\n\n'
-                            'Tools & Equipment:\n'
-                            '• Thieves\' tools\n'
-                            '• Climbing gear\n'
-                            '• Rope 50ft\n'
-                            '• Rations for 1 week\n'
-                            '• Waterskin\n'
-                            '• Bedroll and blanket',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 6,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: Colors.grey.shade600,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Auto-saves automatically • No character limit • Rich text supported',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade600,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          OtherProficienciesSection(
+            controller: _proficienciesController,
+            onChanged: () => _autoSaveCharacter(),
+          ),
+
+          const SizedBox(height: 16),
+
+          LanguagesSection(
+            onChanged: (value) => _autoSaveCharacter(),
+            languagesController: _languagesController,
+          ),
+
+          const SizedBox(height: 16),
+
+          MoneyItemsSection(
+            moneyController: _moneyController,
+            itemsController: _itemsController,
+            onMoneyChanged: (value) => _autoSaveCharacter(),
+            onItemsChanged: () => _autoSaveCharacter(),
           ),
 
           const SizedBox(height: 30),
 
-          // Long Rest section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.bedtime,
-                  color: Colors.green.shade700,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Long Rest',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-                const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: _takeComprehensiveLongRest,
-                  icon: const Icon(Icons.night_shelter),
-                  label: const Text('Take Long Rest'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24), // Space under long rest section
-        ],
-      ),
-    );
-  }
-
-  // Helper methods for spellcasting information
-  String? _getSpellcastingAbility() {
-    final className = _classController.text.toLowerCase();
-    final subclass = _subclassController.text.toLowerCase();
-    
-    // Define spellcasting abilities for different classes
-    final Map<String, String> classSpellcasting = {
-      'wizard': 'INT',
-      'sorcerer': 'CHA',
-      'warlock': 'CHA',
-      'bard': 'CHA',
-      'cleric': 'WIS',
-      'druid': 'WIS',
-      'paladin': 'CHA',
-      'ranger': 'WIS',
-      'artificer': 'INT',
-    };
-    
-    // Check main class first
-    if (classSpellcasting.containsKey(className)) {
-      return classSpellcasting[className];
-    }
-    
-    // Check subclasses that grant spellcasting
-    final Map<String, String> subclassSpellcasting = {
-      'eldritch knight': 'INT',
-      'arcane trickster': 'INT',
-      'divine soul': 'CHA',
-      'favored soul': 'CHA',
-      'shadow monk': 'WIS',
-      'four elements monk': 'WIS',
-      'way of mercy monk': 'WIS',
-    };
-    
-    if (subclassSpellcasting.containsKey(subclass)) {
-      return subclassSpellcasting[subclass];
-    }
-    
-    return null;
-  }
-  
-  int _getAbilityScore(String ability) {
-    switch (ability) {
-      case 'STR':
-        return int.tryParse(_strengthController.text) ?? 10;
-      case 'DEX':
-        return int.tryParse(_dexterityController.text) ?? 10;
-      case 'CON':
-        return int.tryParse(_constitutionController.text) ?? 10;
-      case 'INT':
-        return int.tryParse(_intelligenceController.text) ?? 10;
-      case 'WIS':
-        return int.tryParse(_wisdomController.text) ?? 10;
-      case 'CHA':
-        return int.tryParse(_charismaController.text) ?? 10;
-      default:
-        return 10;
-    }
-  }
-  
-  int _getAbilityModifier(String ability) {
-    final score = _getAbilityScore(ability);
-    return ((score - 10) / 2).floor();
-  }
-  
-  int _getSpellSaveDC() {
-    final spellcastingAbility = _getSpellcastingAbility();
-    if (spellcastingAbility == null) return 0;
-    
-    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
-    final abilityModifier = _getAbilityModifier(spellcastingAbility);
-    
-    return 8 + proficiencyBonus + abilityModifier;
-  }
-  
-  int _getSpellAttackBonus() {
-    final spellcastingAbility = _getSpellcastingAbility();
-    if (spellcastingAbility == null) return 0;
-    
-    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
-    final abilityModifier = _getAbilityModifier(spellcastingAbility);
-    
-    return proficiencyBonus + abilityModifier;
-  }
-
-  Widget _buildSpellcastingInfoRow(String label, String description, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.purple.shade300),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.purple,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.purple.shade600,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+          LongRestSection(
+            takeComprehensiveLongRest: _takeComprehensiveLongRest,
           ),
         ],
       ),
     );
-  }
-  
-  String _getAbilityName(String ability) {
-    switch (ability) {
-      case 'STR':
-        return 'Strength';
-      case 'DEX':
-        return 'Dexterity';
-      case 'CON':
-        return 'Constitution';
-      case 'INT':
-        return 'Intelligence';
-      case 'WIS':
-        return 'Wisdom';
-      case 'CHA':
-        return 'Charisma';
-      default:
-        return ability;
-    }
-  }
-  
-  List<String> _getSubclassesForClass(String className) {
-    switch (className.toLowerCase()) {
-      case 'fighter':
-        return [
-          'Battle Master',
-          'Champion',
-          'Eldritch Knight',
-          'Psi Warrior',
-          'Rune Knight',
-          'Samurai',
-          'Cavalier',
-          'Gunslinger',
-          'Banneret',
-        ];
-      case 'wizard':
-        return [
-          'School of Abjuration',
-          'School of Conjuration',
-          'School of Divination',
-          'School of Enchantment',
-          'School of Evocation',
-          'School of Illusion',
-          'School of Necromancy',
-          'School of Transmutation',
-          'School of Bladesinging',
-          'School of Chronurgy',
-          'School of Graviturgy',
-          'School of Scribes',
-          'School of Order',
-          'School of Invention',
-          'School of War Magic',
-        ];
-      case 'cleric':
-        return [
-          'Knowledge Domain',
-          'Life Domain',
-          'Light Domain',
-          'Nature Domain',
-          'Order Domain',
-          'Peace Domain',
-          'Trickery Domain',
-          'War Domain',
-          'Forge Domain',
-          'Grave Domain',
-          'Twilight Domain',
-          'Arcana Domain',
-        ];
-      case 'rogue':
-        return [
-          'Thief',
-          'Assassin',
-          'Arcane Trickster',
-          'Inquisitive',
-          'Mastermind',
-          'Scout',
-          'Soulknife',
-          'Swashbuckler',
-          'Phantom',
-        ];
-      case 'ranger':
-        return [
-          'Hunter',
-          'Beast Master',
-          'Gloom Stalker',
-          'Horizon Walker',
-          'Monster Slayer',
-          'Fey Wanderer',
-          'Druidic Warrior',
-          'Swarmkeeper',
-        ];
-      case 'paladin':
-        return [
-          'Devotion',
-          'Ancients',
-          'Vengeance',
-          'Oathbreaker',
-          'Glory',
-          'Crown',
-          'Watchers',
-        ];
-      case 'barbarian':
-        return [
-          'Path of the Berserker',
-          'Path of the Totem Warrior',
-          'Path of the Zealot',
-          'Path of the Wild Magic',
-          'Path of the Storm Herald',
-          'Path of the Ancestral Guardian',
-          'Path of the Battlerager',
-          'Path of the Beast',
-          'Path of the Wild Soul',
-        ];
-      case 'bard':
-        return [
-          'College of Lore',
-          'College of Valor',
-          'College of Glamour',
-          'College of Swords',
-          'College of Whispers',
-          'College of Creation',
-          'College of Eloquence',
-          'College of Spirits',
-        ];
-      case 'druid':
-        return [
-          'Circle of the Land',
-          'Circle of the Moon',
-          'Circle of the Shepherd',
-          'Circle of Spores',
-          'Circle of Stars',
-          'Circle of Wildfire',
-          'Circle of Dreams',
-          'Circle of the Coast',
-        ];
-      case 'monk':
-        return [
-          'Way of the Open Hand',
-          'Way of Shadow',
-          'Way of the Four Elements',
-          'Way of the Long Death',
-          'Way of Mercy',
-          'Way of the Drunken Master',
-          'Way of the Kensei',
-          'Way of the Astral Self',
-        ];
-      case 'sorcerer':
-        return [
-          'Draconic Bloodline',
-          'Wild Magic',
-          'Divine Soul',
-          'Shadow Magic',
-          'Storm Sorcery',
-          'Clockwork Soul',
-          'Aberrant Mind',
-        ];
-      case 'warlock':
-        return [
-          'The Fiend',
-          'The Great Old One',
-          'The Celestial',
-          'The Hexblade',
-          'The Archfey',
-          'The Undying',
-          'The Genie',
-          'The Fathomless',
-          'The Undead',
-        ];
-      case 'artificer':
-        return [
-          'Alchemist',
-          'Armorer',
-          'Artillerist',
-          'Battle Smith',
-        ];
-      default:
-        return [];
-    }
   }
 
   Widget _buildAttacksTab() {
     final spellcastingAbility = _getSpellcastingAbility();
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -2312,7 +889,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           }),
 
           const SizedBox(height: 16),
-          
+
           // Debug: Always show spellcasting section for testing
           Container(
             width: double.infinity,
@@ -2344,7 +921,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   ],
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Debug info
                 /* Container(
                   padding: const EdgeInsets.all(8),
@@ -2362,9 +939,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     ],
                   ),
                 ), */
-                
                 const SizedBox(height: 12),
-                
+
                 // Only show spellcasting details if ability is detected
                 if (spellcastingAbility != null) ...[
                   // Spellcasting Ability
@@ -2373,18 +949,18 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     _getAbilityName(spellcastingAbility),
                     '+${_getAbilityModifier(spellcastingAbility)}',
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Spell Save DC
                   _buildSpellcastingInfoRow(
                     'Spell Save DC',
                     '8 + Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
                     _getSpellSaveDC().toString(),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Spell Attack Bonus
                   _buildSpellcastingInfoRow(
                     'Spell Attack Bonus',
@@ -2420,442 +996,67 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildQuickGuideTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Quick Guide Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.description,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Character Quick Guide',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'A quick reference guide for your character\'s key information, abilities, and gameplay notes.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _quickGuideController,
-                      decoration: const InputDecoration(
-                        hintText: 'Create your character quick guide...\n\n'
-                            'Consider including:\n'
-                            '• Character concept and role in the party\n'
-                            '• Key abilities and combat tactics\n'
-                            '• Important spells or features\n'
-                            '• Equipment and magic items\n'
-                            '• Roleplaying notes and personality traits\n'
-                            '• Goals and motivations\n'
-                            '• Relationships with other party members\n'
-                            '• Weaknesses and limitations',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 20,
-                      minLines: 8,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    return CharactersQuickGuide(
+      controller: _quickGuideController,
+      onSaveCharacter: _autoSaveCharacter,
     );
   }
 
   Widget _buildStatsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Ability Scores',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    ' Level ${_levelController.text.isNotEmpty ? _levelController.text : '1'} • proficiency bonus: +${CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              if (_hasUnsavedAbilityChanges)
-                ElevatedButton.icon(
-                  onPressed: () {                    
-                    _saveCharacter('Ability scores saved!');
-                    setState(() {
-                      _hasUnsavedAbilityChanges = false;
-                    });
-                  },
-                  icon: const Icon(Icons.save, size: 16),
-                  label: const Text('Save'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    textStyle: const TextStyle(fontSize: 12),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Ability scores grid
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 3,
-            childAspectRatio: 1.1, // Slightly taller cards
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            children: [
-              _buildStatField('STRENGTH', _strengthController),
-              _buildStatField('DEXTERITY', _dexterityController),
-              _buildStatField('CONSTITUTION', _constitutionController),
-              _buildStatField('INTELLIGENCE', _intelligenceController),
-              _buildStatField('WISDOM', _wisdomController),
-              _buildStatField('CHARISMA', _charismaController),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Saving Throws',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          // Saving throws with calculated modifiers
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            childAspectRatio: 3,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            children: [
-              _buildSavingThrowRow('STR', _savingThrows.strengthProficiency, (
-                value,
-              ) {
-                setState(() {
-                  _savingThrows = CharacterSavingThrows(
-                    strengthProficiency: value ?? false,
-                    dexterityProficiency: _savingThrows.dexterityProficiency,
-                    constitutionProficiency:
-                        _savingThrows.constitutionProficiency,
-                    intelligenceProficiency:
-                        _savingThrows.intelligenceProficiency,
-                    wisdomProficiency: _savingThrows.wisdomProficiency,
-                    charismaProficiency: _savingThrows.charismaProficiency,
-                  );
-                  _autoSaveCharacter(); // Auto-save saving throws
-                });
-              }),
-              _buildSavingThrowRow('DEX', _savingThrows.dexterityProficiency, (
-                value,
-              ) {
-                setState(() {
-                  _savingThrows = CharacterSavingThrows(
-                    strengthProficiency: _savingThrows.strengthProficiency,
-                    dexterityProficiency: value ?? false,
-                    constitutionProficiency:
-                        _savingThrows.constitutionProficiency,
-                    intelligenceProficiency:
-                        _savingThrows.intelligenceProficiency,
-                    wisdomProficiency: _savingThrows.wisdomProficiency,
-                    charismaProficiency: _savingThrows.charismaProficiency,
-                  );
-                  _autoSaveCharacter(); // Auto-save saving throws
-                });
-              }),
-              _buildSavingThrowRow(
-                'CON',
-                _savingThrows.constitutionProficiency,
-                (value) {
-                  setState(() {
-                    _savingThrows = CharacterSavingThrows(
-                      strengthProficiency: _savingThrows.strengthProficiency,
-                      dexterityProficiency: _savingThrows.dexterityProficiency,
-                      constitutionProficiency: value ?? false,
-                      intelligenceProficiency:
-                          _savingThrows.intelligenceProficiency,
-                      wisdomProficiency: _savingThrows.wisdomProficiency,
-                      charismaProficiency: _savingThrows.charismaProficiency,
-                    );
-                    _autoSaveCharacter(); // Auto-save saving throws
-                  });
-                },
-              ),
-              _buildSavingThrowRow(
-                'INT',
-                _savingThrows.intelligenceProficiency,
-                (value) {
-                  setState(() {
-                    _savingThrows = CharacterSavingThrows(
-                      strengthProficiency: _savingThrows.strengthProficiency,
-                      dexterityProficiency: _savingThrows.dexterityProficiency,
-                      constitutionProficiency:
-                          _savingThrows.constitutionProficiency,
-                      intelligenceProficiency: value ?? false,
-                      wisdomProficiency: _savingThrows.wisdomProficiency,
-                      charismaProficiency: _savingThrows.charismaProficiency,
-                    );
-                    _autoSaveCharacter(); // Auto-save saving throws
-                  });
-                },
-              ),
-              _buildSavingThrowRow('WIS', _savingThrows.wisdomProficiency, (
-                value,
-              ) {
-                setState(() {
-                  _savingThrows = CharacterSavingThrows(
-                    strengthProficiency: _savingThrows.strengthProficiency,
-                    dexterityProficiency: _savingThrows.dexterityProficiency,
-                    constitutionProficiency:
-                        _savingThrows.constitutionProficiency,
-                    intelligenceProficiency:
-                        _savingThrows.intelligenceProficiency,
-                    wisdomProficiency: value ?? false,
-                    charismaProficiency: _savingThrows.charismaProficiency,
-                  );
-                  _autoSaveCharacter(); // Auto-save saving throws
-                });
-              }),
-              _buildSavingThrowRow('CHA', _savingThrows.charismaProficiency, (
-                value,
-              ) {
-                setState(() {
-                  _savingThrows = CharacterSavingThrows(
-                    strengthProficiency: _savingThrows.strengthProficiency,
-                    dexterityProficiency: _savingThrows.dexterityProficiency,
-                    constitutionProficiency:
-                        _savingThrows.constitutionProficiency,
-                    intelligenceProficiency:
-                        _savingThrows.intelligenceProficiency,
-                    wisdomProficiency: _savingThrows.wisdomProficiency,
-                    charismaProficiency: value ?? false,
-                  );
-                  _autoSaveCharacter(); // Auto-save saving throws
-                });
-              }),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatField(String label, TextEditingController controller) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade300, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(6.0), // Reduced padding from 8.0 to 6.0
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 2), // Reduced height from 4 to 2
-            Expanded( // Make the container expand to fit available space
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.black54, width: 1),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Expanded( // Make TextField expand
-                      child: Center( // Center the TextField within the Expanded space
-                        child: TextField(
-                          controller: controller,
-                          decoration: InputDecoration(
-                            hintText: '10',
-                            hintStyle: TextStyle(color: Colors.grey.shade400),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero, // Remove content padding for better centering
-                            isDense: true,
-                          ),
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                          textAlign: TextAlign.center,
-                          onChanged: (value) {
-                            // Mark as having unsaved changes and force rebuild
-                            setState(() {
-                              _hasUnsavedAbilityChanges = true;
-                            });
-                            // Force rebuild to update modifier
-                            (context as Element).markNeedsBuild();
-                          },
-                          onSubmitted: (value) {
-                            // Dismiss keyboard when Done is pressed
-                            FocusScope.of(context).unfocus();
-                          },
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2, // Reduced vertical padding from 3 to 2
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(8),
-                          bottomRight: Radius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        _getModifier(controller.text),
-                        style: const TextStyle(
-                          fontSize: 11, 
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          height: 1.0, 
-                        ),
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.visible,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCombatField(String label, TextEditingController controller) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade300, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              width: double.infinity,
-              height: 46,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.black54, width: 1),
-              ),
-              child: TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  hintText: '10',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
-                  isDense: true,
-                ),
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return StatsTab(
+      levelController: _levelController,
+      strengthController: _strengthController,
+      dexterityController: _dexterityController,
+      constitutionController: _constitutionController,
+      intelligenceController: _intelligenceController,
+      wisdomController: _wisdomController,
+      charismaController: _charismaController,
+      hasUnsavedAbilityChanges: _hasUnsavedAbilityChanges,
+      savingThrows: _savingThrows,
+      onSaveAbilities: () {
+        _saveCharacter(successMessage: 'Ability scores saved!');
+        setState(() {
+          _hasUnsavedAbilityChanges = false;
+        });
+      },
+      onSavingThrowsChanged: (newSavingThrows) {
+        debugPrint('=== onSavingThrowsChanged CHANGED ===');
+        setState(() {
+          _savingThrows = newSavingThrows;
+          _saveCharacter(showToast: false);
+        });
+      },
+      onAbilityChanged: () {
+        debugPrint('=== ABILITY CHANGED ===');
+        debugPrint(
+          '_hasUnsavedAbilityChanges before: $_hasUnsavedAbilityChanges',
+        );
+        setState(() {
+          _hasUnsavedAbilityChanges = true;
+        });
+        debugPrint(
+          '_hasUnsavedAbilityChanges after: $_hasUnsavedAbilityChanges',
+        );
+        debugPrint('======================');
+      },
     );
   }
 
   Widget _buildInspirationField() {
     final isActiveColor = _hasInspiration ? Colors.green : Colors.blue;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: _hasInspiration ? Colors.green.shade50 : Colors.blue.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _hasInspiration ? Colors.green.shade200 : Colors.blue.shade200),
+        border: Border.all(
+          color: _hasInspiration ? Colors.green.shade200 : Colors.blue.shade200,
+        ),
         boxShadow: [
           BoxShadow(
-            color: (_hasInspiration ? Colors.green : Colors.blue).withOpacity(0.1),
+            color: (_hasInspiration ? Colors.green : Colors.blue).withOpacity(
+              0.1,
+            ),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -2897,406 +1098,19 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Icon(
-                        _hasInspiration ? Icons.check_circle : Icons.circle_outlined,
-                        color: _hasInspiration ? Colors.green.shade800 : Colors.grey.shade400,
-                        size: 20,
-                      ),
+                  _hasInspiration ? Icons.check_circle : Icons.circle_outlined,
+                  color:
+                      _hasInspiration
+                          ? Colors.green.shade800
+                          : Colors.grey.shade400,
+                  size: 20,
+                ),
               ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  // Check if the current class or subclass can cast spells
-  bool _canCastSpells() {
-    final characterClass = _classController.text.trim().toLowerCase();
-    final subclass = _subclassController.text.trim().toLowerCase();
-    
-    // Debug log to track spellcasting detection
-    debugPrint('Checking spellcasting for class: "$characterClass", subclass: "$subclass"');
-    
-    // Full spellcasting classes
-    final spellcastingClasses = {
-      'wizard', 'sorcerer', 'warlock', 'bard', 'cleric', 'druid', 
-      'artificer', 'blood hunter', 'mystic'
-    };
-    
-    // Partial spellcasting classes (subclasses that grant spellcasting)
-    final spellcastingSubclasses = {
-      'eldritch knight', // Fighter subclass
-      'arcane trickster', // Rogue subclass
-    };
-    
-    // Check if main class is a spellcasting class
-    if (spellcastingClasses.contains(characterClass)) {
-      debugPrint('Class "$characterClass" is a spellcasting class');
-      return true;
-    }
-    
-    // Check if subclass grants spellcasting
-    if (spellcastingSubclasses.contains(subclass)) {
-      debugPrint('Subclass "$subclass" grants spellcasting');
-      return true;
-    }
-    
-    // Special case: Ranger and Paladin are spellcasting classes
-    if (characterClass == 'ranger' || characterClass == 'paladin') {
-      debugPrint('Class "$characterClass" is a spellcasting class (special case)');
-      return true;
-    }
-    
-    debugPrint('Class "$characterClass" with subclass "$subclass" cannot cast spells');
-    return false;
-  }
-
-Widget _buildIniciativeField() {
-    final currentInitiative = int.tryParse(_initiativeController.text) ?? 0;
-    final currentDexterity = int.tryParse(_dexterityController.text) ?? 10;
-    final dexterityModifier = ((currentDexterity - 10) / 2).floor();
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Initiative Modifier:',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue.shade700,
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: _showInitiativeDialog,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    width: 60,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.shade300),
-                    ),
-                    child: Center(
-                      child: Text(
-                        currentInitiative.toString(),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: Colors.blue.shade600,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Current: $currentInitiative (Dex modifier: $dexterityModifier). Usually equals dexterity modifier but can be modified by feats, items, or special abilities.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.blue.shade700,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConcentrationField() {
-    final isActiveColor = _hasConcentration ? Colors.green : Colors.purple;
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: _hasConcentration ? Colors.green.shade50 : Colors.purple.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _hasConcentration ? Colors.green.shade200 : Colors.purple.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: (_hasConcentration ? Colors.green : Colors.purple).withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            InkWell(
-              onTap: () {
-                setState(() {
-                  _hasConcentration = !_hasConcentration;
-                  _autoSaveCharacter();
-                });
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Spell Concentration',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: _hasConcentration ? Colors.green.shade700 : Colors.purple.shade700,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    _hasConcentration ? Icons.check_circle : Icons.circle_outlined,
-                    color: _hasConcentration ? Colors.green.shade800 : Colors.grey.shade400,
-                    size: 24,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: isActiveColor.shade600,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'You must pass a Constitution Saving Throw (CON ST) when you take damage (DC 10 or half the damage, whichever is greater) and you can only maintain one concentration spell at a time, losing it if you are incapacitated, die, or cast another spell that requires it.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isActiveColor.shade700,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildArmorClassField() {
-    final isActiveColor = _hasShield ? Colors.red : Colors.blue;
-    return Container(
-      decoration: BoxDecoration(
-        color:  isActiveColor.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isActiveColor.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: isActiveColor.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            Icon(
-              Icons.shield,
-              color: isActiveColor.shade600,
-              size: 24,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Armor Class',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isActiveColor.shade700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              width: double.infinity,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: isActiveColor.shade100),
-              ),
-              child: TextField(
-                controller: _armorClassController,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  isDense: true,
-                ),
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.done,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: isActiveColor.shade800,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Shield checkbox row
-            Container(
-              width: double.infinity,
-              height: 30,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: isActiveColor.shade100),
-              ),
-              padding: EdgeInsets.all(4.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,            
-                children: [
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _hasShield = !_hasShield;
-                          _autoSaveCharacter();
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: Icon(
-                        _hasShield ? Icons.check_circle : Icons.circle_outlined,
-                        color: _hasShield ? isActiveColor.shade800 : Colors.grey.shade400,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      'Shield',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isActiveColor.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSpeedField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            Icon(
-              Icons.directions_run,
-              color: Colors.blue.shade600,
-              size: 24,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Speed',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.blue.shade700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              width: double.infinity,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade100),
-              ),
-              child: TextField(
-                controller: _speedController,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  isDense: true,
-                ),
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade800,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _getModifier(String scoreText) {
-    try {
-      final score = int.tryParse(scoreText) ?? 10;
-      final modifier = ((score - 10) / 2).floor();
-      return modifier >= 0 ? '+$modifier' : '$modifier';
-    } catch (e) {
-      return '+0';
-    }
   }
 
   Widget _buildSkillsTab() {
@@ -3305,7 +1119,6 @@ Widget _buildIniciativeField() {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // Skills grouped by ability scores
           _buildSkillGroup('Strength', [
             _buildSkillRow(
@@ -3457,12 +1270,889 @@ Widget _buildIniciativeField() {
     );
   }
 
+  Widget _buildSpellSlotsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Spell Slots',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              ElevatedButton.icon(
+                onPressed: _takeLongRest,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Restore all slots'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Summary section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Spell Slot Summary',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Calculate total slots and used
+                  Consumer<CharactersViewModel>(
+                    builder: (context, viewModel, child) {
+                      final totalSlots =
+                          _spellSlots.level1Slots +
+                          _spellSlots.level2Slots +
+                          _spellSlots.level3Slots +
+                          _spellSlots.level4Slots +
+                          _spellSlots.level5Slots +
+                          _spellSlots.level6Slots +
+                          _spellSlots.level7Slots +
+                          _spellSlots.level8Slots +
+                          _spellSlots.level9Slots;
+
+                      final totalUsed =
+                          _spellSlots.level1Used +
+                          _spellSlots.level2Used +
+                          _spellSlots.level3Used +
+                          _spellSlots.level4Used +
+                          _spellSlots.level5Used +
+                          _spellSlots.level6Used +
+                          _spellSlots.level7Used +
+                          _spellSlots.level8Used +
+                          _spellSlots.level9Used;
+
+                      final availableSlots = totalSlots - totalUsed;
+
+                      return Column(
+                        children: [
+                          _buildSummaryRow(
+                            'Total Slots',
+                            totalSlots.toString(),
+                          ),
+                          _buildSummaryRow('Used Slots', totalUsed.toString()),
+                          _buildSummaryRow(
+                            'Available Slots',
+                            availableSlots.toString(),
+                            availableSlots > 0 ? Colors.green : Colors.red,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Spell slots grid
+          ...[
+            for (int level = 1; level <= 9; level++)
+              _buildSpellSlotField('Level $level', level),
+          ],
+
+          const SizedBox(height: 32),
+
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpellsTab() {
+    // Calculate maximum prepared spells using current state
+    final modifier = CharacterSpellPreparation.getSpellcastingModifier(
+      widget.character,
+    );
+    final calculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
+      _classController.text.trim(), // Use current class from controller
+      int.tryParse(_levelController.text) ??
+          1, // Use current level from controller
+      modifier,
+    );
+
+    // Use the stored max if it's different from calculated (user modified it)
+    final maxPrepared =
+        _spellPreparation.maxPreparedSpells == 0
+            ? calculatedMax
+            : _spellPreparation.maxPreparedSpells;
+
+    // Check if user has modified the max (for visual indicator)
+    final isModified =
+        _spellPreparation.maxPreparedSpells != 0 &&
+        _spellPreparation.maxPreparedSpells != calculatedMax;
+
+    final canPrepare = maxPrepared > 0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your character\'s known spells.',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: _showAddSpellDialog,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Spell'),
+              ),
+            ],
+          ),
+          // Spell preparation section - only show for classes that prepare spells
+          if (canPrepare) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.indigo.shade50, Colors.indigo.shade100],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.indigo.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.auto_stories,
+                        color: Colors.indigo.shade700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Spell Preparation',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.indigo.shade700,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder:
+                                (context) => AlertDialog(
+                                  title: const Text('Spell Preparation Info'),
+                                  content: const Text(
+                                    'You can establish if a spell is always prepared or you can cast it for free. Always prepared spells don\'t count against your maximum prepared spells limit.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Got it'),
+                                    ),
+                                  ],
+                                ),
+                          );
+                        },
+                        icon: const Icon(Icons.info_outline, size: 16),
+                        color: Colors.indigo.shade700,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Maximum prepared spells: $maxPrepared (${_classController.text.trim()} level ${int.tryParse(_levelController.text) ?? 1} + ${_getModifierName(modifier)} $modifier modifier = $calculatedMax)${maxPrepared != calculatedMax ? ' (modified: +${(maxPrepared - calculatedMax).abs()})' : ''}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.indigo.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Currently prepared: ${_spellPreparation.currentPreparedCount}/$maxPrepared',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                _spellPreparation.currentPreparedCount <
+                                        maxPrepared
+                                    ? Colors.green.shade700
+                                    : Colors.blue.shade700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: _showMaxPreparedDialog,
+                        icon: const Icon(Icons.edit, size: 14),
+                        label: const Text(
+                          'Modify',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.indigo.shade700,
+                          elevation: 2,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                        ),
+                      ),
+                      if (isModified) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 2,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                // Calculate the new max (calculated value)
+                                final newMax = calculatedMax;
+
+                                // Get current prepared spells (excluding always prepared)
+                                final currentPrepared =
+                                    _spellPreparation.preparedSpells;
+
+                                // If we have more prepared spells than the new max, uncheck excess
+                                if (currentPrepared.length > newMax) {
+                                  final spellsToKeep =
+                                      currentPrepared.take(newMax).toList();
+                                  _spellPreparation = _spellPreparation.copyWith(
+                                    maxPreparedSpells: 0, // Reset to calculated
+                                    preparedSpells:
+                                        spellsToKeep, // Keep only up to new max
+                                  );
+                                } else {
+                                  // Just reset max, keep current prepared spells
+                                  _spellPreparation = _spellPreparation
+                                      .copyWith(maxPreparedSpells: 0);
+                                }
+                              });
+                              _autoSaveCharacter();
+                            },
+                            icon: const Icon(Icons.refresh, size: 16),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.indigo.shade700,
+                              padding: const EdgeInsets.all(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Group spells by level
+          SpellByLevel(
+            spells: _spells,
+            spellPreparation: _spellPreparation,
+            character: widget.character,
+            classController: _classController,
+            levelController: _levelController,
+            onShowSpellDetails: _showSpellDetails,
+            onToggleSpellPreparation: _toggleSpellPreparation,
+            onToggleAlwaysPrepared: _toggleAlwaysPrepared,
+            onToggleFreeUse: _toggleFreeUse,
+            onAutoSaveCharacter: _autoSaveCharacter,
+            onRemoveSpell: (index) {
+              setState(() {
+                _spells.removeAt(index);
+              });
+            },
+          ),
+          const SizedBox(height: 70),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatsTab() {
+    return CharactersFeatsTab(
+      feats: _feats,
+      featNotesController: _featNotesController,
+      onFeatsChanged: (newFeats) {
+        setState(() {
+          _feats = newFeats;
+        });
+      },
+      onAutoSaveCharacter: _autoSaveCharacter,
+      characterName: widget.character.name,
+    );
+  }
+
+  // Helper methods for spellcasting information
+  String? _getSpellcastingAbility() {
+    final className = _classController.text.toLowerCase();
+    final subclass = _subclassController.text.toLowerCase();
+
+    // Define spellcasting abilities for different classes
+    final Map<String, String> classSpellcasting = {
+      'wizard': 'INT',
+      'sorcerer': 'CHA',
+      'warlock': 'CHA',
+      'bard': 'CHA',
+      'cleric': 'WIS',
+      'druid': 'WIS',
+      'paladin': 'CHA',
+      'ranger': 'WIS',
+      'artificer': 'INT',
+    };
+
+    // Check main class first
+    if (classSpellcasting.containsKey(className)) {
+      return classSpellcasting[className];
+    }
+
+    // Check subclasses that grant spellcasting
+    final Map<String, String> subclassSpellcasting = {
+      'eldritch knight': 'INT',
+      'arcane trickster': 'INT',
+      'divine soul': 'CHA',
+      'favored soul': 'CHA',
+      'shadow monk': 'WIS',
+      'four elements monk': 'WIS',
+      'way of mercy monk': 'WIS',
+    };
+
+    if (subclassSpellcasting.containsKey(subclass)) {
+      return subclassSpellcasting[subclass];
+    }
+
+    return null;
+  }
+
+  int _getAbilityScore(String ability) {
+    return CharacterAbilityHelper.getAbilityScore(
+      ability,
+      strengthController: _strengthController,
+      dexterityController: _dexterityController,
+      constitutionController: _constitutionController,
+      intelligenceController: _intelligenceController,
+      wisdomController: _wisdomController,
+      charismaController: _charismaController,
+    );
+  }
+
+  int _getAbilityModifier(String ability) {
+    return CharacterAbilityHelper.getAbilityModifierFromControllers(
+      ability,
+      strengthController: _strengthController,
+      dexterityController: _dexterityController,
+      constitutionController: _constitutionController,
+      intelligenceController: _intelligenceController,
+      wisdomController: _wisdomController,
+      charismaController: _charismaController,
+    );
+  }
+
+  int _getSpellSaveDC() {
+    final spellcastingAbility = _getSpellcastingAbility();
+    if (spellcastingAbility == null) return 0;
+
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
+      int.tryParse(_levelController.text) ?? 1,
+    );
+    final abilityModifier = _getAbilityModifier(spellcastingAbility);
+
+    return 8 + proficiencyBonus + abilityModifier;
+  }
+
+  int _getSpellAttackBonus() {
+    final spellcastingAbility = _getSpellcastingAbility();
+    if (spellcastingAbility == null) return 0;
+
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
+      int.tryParse(_levelController.text) ?? 1,
+    );
+    final abilityModifier = _getAbilityModifier(spellcastingAbility);
+
+    return proficiencyBonus + abilityModifier;
+  }
+
+  Widget _buildSpellcastingInfoRow(
+    String label,
+    String description,
+    String value,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.purple.shade300),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.purple,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.purple.shade600,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getAbilityName(String ability) {
+    return CharacterAbilityHelper.getAbilityName(ability);
+  }
+
+  List<String> _getSubclassesForClass(String className) {
+    switch (className.toLowerCase()) {
+      case 'fighter':
+        return [
+          'Battle Master',
+          'Champion',
+          'Eldritch Knight',
+          'Psi Warrior',
+          'Rune Knight',
+          'Samurai',
+          'Cavalier',
+          'Gunslinger',
+          'Banneret',
+        ];
+      case 'wizard':
+        return [
+          'School of Abjuration',
+          'School of Conjuration',
+          'School of Divination',
+          'School of Enchantment',
+          'School of Evocation',
+          'School of Illusion',
+          'School of Necromancy',
+          'School of Transmutation',
+          'School of Bladesinging',
+          'School of Chronurgy',
+          'School of Graviturgy',
+          'School of Scribes',
+          'School of Order',
+          'School of Invention',
+          'School of War Magic',
+        ];
+      case 'cleric':
+        return [
+          'Knowledge Domain',
+          'Life Domain',
+          'Light Domain',
+          'Nature Domain',
+          'Order Domain',
+          'Peace Domain',
+          'Trickery Domain',
+          'War Domain',
+          'Forge Domain',
+          'Grave Domain',
+          'Twilight Domain',
+          'Arcana Domain',
+        ];
+      case 'rogue':
+        return [
+          'Thief',
+          'Assassin',
+          'Arcane Trickster',
+          'Inquisitive',
+          'Mastermind',
+          'Scout',
+          'Soulknife',
+          'Swashbuckler',
+          'Phantom',
+        ];
+      case 'ranger':
+        return [
+          'Hunter',
+          'Beast Master',
+          'Gloom Stalker',
+          'Horizon Walker',
+          'Monster Slayer',
+          'Fey Wanderer',
+          'Druidic Warrior',
+          'Swarmkeeper',
+        ];
+      case 'paladin':
+        return [
+          'Devotion',
+          'Ancients',
+          'Vengeance',
+          'Oathbreaker',
+          'Glory',
+          'Crown',
+          'Watchers',
+        ];
+      case 'barbarian':
+        return [
+          'Path of the Berserker',
+          'Path of the Totem Warrior',
+          'Path of the Zealot',
+          'Path of the Wild Magic',
+          'Path of the Storm Herald',
+          'Path of the Ancestral Guardian',
+          'Path of the Battlerager',
+          'Path of the Beast',
+          'Path of the Wild Soul',
+        ];
+      case 'bard':
+        return [
+          'College of Lore',
+          'College of Valor',
+          'College of Glamour',
+          'College of Swords',
+          'College of Whispers',
+          'College of Creation',
+          'College of Eloquence',
+          'College of Spirits',
+        ];
+      case 'druid':
+        return [
+          'Circle of the Land',
+          'Circle of the Moon',
+          'Circle of the Shepherd',
+          'Circle of Spores',
+          'Circle of Stars',
+          'Circle of Wildfire',
+          'Circle of Dreams',
+          'Circle of the Coast',
+        ];
+      case 'monk':
+        return [
+          'Way of the Open Hand',
+          'Way of Shadow',
+          'Way of the Four Elements',
+          'Way of the Long Death',
+          'Way of Mercy',
+          'Way of the Drunken Master',
+          'Way of the Kensei',
+          'Way of the Astral Self',
+        ];
+      case 'sorcerer':
+        return [
+          'Draconic Bloodline',
+          'Wild Magic',
+          'Divine Soul',
+          'Shadow Magic',
+          'Storm Sorcery',
+          'Clockwork Soul',
+          'Aberrant Mind',
+        ];
+      case 'warlock':
+        return [
+          'The Fiend',
+          'The Great Old One',
+          'The Celestial',
+          'The Hexblade',
+          'The Archfey',
+          'The Undying',
+          'The Genie',
+          'The Fathomless',
+          'The Undead',
+        ];
+      case 'artificer':
+        return ['Alchemist', 'Armorer', 'Artillerist', 'Battle Smith'];
+      default:
+        return [];
+    }
+  }
+
+  // Check if the current class or subclass can cast spells
+  bool _canCastSpells() {
+    final characterClass = _classController.text.trim().toLowerCase();
+    final subclass = _subclassController.text.trim().toLowerCase();
+
+    // Debug log to track spellcasting detection
+    debugPrint(
+      'Checking spellcasting for class: "$characterClass", subclass: "$subclass"',
+    );
+
+    // Full spellcasting classes
+    final spellcastingClasses = {
+      'wizard',
+      'sorcerer',
+      'warlock',
+      'bard',
+      'cleric',
+      'druid',
+      'artificer',
+      'blood hunter',
+      'mystic',
+    };
+
+    // Partial spellcasting classes (subclasses that grant spellcasting)
+    final spellcastingSubclasses = {
+      'eldritch knight', // Fighter subclass
+      'arcane trickster', // Rogue subclass
+    };
+
+    // Check if main class is a spellcasting class
+    if (spellcastingClasses.contains(characterClass)) {
+      debugPrint('Class "$characterClass" is a spellcasting class');
+      return true;
+    }
+
+    // Check if subclass grants spellcasting
+    if (spellcastingSubclasses.contains(subclass)) {
+      debugPrint('Subclass "$subclass" grants spellcasting');
+      return true;
+    }
+
+    // Special case: Ranger and Paladin are spellcasting classes
+    if (characterClass == 'ranger' || characterClass == 'paladin') {
+      debugPrint(
+        'Class "$characterClass" is a spellcasting class (special case)',
+      );
+      return true;
+    }
+
+    debugPrint(
+      'Class "$characterClass" with subclass "$subclass" cannot cast spells',
+    );
+    return false;
+  }
+
+  Widget _buildArmorClassField() {
+    final isActiveColor = _hasShield ? Colors.red : Colors.blue;
+    return Container(
+      decoration: BoxDecoration(
+        color: isActiveColor.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isActiveColor.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: isActiveColor.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Icon(Icons.shield, color: isActiveColor.shade600, size: 24),
+            const SizedBox(height: 8),
+            Text(
+              'Armor Class',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActiveColor.shade700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: isActiveColor.shade100),
+              ),
+              child: TextField(
+                controller: _armorClassController,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+                  isDense: true,
+                ),
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isActiveColor.shade800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Shield checkbox row
+            Container(
+              width: double.infinity,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: isActiveColor.shade100),
+              ),
+              padding: EdgeInsets.all(4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _hasShield = !_hasShield;
+                          _autoSaveCharacter();
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Icon(
+                        _hasShield ? Icons.check_circle : Icons.circle_outlined,
+                        color:
+                            _hasShield
+                                ? isActiveColor.shade800
+                                : Colors.grey.shade400,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Shield',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isActiveColor.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpeedField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Icon(Icons.directions_run, color: Colors.blue.shade600, size: 24),
+            const SizedBox(height: 8),
+            Text(
+              'Speed',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue.shade700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade100),
+              ),
+              child: TextField(
+                controller: _speedController,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+                  isDense: true,
+                ),
+                keyboardType: TextInputType.number,
+                textInputAction:
+                    TextInputAction.done, // Show "Done" button on keyboard
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSkillGroup(String abilityName, List<Widget> skills) {
     // Get the ability modifier for this group
     final abilityAbbreviation = _getAbilityAbbreviation(abilityName);
     final abilityScore = _getAbilityScore(abilityAbbreviation);
     final modifier = ((abilityScore - 10) / 2).floor();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3493,7 +2183,10 @@ Widget _buildIniciativeField() {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.blue.shade100,
                   borderRadius: BorderRadius.circular(12),
@@ -3518,73 +2211,7 @@ Widget _buildIniciativeField() {
   }
 
   String _getAbilityAbbreviation(String abilityName) {
-    switch (abilityName) {
-      case 'Strength':
-        return 'STR';
-      case 'Dexterity':
-        return 'DEX';
-      case 'Intelligence':
-        return 'INT';
-      case 'Wisdom':
-        return 'WIS';
-      case 'Charisma':
-        return 'CHA';
-      default:
-        return abilityName.substring(0, 3).toUpperCase();
-    }
-  }
-
-  Widget _buildSavingThrowRow(
-    String ability,
-    bool isProficient,
-    Function(bool?) onChanged,
-  ) {
-    final abilityScore = _getAbilityScore(ability);
-    final modifier = ((abilityScore - 10) / 2).floor();
-    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
-    final total = modifier + (isProficient ? proficiencyBonus : 0);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        children: [
-          // Ability and modifier
-          SizedBox(
-            width: 50,
-            child: Text(
-              '$ability\n${modifier >= 0 ? '+' : ''}$modifier',
-              style: const TextStyle(fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Proficiency checkbox
-          Checkbox(
-            value: isProficient,
-            onChanged: onChanged,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          const SizedBox(width: 8),
-          // Total bonus
-          SizedBox(
-            width: 40,
-            child: Text(
-              '${total >= 0 ? '+' : ''}$total',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isProficient ? Colors.blue : Colors.black,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
+    return CharacterAbilityHelper.getAbilityAbbreviation(abilityName);
   }
 
   Widget _buildSkillRow(
@@ -3596,8 +2223,10 @@ Widget _buildIniciativeField() {
   ) {
     final abilityScore = _getAbilityScore(ability);
     final modifier = ((abilityScore - 10) / 2).floor();
-    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1);
-    
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
+      int.tryParse(_levelController.text) ?? 1,
+    );
+
     // Calculate total bonus directly instead of using old _stats object
     int total = modifier;
     if (hasExpertise) {
@@ -3698,41 +2327,6 @@ Widget _buildIniciativeField() {
     );
   }
 
-  Widget _buildDeleteButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.red.shade600,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.red.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon:
-            _isPickingImage
-                ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-                : const Icon(
-                  Icons.delete_outline,
-                  color: Colors.white,
-                  size: 20,
-                ),
-        onPressed: _isPickingImage ? null : () => _showDeleteConfirmation(),
-        tooltip: 'Remove image',
-      ),
-    );
-  }
-
   Widget _buildPickImageButton() {
     return Container(
       decoration: BoxDecoration(
@@ -3763,7 +2357,6 @@ Widget _buildIniciativeField() {
       ),
     );
   }
-
 
   void _showDeleteConfirmation() {
     showDialog(
@@ -3912,7 +2505,7 @@ Widget _buildIniciativeField() {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      if (_customImageData != null) ...[
+                      if (_customImagePath != null) ...[
                         // Divider
                         Divider(height: 1, color: Colors.grey.shade200),
 
@@ -4210,198 +2803,6 @@ Widget _buildIniciativeField() {
     });
   }
 
-  Widget _buildHealthTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Hit Points',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _maxHpController,
-                  decoration: const InputDecoration(
-                    labelText: 'Max HP',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: _currentHpController,
-                  decoration: const InputDecoration(
-                    labelText: 'Current HP',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          TextField(
-            controller: _tempHpController,
-            decoration: const InputDecoration(
-              labelText: 'Temporary HP',
-              border: OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-          ),
-
-          const SizedBox(height: 24),
-          const Text(
-            'Hit Dice',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _hitDiceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Number of Hit Dice',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: _hitDiceTypeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Hit Dice Type',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSpellSlotsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Spell Slots',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              ElevatedButton.icon(
-                onPressed: _takeLongRest,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Restore all slots'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          // Summary section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Spell Slot Summary',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Calculate total slots and used
-                  Consumer<CharactersViewModel>(
-                    builder: (context, viewModel, child) {
-                      final totalSlots =
-                          _spellSlots.level1Slots +
-                          _spellSlots.level2Slots +
-                          _spellSlots.level3Slots +
-                          _spellSlots.level4Slots +
-                          _spellSlots.level5Slots +
-                          _spellSlots.level6Slots +
-                          _spellSlots.level7Slots +
-                          _spellSlots.level8Slots +
-                          _spellSlots.level9Slots;
-
-                      final totalUsed =
-                          _spellSlots.level1Used +
-                          _spellSlots.level2Used +
-                          _spellSlots.level3Used +
-                          _spellSlots.level4Used +
-                          _spellSlots.level5Used +
-                          _spellSlots.level6Used +
-                          _spellSlots.level7Used +
-                          _spellSlots.level8Used +
-                          _spellSlots.level9Used;
-
-                      final availableSlots = totalSlots - totalUsed;
-
-                      return Column(
-                        children: [
-                          _buildSummaryRow(
-                            'Total Slots',
-                            totalSlots.toString(),
-                          ),
-                          _buildSummaryRow('Used Slots', totalUsed.toString()),
-                          _buildSummaryRow(
-                            'Available Slots',
-                            availableSlots.toString(),
-                            availableSlots > 0 ? Colors.green : Colors.red,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Spell slots grid
-          ...[
-            for (int level = 1; level <= 9; level++)
-              _buildSpellSlotField('Level $level', level),
-          ],
-
-          const SizedBox(height: 32),
-
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSummaryRow(String label, String value, [Color? valueColor]) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -4416,626 +2817,6 @@ Widget _buildIniciativeField() {
         ],
       ),
     );
-  }
-
-  Widget _buildSpellsTab() {
-    // Calculate maximum prepared spells using current state
-    final modifier = CharacterSpellPreparation.getSpellcastingModifier(widget.character);
-    final calculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
-      _classController.text.trim(), // Use current class from controller
-      int.tryParse(_levelController.text) ?? 1, // Use current level from controller
-      modifier,
-    );
-    
-    // Use the stored max if it's different from calculated (user modified it)
-    final maxPrepared = _spellPreparation.maxPreparedSpells == 0 
-        ? calculatedMax 
-        : _spellPreparation.maxPreparedSpells;
-    
-    // Check if user has modified the max (for visual indicator)
-    final isModified = _spellPreparation.maxPreparedSpells != 0 && _spellPreparation.maxPreparedSpells != calculatedMax;
-    
-    final canPrepare = maxPrepared > 0;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s known spells.',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: _showAddSpellDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Add Spell'),
-              ),
-            ],
-          ),
-          // Spell preparation section - only show for classes that prepare spells
-          if (canPrepare) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.indigo.shade50, Colors.indigo.shade100],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.indigo.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.auto_stories, color: Colors.indigo.shade700, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Spell Preparation',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.indigo.shade700,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Spell Preparation Info'),
-                              content: const Text(
-                                'You can establish if a spell is always prepared or you can cast it for free. Always prepared spells don\'t count against your maximum prepared spells limit.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Got it'),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.info_outline, size: 16),
-                        color: Colors.indigo.shade700,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Maximum prepared spells: $maxPrepared (${_classController.text.trim()} level ${int.tryParse(_levelController.text) ?? 1} + ${_getModifierName(modifier)} $modifier modifier = $calculatedMax)${maxPrepared != calculatedMax ? ' (modified: +${(maxPrepared - calculatedMax).abs()})' : ''}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.indigo.shade600,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Currently prepared: ${_spellPreparation.currentPreparedCount}/$maxPrepared',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _spellPreparation.currentPreparedCount < maxPrepared ? Colors.green.shade700 : Colors.blue.shade700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: _showMaxPreparedDialog,
-                        icon: const Icon(Icons.edit, size: 14),
-                        label: const Text('Modify', style: TextStyle(fontSize: 12)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.indigo.shade700,
-                          elevation: 2,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        ),
-                      ),
-                      if (isModified) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 2,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                // Calculate the new max (calculated value)
-                                final newMax = calculatedMax;
-                                
-                                // Get current prepared spells (excluding always prepared)
-                                final currentPrepared = _spellPreparation.preparedSpells;
-                                
-                                // If we have more prepared spells than the new max, uncheck excess
-                                if (currentPrepared.length > newMax) {
-                                  final spellsToKeep = currentPrepared.take(newMax).toList();
-                                  _spellPreparation = _spellPreparation.copyWith(
-                                    maxPreparedSpells: 0, // Reset to calculated
-                                    preparedSpells: spellsToKeep, // Keep only up to new max
-                                  );
-                                } else {
-                                  // Just reset max, keep current prepared spells
-                                  _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: 0);
-                                }
-                              });
-                              _autoSaveCharacter();
-                            },
-                            icon: const Icon(Icons.refresh, size: 16),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.indigo.shade700,
-                              padding: const EdgeInsets.all(8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-          
-          // Group spells by level
-          ..._buildSpellsByLevel(),
-          const SizedBox(height: 70),
-        ],
-      ),
-    );
-  }
-
-  IconData _getSpellLevelIcon(int level) {
-    switch (level) {
-      case 0:
-        return Icons.auto_awesome;
-      case 1:
-        return Icons.filter_1;
-      case 2:
-        return Icons.filter_2;
-      case 3:
-        return Icons.filter_3;
-      case 4:
-        return Icons.filter_4;
-      case 5:
-        return Icons.filter_5;
-      case 6:
-        return Icons.filter_6;
-      case 7:
-        return Icons.filter_7;
-      case 8:
-        return Icons.filter_8;
-      case 9:
-        return Icons.filter_9;
-      default:
-        return Icons.star;
-    }
-  }
-
-  /// Get the count of prepared spells for a specific level
-  int _getPreparedSpellsCountForLevel(int level) {
-    final spellsViewModel = context.read<SpellsViewModel>();
-    int count = 0;
-    for (final spellName in _spells) {
-      if (_spellPreparation.isSpellPrepared(spellName)) {
-        // Get spell level from cached spells list instead of context.read
-        final spell = spellsViewModel.spells.firstWhere(
-          (s) => s.name.toLowerCase() == spellName.toLowerCase(),
-          orElse: () => Spell(
-            id: 'unknown',
-            name: spellName,
-            castingTime: 'Unknown',
-            range: 'Unknown',
-            duration: 'Unknown',
-            description: 'Custom spell',
-            classes: [],
-            dice: [],
-            updatedAt: DateTime.now(),
-          ),
-        );
-        
-        if (spell.levelNumber == level) {
-          count++;
-        }
-      }
-    }
-    return count;
-  }
-
-  List<Widget> _buildSpellsByLevel() {
-    if (_spells.isEmpty) {
-      return [
-        const Center(
-          child: Text(
-            'No spells added yet',
-            style: TextStyle(color: Colors.grey, fontSize: 16),
-          ),
-        ),
-      ];
-    }
-
-    final spellsViewModel = context.read<SpellsViewModel>();
-    final Map<int, List<Map<String, dynamic>>> spellsByLevel = {};
-
-    // Group spells by level
-    for (int i = 0; i < _spells.length; i++) {
-      final spellName = _spells[i];
-      final spell = spellsViewModel.spells.firstWhere(
-        (s) => s.name.toLowerCase() == spellName.toLowerCase(),
-        orElse: () => Spell(
-          id: 'unknown',
-          name: spellName,
-          castingTime: 'Unknown',
-          range: 'Unknown',
-          duration: 'Unknown',
-          description: 'Custom spell',
-          classes: [],
-          dice: [],
-          updatedAt: DateTime.now(),
-        ),
-      );
-
-      final level = spell.levelNumber;
-      if (!spellsByLevel.containsKey(level)) {
-        spellsByLevel[level] = [];
-      }
-      spellsByLevel[level]!.add({
-        'index': i,
-        'spell': spell,
-      });
-    }
-
-    // Sort levels (0-9, where 0 is cantrips)
-    final sortedLevels = spellsByLevel.keys.toList()..sort();
-
-    final List<Widget> widgets = [];
-
-    for (final level in sortedLevels) {
-      final spellsInLevel = spellsByLevel[level]!;
-      
-      // Calculate max prepared spells for this class (used for header and individual spells)
-      final currentCalculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
-        _classController.text.trim(), // Use current class from controller
-        int.tryParse(_levelController.text) ?? 1, // Use current level from controller
-        CharacterSpellPreparation.getSpellcastingModifier(widget.character),
-      );
-      
-      // Add level header
-      widgets.add(
-        Stack(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: level == 0 
-                    ? [Colors.purple.shade50, Colors.purple.shade100]
-                    : [Colors.blue.shade50, Colors.blue.shade100],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: level == 0 ? Colors.purple.shade200 : Colors.blue.shade200,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _getSpellLevelIcon(level),
-                    color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    level == 0 ? 'Cantrips' : 'Level $level Spells',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: (level == 0 ? Colors.purple : Colors.blue).withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${spellsInLevel.length}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: level == 0 ? Colors.purple.shade700 : Colors.blue.shade700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Only show prepared count if class can prepare spells and level > 0
-            if (level > 0 && currentCalculatedMax > 0)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${spellsInLevel.where((spellData) {
-                      final spell = spellData['spell'] as Spell;
-                      final spellId = spell.id; // Use spell.id instead of spell.name
-                      final isPrepared = _spellPreparation.isSpellPrepared(spellId);
-                      debugPrint('Spell: ${spell.name}, ID: $spellId, Prepared: $isPrepared');
-                      return isPrepared;
-                    }).length} prepared',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.green,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      );
-
-      // Sort spells within each level: always prepared first, then prepared spells, then others
-      spellsInLevel.sort((a, b) {
-        final spellA = a['spell'] as Spell;
-        final spellB = b['spell'] as Spell;
-        
-        final isAlwaysPreparedA = _spellPreparation.isSpellAlwaysPrepared(spellA.id);
-        final isAlwaysPreparedB = _spellPreparation.isSpellAlwaysPrepared(spellB.id);
-        
-        // Always prepared spells come first
-        if (isAlwaysPreparedA && !isAlwaysPreparedB) return -1;
-        if (!isAlwaysPreparedA && isAlwaysPreparedB) return 1;
-        
-        // If both are always prepared or both are not, sort by prepared status
-        final isPreparedA = _spellPreparation.isSpellPrepared(spellA.id);
-        final isPreparedB = _spellPreparation.isSpellPrepared(spellB.id);
-        
-        if (isPreparedA && !isPreparedB) return -1;
-        if (!isPreparedA && isPreparedB) return 1;
-        
-        // If both have same preparation status, sort alphabetically
-        return spellA.name.compareTo(spellB.name);
-      });
-
-      // Add spells in this level
-      for (final spellData in spellsInLevel) {
-        final index = spellData['index'] as int;
-        final spell = spellData['spell'] as Spell;
-        
-        // Check if spell can be prepared (only for classes that prepare spells and non-cantrips)
-        final currentMaxPrepared = _spellPreparation.maxPreparedSpells == 0 
-            ? currentCalculatedMax 
-            : _spellPreparation.maxPreparedSpells;
-        
-        final canPrepare = spell.levelNumber > 0 && // Cantrips (level 0) cannot be prepared
-            currentMaxPrepared > 0;
-        
-        // Check spell status
-        final isPrepared = _spellPreparation.isSpellPrepared(spell.id);
-        final isAlwaysPrepared = _spellPreparation.isSpellAlwaysPrepared(spell.id);
-        final isFreeUse = _spellPreparation.isSpellFreeUse(spell.id);
-        
-        // Check if we can prepare more spells
-        final canPrepareMore = _spellPreparation.currentPreparedCount < currentMaxPrepared || isAlwaysPrepared;
-
-        widgets.add(
-          Card(
-            margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-            child: ListTile(
-              leading: canPrepare 
-                ? Transform.scale(
-                    scale: 1.2,
-                    child: Checkbox(
-                      shape: CircleBorder(),
-                      value: isPrepared,
-                      onChanged: (bool? value) {
-                        if (value == true) {
-                          if (canPrepareMore || isAlwaysPrepared) {
-                            _toggleSpellPreparation(spell.id, true);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Cannot prepare more spells. Maximum: $currentMaxPrepared'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        } else {
-                          _toggleSpellPreparation(spell.id, false);
-                        }
-                      },
-                    ),
-                  )
-                : null,
-              title: InkWell(
-                child: Text(
-                  spell.name,
-                  style: const TextStyle(
-                    color: Colors.blue,
-                  ),
-                ),
-                onTap: () => _showSpellDetails(spell.name),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                  if (isAlwaysPrepared || isFreeUse) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        if (isAlwaysPrepared) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.purple.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.star, size: 12, color: Colors.purple.shade700),
-                                const SizedBox(width: 2),
-                                Text(
-                                  'Always',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.purple.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                        ],
-                        if (isFreeUse) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.bolt, size: 12, color: Colors.green.shade700),
-                                const SizedBox(width: 2),
-                                Text(
-                                  'Free',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.green.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-              trailing: SizedBox(
-                width: 80,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (canPrepare) ...[
-                      // Always prepared toggle
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            isAlwaysPrepared ? Icons.star : Icons.star_border,
-                            color: Colors.purple,
-                            size: 16,
-                          ),
-                          onPressed: () => _toggleAlwaysPrepared(spell.id),
-                          tooltip: 'Always prepared',
-                        ),
-                      ),
-                      // Free use toggle
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            isFreeUse ? Icons.bolt : Icons.bolt_outlined,
-                            color: Colors.green,
-                            size: 16,
-                          ),
-                          onPressed: () => _toggleFreeUse(spell.id),
-                          tooltip: 'Free use once per day',
-                        ),
-                      ),
-                    ],
-                    // Delete button
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(Icons.delete, size: 16),
-                        onPressed: () {
-                          setState(() {
-                            _spells.removeAt(index);
-                            // Remove from preparation lists if it was prepared
-                            if (isPrepared) {
-                              _toggleSpellPreparation(spell.id, false);
-                            }
-                            if (isAlwaysPrepared) {
-                              _toggleAlwaysPrepared(spell.id);
-                            }
-                            if (isFreeUse) {
-                              _toggleFreeUse(spell.id);
-                            }
-                          });
-
-                          // Auto-save the character when a spell is removed
-                          _autoSaveCharacter();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }
-
-      // Add spacing between levels
-      if (level != sortedLevels.last) {
-        widgets.add(const SizedBox(height: 16));
-      }
-    }
-
-    return widgets;
   }
 
   Widget _buildSpellSlotField(String label, int level) {
@@ -5503,7 +3284,9 @@ Widget _buildIniciativeField() {
                         controller: textController, // Use the controller
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.done, // Show "Done" button on keyboard
+                        textInputAction:
+                            TextInputAction
+                                .done, // Show "Done" button on keyboard
                         onChanged: (value) {
                           final newValue = int.tryParse(value) ?? 0;
                           if (type == 'slots') {
@@ -5670,566 +3453,28 @@ Widget _buildIniciativeField() {
     }
   }
 
-  Widget _buildFeatsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Character Feats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s feats',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 16),
-
-          // Feats list
-          ..._feats.asMap().entries.map((entry) {
-            final index = entry.key;
-            final featName = entry.value;
-
-            // Try to find feat details
-            final featsViewModel = context.read<FeatsViewModel>();
-            final feat = featsViewModel.feats.firstWhere(
-              (f) => f.name.toLowerCase() == featName.toLowerCase(),
-              orElse: () => Feat(
-                id: 'unknown',
-                name: featName,
-                description: 'Custom feat',
-                source: 'Unknown',
-              ),
-            );
-
-            return Card(
-              child: ListTile(
-                title: InkWell(
-                  child: Text(
-                    feat.name,
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  onTap: () => _showFeatDetails(feat),
-                ),
-                subtitle: Text(
-                  feat.source,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _feats.removeAt(index);
-                    });
-
-                    // Auto-save the character when a feat is removed
-                    _autoSaveCharacter();
-                  },
-                ),
-              ),
-            );
-          }),
-
-          TextButton.icon(
-            onPressed: _showAddFeatDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Feat'),
-          ),
-          const SizedBox(height: 16),
-          
-          // Feat Notes Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.note_alt,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Notes',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Additional notes about your feats and abilities.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _featNotesController,
-                      decoration: const InputDecoration(
-                        hintText: 'Add notes about your feats...\n\n'
-                            'Examples:\n'
-                            '• Feat descriptions and mechanics\n'
-                            '• Synergies with other abilities\n'
-                            '• Combat strategies using feats\n'
-                            '• Roleplaying aspects of feats\n'
-                            '• Feat progression plans',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 3,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildPersonalizedSlotsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: const Text(
-                  'Personalized Slots',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: _restoreAllPersonalizedSlots,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Restore all'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-                    
-          // Personalized slots list
-          if (_personalizedSlots.isEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.casino,
-                      color: Colors.grey.shade400,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No class slots configured',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Click the + button to add slot types like Superiority Dice, Ki Points, etc.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            ..._personalizedSlots.asMap().entries.map((entry) {
-              final index = entry.key;
-              final slot = entry.value;
-              return _buildPersonalizedSlotField(slot.name, index);
-            }),
-
-          const SizedBox(height: 16),
-          
-          TextButton.icon(
-            onPressed: _showAddPersonalizedSlotDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Personalized Slot'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonalizedSlotField(String label, int slotIndex) {
-    final slot = _personalizedSlots[slotIndex];
-    final slots = slot.maxSlots;
-    final used = slot.usedSlots;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text('Slots: ', style: const TextStyle(color: Colors.grey)),
-                    InkWell(
-                      onTap: () => _showPersonalizedSlotModifierDialog(slotIndex, 'slots', slots),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '$slots',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                      onPressed: () {
-                        setState(() {
-                          _personalizedSlots.removeAt(slotIndex);
-                        });
-                        _autoSaveCharacter();
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Visual slot dots
-            if (slots > 0) ...[
-              Row(
-                children: [
-                  const Text('Used: ', style: TextStyle(color: Colors.grey)),
-                  ...List.generate(slots, (index) {
-                    final isUsed = index < used;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: GestureDetector(
-                        onTap: () => _togglePersonalizedSlot(slotIndex, index),
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isUsed ? Colors.red : Colors.grey.shade300,
-                            border: Border.all(
-                              color: isUsed ? Colors.red.shade300 : Colors.grey.shade400,
-                              width: 2,
-                            ),
-                          ),
-                          child: isUsed
-                              ? const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 12,
-                                )
-                              : null,
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '$used of $slots slots used',
-                style: TextStyle(
-                  color: used == slots ? Colors.red : Colors.green,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ] else ...[
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(Icons.block, color: Colors.grey.shade400, size: 32),
-                      const SizedBox(height: 8),
-                      Text(
-                        'No slots available',
-                        style: TextStyle(color: Colors.grey.shade600),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Click the slots number to add slots',
-                        style: TextStyle(
-                          color: Colors.grey.shade500,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return CharactersPersonalizedTab(
+      personalizedSlots: _personalizedSlots,
+      onPersonalizedSlotsChanged: (newSlots) {
+        setState(() {
+          _personalizedSlots = newSlots;
+        });
+      },
+      onAutoSaveCharacter: _autoSaveCharacter,
+      characterName: widget.character.name,
     );
   }
 
   Widget _buildNotesTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Backstory Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.history_edu,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Character Backstory',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'The complete history and background story of your character.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _backstoryController,
-                      decoration: const InputDecoration(
-                        hintText: 'Write your character\'s backstory...\n\n'
-                            'Consider including:\n'
-                            '• Place of birth and family background\n'
-                            '• Life events that shaped their personality\n'
-                            '• How they became an adventurer\n'
-                            '• Significant relationships and experiences\n'
-                            '• Secrets, traumas, or triumphs\n'
-                            '• Hopes for the future',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 6,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Character Pillars Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.foundation,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Character Pillars',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Core elements that define your character\'s role in the story.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField('Gimmick', _gimmickController, 
-                    'What makes your character unique or memorable?'),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField('Quirk', _quirkController,
-                    'Odd habits or mannerisms that define your character.'),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField('Wants', _wantsController,
-                    'What does your character desire most in the world?'),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField('Needs', _needsController,
-                    'What must your character accomplish or obtain?'),
-                  const SizedBox(height: 16),
-                  _buildEnhancedPillarField('Conflict', _conflictController,
-                    'What internal or external struggles drive your character?'),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-          
-          // Auto-save info
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: Colors.grey.shade600,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'All notes auto-save automatically • No character limit • Rich text supported',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 56),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEnhancedPillarField(String label, TextEditingController controller, String hint) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.grey.shade50,
-          ),
-          child: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: hint,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
-            ),
-            maxLines: 6,
-            minLines: 3,
-            style: const TextStyle(
-              fontSize: 15,
-              height: 1.4,
-              color: Colors.black87,
-            ),
-            onChanged: (value) => _autoSaveCharacter(),
-          ),
-        ),
-      ],
+    return CharactersNotes(
+      backstoryController: _backstoryController,
+      gimmickController: _gimmickController,
+      quirkController: _quirkController,
+      wantsController: _wantsController,
+      needsController: _needsController,
+      conflictController: _conflictController,
+      onSaveCharacter: _autoSaveCharacter,
     );
   }
 
@@ -6343,198 +3588,308 @@ Widget _buildIniciativeField() {
       context: context,
       builder:
           (context) => StatefulBuilder(
-            builder: (context, setState) => Dialog(
-              child: Container(
-                width: double.maxFinite,
-                height: 600,
-                child: Column(
-                  children: [
-                    // Header
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.auto_awesome),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Add Spells to ${widget.character.name}',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (selectedSpells.isNotEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade100,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '${selectedSpells.length} selected',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.blue.shade700,
-                                ),
-                              ),
-                            ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-
-                    // Filters section
-                    Container(
-                      padding: const EdgeInsets.all(16.0),
-                      color: Colors.grey.shade50,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Filter by character class toggle
-                          Row(
+            builder:
+                (context, setState) => Dialog(
+                  child: Container(
+                    width: double.maxFinite,
+                    height: 600,
+                    child: Column(
+                      children: [
+                        // Header
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
                             children: [
-                              Switch(
-                                value: _filterByCharacterClass,
-                                onChanged: (value) {
-                                  this.setState(() {
-                                    _filterByCharacterClass = value;
-                                  });
-                                  setState(() {});
-                                },
-                              ),
+                              const Icon(Icons.auto_awesome),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Only show ${widget.character.characterClass} spells',
-                                  style: const TextStyle(fontSize: 14),
+                                  'Add Spells to ${widget.character.name}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                              ),
+                              if (selectedSpells.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade100,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${selectedSpells.length} selected',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.blue.shade700,
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: () => Navigator.pop(context),
+                                icon: const Icon(Icons.close),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                        ),
+                        const Divider(height: 1),
 
-                          // Filter dropdowns
-                          Column(
+                        // Filters section
+                        Container(
+                          padding: const EdgeInsets.all(16.0),
+                          color: Colors.grey.shade50,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Filter by character class toggle
                               Row(
                                 children: [
-                                  Expanded(
-                                    child: Consumer<SpellsViewModel>(
-                                      builder: (context, spellsViewModel, child) {
-                                        final levels = ['All', 'Cantrips', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5', 'Level 6', 'Level 7', 'Level 8', 'Level 9'];
-                                        return DropdownButtonFormField<String>(
-                                          value: _selectedLevelFilter ?? 'All',
-                                          isExpanded: true,
-                                          decoration: const InputDecoration(
-                                            labelText: 'Level',
-                                            border: OutlineInputBorder(),
-                                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                          ),
-                                          items: levels.map((level) {
-                                            return DropdownMenuItem(
-                                              value: level,
-                                              child: Text(level, style: const TextStyle(fontSize: 11)),
-                                            );
-                                          }).toList(),
-                                          onChanged: (value) {
-                                            this.setState(() {
-                                              _selectedLevelFilter = value == 'All' ? null : value;
-                                            });
-                                            setState(() {});
-                                          },
-                                        );
-                                      },
-                                    ),
+                                  Switch(
+                                    value: _filterByCharacterClass,
+                                    onChanged: (value) {
+                                      this.setState(() {
+                                        _filterByCharacterClass = value;
+                                      });
+                                      setState(() {});
+                                    },
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
-                                    child: Consumer<SpellsViewModel>(
-                                      builder: (context, spellsViewModel, child) {
-                                        final classes = ['All', ...spellsViewModel.spells.map((s) => s.classes).expand((c) => c).toSet().toList()..sort()];
-                                        return DropdownButtonFormField<String>(
-                                          value: _selectedClassFilter ?? 'All',
-                                          isExpanded: true,
-                                          decoration: const InputDecoration(
-                                            labelText: 'Class',
-                                            border: OutlineInputBorder(),
-                                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                          ),
-                                          items: classes.map((className) {
-                                            final displayName = className == 'All' 
-                                              ? 'All'
-                                              : className.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ');
-                                            return DropdownMenuItem(
-                                              value: className,
-                                              child: Text(
-                                                displayName.length > 15 ? '${displayName.substring(0, 15)}...' : displayName,
-                                                style: const TextStyle(fontSize: 11),
-                                              ),
-                                            );
-                                          }).toList(),
-                                          onChanged: (value) {
-                                            this.setState(() {
-                                              _selectedClassFilter = value == 'All' ? null : value;
-                                            });
-                                            setState(() {});
-                                          },
-                                        );
-                                      },
+                                    child: Text(
+                                      'Only show ${widget.character.characterClass} spells',
+                                      style: const TextStyle(fontSize: 14),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              Row(
+                              const SizedBox(height: 12),
+
+                              // Filter dropdowns
+                              Column(
                                 children: [
-                                  Expanded(
-                                    child: Consumer<SpellsViewModel>(
-                                      builder: (context, spellsViewModel, child) {
-                                        final schools = ['All', ...spellsViewModel.spells.map((s) => s.schoolName).toSet().toList()..sort()];
-                                        return DropdownButtonFormField<String>(
-                                          value: _selectedSchoolFilter ?? 'All',
-                                          isExpanded: true,
-                                          decoration: const InputDecoration(
-                                            labelText: 'School',
-                                            border: OutlineInputBorder(),
-                                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                          ),
-                                          items: schools.map((school) {
-                                            return DropdownMenuItem(
-                                              value: school,
-                                              child: Text(
-                                                school.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' '),
-                                                style: const TextStyle(fontSize: 11),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Consumer<SpellsViewModel>(
+                                          builder: (
+                                            context,
+                                            spellsViewModel,
+                                            child,
+                                          ) {
+                                            final levels = [
+                                              'All',
+                                              'Cantrips',
+                                              'Level 1',
+                                              'Level 2',
+                                              'Level 3',
+                                              'Level 4',
+                                              'Level 5',
+                                              'Level 6',
+                                              'Level 7',
+                                              'Level 8',
+                                              'Level 9',
+                                            ];
+                                            return DropdownButtonFormField<
+                                              String
+                                            >(
+                                              value:
+                                                  _selectedLevelFilter ?? 'All',
+                                              isExpanded: true,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Level',
+                                                border: OutlineInputBorder(),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 8,
+                                                    ),
                                               ),
+                                              items:
+                                                  levels.map((level) {
+                                                    return DropdownMenuItem(
+                                                      value: level,
+                                                      child: Text(
+                                                        level,
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                              onChanged: (value) {
+                                                this.setState(() {
+                                                  _selectedLevelFilter =
+                                                      value == 'All'
+                                                          ? null
+                                                          : value;
+                                                });
+                                                setState(() {});
+                                              },
                                             );
-                                          }).toList(),
-                                          onChanged: (value) {
-                                            this.setState(() {
-                                              _selectedSchoolFilter = value == 'All' ? null : value;
-                                            });
-                                            setState(() {});
                                           },
-                                        );
-                                      },
-                                    ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Consumer<SpellsViewModel>(
+                                          builder: (
+                                            context,
+                                            spellsViewModel,
+                                            child,
+                                          ) {
+                                            final classes = [
+                                              'All',
+                                              ...spellsViewModel.spells
+                                                  .map((s) => s.classes)
+                                                  .expand((c) => c)
+                                                  .toSet()
+                                                  .toList()
+                                                ..sort(),
+                                            ];
+                                            return DropdownButtonFormField<
+                                              String
+                                            >(
+                                              value:
+                                                  _selectedClassFilter ?? 'All',
+                                              isExpanded: true,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Class',
+                                                border: OutlineInputBorder(),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 8,
+                                                    ),
+                                              ),
+                                              items:
+                                                  classes.map((className) {
+                                                    final displayName =
+                                                        className == 'All'
+                                                            ? 'All'
+                                                            : className
+                                                                .split('_')
+                                                                .map(
+                                                                  (word) =>
+                                                                      word.isNotEmpty
+                                                                          ? word[0].toUpperCase() +
+                                                                              word.substring(1)
+                                                                          : '',
+                                                                )
+                                                                .join(' ');
+                                                    return DropdownMenuItem(
+                                                      value: className,
+                                                      child: Text(
+                                                        displayName.length > 15
+                                                            ? '${displayName.substring(0, 15)}...'
+                                                            : displayName,
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                              onChanged: (value) {
+                                                this.setState(() {
+                                                  _selectedClassFilter =
+                                                      value == 'All'
+                                                          ? null
+                                                          : value;
+                                                });
+                                                setState(() {});
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Consumer<SpellsViewModel>(
+                                          builder: (
+                                            context,
+                                            spellsViewModel,
+                                            child,
+                                          ) {
+                                            final schools = [
+                                              'All',
+                                              ...spellsViewModel.spells
+                                                  .map((s) => s.schoolName)
+                                                  .toSet()
+                                                  .toList()
+                                                ..sort(),
+                                            ];
+                                            return DropdownButtonFormField<
+                                              String
+                                            >(
+                                              value:
+                                                  _selectedSchoolFilter ??
+                                                  'All',
+                                              isExpanded: true,
+                                              decoration: const InputDecoration(
+                                                labelText: 'School',
+                                                border: OutlineInputBorder(),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 8,
+                                                    ),
+                                              ),
+                                              items:
+                                                  schools.map((school) {
+                                                    return DropdownMenuItem(
+                                                      value: school,
+                                                      child: Text(
+                                                        school
+                                                            .split('_')
+                                                            .map(
+                                                              (word) =>
+                                                                  word.isNotEmpty
+                                                                      ? word[0]
+                                                                              .toUpperCase() +
+                                                                          word.substring(
+                                                                            1,
+                                                                          )
+                                                                      : '',
+                                                            )
+                                                            .join(' '),
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                              onChanged: (value) {
+                                                this.setState(() {
+                                                  _selectedSchoolFilter =
+                                                      value == 'All'
+                                                          ? null
+                                                          : value;
+                                                });
+                                                setState(() {});
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
+                        ),
+                        const Divider(height: 1),
 
-                   /*  // Search bar
+                        /*  // Search bar
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Consumer<SpellsViewModel>(
@@ -6553,148 +3908,202 @@ Widget _buildIniciativeField() {
                       ),
                     ), */
 
-                    // Spells list
-                    Expanded(
-                      child: Consumer<SpellsViewModel>(
-                        builder: (context, spellsViewModel, child) {
-                          if (spellsViewModel.isLoading) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-
-                          if (spellsViewModel.error != null) {
-                            return Center(
-                              child: Text('Error: ${spellsViewModel.error}'),
-                            );
-                          }
-
-                          // Apply filters
-                          List<Spell> filteredSpells = spellsViewModel.spells.where((spell) {
-                            // Filter by character class if enabled
-                            if (_filterByCharacterClass) {
-                              final characterClass = widget.character.characterClass.toLowerCase();
-                              if (!spell.classes.any((className) => className.toLowerCase() == characterClass)) {
-                                return false;
+                        // Spells list
+                        Expanded(
+                          child: Consumer<SpellsViewModel>(
+                            builder: (context, spellsViewModel, child) {
+                              if (spellsViewModel.isLoading) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
                               }
-                            }
 
-                            // Filter by level
-                            if (_selectedLevelFilter != null) {
-                              if (_selectedLevelFilter == 'Cantrips') {
-                                if (spell.levelNumber != 0) return false;
-                              } else if (_selectedLevelFilter!.startsWith('Level')) {
-                                final level = int.tryParse(_selectedLevelFilter!.split(' ')[1]);
-                                if (spell.levelNumber != level) return false;
+                              if (spellsViewModel.error != null) {
+                                return Center(
+                                  child: Text(
+                                    'Error: ${spellsViewModel.error}',
+                                  ),
+                                );
                               }
-                            }
 
-                            // Filter by class
-                            if (_selectedClassFilter != null) {
-                              if (!spell.classes.contains(_selectedClassFilter)) return false;
-                            }
-
-                            // Filter by school
-                            if (_selectedSchoolFilter != null) {
-                              if (spell.schoolName != _selectedSchoolFilter) return false;
-                            }
-
-                            return true;
-                          }).toList();
-
-                          if (filteredSpells.isEmpty) {
-                            return const Center(child: Text('No spells found with current filters'));
-                          }
-
-                          return ListView.builder(
-                            itemCount: filteredSpells.length,
-                            itemBuilder: (context, index) {
-                              final spell = filteredSpells[index];
-                              final isKnown = _spells.contains(spell.name);
-                              final isSelected = selectedSpells.contains(spell.name);
-
-                              return CheckboxListTile(
-                                value: isSelected,
-                                onChanged: isKnown ? null : (bool? value) {
-                                  setState(() {
-                                    if (value == true) {
-                                      selectedSpells.add(spell.name);
-                                    } else {
-                                      selectedSpells.remove(spell.name);
+                              // Apply filters
+                              List<Spell> filteredSpells =
+                                  spellsViewModel.spells.where((spell) {
+                                    // Filter by character class if enabled
+                                    if (_filterByCharacterClass) {
+                                      final characterClass =
+                                          widget.character.characterClass
+                                              .toLowerCase();
+                                      if (!spell.classes.any(
+                                        (className) =>
+                                            className.toLowerCase() ==
+                                            characterClass,
+                                      )) {
+                                        return false;
+                                      }
                                     }
-                                  });
-                                },
-                                title: Text(
-                                  spell.name,
-                                  style: TextStyle(
-                                    color: isKnown ? Colors.grey : null,
-                                    decoration: isKnown ? TextDecoration.lineThrough : null,
+
+                                    // Filter by level
+                                    if (_selectedLevelFilter != null) {
+                                      if (_selectedLevelFilter == 'Cantrips') {
+                                        if (spell.levelNumber != 0)
+                                          return false;
+                                      } else if (_selectedLevelFilter!
+                                          .startsWith('Level')) {
+                                        final level = int.tryParse(
+                                          _selectedLevelFilter!.split(' ')[1],
+                                        );
+                                        if (spell.levelNumber != level)
+                                          return false;
+                                      }
+                                    }
+
+                                    // Filter by class
+                                    if (_selectedClassFilter != null) {
+                                      if (!spell.classes.contains(
+                                        _selectedClassFilter,
+                                      ))
+                                        return false;
+                                    }
+
+                                    // Filter by school
+                                    if (_selectedSchoolFilter != null) {
+                                      if (spell.schoolName !=
+                                          _selectedSchoolFilter)
+                                        return false;
+                                    }
+
+                                    return true;
+                                  }).toList();
+
+                              if (filteredSpells.isEmpty) {
+                                return const Center(
+                                  child: Text(
+                                    'No spells found with current filters',
                                   ),
-                                ),
-                                subtitle: Text(
-                                  '${spell.schoolName.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
-                                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                                ),
-                                secondary: isKnown 
-                                  ? const Icon(Icons.check, color: Colors.green)
-                                  : Icon(
-                                      isSelected ? Icons.check_circle : Icons.check_circle_outline,
-                                      color: isSelected ? Colors.blue : Colors.grey,
+                                );
+                              }
+
+                              return ListView.builder(
+                                itemCount: filteredSpells.length,
+                                itemBuilder: (context, index) {
+                                  final spell = filteredSpells[index];
+                                  final isKnown = _spells.contains(spell.name);
+                                  final isSelected = selectedSpells.contains(
+                                    spell.name,
+                                  );
+
+                                  return CheckboxListTile(
+                                    value: isSelected,
+                                    onChanged:
+                                        isKnown
+                                            ? null
+                                            : (bool? value) {
+                                              setState(() {
+                                                if (value == true) {
+                                                  selectedSpells.add(
+                                                    spell.name,
+                                                  );
+                                                } else {
+                                                  selectedSpells.remove(
+                                                    spell.name,
+                                                  );
+                                                }
+                                              });
+                                            },
+                                    title: Text(
+                                      spell.name,
+                                      style: TextStyle(
+                                        color: isKnown ? Colors.grey : null,
+                                        decoration:
+                                            isKnown
+                                                ? TextDecoration.lineThrough
+                                                : null,
+                                      ),
                                     ),
-                                enabled: !isKnown,
+                                    subtitle: Text(
+                                      '${spell.schoolName.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    secondary:
+                                        isKnown
+                                            ? const Icon(
+                                              Icons.check,
+                                              color: Colors.green,
+                                            )
+                                            : Icon(
+                                              isSelected
+                                                  ? Icons.check_circle
+                                                  : Icons.check_circle_outline,
+                                              color:
+                                                  isSelected
+                                                      ? Colors.blue
+                                                      : Colors.grey,
+                                            ),
+                                    enabled: !isKnown,
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
-                    ),
-
-                    // Footer
-                    const Divider(height: 1),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel'),
                           ),
-                          Expanded(
-                            child: Text(
-                              '${_spells.length} spells known',
-                              style: const TextStyle(color: Colors.grey),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: selectedSpells.isEmpty ? null : () {
-                              // Update the parent state first
-                              this.setState(() {
-                                _spells.addAll(selectedSpells);
-                              });
-                              Navigator.pop(context);
+                        ),
 
-                              // Auto-save the character when spells are added
-                              _autoSaveCharacter();
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Added ${selectedSpells.length} spell${selectedSpells.length == 1 ? '' : 's'} to ${widget.character.name}',
-                                  ),
-                                  backgroundColor: Colors.green,
+                        // Footer
+                        const Divider(height: 1),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  '${_spells.length} spells known',
+                                  style: const TextStyle(color: Colors.grey),
+                                  textAlign: TextAlign.center,
                                 ),
-                              );
-                            },
-                            child: Text('Add ${selectedSpells.isEmpty ? 'Spells' : '${selectedSpells.length} Spell${selectedSpells.length == 1 ? '' : 's'}'}'),
+                              ),
+                              ElevatedButton(
+                                onPressed:
+                                    selectedSpells.isEmpty
+                                        ? null
+                                        : () {
+                                          // Update the parent state first
+                                          this.setState(() {
+                                            _spells.addAll(selectedSpells);
+                                          });
+                                          Navigator.pop(context);
+
+                                          // Auto-save the character when spells are added
+                                          _autoSaveCharacter();
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Added ${selectedSpells.length} spell${selectedSpells.length == 1 ? '' : 's'} to ${widget.character.name}',
+                                              ),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        },
+                                child: Text(
+                                  'Add ${selectedSpells.isEmpty ? 'Spells' : '${selectedSpells.length} Spell${selectedSpells.length == 1 ? '' : 's'}'}',
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
           ),
     );
   }
@@ -6943,37 +4352,40 @@ Widget _buildIniciativeField() {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
-                        ...background.features.map((feature) => Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                feature.name,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                        ...background.features.map(
+                          (feature) => Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  feature.name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                feature.description,
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  feature.description,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
                           ),
-                        )),
+                        ),
                         const SizedBox(height: 16),
                       ],
 
                       // Description (if available from features)
-                      if (background.features.isNotEmpty && background.features.first.description.isNotEmpty) ...[
+                      if (background.features.isNotEmpty &&
+                          background.features.first.description.isNotEmpty) ...[
                         Text(
                           'Description:',
                           style: Theme.of(context).textTheme.titleMedium,
@@ -7212,626 +4624,129 @@ Widget _buildIniciativeField() {
     return components.join(', ');
   }
 
-  void _autoSaveCharacter() {
-    // Create updated character with all current data
-    final updatedCharacter = widget.character.copyWith(
-      name: _nameController.text.trim(),
-      customImageData: _customImageData,
-      characterClass: _classController.text.trim(),
-      level: int.tryParse(_levelController.text) ?? 1,
-      subclass:
-          _subclassController.text.trim().isEmpty
-              ? null
-              : _subclassController.text.trim(),
-      race:
-          _raceController.text.trim().isEmpty
-              ? null
-              : _raceController.text.trim(),
-      background:
-          _backgroundController.text.trim().isEmpty
-              ? null
-              : _backgroundController.text.trim(),
-      stats: CharacterStats(
-        strength: int.tryParse(_strengthController.text) ?? 10,
-        dexterity: int.tryParse(_dexterityController.text) ?? 10,
-        constitution: int.tryParse(_constitutionController.text) ?? 10,
-        intelligence: int.tryParse(_intelligenceController.text) ?? 10,
-        wisdom: int.tryParse(_wisdomController.text) ?? 10,
-        charisma: int.tryParse(_charismaController.text) ?? 10,
-        proficiencyBonus: CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1),
-        armorClass: int.tryParse(_armorClassController.text) ?? 10,
-        speed: int.tryParse(_speedController.text) ?? 30,
-        initiative: int.tryParse(_initiativeController.text) ?? 0,
-        inspiration: _hasInspiration,
-        hasConcentration: _hasConcentration,
-        hasShield: _hasShield,
-      ),
-      savingThrows: _savingThrows,
-      skillChecks: _skillChecks,
-      health: CharacterHealth(
-        maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
-        currentHitPoints: int.tryParse(_currentHpController.text) ?? 10,
-        temporaryHitPoints: int.tryParse(_tempHpController.text) ?? 0,
-        hitDice: int.tryParse(_hitDiceController.text) ?? 1,
-        hitDiceType:
-            _hitDiceTypeController.text.trim().isEmpty
-                ? 'd8'
-                : _hitDiceTypeController.text.trim(),
-      ),
-      attacks: _attacks,
-      spellSlots: _spellSlots,
-      spells: _spells,
-      feats: _feats,
-      personalizedSlots: _personalizedSlots,
-      spellPreparation: _spellPreparation,
-      quickGuide: _quickGuideController.text.trim(),
-      proficiencies: _proficienciesController.text.trim(),
-      featuresTraits: _featuresTraitsController.text.trim(),
-      backstory: _backstoryController.text.trim(),
-      featNotes: _featNotesController.text.trim(),
-      pillars: CharacterPillars(
-        gimmick: _gimmickController.text.trim(),
-        quirk: _quirkController.text.trim(),
-        wants: _wantsController.text.trim(),
-        needs: _needsController.text.trim(),
-        conflict: _conflictController.text.trim(),
-      ),
-      appearance: CharacterAppearance(
-        height: _heightController.text.trim(),
-        age: _ageController.text.trim(),
-        eyeColor: _eyeColorController.text.trim(),
-        additionalDetails: _additionalDetailsController.text.trim(),
-                appearanceImageData: _appearanceImageData,
-      ),
-      deathSaves: CharacterDeathSaves(
-        successes: _deathSaveSuccesses,
-        failures: _deathSaveFailures,
-      ),
-      languages: CharacterLanguages(
-        languages: _languagesController.text
-            .split(',')
-            .map((lang) => lang.trim())
-            .where((lang) => lang.isNotEmpty)
-            .toList(),
-      ),
-      moneyItems: CharacterMoneyItems(
-        money: _moneyController.text.trim(),
-        items: _itemsController.text
-            .split('\n')
-            .map((item) => item.trim())
-            .where((item) => item.isNotEmpty)
-            .toList(),
-      ),
-      updatedAt: DateTime.now(),
-    );
-
-    // Save the character silently (no success message)
-    context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
+  void _autoSaveCharacter() async {
+    // Don't proceed if widget is not mounted (context is not safe)
+    if (!mounted) return;
     
-    // Clear unsaved changes flag
-    _hasUnsavedAbilityChanges = false;
-  }
-
-  void _showAddFeatDialog() {
-    // Load feats if not already loaded
-    context.read<FeatsViewModel>().loadFeats();
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Container(
-          width: double.maxFinite,
-          height: 500,
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.military_tech),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Add Feat to ${widget.character.name}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-
-              // Feats list
-              Expanded(
-                child: Consumer<FeatsViewModel>(
-                  builder: (context, featsViewModel, child) {
-                    if (featsViewModel.isLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-
-                    if (featsViewModel.error != null) {
-                      return Center(
-                        child: Text('Error: ${featsViewModel.error}'),
-                      );
-                    }
-
-                    final feats = featsViewModel.feats;
-                    final searchQuery = '';
-                    final filteredFeats = searchQuery.isEmpty 
-                        ? feats
-                        : feats.where((feat) => feat.name.toLowerCase().contains(searchQuery.toLowerCase())).toList();
-                    
-                    if (filteredFeats.isEmpty) {
-                      return const Center(child: Text('No feats found'));
-                    }
-                    
-                    return ListView.builder(
-                      itemCount: filteredFeats.length,
-                      itemBuilder: (context, index) {
-                        final feat = filteredFeats[index];
-                        final isKnown = _feats.contains(feat.name);
-
-                        return ListTile(
-                          title: Text(feat.name),
-                          subtitle: Text(
-                            feat.source,
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                          trailing: isKnown
-                              ? const Icon(
-                                  Icons.check,
-                                  color: Colors.green,
-                                )
-                              : const Icon(Icons.add),
-                          enabled: !isKnown,
-                          onTap: isKnown
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _feats.add(feat.name);
-                                  });
-                                  Navigator.pop(context);
-
-                                  // Auto-save the character when a feat is added
-                                  _autoSaveCharacter();
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Added ${feat.name} to ${widget.character.name}',
-                                      ),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                },
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-
-              // Footer
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                    Text(
-                      '${_feats.length} feats known',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    debugPrint("============= _autoSaveCharacter is called ======");
+    try {
+      // Create updated character with all current data
+      final updatedCharacter = widget.character.copyWith(
+        name: _nameController.text.trim(),
+        customImagePath: _customImagePath,
+        characterClass: _classController.text.trim(),
+        level: int.tryParse(_levelController.text) ?? 1,
+        subclass:
+            _subclassController.text.trim().isEmpty
+                ? null
+                : _subclassController.text.trim(),
+        race:
+            _raceController.text.trim().isEmpty
+                ? null
+                : _raceController.text.trim(),
+        background:
+            _backgroundController.text.trim().isEmpty
+                ? null
+                : _backgroundController.text.trim(),
+        stats: CharacterStats(
+          strength: int.tryParse(_strengthController.text) ?? 10,
+          dexterity: int.tryParse(_dexterityController.text) ?? 10,
+          constitution: int.tryParse(_constitutionController.text) ?? 10,
+          intelligence: int.tryParse(_intelligenceController.text) ?? 10,
+          wisdom: int.tryParse(_wisdomController.text) ?? 10,
+          charisma: int.tryParse(_charismaController.text) ?? 10,
+          proficiencyBonus: CharacterStats.calculateProficiencyBonus(
+            int.tryParse(_levelController.text) ?? 1,
           ),
+          armorClass: int.tryParse(_armorClassController.text) ?? 10,
+          speed: int.tryParse(_speedController.text) ?? 30,
+          initiative: int.tryParse(_initiativeController.text) ?? 0,
+          inspiration: _hasInspiration,
+          hasConcentration: _hasConcentration,
+          hasShield: _hasShield,
         ),
-      ),
-    );
-  }
-
-  void _showFeatDetails(Feat feat) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(16),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              // Header
-              Row(
-                children: [
-                  const Icon(Icons.military_tech, size: 28),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      feat.name,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Source
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.book, size: 16, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Source: ${feat.source}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Prerequisite
-              if (feat.prerequisite != null && feat.prerequisite!.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.shade200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Prerequisite:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(feat.prerequisite!),
-                    ],
-                  ),
-                ),
-              if (feat.prerequisite != null && feat.prerequisite!.isNotEmpty)
-                const SizedBox(height: 16),
-
-              // Description
-              const Text(
-                'Description',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                feat.description,
-                style: const TextStyle(fontSize: 16, height: 1.5),
-              ),
-              const SizedBox(height: 16),
-
-              // Effects
-              if (feat.effects.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Effects',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        feat.formattedEffects,
-                        style: const TextStyle(fontSize: 16, height: 1.5),
-                      ),
-                    ),
-                  ],
-                ),
-
-              const SizedBox(height: 16),
-
-              // Character info
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.person, size: 16, color: Colors.green),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Known by: ${widget.character.name}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        savingThrows: _savingThrows,
+        skillChecks: _skillChecks,
+        health: CharacterHealth(
+          maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
+          currentHitPoints: int.tryParse(_currentHpController.text) ?? 10,
+          temporaryHitPoints: int.tryParse(_tempHpController.text) ?? 0,
+          hitDice: int.tryParse(_hitDiceController.text) ?? 1,
+          hitDiceType:
+              _hitDiceTypeController.text.trim().isEmpty
+                  ? 'd8'
+                  : _hitDiceTypeController.text.trim(),
         ),
-      ),
-    );
-  }
-
-  void _showAddPersonalizedSlotDialog() {
-    final nameController = TextEditingController();
-    final maxSlotsController = TextEditingController(text: '4');
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Class Slot'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Slot Name',
-                hintText: 'e.g., Superiority Dice, Ki Points',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: maxSlotsController,
-              decoration: const InputDecoration(
-                labelText: 'Max Slots',
-                hintText: 'e.g., 4',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-            ),
-          ],
+        attacks: _attacks,
+        spellSlots: _spellSlots,
+        spells: _spells,
+        feats: _feats,
+        personalizedSlots: _personalizedSlots,
+        spellPreparation: _spellPreparation,
+        quickGuide: jsonEncode(
+          _quickGuideController.document.toDelta().toJson(),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+        proficiencies: jsonEncode(
+          _proficienciesController.document.toDelta().toJson(),
+        ),
+        featuresTraits: _featuresTraitsController.text.trim(),
+        backstory: jsonEncode(
+          _backstoryController.document.toDelta().toJson(),
+        ),
+        featNotes: jsonEncode(
+          _featNotesController.document.toDelta().toJson(),
+        ),
+        pillars: CharacterPillars(
+          gimmick: _gimmickController.text.trim(),
+          quirk: _quirkController.text.trim(),
+          wants: _wantsController.text.trim(),
+          needs: _needsController.text.trim(),
+          conflict: _conflictController.text.trim(),
+        ),
+        appearance: CharacterAppearance(
+          height: _heightController.text.trim(),
+          age: _ageController.text.trim(),
+          eyeColor: _eyeColorController.text.trim(),
+          additionalDetails: jsonEncode(
+            _additionalDetailsController.document.toDelta().toJson(),
           ),
-          ElevatedButton(
-            onPressed: () {
-              final name = nameController.text.trim();
-              final maxSlots = int.tryParse(maxSlotsController.text) ?? 4;
+          appearanceImagePath: _appearanceImagePath ?? '',
+        ),
+        deathSaves: CharacterDeathSaves(
+          successes: _deathSaveSuccesses,
+          failures: _deathSaveFailures,
+        ),
+        languages: CharacterLanguages(
+          languages:
+              _languagesController.text
+                  .split(',')
+                  .map((lang) => lang.trim())
+                  .where((lang) => lang.isNotEmpty)
+                  .toList(),
+        ),
+        moneyItems: CharacterMoneyItems(
+          money: _moneyController.text.trim(),
+          items: [jsonEncode(
+            _itemsController.document.toDelta().toJson(),
+          )],
+        ),
+        updatedAt: DateTime.now(),
+      );
 
-              if (name.isNotEmpty) {
-                setState(() {
-                  _personalizedSlots.add(CharacterPersonalizedSlot(
-                    name: name,
-                    maxSlots: maxSlots,
-                    usedSlots: 0,
-                    diceType: 'd6', // Default value, not shown in UI
-                  ));
-                });
-                _autoSaveCharacter();
-                Navigator.pop(context);
+      // Check if still mounted before accessing context
+      if (!mounted) return;
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Added $name to ${widget.character.name}'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
+      // Save the character silently and wait for completion
+      await context.read<CharactersViewModel>().updateCharacter(
+        updatedCharacter,
+      );
 
-  void _updatePersonalizedSlot(int index, CharacterPersonalizedSlot updatedSlot) {
-    setState(() {
-      _personalizedSlots[index] = updatedSlot;
-    });
-    _autoSaveCharacter();
-  }
-
-  Color _getRemainingColor(int remaining, int max) {
-    if (max == 0) return Colors.grey;
-    final ratio = remaining / max;
-    
-    if (ratio > 0.5) return Colors.green;
-    if (ratio > 0.25) return Colors.orange;
-    return Colors.red;
-  }
-
-  void _togglePersonalizedSlot(int slotIndex, int dotIndex) {
-    final slot = _personalizedSlots[slotIndex];
-    if (dotIndex < slot.usedSlots) {
-      // Restore the slot
-      _updatePersonalizedSlot(slotIndex, slot.copyWith(usedSlots: slot.usedSlots - 1));
-    } else {
-      // Use the slot
-      _updatePersonalizedSlot(slotIndex, slot.copyWith(usedSlots: slot.usedSlots + 1));
+      // Clear unsaved changes flag
+      _hasUnsavedAbilityChanges = false;
+    } catch (e) {
+      // Silent error handling for auto-save - don't show UI messages
+      debugPrint('Auto-save error: $e');
     }
-  }
-
-  void _showPersonalizedSlotModifierDialog(int slotIndex, String type, int currentValue) {
-    final slot = _personalizedSlots[slotIndex];
-    final textController = TextEditingController(text: currentValue.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Modify ${slot.name}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              type == 'slots' ? 'Maximum slots:' : 'Used slots:',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: textController,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: type == 'slots' ? 'Max Slots' : 'Used Slots',
-              ),
-              onChanged: (value) {
-                final newValue = int.tryParse(value) ?? currentValue;
-                if (type == 'slots') {
-                  // Ensure used slots don't exceed new max
-                  final newUsedSlots = slot.usedSlots > newValue ? newValue : slot.usedSlots;
-                  _updatePersonalizedSlot(slotIndex, slot.copyWith(
-                    maxSlots: newValue,
-                    usedSlots: newUsedSlots,
-                  ));
-                } else {
-                  // Ensure used slots don't exceed max slots
-                  final clampedValue = newValue.clamp(0, slot.maxSlots);
-                  _updatePersonalizedSlot(slotIndex, slot.copyWith(usedSlots: clampedValue));
-                }
-                currentValue = newValue; // Update local value
-                textController.text = newValue.toString(); // Update text field
-                _autoSaveCharacter(); // Auto-save on text input
-              },
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                if (type == 'slots') ...[
-                  ElevatedButton(
-                    onPressed: () {
-                      _updatePersonalizedSlot(slotIndex, slot.copyWith(maxSlots: 4));
-                      currentValue = 4;
-                      textController.text = '4';
-                      _autoSaveCharacter();
-                    },
-                    child: const Text('Set 4'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _updatePersonalizedSlot(slotIndex, slot.copyWith(maxSlots: 6));
-                      currentValue = 6;
-                      textController.text = '6';
-                      _autoSaveCharacter();
-                    },
-                    child: const Text('Set 6'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _updatePersonalizedSlot(slotIndex, slot.copyWith(maxSlots: 8));
-                      currentValue = 8;
-                      textController.text = '8';
-                      _autoSaveCharacter();
-                    },
-                    child: const Text('Set 8'),
-                  ),
-                ] else ...[
-                  ElevatedButton(
-                    onPressed: () {
-                      _updatePersonalizedSlot(slotIndex, slot.copyWith(usedSlots: 0));
-                      currentValue = 0;
-                      textController.text = '0';
-                      _autoSaveCharacter();
-                    },
-                    child: const Text('Clear All'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _updatePersonalizedSlot(slotIndex, slot.copyWith(usedSlots: slot.maxSlots));
-                      currentValue = slot.maxSlots;
-                      textController.text = slot.maxSlots.toString();
-                      _autoSaveCharacter();
-                    },
-                    child: const Text('Use All'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      final halfSlots = (slot.maxSlots / 2).floor();
-                      _updatePersonalizedSlot(slotIndex, slot.copyWith(usedSlots: halfSlots));
-                      currentValue = halfSlots;
-                      textController.text = halfSlots.toString();
-                      _autoSaveCharacter();
-                    },
-                    child: const Text('Half Used'),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _restoreAllPersonalizedSlots() {
-    setState(() {
-      _personalizedSlots = _personalizedSlots.map((slot) => slot.copyWith(usedSlots: 0)).toList();
-    });
-
-    // Auto-save the restoration
-    _autoSaveCharacter();
-
-    // Show confirmation message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All class slots have been restored!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
 
   void _takeComprehensiveLongRest() {
@@ -7839,7 +4754,7 @@ Widget _buildIniciativeField() {
       // Restore hit points to maximum
       _currentHpController.text = _maxHpController.text;
       _tempHpController.text = '0';
-      
+
       // Update health object
       _health = CharacterHealth(
         maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
@@ -7872,7 +4787,10 @@ Widget _buildIniciativeField() {
       );
 
       // Reset all personalized slots to 0 (restore all slots)
-      _personalizedSlots = _personalizedSlots.map((slot) => slot.copyWith(usedSlots: 0)).toList();
+      _personalizedSlots =
+          _personalizedSlots
+              .map((slot) => slot.copyWith(usedSlots: 0))
+              .toList();
     });
 
     // Auto-save the comprehensive long rest
@@ -7881,7 +4799,9 @@ Widget _buildIniciativeField() {
     // Show confirmation message
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Long rest completed! HP, spell slots, and all class resources restored!'),
+        content: Text(
+          'Long rest completed! HP, spell slots, and all class resources restored!',
+        ),
         backgroundColor: Colors.green,
         duration: Duration(seconds: 3),
       ),
@@ -7943,14 +4863,39 @@ Widget _buildIniciativeField() {
       );
 
       if (image != null && mounted) {
-        // Convert image to base64 and save to character data
-        final base64Data = await _imageFileToBase64(File(image.path));
-        if (base64Data != null) {
-          setState(() {
-            _customImageData = base64Data;
-          });
-          debugPrint('Profile image converted to base64 (${base64Data.length} characters)');
+        // Create a permanent directory for character images
+        final directory = await getApplicationDocumentsDirectory();
+        final characterImagesDir = Directory(
+          path.join(directory.path, 'character_images'),
+        );
+
+        // Create directory if it doesn't exist
+        if (!await characterImagesDir.exists()) {
+          await characterImagesDir.create(recursive: true);
         }
+
+        // Generate unique filename
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = '${widget.character.id}_$timestamp.jpg';
+        final savedImagePath = path.join(characterImagesDir.path, fileName);
+
+        // Copy image to permanent location
+        final File sourceFile = File(image.path);
+        final File savedFile = await sourceFile.copy(savedImagePath);
+
+        // Clean up old image if exists
+        if (_customImagePath != null &&
+            _customImagePath!.startsWith(characterImagesDir.path)) {
+          try {
+            await File(_customImagePath!).delete();
+          } catch (e) {
+            // Error deleting old image: $e
+          }
+        }
+
+        setState(() {
+          _customImagePath = savedFile.path;
+        });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -7984,8 +4929,24 @@ Widget _buildIniciativeField() {
 
   void _removeImage() async {
     try {
+      // Delete the image file if it exists in our character_images directory
+      if (_customImagePath != null) {
+        final directory = await getApplicationDocumentsDirectory();
+        final characterImagesDir = Directory(
+          path.join(directory.path, 'character_images'),
+        );
+
+        if (_customImagePath!.startsWith(characterImagesDir.path)) {
+          try {
+            await File(_customImagePath!).delete();
+          } catch (e) {
+            // Error deleting image file: $e
+          }
+        }
+      }
+
       setState(() {
-        _customImageData = null;
+        _customImagePath = null;
       });
 
       if (mounted) {
@@ -8028,14 +4989,35 @@ Widget _buildIniciativeField() {
       );
 
       if (image != null) {
-        // Convert image to base64 and save to character data
-        final base64Data = await _imageFileToBase64(File(image.path));
-        if (base64Data != null) {
-          setState(() {
-            _appearanceImageData = base64Data;
-          });
-          debugPrint('Appearance image converted to base64 (${base64Data.length} characters)');
+        final directory = await getApplicationDocumentsDirectory();
+        final appearanceImagesDir = Directory(
+          path.join(directory.path, 'appearance_images'),
+        );
+        if (!await appearanceImagesDir.exists()) {
+          await appearanceImagesDir.create(recursive: true);
         }
+
+        final String fileName = path.basename(image.path);
+        final String savedImagePath = path.join(
+          appearanceImagesDir.path,
+          fileName,
+        );
+        final File sourceFile = File(image.path);
+        final File savedFile = await sourceFile.copy(savedImagePath);
+
+        // Clean up old appearance image if exists
+        if (_appearanceImagePath != null &&
+            _appearanceImagePath!.startsWith(appearanceImagesDir.path)) {
+          try {
+            await File(_appearanceImagePath!).delete();
+          } catch (e) {
+            debugPrint('Error deleting old appearance image: $e');
+          }
+        }
+
+        setState(() {
+          _appearanceImagePath = savedFile.path;
+        });
 
         if (mounted) {
           _autoSaveCharacter();
@@ -8057,8 +5039,24 @@ Widget _buildIniciativeField() {
 
   void _removeAppearanceImage() async {
     try {
+      // Delete the appearance image file if it exists in our appearance_images directory
+      if (_appearanceImagePath != null) {
+        final directory = await getApplicationDocumentsDirectory();
+        final appearanceImagesDir = Directory(
+          path.join(directory.path, 'appearance_images'),
+        );
+
+        if (_appearanceImagePath!.startsWith(appearanceImagesDir.path)) {
+          try {
+            await File(_appearanceImagePath!).delete();
+          } catch (e) {
+            debugPrint('Error deleting appearance image file: $e');
+          }
+        }
+      }
+
       setState(() {
-        _appearanceImageData = null;
+        _appearanceImagePath = null;
       });
 
       if (mounted) {
@@ -8085,114 +5083,170 @@ Widget _buildIniciativeField() {
     }
   }
 
-  void _saveCharacter([String? successMessage]) {
-    // Update all character data from controllers
-    debugPrint('=== SAVE CHARACTER DEBUG ===');
-    debugPrint('Background controller text: "${_backgroundController.text}"');
-    debugPrint('Selected background: "$_selectedBackground"');
-    debugPrint('Has unsaved changes: $_hasUnsavedClassChanges');
-    
-    final updatedCharacter = widget.character.copyWith(
-      name: _nameController.text.trim(),
-      characterClass: _classController.text.trim(),
-      level: int.tryParse(_levelController.text) ?? 1,
-      subclass:
-          _subclassController.text.trim().isEmpty
-              ? null
-              : _subclassController.text.trim(),
-      race:
-          _raceController.text.trim().isEmpty
-              ? null
-              : _raceController.text.trim(),
-      background:
-          _backgroundController.text.trim().isEmpty
-              ? null
-              : _backgroundController.text.trim(),
-      stats: CharacterStats(
-        strength: int.tryParse(_strengthController.text) ?? 10,
-        dexterity: int.tryParse(_dexterityController.text) ?? 10,
-        constitution: int.tryParse(_constitutionController.text) ?? 10,
-        intelligence: int.tryParse(_intelligenceController.text) ?? 10,
-        wisdom: int.tryParse(_wisdomController.text) ?? 10,
-        charisma: int.tryParse(_charismaController.text) ?? 10,
-        proficiencyBonus: CharacterStats.calculateProficiencyBonus(int.tryParse(_levelController.text) ?? 1),
-        armorClass: int.tryParse(_armorClassController.text) ?? 10,
-        speed: int.tryParse(_speedController.text) ?? 30,
-        initiative: int.tryParse(_initiativeController.text) ?? 0,
-        inspiration: _hasInspiration,
-        hasConcentration: _hasConcentration,
-        hasShield: _hasShield,
-      ),
-      savingThrows: _savingThrows,
-      skillChecks: _skillChecks,
-      health: CharacterHealth(
-        maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
-        currentHitPoints: int.tryParse(_currentHpController.text) ?? 10,
-        temporaryHitPoints: int.tryParse(_tempHpController.text) ?? 0,
-        hitDice: int.tryParse(_hitDiceController.text) ?? 1,
-        hitDiceType:
-            _hitDiceTypeController.text.trim().isEmpty
-                ? 'd8'
-                : _hitDiceTypeController.text.trim(),
-      ),
-      attacks: _attacks,
-      spellSlots: _spellSlots,
-      spells: _spells,
-      feats: _feats,
-      personalizedSlots: _personalizedSlots,
-      spellPreparation: _spellPreparation,
-      quickGuide: _quickGuideController.text.trim(),
-      proficiencies: _proficienciesController.text.trim(),
-      featuresTraits: _featuresTraitsController.text.trim(),
-      backstory: _backstoryController.text.trim(),
-      featNotes: _featNotesController.text.trim(),
-      pillars: CharacterPillars(
-        gimmick: _gimmickController.text.trim(),
-        quirk: _quirkController.text.trim(),
-        wants: _wantsController.text.trim(),
-        needs: _needsController.text.trim(),
-        conflict: _conflictController.text.trim(),
-      ),
-      appearance: CharacterAppearance(
-        height: _heightController.text.trim(),
-        age: _ageController.text.trim(),
-        eyeColor: _eyeColorController.text.trim(),
-        additionalDetails: _additionalDetailsController.text.trim(),
-                appearanceImageData: _appearanceImageData,
-      ),
-      deathSaves: CharacterDeathSaves(
-        successes: _deathSaveSuccesses,
-        failures: _deathSaveFailures,
-      ),
-      languages: CharacterLanguages(
-        languages: _languagesController.text
-            .split(',')
-            .map((lang) => lang.trim())
-            .where((lang) => lang.isNotEmpty)
-            .toList(),
-      ),
-      moneyItems: CharacterMoneyItems(
-        money: _moneyController.text.trim(),
-        items: _itemsController.text
-            .split('\n')
-            .map((item) => item.trim())
-            .where((item) => item.isNotEmpty)
-            .toList(),
-      ),
-      updatedAt: DateTime.now(),
-    );
+  void _saveCharacter({String? successMessage, bool showToast = true}) async {
+    // Show loading indicator
+    setState(() {
+      _isLoading = true;
+    });
 
-    debugPrint('=== SAVING CHARACTER ===');
-    debugPrint('Updated character background: ${updatedCharacter.background}');
-    debugPrint('========================');
+    try {
+      // Update all character data from controllers
+      debugPrint('=== SAVE CHARACTER DEBUG ===');
+      debugPrint('Background controller text: "${_backgroundController.text}"');
+      debugPrint('Selected background: "$_selectedBackground"');
+      debugPrint('Has unsaved changes: $_hasUnsavedClassChanges');
 
-    context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
+      final updatedCharacter = widget.character.copyWith(
+        name: _nameController.text.trim(),
+        customImagePath: _customImagePath,
+        characterClass: _classController.text.trim(),
+        level: int.tryParse(_levelController.text) ?? 1,
+        subclass:
+            _subclassController.text.trim().isEmpty
+                ? null
+                : _subclassController.text.trim(),
+        race:
+            _raceController.text.trim().isEmpty
+                ? null
+                : _raceController.text.trim(),
+        background:
+            _backgroundController.text.trim().isEmpty
+                ? null
+                : _backgroundController.text.trim(),
+        stats: CharacterStats(
+          strength: int.tryParse(_strengthController.text) ?? 10,
+          dexterity: int.tryParse(_dexterityController.text) ?? 10,
+          constitution: int.tryParse(_constitutionController.text) ?? 10,
+          intelligence: int.tryParse(_intelligenceController.text) ?? 10,
+          wisdom: int.tryParse(_wisdomController.text) ?? 10,
+          charisma: int.tryParse(_charismaController.text) ?? 10,
+          proficiencyBonus: CharacterStats.calculateProficiencyBonus(
+            int.tryParse(_levelController.text) ?? 1,
+          ),
+          armorClass: int.tryParse(_armorClassController.text) ?? 10,
+          speed: int.tryParse(_speedController.text) ?? 30,
+          initiative: int.tryParse(_initiativeController.text) ?? 0,
+          inspiration: _hasInspiration,
+          hasConcentration: _hasConcentration,
+          hasShield: _hasShield,
+        ),
+        savingThrows: _savingThrows,
+        skillChecks: _skillChecks,
+        health: CharacterHealth(
+          maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
+          currentHitPoints: int.tryParse(_currentHpController.text) ?? 10,
+          temporaryHitPoints: int.tryParse(_tempHpController.text) ?? 0,
+          hitDice: int.tryParse(_hitDiceController.text) ?? 1,
+          hitDiceType:
+              _hitDiceTypeController.text.trim().isEmpty
+                  ? 'd8'
+                  : _hitDiceTypeController.text.trim(),
+        ),
+        attacks: _attacks,
+        spellSlots: _spellSlots,
+        spells: _spells,
+        feats: _feats,
+        personalizedSlots: _personalizedSlots,
+        spellPreparation: _spellPreparation,
+        quickGuide: jsonEncode(
+          _quickGuideController.document.toDelta().toJson(),
+        ),
+        proficiencies: jsonEncode(
+          _proficienciesController.document.toDelta().toJson(),
+        ),
+        featuresTraits: _featuresTraitsController.text.trim(),
+        backstory: jsonEncode(
+          _backstoryController.document.toDelta().toJson(),
+        ),
+        featNotes: 
+        jsonEncode(
+          _featNotesController.document.toDelta().toJson(),
+        ),
+        pillars: CharacterPillars(
+          gimmick: _gimmickController.text.trim(),
+          quirk: _quirkController.text.trim(),
+          wants: _wantsController.text.trim(),
+          needs: _needsController.text.trim(),
+          conflict: _conflictController.text.trim(),
+        ),
+        appearance: CharacterAppearance(
+          height: _heightController.text.trim(),
+          age: _ageController.text.trim(),
+          eyeColor: _eyeColorController.text.trim(),
+          additionalDetails: jsonEncode(
+            _additionalDetailsController.document.toDelta().toJson(),
+          ),
+          appearanceImagePath: _appearanceImagePath ?? '',
+        ),
+        deathSaves: CharacterDeathSaves(
+          successes: _deathSaveSuccesses,
+          failures: _deathSaveFailures,
+        ),
+        languages: CharacterLanguages(
+          languages:
+              _languagesController.text
+                  .split(',')
+                  .map((lang) => lang.trim())
+                  .where((lang) => lang.isNotEmpty)
+                  .toList(),
+        ),
+        moneyItems: CharacterMoneyItems(
+          money: _moneyController.text.trim(),
+          items: [jsonEncode(
+            _itemsController.document.toDelta().toJson(),
+          )],
+        ),
+        updatedAt: DateTime.now(),
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(successMessage ?? 'Character saved successfully!')),
-    );
+      debugPrint('=== SAVING CHARACTER ===');
+      debugPrint(
+        'Updated character background: ${updatedCharacter.background}',
+      );
+      debugPrint('========================');
 
-   // Navigator.pop(context);
+      // Save character and wait for completion
+      await context.read<CharactersViewModel>().updateCharacter(
+        updatedCharacter,
+      );
+
+      // Clear unsaved changes flags
+      setState(() {
+        _hasUnsavedClassChanges = false;
+        _hasUnsavedAbilityChanges = false;
+      });
+
+      // Show success message
+      if (mounted && showToast) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(successMessage ?? 'Character saved successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate back to character list after successful save
+        //Navigator.pop(context);
+      }
+    } catch (e) {
+      debugPrint('Error saving character: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save character: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      // Hide loading indicator
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   /// Toggle spell preparation status
@@ -8206,7 +5260,10 @@ Widget _buildIniciativeField() {
         }
       } else {
         _spellPreparation = _spellPreparation.copyWith(
-          preparedSpells: _spellPreparation.preparedSpells.where((id) => id != spellId).toList(),
+          preparedSpells:
+              _spellPreparation.preparedSpells
+                  .where((id) => id != spellId)
+                  .toList(),
         );
       }
     });
@@ -8218,20 +5275,33 @@ Widget _buildIniciativeField() {
     setState(() {
       if (_spellPreparation.isSpellAlwaysPrepared(spellId)) {
         // Remove from always prepared
-        final newAlwaysPrepared = _spellPreparation.alwaysPreparedSpells.where((id) => id != spellId).toList();
-        _spellPreparation = _spellPreparation.copyWith(alwaysPreparedSpells: newAlwaysPrepared);
-        
+        final newAlwaysPrepared =
+            _spellPreparation.alwaysPreparedSpells
+                .where((id) => id != spellId)
+                .toList();
+        _spellPreparation = _spellPreparation.copyWith(
+          alwaysPreparedSpells: newAlwaysPrepared,
+        );
+
         // Also remove from regular prepared if it's there
         if (_spellPreparation.preparedSpells.contains(spellId)) {
-          final newPrepared = _spellPreparation.preparedSpells.where((id) => id != spellId).toList();
-          _spellPreparation = _spellPreparation.copyWith(preparedSpells: newPrepared);
+          final newPrepared =
+              _spellPreparation.preparedSpells
+                  .where((id) => id != spellId)
+                  .toList();
+          _spellPreparation = _spellPreparation.copyWith(
+            preparedSpells: newPrepared,
+          );
         }
       } else {
         // Add to always prepared
         _spellPreparation = _spellPreparation.copyWith(
-          alwaysPreparedSpells: [..._spellPreparation.alwaysPreparedSpells, spellId],
+          alwaysPreparedSpells: [
+            ..._spellPreparation.alwaysPreparedSpells,
+            spellId,
+          ],
         );
-        
+
         // Also add to prepared if not already there
         if (!_spellPreparation.preparedSpells.contains(spellId)) {
           _spellPreparation = _spellPreparation.copyWith(
@@ -8248,7 +5318,10 @@ Widget _buildIniciativeField() {
     setState(() {
       if (_spellPreparation.isSpellFreeUse(spellId)) {
         _spellPreparation = _spellPreparation.copyWith(
-          freeUseSpells: _spellPreparation.freeUseSpells.where((id) => id != spellId).toList(),
+          freeUseSpells:
+              _spellPreparation.freeUseSpells
+                  .where((id) => id != spellId)
+                  .toList(),
         );
       } else {
         _spellPreparation = _spellPreparation.copyWith(
@@ -8262,7 +5335,7 @@ Widget _buildIniciativeField() {
   /// Get the name of the modifier based on character class
   String _getModifierName(int modifier) {
     final className = _classController.text.trim().toLowerCase();
-    
+
     switch (className) {
       case 'wizard':
       case 'artificer':
@@ -8286,378 +5359,171 @@ Widget _buildIniciativeField() {
     final currentInitiative = int.tryParse(_initiativeController.text) ?? 0;
     final dexterityScore = int.tryParse(_dexterityController.text) ?? 10;
     final dexterityModifier = ((dexterityScore - 10) / 2).floor();
-    
-    final controller = TextEditingController(text: currentInitiative.toString());
-    
+
+    final controller = TextEditingController(
+      text: currentInitiative.toString(),
+    );
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Modify Initiative Modifier'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter initiative modifier for this character:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Initiative Modifier',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Dexterity modifier: $dexterityModifier',
-              style: const TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final newInitiative = int.tryParse(controller.text);
-              if (newInitiative != null) {
-                setState(() {
-                  _initiativeController.text = newInitiative.toString();
-                  _initiativeManuallyModified = true;
-                });
-                _autoSaveCharacter();
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please enter a valid number'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Modify Initiative Modifier'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Enter initiative modifier for this character:'),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Initiative Modifier',
+                    border: OutlineInputBorder(),
                   ),
-                );
-              }
-            },
-            child: const Text('Save'),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Dexterity modifier: $dexterityModifier',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final newInitiative = int.tryParse(controller.text);
+                  if (newInitiative != null) {
+                    setState(() {
+                      _initiativeController.text = newInitiative.toString();
+                    });
+                    _autoSaveCharacter();
+                    Navigator.pop(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter a valid number'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
-  }
-
-  /// Handle dexterity stat changes - always reset initiative to match new dexterity modifier
-  void _onDexterityChanged() {
-    setState(() {
-      final currentDexterity = int.tryParse(_dexterityController.text) ?? 10;
-      final newDexterityModifier = ((currentDexterity - 10) / 2).floor();
-      _initiativeController.text = newDexterityModifier.toString();
-      _initiativeManuallyModified = false; // Reset to auto-calculated state
-    });
-    _autoSaveCharacter();
   }
 
   /// Show dialog to modify maximum prepared spells
   void _showMaxPreparedDialog() {
     // Calculate current max to show in dialog
-    final currentMax = _spellPreparation.maxPreparedSpells == 0 
-        ? CharacterSpellPreparation.calculateMaxPreparedSpells(
-            _classController.text.trim(),
-            int.tryParse(_levelController.text) ?? 1,
-            CharacterSpellPreparation.getSpellcastingModifier(widget.character),
-          )
-        : _spellPreparation.maxPreparedSpells;
-    
+    final currentMax =
+        _spellPreparation.maxPreparedSpells == 0
+            ? CharacterSpellPreparation.calculateMaxPreparedSpells(
+              _classController.text.trim(),
+              int.tryParse(_levelController.text) ?? 1,
+              CharacterSpellPreparation.getSpellcastingModifier(
+                widget.character,
+              ),
+            )
+            : _spellPreparation.maxPreparedSpells;
+
     final controller = TextEditingController(text: currentMax.toString());
-    
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Modify Maximum Prepared Spells'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter the maximum number of spells this character can prepare:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Maximum Prepared Spells',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Calculated maximum: ${CharacterSpellPreparation.calculateMaxPreparedSpells(
-                widget.character.characterClass,
-                widget.character.level,
-                CharacterSpellPreparation.getSpellcastingModifier(widget.character),
-              )}',
-              style: const TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final newMax = int.tryParse(controller.text);
-              if (newMax != null && newMax >= 0) {
-                setState(() {
-                  // If reducing max, uncheck ALL regular prepared spells
-                  final alwaysPreparedOnly = _spellPreparation.preparedSpells.where((spellId) => 
-                    _spellPreparation.alwaysPreparedSpells.contains(spellId)
-                  ).toList();
-                  
-                  if (newMax < _spellPreparation.currentPreparedCount) {
-                    // Clear all regular prepared spells, keep only always prepared
-                    _spellPreparation = _spellPreparation.copyWith(
-                      maxPreparedSpells: newMax,
-                      preparedSpells: [...alwaysPreparedOnly],
-                    );
-                  } else {
-                    // Just update max if no reduction needed
-                    _spellPreparation = _spellPreparation.copyWith(maxPreparedSpells: newMax);
-                  }
-                });
-                _autoSaveCharacter();
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please enter a valid number'),
-                    backgroundColor: Colors.red,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Modify Maximum Prepared Spells'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Enter the maximum number of spells this character can prepare:',
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Maximum Prepared Spells',
+                    border: OutlineInputBorder(),
                   ),
-                );
-              }
-            },
-            child: const Text('Save'),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Calculated maximum: ${CharacterSpellPreparation.calculateMaxPreparedSpells(widget.character.characterClass, widget.character.level, CharacterSpellPreparation.getSpellcastingModifier(widget.character))}',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final newMax = int.tryParse(controller.text);
+                  if (newMax != null && newMax >= 0) {
+                    setState(() {
+                      // If reducing max, uncheck ALL regular prepared spells
+                      final alwaysPreparedOnly =
+                          _spellPreparation.preparedSpells
+                              .where(
+                                (spellId) => _spellPreparation
+                                    .alwaysPreparedSpells
+                                    .contains(spellId),
+                              )
+                              .toList();
+
+                      if (newMax < _spellPreparation.currentPreparedCount) {
+                        // Clear all regular prepared spells, keep only always prepared
+                        _spellPreparation = _spellPreparation.copyWith(
+                          maxPreparedSpells: newMax,
+                          preparedSpells: [...alwaysPreparedOnly],
+                        );
+                      } else {
+                        // Just update max if no reduction needed
+                        _spellPreparation = _spellPreparation.copyWith(
+                          maxPreparedSpells: newMax,
+                        );
+                      }
+                    });
+                    _autoSaveCharacter();
+                    Navigator.pop(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter a valid number'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   Widget _buildAppearanceTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Character Image Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Character Image',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 200,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade400),
-                          ),
-                          child: _base64ToImage(
-                            _appearanceImageData,
-                            width: 200,
-                            height: 200,
-                            placeholder: const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: _isPickingImage ? null : _pickAppearanceImage,
-                              icon: const Icon(Icons.photo_library),
-                              label: Text(_appearanceImageData != null ? 'Change' : 'Add'),
-                            ),
-                            if (_appearanceImageData != null) ...[
-                              const SizedBox(width: 8),
-                              ElevatedButton.icon(
-                                onPressed: _removeAppearanceImage,
-                                icon: const Icon(Icons.delete),
-                                label: const Text('Remove'),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Physical Traits Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Physical Traits',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Height Field
-                  TextField(
-                    controller: _heightController,
-                    decoration: const InputDecoration(
-                      labelText: 'Height',
-                      hintText: 'e.g., 5\'10" or 178 cm',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.height),
-                    ),
-                    onChanged: (value) => _autoSaveCharacter(),
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Age Field
-                  TextField(
-                    controller: _ageController,
-                    decoration: const InputDecoration(
-                      labelText: 'Age',
-                      hintText: 'e.g., 25 years old',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.cake),
-                    ),
-                    onChanged: (value) => _autoSaveCharacter(),
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Eye Color Field
-                  TextField(
-                    controller: _eyeColorController,
-                    decoration: const InputDecoration(
-                      labelText: 'Eye Color',
-                      hintText: 'e.g., Blue, Green, Brown',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.visibility),
-                    ),
-                    onChanged: (value) => _autoSaveCharacter(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Additional Details Section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.description,
-                        color: Theme.of(context).primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Character Appereance',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Describe your character\'s appearance.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: TextField(
-                      controller: _additionalDetailsController,
-                      decoration: const InputDecoration(
-                        hintText: 'Start writing your character\'s story...\n\n'
-                            'You can describe:\n'
-                            '• Physical appearance beyond basic traits\n'
-                            '• Clothing and equipment style\n'
-                            '• Notable scars, tattoos, or markings\n'
-                            '• Personality traits and mannerisms\n'
-                            '• Background story and history\n'
-                            '• Goals, dreams, and motivations\n'
-                            '• Relationships and connections\n'
-                            '• Any other details that bring your character to life',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 8,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => _autoSaveCharacter(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: Colors.grey.shade600,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Auto-saves automatically • No character limit • Supports rich text descriptions',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade600,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    return CharactersAppereance(
+      appearanceImagePath: _appearanceImagePath,
+      isPickingImage: _isPickingImage,
+      pickAppearanceImage: _pickAppearanceImage,
+      removeAppearanceImage: _removeAppearanceImage,
+      heightController: _heightController,
+      ageController: _ageController,
+      eyeColorController: _eyeColorController,
+      additionalDetailsController: _additionalDetailsController,
+      autoSaveCharacter: _autoSaveCharacter,
     );
   }
+
 }

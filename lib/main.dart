@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'viewmodels/items_viewmodel.dart';
 import 'viewmodels/spells_viewmodel.dart';
 import 'viewmodels/characters_viewmodel.dart';
 import 'views/spells/spells_list_screen.dart';
 import 'views/characters/characters_list_screen.dart';
-import 'views/characters/diaries_overview_screen.dart';
+import 'views/diaries/diaries_overview_screen.dart';
 import 'views/information/information_screen.dart';
 import 'viewmodels/feats_viewmodel.dart';
 import 'viewmodels/class_viewmodel.dart';
@@ -56,6 +58,15 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'D&D',
         debugShowCheckedModeBanner: false,
+        localizationsDelegates: [
+          FlutterQuillLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'),
+        ],
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.blue,
