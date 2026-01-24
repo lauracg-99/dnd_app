@@ -244,9 +244,6 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
               case 'duplicate':
                 _duplicateCharacter(character);
                 break;
-              case 'export':
-                _exportCharacter(character);
-                break;
             }
           },
           itemBuilder:
@@ -280,17 +277,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
                       Text('Duplicate'),
                     ],
                   ),
-                ),
-                const PopupMenuItem(
-                  value: 'export',
-                  child: Row(
-                    children: [
-                      Icon(Icons.share),
-                      SizedBox(width: 8),
-                      Text('Export'),
-                    ],
-                  ),
-                ),
+                ),                
                 const PopupMenuItem(
                   value: 'delete',
                   child: Row(
@@ -377,21 +364,5 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
     context.read<CharactersViewModel>().updateCharacter(duplicatedCharacter);
   }
 
-  void _exportCharacter(Character character) {
-    final viewModel = context.read<CharactersViewModel>();
-    viewModel.exportCharacter(character);
 
-    // TODO: Implement proper file sharing
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Exported ${character.name} to clipboard'),
-        action: SnackBarAction(
-          label: 'Copy',
-          onPressed: () {
-            // TODO: Copy to clipboard
-          },
-        ),
-      ),
-    );
-  }
 }

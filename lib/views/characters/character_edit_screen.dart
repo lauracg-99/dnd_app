@@ -37,6 +37,7 @@ import '../../viewmodels/races_viewmodel.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
 import '../../utils/image_utils.dart';
 import 'SpellsTab/spell_by_level.dart';
+import '../diaries/diary_list_screen.dart';
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -611,6 +612,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
+  /// Navigate to the character's diary list
+  void _navigateToDiaries() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => DiaryListScreen(character: widget.character),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -668,6 +678,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           )).toList(),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.book),
+            onPressed: _navigateToDiaries,
+            tooltip: "Character's Diary",
+          ),
           IconButton(
             icon: const Icon(Icons.reorder),
             onPressed: _showTabReorderDialog,
