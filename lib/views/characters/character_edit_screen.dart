@@ -35,6 +35,7 @@ import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
+import '../../utils/image_utils.dart';
 import 'SpellsTab/spell_by_level.dart';
 
 class CharacterEditScreen extends StatefulWidget {
@@ -51,6 +52,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   late TabController _tabController;
   String? _customImagePath;
   String? _appearanceImagePath;
+  String? _customImageData;
+  String? _appearanceImageData;
   bool _isPickingImage = false;
   bool _hasUnsavedAbilityChanges = false;
   bool _hasUnsavedClassChanges = false;
@@ -197,6 +200,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Initialize profile image
     _customImagePath = character.customImagePath;
     _appearanceImagePath = character.appearance.appearanceImagePath;
+    
+    // Initialize base64 image data
+    _customImageData = character.customImageData;
+    _appearanceImageData = character.appearance.appearanceImageData;
 
     // Initialize controllers
     _nameController.text = character.name;
@@ -716,6 +723,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             raceController: _raceController,
             backgroundController: _backgroundController,
             customImagePath: _customImagePath,
+            customImageData: _customImageData,
             onPickImage: _showImageOptionsDialog,
             onSave: () => _saveCharacter(successMessage: 'Character updated!'),
             getSubclassesForClass: _getSubclassesForClass,
@@ -4634,6 +4642,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       final updatedCharacter = widget.character.copyWith(
         name: _nameController.text.trim(),
         customImagePath: _customImagePath,
+        customImageData: _customImageData,
         characterClass: _classController.text.trim(),
         level: int.tryParse(_levelController.text) ?? 1,
         subclass:
@@ -4711,6 +4720,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             _additionalDetailsController.document.toDelta().toJson(),
           ),
           appearanceImagePath: _appearanceImagePath ?? '',
+          appearanceImageData: _appearanceImageData,
         ),
         deathSaves: CharacterDeathSaves(
           successes: _deathSaveSuccesses,
@@ -4895,6 +4905,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
         setState(() {
           _customImagePath = savedFile.path;
+          // Convert image to base64 for JSON persistence
+          _customImageData = ImageUtils.imageFileToBase64(savedFile.path);
+          debugPrint('Profile image converted to base64: ${_customImageData?.length ?? 0} characters');
         });
 
         if (mounted) {
@@ -4947,6 +4960,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
       setState(() {
         _customImagePath = null;
+        _customImageData = null;
       });
 
       if (mounted) {
@@ -5017,6 +5031,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
         setState(() {
           _appearanceImagePath = savedFile.path;
+          // Convert appearance image to base64 for JSON persistence
+          _appearanceImageData = ImageUtils.imageFileToBase64(savedFile.path);
+          debugPrint('Appearance image converted to base64: ${_appearanceImageData?.length ?? 0} characters');
         });
 
         if (mounted) {
@@ -5057,6 +5074,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
       setState(() {
         _appearanceImagePath = null;
+        _appearanceImageData = null;
       });
 
       if (mounted) {
@@ -5099,6 +5117,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       final updatedCharacter = widget.character.copyWith(
         name: _nameController.text.trim(),
         customImagePath: _customImagePath,
+        customImageData: _customImageData,
         characterClass: _classController.text.trim(),
         level: int.tryParse(_levelController.text) ?? 1,
         subclass:
@@ -5177,6 +5196,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             _additionalDetailsController.document.toDelta().toJson(),
           ),
           appearanceImagePath: _appearanceImagePath ?? '',
+          appearanceImageData: _appearanceImageData,
         ),
         deathSaves: CharacterDeathSaves(
           successes: _deathSaveSuccesses,
@@ -5515,6 +5535,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   Widget _buildAppearanceTab() {
     return CharactersAppereance(
       appearanceImagePath: _appearanceImagePath,
+      appearanceImageData: _appearanceImageData,
       isPickingImage: _isPickingImage,
       pickAppearanceImage: _pickAppearanceImage,
       removeAppearanceImage: _removeAppearanceImage,

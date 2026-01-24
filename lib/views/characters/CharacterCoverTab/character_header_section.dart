@@ -3,6 +3,7 @@ import 'package:dnd_app/models/race_model.dart';
 import 'package:dnd_app/viewmodels/backgrounds_viewmodel.dart';
 import 'package:dnd_app/viewmodels/characters_viewmodel.dart';
 import 'package:dnd_app/viewmodels/races_viewmodel.dart';
+import 'package:dnd_app/utils/image_utils.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
@@ -17,6 +18,7 @@ class CharacterHeaderSection extends StatefulWidget {
   final TextEditingController backgroundController;
 
   final String? customImagePath;
+  final String? customImageData;
   final bool isEditing;
   final void Function(bool) onEditToggle;
   final VoidCallback onPickImage;
@@ -42,6 +44,7 @@ class CharacterHeaderSection extends StatefulWidget {
     required this.raceController,
     required this.backgroundController,
     this.customImagePath,
+    this.customImageData,
     required this.isEditing,
     required this.onEditToggle,
     required this.onPickImage,
@@ -129,27 +132,7 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
                       width: 2,
                     ),
                   ),
-                  child: widget.customImagePath != null
-                      ? ClipOval(
-                          child: Image.file(
-                            File(widget.customImagePath!),
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
-                                Icons.person,
-                                size: 40,
-                                color: Colors.grey,
-                              );
-                            },
-                          ),
-                        )
-                      : const Icon(
-                          Icons.person,
-                          size: 40,
-                          color: Colors.grey,
-                        ),
+                  child: _buildProfileImage(),
                 ),
                 if (widget.isEditing)
                   Positioned(
@@ -509,6 +492,56 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileImage() {
+    // Prioritize base64 data if available
+    if (widget.customImageData != null && widget.customImageData!.isNotEmpty) {
+      final imageBytes = ImageUtils.base64ToImageBytes(widget.customImageData);
+      if (imageBytes != null) {
+        return ClipOval(
+          child: Image.memory(
+            imageBytes,
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(
+                Icons.person,
+                size: 40,
+                color: Colors.grey,
+              );
+            },
+          ),
+        );
+      }
+    }
+    
+    // Fallback to file path if base64 is not available
+    if (widget.customImagePath != null && widget.customImagePath!.isNotEmpty) {
+      return ClipOval(
+        child: Image.file(
+          File(widget.customImagePath!),
+          width: 80,
+          height: 80,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(
+              Icons.person,
+              size: 40,
+              color: Colors.grey,
+            );
+          },
+        ),
+      );
+    }
+    
+    // Default icon if no image is available
+    return const Icon(
+      Icons.person,
+      size: 40,
+      color: Colors.grey,
     );
   }
 }

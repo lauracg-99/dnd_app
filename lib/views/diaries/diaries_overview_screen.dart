@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:io';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
+import '../../utils/image_utils.dart';
 import 'diary_list_screen.dart';
 
 class DiariesOverviewScreen extends StatefulWidget {
@@ -203,20 +204,7 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: ListTile(
         leading: CircleAvatar(
-          child:
-              character.customImagePath != null
-                  ? ClipOval(
-                    child: Image.file(
-                      File(character.customImagePath!),
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.person);
-                      },
-                    ),
-                  )
-                  : const Icon(Icons.person),
+          child: _buildCharacterImage(character),
         ),
         title: Text(
           character.name,
@@ -255,5 +243,43 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
         },
       ),
     );
+  }
+
+  Widget _buildCharacterImage(Character character) {
+    // Prioritize base64 data if available
+    if (character.customImageData != null && character.customImageData!.isNotEmpty) {
+      final imageBytes = ImageUtils.base64ToImageBytes(character.customImageData);
+      if (imageBytes != null) {
+        return ClipOval(
+          child: Image.memory(
+            imageBytes,
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(Icons.person);
+            },
+          ),
+        );
+      }
+    }
+    
+    // Fallback to file path if base64 is not available
+    if (character.customImagePath != null && character.customImagePath!.isNotEmpty) {
+      return ClipOval(
+        child: Image.file(
+          File(character.customImagePath!),
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(Icons.person);
+          },
+        ),
+      );
+    }
+    
+    // Default icon if no image is available
+    return const Icon(Icons.person);
   }
 }
