@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-class SimpleQuillEditor extends StatelessWidget {
+class SimpleQuillEditor extends StatefulWidget {
   final QuillController controller;
   final QuillSimpleToolbarConfig toolbarConfig;
   final double height;
@@ -14,6 +14,19 @@ class SimpleQuillEditor extends StatelessWidget {
     this.height = 300,
     this.placeholder
   });
+
+  @override
+  State<SimpleQuillEditor> createState() => _SimpleQuillEditorState();
+}
+
+class _SimpleQuillEditorState extends State<SimpleQuillEditor> {
+  final FocusNode _focusNode = FocusNode();
+  
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,40 +53,47 @@ class SimpleQuillEditor extends StatelessWidget {
               border: Border(top: BorderSide(color: borderColor)),
             ),
             child: QuillSimpleToolbar(
-              controller: controller,
-              config: toolbarConfig,
+              controller: widget.controller,
+              config: widget.toolbarConfig,
             ),
           ),
           // Editor
-          Container(
-            padding: const EdgeInsets.all(10),
-            height: height,
-            child: QuillEditor.basic(
-              controller: controller,
-              config: QuillEditorConfig(
-                placeholder: placeholder?.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '') ?? "",
-                customStyles: DefaultStyles(
-                  placeHolder: DefaultTextBlockStyle(
-                    const TextStyle(
-                      fontSize: 15,
-                      height: 1.5,
-                      color: Colors.grey, // Standard placeholder color
+          GestureDetector(
+            onTap: () {
+              // Request focus when tapping on the editor area
+              _focusNode.requestFocus();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              height: widget.height,
+              child: QuillEditor.basic(
+                controller: widget.controller,
+                focusNode: _focusNode,
+                config: QuillEditorConfig(
+                  placeholder: widget.placeholder?.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '') ?? "",
+                  customStyles: DefaultStyles(
+                    placeHolder: DefaultTextBlockStyle(
+                      const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.grey, // Standard placeholder color
+                      ),
+                      const HorizontalSpacing(0, 0),
+                      const VerticalSpacing(0, 0),
+                      const VerticalSpacing(0, 0),
+                      const BoxDecoration(),                   
                     ),
-                    const HorizontalSpacing(0, 0),
-                    const VerticalSpacing(0, 0),
-                    const VerticalSpacing(0, 0),
-                    const BoxDecoration(),                   
-                  ),
-                  paragraph: DefaultTextBlockStyle(
-                    const TextStyle(
-                      fontSize: 15,
-                      height: 1.5,
-                      color: Colors.black87,
+                    paragraph: DefaultTextBlockStyle(
+                      const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.black87,
+                      ),
+                      const HorizontalSpacing(0, 0),
+                      const VerticalSpacing(0, 0),
+                      const VerticalSpacing(0, 0),
+                      const BoxDecoration(), 
                     ),
-                    const HorizontalSpacing(0, 0),
-                    const VerticalSpacing(0, 0),
-                    const VerticalSpacing(0, 0),
-                    const BoxDecoration(), 
                   ),
                 ),
               ),
