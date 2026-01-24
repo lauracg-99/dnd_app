@@ -44,6 +44,16 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
     widget.onAutoSaveCharacter();
   }
 
+  void _reorderPersonalizedSlots(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final newSlots = List<CharacterPersonalizedSlot>.from(_personalizedSlots);
+    final item = newSlots.removeAt(oldIndex);
+    newSlots.insert(newIndex, item);
+    _updatePersonalizedSlots(newSlots);
+  }
+
   void _updatePersonalizedSlot(int index, CharacterPersonalizedSlot updatedSlot) {
     final newSlots = List<CharacterPersonalizedSlot>.from(_personalizedSlots);
     newSlots[index] = updatedSlot;
@@ -307,12 +317,13 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
     );
   }
 
-  Widget _buildPersonalizedSlotField(String label, int slotIndex) {
+  Widget _buildPersonalizedSlotField({required Key key, required String label, required int slotIndex}) {
     final slot = _personalizedSlots[slotIndex];
     final slots = slot.maxSlots;
     final used = slot.usedSlots;
 
     return Card(
+      key: key,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -321,14 +332,26 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.drag_handle,
+                      color: Colors.grey.shade400,
+                      size: 20,
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
                 Row(
                   children: [
@@ -520,11 +543,20 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
               ),
             )
           else
-            ..._personalizedSlots.asMap().entries.map((entry) {
-              final index = entry.key;
-              final slot = entry.value;
-              return _buildPersonalizedSlotField(slot.name, index);
-            }),
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _personalizedSlots.length,
+              onReorder: _reorderPersonalizedSlots,
+              itemBuilder: (context, index) {
+                final slot = _personalizedSlots[index];
+                return _buildPersonalizedSlotField(
+                  key: ValueKey('slot_$index'),
+                  label: slot.name,
+                  slotIndex: index,
+                );
+              },
+            ),
 
           const SizedBox(height: 16),
 
