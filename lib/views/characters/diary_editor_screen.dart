@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
+import 'dart:convert';
 import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
 import '../../services/diary_service.dart';
+import '../../utils/QuillToolbarConfigs.dart';
+import '../../utils/simple_quill_editor_no_card.dart';
 
 class DiaryEditorScreen extends StatefulWidget {
   final Character character;
@@ -19,18 +24,29 @@ class DiaryEditorScreen extends StatefulWidget {
 
 class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
   final _titleController = TextEditingController();
-  final _contentController = TextEditingController();
+  final _contentController = QuillController.basic();
   bool _isLoading = false;
-  bool _isBold = false;
-  bool _isItalic = false;
-  bool _isUnderline = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.diaryEntry != null) {
       _titleController.text = widget.diaryEntry!.title;
-      _contentController.text = widget.diaryEntry!.content;
+      
+      // Initialize content with rich text support
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(widget.diaryEntry!.content);
+        _contentController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = widget.diaryEntry!.content;
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _contentController.document = Document.fromDelta(delta);
+      }
     }
   }
 
@@ -85,31 +101,13 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
             ),
           ),
           
-          // Formatting toolbar
-        //  _buildFormattingToolbar(),
-          
           // Content field
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: TextField(
-                controller: _contentController,
-                decoration: const InputDecoration(
-                  labelText: 'Content',
-                  hintText: 'Write your diary entry here...',
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: null,
-                expands: true,
-                textAlignVertical: TextAlignVertical.top,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
-                  fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
-                  decoration: _isUnderline ? TextDecoration.underline : TextDecoration.none,
-                ),
-              ),
+            child: SimpleQuillEditorNoCard(
+              controller: _contentController,
+              toolbarConfig: QuillToolbarConfigs.minimal,
+              placeholder: 'Write your diary entry here...',
+              height: double.infinity,
             ),
           ),
           
@@ -148,145 +146,6 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
     );
   }
 
-  Widget _buildFormattingToolbar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[300]!),
-        ),
-      ),
-      child: Row(
-        children: [
-          _buildFormatButton(
-            icon: Icons.format_bold,
-            tooltip: 'Bold',
-            isActive: _isBold,
-            onPressed: () {
-              setState(() {
-                _isBold = !_isBold;
-              });
-            },
-          ),
-          _buildFormatButton(
-            icon: Icons.format_italic,
-            tooltip: 'Italic',
-            isActive: _isItalic,
-            onPressed: () {
-              setState(() {
-                _isItalic = !_isItalic;
-              });
-            },
-          ),
-          _buildFormatButton(
-            icon: Icons.format_underlined,
-            tooltip: 'Underline',
-            isActive: _isUnderline,
-            onPressed: () {
-              setState(() {
-                _isUnderline = !_isUnderline;
-              });
-            },
-          ),
-          const SizedBox(width: 16),
-          _buildFormatButton(
-            icon: Icons.format_list_bulleted,
-            tooltip: 'Bullet List',
-            onPressed: _insertBulletList,
-          ),
-          _buildFormatButton(
-            icon: Icons.format_list_numbered,
-            tooltip: 'Numbered List',
-            onPressed: _insertNumberedList,
-          ),
-          const Spacer(),
-          _buildFormatButton(
-            icon: Icons.clear_all,
-            tooltip: 'Clear Formatting',
-            onPressed: _clearFormatting,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFormatButton({
-    required IconData icon,
-    required String tooltip,
-    required VoidCallback onPressed,
-    bool isActive = false,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: IconButton(
-        icon: Icon(icon),
-        onPressed: onPressed,
-        style: IconButton.styleFrom(
-          backgroundColor: isActive ? Theme.of(context).primaryColor.withValues(alpha: 0.2) : null,
-          foregroundColor: isActive ? Theme.of(context).primaryColor : null,
-        ),
-      ),
-    );
-  }
-
-  void _insertBulletList() {
-    final currentText = _contentController.text;
-    final selection = _contentController.selection;
-    final bulletPoint = '\n• ';
-    
-    if (selection.isValid) {
-      final newText = currentText.replaceRange(
-        selection.start,
-        selection.end,
-        bulletPoint,
-      );
-      _contentController.value = TextEditingValue(
-        text: newText,
-        selection: TextSelection.collapsed(
-          offset: selection.start + bulletPoint.length,
-        ),
-      );
-    } else {
-      _contentController.text += bulletPoint;
-      _contentController.selection = TextSelection.collapsed(
-        offset: _contentController.text.length,
-      );
-    }
-  }
-
-  void _insertNumberedList() {
-    final currentText = _contentController.text;
-    final selection = _contentController.selection;
-    final numberPoint = '\n1. ';
-    
-    if (selection.isValid) {
-      final newText = currentText.replaceRange(
-        selection.start,
-        selection.end,
-        numberPoint,
-      );
-      _contentController.value = TextEditingValue(
-        text: newText,
-        selection: TextSelection.collapsed(
-          offset: selection.start + numberPoint.length,
-        ),
-      );
-    } else {
-      _contentController.text += numberPoint;
-      _contentController.selection = TextSelection.collapsed(
-        offset: _contentController.text.length,
-      );
-    }
-  }
-
-  void _clearFormatting() {
-    setState(() {
-      _isBold = false;
-      _isItalic = false;
-      _isUnderline = false;
-    });
-  }
-
   Future<void> _saveDiaryEntry() async {
     if (_titleController.text.trim().isEmpty) {
       _showErrorSnackBar('Please enter a title for the diary entry');
@@ -303,13 +162,17 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
         await DiaryService.createDiaryEntry(
           characterId: widget.character.id,
           title: _titleController.text.trim(),
-          content: _contentController.text.trim(),
+          content: jsonEncode(
+            _contentController.document.toDelta().toJson(),
+          ),
         );
       } else {
         // Update existing diary entry
         final updatedEntry = widget.diaryEntry!.copyWith(
           title: _titleController.text.trim(),
-          content: _contentController.text.trim(),
+          content: jsonEncode(
+            _contentController.document.toDelta().toJson(),
+          ),
         );
         await DiaryService.saveDiaryEntry(updatedEntry);
       }

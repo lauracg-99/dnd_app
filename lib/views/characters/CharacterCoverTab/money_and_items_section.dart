@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:dnd_app/utils/QuillToolbarConfigs.dart';
+import 'package:dnd_app/utils/SimpleQuillEditor.dart';
 
 class MoneyItemsSection extends StatelessWidget {
   final TextEditingController moneyController;
-  final TextEditingController itemsController;
+  final QuillController itemsController;
   final void Function(String) onMoneyChanged;
-  final void Function(String) onItemsChanged;
+  final void Function() onItemsChanged;
 
   const MoneyItemsSection({
     super.key,
@@ -63,34 +66,18 @@ class MoneyItemsSection extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             // Items field
-            _buildTextField(
-              context: context,
-              controller: itemsController,
-              label: 'Items & Equipment',
-              hint: 'List your character\'s equipment and possessions...\n\n'
-                  'Weapons:\n'
-                  '• Longsword +1, Shield +1\n'
-                  '• Shortbow with 20 arrows\n'
-                  '• Dagger +2\n\n'
-                  'Armor:\n'
-                  '• Chain mail armor\n'
-                  '• Steel shield\n'
-                  '• Helmet of protection\n\n'
-                  'Magic Items:\n'
-                  '• Ring of invisibility\n'
-                  '• Amulet of health\n'
-                  '• Boots of speed\n'
-                  '• Cloak of elvenkind\n\n'
-                  'Tools & Equipment:\n'
-                  '• Thieves\' tools\n'
-                  '• Climbing gear\n'
-                  '• Rope 50ft\n'
-                  '• Rations for 1 week\n'
-                  '• Waterskin\n'
-                  '• Bedroll and blanket',
-              onChanged: onItemsChanged,
-              maxLines: 12,
-              minLines: 6,
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey.shade50,
+              ),
+              child: SimpleQuillEditor(
+                controller: itemsController,
+                toolbarConfig: QuillToolbarConfigs.minimal,
+                placeholder: 'List your character\'s equipment and possessions...\n\n',
+                height: 300,
+              ),
             ),            
             const SizedBox(height: 12),
             Row(

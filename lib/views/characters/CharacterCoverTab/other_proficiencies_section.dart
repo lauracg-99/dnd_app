@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:dnd_app/utils/QuillToolbarConfigs.dart';
+import 'package:dnd_app/utils/SimpleQuillEditor.dart';
 
 class OtherProficienciesSection extends StatelessWidget {
-  final TextEditingController controller;
-  final void Function(String) onChanged;
+  final QuillController controller;
+  final void Function() onChanged;
 
   const OtherProficienciesSection({
     super.key,
@@ -42,29 +45,11 @@ class OtherProficienciesSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 color: Colors.grey.shade50,
               ),
-              child: TextField(
+              child: SimpleQuillEditor(
                 controller: controller,
-                decoration: const InputDecoration(
-                  hintText: 'Add other proficiencies and bonuses...\n\n'
-                      'Examples:\n'
-                      '• Tool proficiencies (smith\'s tools, herbalism kit, etc.)\n'
-                      '• Weapon proficiencies not covered by class/race\n'
-                      '• Armor proficiencies from special training\n'
-                      '• Skill proficiencies from background or feats\n'
-                      '• Languages and special abilities\n'
-                      '• Other bonuses or special features',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(16),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 12,
-                minLines: 3,
-                style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.5,
-                  color: Colors.black87,
-                ),
-                onChanged: onChanged,
+                toolbarConfig: QuillToolbarConfigs.minimal,
+                placeholder: 'Add other proficiencies and bonuses...\n\n',
+                height: 300,
               ),
             ),
           ],

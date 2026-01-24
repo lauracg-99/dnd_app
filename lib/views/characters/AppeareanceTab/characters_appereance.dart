@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:dnd_app/utils/QuillToolbarConfigs.dart';
+import 'package:dnd_app/utils/SimpleQuillEditor.dart';
 import 'dart:io';
 
 class CharactersAppereance extends StatelessWidget {
@@ -9,7 +12,7 @@ class CharactersAppereance extends StatelessWidget {
   final TextEditingController heightController;
   final TextEditingController ageController;
   final TextEditingController eyeColorController;
-  final TextEditingController additionalDetailsController;
+  final QuillController additionalDetailsController;
   final VoidCallback autoSaveCharacter;
 
   const CharactersAppereance({
@@ -211,32 +214,11 @@ class CharactersAppereance extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       color: Colors.grey.shade50,
                     ),
-                    child: TextField(
+                    child: SimpleQuillEditor(
                       controller: additionalDetailsController,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Start writing your character\'s story...\n\n'
-                            'You can describe:\n'
-                            '• Physical appearance beyond basic traits\n'
-                            '• Clothing and equipment style\n'
-                            '• Notable scars, tattoos, or markings\n'
-                            '• Personality traits and mannerisms\n'
-                            '• Background story and history\n'
-                            '• Goals, dreams, and motivations\n'
-                            '• Relationships and connections\n'
-                            '• Any other details that bring your character to life',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 8,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                      onChanged: (value) => autoSaveCharacter(),
+                      toolbarConfig: QuillToolbarConfigs.minimal,
+                      placeholder: 'Start writing your character\'s appearance...\n\n',
+                      height: 200,
                     ),
                   ),
                   const SizedBox(height: 12),

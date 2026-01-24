@@ -66,7 +66,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   // Money and items controllers
   final _moneyController = TextEditingController();
-  final _itemsController = TextEditingController();
+  final _itemsController = QuillController.basic();
 
   // Form controllers
   final _nameController = TextEditingController();
@@ -76,16 +76,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _raceController = TextEditingController();
   final _backgroundController = TextEditingController();
   final _quickGuideController = QuillController.basic();
-  final _proficienciesController = TextEditingController();
+  final _proficienciesController = QuillController.basic();
   final _featuresTraitsController = TextEditingController();
-  final _backstoryController = TextEditingController();
+  final _backstoryController = QuillController.basic();
   final _featNotesController = QuillController.basic();
 
   // Appearance controllers
   final _heightController = TextEditingController();
   final _ageController = TextEditingController();
   final _eyeColorController = TextEditingController();
-  final _additionalDetailsController = TextEditingController();
+  final _additionalDetailsController = QuillController.basic();
 
   // Pillars controllers
   final _gimmickController = TextEditingController();
@@ -203,9 +203,39 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         _quickGuideController.document = Document.fromDelta(delta);
       }
     }
-    _proficienciesController.text = character.proficiencies;
+    // Initialize proficiencies with rich text support
+    if (character.proficiencies.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.proficiencies);
+        _proficienciesController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.proficiencies;
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _proficienciesController.document = Document.fromDelta(delta);
+      }
+    }
     _featuresTraitsController.text = character.featuresTraits;
-    _backstoryController.text = character.backstory;
+    // Initialize backstory with rich text support
+    if (character.backstory.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.backstory);
+        _backstoryController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.backstory;
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _backstoryController.document = Document.fromDelta(delta);
+      }
+    }
 
     // Initialize death saves
     _deathSaveSuccesses = List.from(character.deathSaves.successes);
@@ -214,7 +244,23 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Initialize languages and money/items
     _languagesController.text = character.languages.languages.join(', ');
     _moneyController.text = character.moneyItems.money;
-    _itemsController.text = character.moneyItems.items.join('\n');
+    
+    // Initialize items with rich text support
+    if (character.moneyItems.items.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.moneyItems.items.first);
+        _itemsController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.moneyItems.items.join('\n');
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _itemsController.document = Document.fromDelta(delta);
+      }
+    }
 
     // Add listeners for class changes
     _classController.addListener(() {
@@ -321,7 +367,22 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _heightController.text = character.appearance.height;
     _ageController.text = character.appearance.age;
     _eyeColorController.text = character.appearance.eyeColor;
-    _additionalDetailsController.text = character.appearance.additionalDetails;
+    // Initialize appearance additional details with rich text support
+    if (character.appearance.additionalDetails.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.appearance.additionalDetails);
+        _additionalDetailsController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.appearance.additionalDetails;
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _additionalDetailsController.document = Document.fromDelta(delta);
+      }
+    }
 
     // Set up auto-save listeners
     _setupAutoSaveListeners();
@@ -342,10 +403,22 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _quickGuideController.document.changes.listen((_) {
       _autoSaveCharacter();
     });
-    _proficienciesController.addListener(_autoSaveCharacter);
+    _proficienciesController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
     _featuresTraitsController.addListener(_autoSaveCharacter);
-    _backstoryController.addListener(_autoSaveCharacter);
+    _backstoryController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
     _featNotesController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
+    _additionalDetailsController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
+
+    _moneyController.addListener(_autoSaveCharacter);
+    _itemsController.document.changes.listen((_) {
       _autoSaveCharacter();
     });
 
@@ -420,6 +493,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _featuresTraitsController.dispose();
     _backstoryController.dispose();
     _featNotesController.dispose();
+    _additionalDetailsController.dispose();
+    _moneyController.dispose();
+    _itemsController.dispose();
     _gimmickController.dispose();
     _quirkController.dispose();
     _wantsController.dispose();
@@ -629,7 +705,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           OtherProficienciesSection(
             controller: _proficienciesController,
-            onChanged: (value) => _autoSaveCharacter(),
+            onChanged: () => _autoSaveCharacter(),
           ),
 
           const SizedBox(height: 16),
@@ -645,7 +721,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             moneyController: _moneyController,
             itemsController: _itemsController,
             onMoneyChanged: (value) => _autoSaveCharacter(),
-            onItemsChanged: (value) => _autoSaveCharacter(),
+            onItemsChanged: () => _autoSaveCharacter(),
           ),
 
           const SizedBox(height: 30),
@@ -4499,9 +4575,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         quickGuide: jsonEncode(
           _quickGuideController.document.toDelta().toJson(),
         ),
-        proficiencies: _proficienciesController.text.trim(),
+        proficiencies: jsonEncode(
+          _proficienciesController.document.toDelta().toJson(),
+        ),
         featuresTraits: _featuresTraitsController.text.trim(),
-        backstory: _backstoryController.text.trim(),
+        backstory: jsonEncode(
+          _backstoryController.document.toDelta().toJson(),
+        ),
         featNotes: jsonEncode(
           _featNotesController.document.toDelta().toJson(),
         ),
@@ -4516,7 +4596,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           height: _heightController.text.trim(),
           age: _ageController.text.trim(),
           eyeColor: _eyeColorController.text.trim(),
-          additionalDetails: _additionalDetailsController.text.trim(),
+          additionalDetails: jsonEncode(
+            _additionalDetailsController.document.toDelta().toJson(),
+          ),
           appearanceImagePath: _appearanceImagePath ?? '',
         ),
         deathSaves: CharacterDeathSaves(
@@ -4533,12 +4615,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ),
         moneyItems: CharacterMoneyItems(
           money: _moneyController.text.trim(),
-          items:
-              _itemsController.text
-                  .split('\n')
-                  .map((item) => item.trim())
-                  .where((item) => item.isNotEmpty)
-                  .toList(),
+          items: [jsonEncode(
+            _itemsController.document.toDelta().toJson(),
+          )],
         ),
         updatedAt: DateTime.now(),
       );
@@ -4961,9 +5040,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         quickGuide: jsonEncode(
           _quickGuideController.document.toDelta().toJson(),
         ),
-        proficiencies: _proficienciesController.text.trim(),
+        proficiencies: jsonEncode(
+          _proficienciesController.document.toDelta().toJson(),
+        ),
         featuresTraits: _featuresTraitsController.text.trim(),
-        backstory: _backstoryController.text.trim(),
+        backstory: jsonEncode(
+          _backstoryController.document.toDelta().toJson(),
+        ),
         featNotes: 
         jsonEncode(
           _featNotesController.document.toDelta().toJson(),
@@ -4979,7 +5062,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           height: _heightController.text.trim(),
           age: _ageController.text.trim(),
           eyeColor: _eyeColorController.text.trim(),
-          additionalDetails: _additionalDetailsController.text.trim(),
+          additionalDetails: jsonEncode(
+            _additionalDetailsController.document.toDelta().toJson(),
+          ),
           appearanceImagePath: _appearanceImagePath ?? '',
         ),
         deathSaves: CharacterDeathSaves(
@@ -4996,12 +5081,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ),
         moneyItems: CharacterMoneyItems(
           money: _moneyController.text.trim(),
-          items:
-              _itemsController.text
-                  .split('\n')
-                  .map((item) => item.trim())
-                  .where((item) => item.isNotEmpty)
-                  .toList(),
+          items: [jsonEncode(
+            _itemsController.document.toDelta().toJson(),
+          )],
         ),
         updatedAt: DateTime.now(),
       );

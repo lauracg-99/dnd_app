@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'dart:convert';
 import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
 import '../../services/diary_service.dart';
@@ -264,20 +266,41 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
   String _getPreviewText(String content) {
     if (content.isEmpty) return 'No content';
     
-    // Remove markdown-like formatting for preview
-    String cleanContent = content
-        .replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1') // Bold
-        .replaceAll(RegExp(r'\*(.*?)\*'), r'$1') // Italic
-        .replaceAll(RegExp(r'_(.*?)_'), r'$1') // Italic
-        .replaceAll(RegExp(r'`(.*?)`'), r'$1') // Code
-        .replaceAll(RegExp(r'#{1,6}\s*'), '') // Headers
-        .replaceAll(RegExp(r'\n'), ' ') // Newlines to spaces
-        .trim();
-    
-    if (cleanContent.length > 100) {
-      return '${cleanContent.substring(0, 100)}...';
+    try {
+      // Try to parse as JSON (new format with rich text)
+      final List<dynamic> jsonDelta = jsonDecode(content);
+      final controller = QuillController.basic()
+        ..document = Document.fromJson(jsonDelta);
+      
+      // Get plain text from rich text
+      String plainText = controller.document.toPlainText();
+      
+      // Clean up the plain text for preview
+      String cleanContent = plainText
+          .replaceAll(RegExp(r'\n'), ' ') // Newlines to spaces
+          .replaceAll(RegExp(r'\s+'), ' ') // Multiple spaces to single space
+          .trim();
+      
+      if (cleanContent.length > 100) {
+        return '${cleanContent.substring(0, 100)}...';
+      }
+      return cleanContent;
+    } catch (e) {
+      // Fallback to plain text (old format)
+      String cleanContent = content
+          .replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1') // Bold
+          .replaceAll(RegExp(r'\*(.*?)\*'), r'$1') // Italic
+          .replaceAll(RegExp(r'_(.*?)_'), r'$1') // Italic
+          .replaceAll(RegExp(r'`(.*?)`'), r'$1') // Code
+          .replaceAll(RegExp(r'#{1,6}\s*'), '') // Headers
+          .replaceAll(RegExp(r'\n'), ' ') // Newlines to spaces
+          .trim();
+      
+      if (cleanContent.length > 100) {
+        return '${cleanContent.substring(0, 100)}...';
+      }
+      return cleanContent;
     }
-    return cleanContent;
   }
 
   String _formatDate(DateTime date) {

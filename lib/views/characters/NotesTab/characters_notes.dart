@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:dnd_app/utils/QuillToolbarConfigs.dart';
+import 'package:dnd_app/utils/SimpleQuillEditor.dart';
 
 class CharactersNotes extends StatefulWidget {
-  final TextEditingController backstoryController;
+  final QuillController backstoryController;
   final TextEditingController gimmickController;
   final TextEditingController quirkController;
   final TextEditingController wantsController;
@@ -119,29 +121,18 @@ class _CharactersNotesState extends State<CharactersNotes>
                       borderRadius: BorderRadius.circular(8),
                       color: Colors.grey.shade50,
                     ),
-                    child: TextField(
+                    child: SimpleQuillEditor(
                       controller: widget.backstoryController,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Write your character\'s backstory...\n\n'
-                            'Consider including:\n'
-                            '• Place of birth and family background\n'
-                            '• Life events that shaped their personality\n'
-                            '• How they became an adventurer\n'
-                            '• Significant relationships and experiences\n'
-                            '• Secrets, traumas, or triumphs\n'
-                            '• Hopes for the future',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 12,
-                      minLines: 6,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
+                      toolbarConfig: QuillToolbarConfigs.minimal,
+                      placeholder: 'Write your character\'s backstory...\n\n'
+                          'Consider including:\n'
+                          '• Place of birth and family background\n'
+                          '• Life events that shaped their personality\n'
+                          '• How they became an adventurer\n'
+                          '• Significant relationships and experiences\n'
+                          '• Secrets, traumas, or triumphs\n'
+                          '• Hopes for the future',
+                      height: 300,
                     ),
                   ),
                 ],

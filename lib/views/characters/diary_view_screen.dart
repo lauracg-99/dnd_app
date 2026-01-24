@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'dart:convert';
 import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
 import 'diary_editor_screen.dart';
@@ -106,41 +108,74 @@ class DiaryViewScreen extends StatelessWidget {
         margin: EdgeInsets.all(18.0),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Content',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Content',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 12),
-                diaryEntry.content.isNotEmpty
-                    ? Text(
-                        diaryEntry.content,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          height: 1.5,
-                        ),
-                      )
-                    : Text(
-                        'No content',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey[600],
-                        ),
+              ),
+              const SizedBox(height: 12),
+              diaryEntry.content.isNotEmpty
+                  ? _buildRichContent()
+                  : Text(
+                      'No content',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey[600],
                       ),
-              ],
-            ),
+                    ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildRichContent() {
+    try {
+      // Try to parse as JSON (new format with rich text)
+      final List<dynamic> jsonDelta = jsonDecode(diaryEntry.content);
+      final controller = QuillController.basic()
+        ..document = Document.fromJson(jsonDelta);
+      
+      return Container(
+        constraints: const BoxConstraints(maxHeight: 400),
+        child: QuillEditor.basic(
+          controller: controller,
+          config: QuillEditorConfig(
+            scrollable: true,
+            customStyles: DefaultStyles(
+              paragraph: DefaultTextBlockStyle(
+                const TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                  color: Colors.black87,
+                ),
+                const HorizontalSpacing(0, 0),
+                const VerticalSpacing(0, 0),
+                const VerticalSpacing(0, 0),
+                const BoxDecoration(), 
+              ),
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      // Fallback to plain text (old format)
+      return Text(
+        diaryEntry.content,
+        style: const TextStyle(
+          fontSize: 16,
+          height: 1.5,
+        ),
+      );
+    }
   }
 
   String _formatDate(DateTime date) {

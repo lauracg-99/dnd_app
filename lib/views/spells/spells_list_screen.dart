@@ -38,16 +38,22 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         title: const Text('D&D Spells'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            icon: Icon(
+              Icons.filter_list,
+              color: _isFilterExpanded ? Theme.of(context).colorScheme.primary : null,
+            ),
             onPressed: () {
               setState(() {
                 _isFilterExpanded = !_isFilterExpanded;
               });
+              // Debug print to verify button is working
+              debugPrint('Filter button pressed. Expanded: $_isFilterExpanded');
             },
+            tooltip: 'Filter spells',
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(_isFilterExpanded ? 200 : 80),
+          preferredSize: Size.fromHeight(_isFilterExpanded ? 280 : 80),
           child: _buildSearchAndFilters(),
         ),
       ),
@@ -101,7 +107,22 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
               ),
               
               // Expandable filter section
-              if (_isFilterExpanded) ..._buildFilterControls(viewModel),
+              if (_isFilterExpanded) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Column(
+                    children: _buildFilterControls(viewModel),
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -450,7 +471,6 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
     }
     return components.join(', ');
   }
-}
 
   void _showCharacterSelectionDialog(BuildContext context, Spell spell) {
     final charactersViewModel = context.read<CharactersViewModel>();
@@ -537,6 +557,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
       ),
     );
   }
+}
 
 extension StringExtension on String {
   String capitalize() {
