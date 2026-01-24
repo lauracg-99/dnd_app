@@ -7,7 +7,7 @@ import 'viewmodels/spells_viewmodel.dart';
 import 'viewmodels/characters_viewmodel.dart';
 import 'views/spells/spells_list_screen.dart';
 import 'views/characters/characters_list_screen.dart';
-import 'views/characters/diaries_overview_screen.dart';
+import 'views/diaries/diaries_overview_screen.dart';
 import 'views/information/information_screen.dart';
 import 'viewmodels/feats_viewmodel.dart';
 import 'viewmodels/class_viewmodel.dart';

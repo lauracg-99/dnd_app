@@ -14,6 +14,7 @@ import 'package:dnd_app/views/characters/AppeareanceTab/characters_appereance.da
 import 'package:dnd_app/views/characters/NotesTab/characters_notes.dart';
 import 'package:dnd_app/views/characters/PersonalizedSlotsTab/characters_personalized_tab.dart';
 import 'package:dnd_app/views/characters/FeatsTab/characters_feats_tab.dart';
+import 'package:dnd_app/views/characters/TabReorderDialog/tab_reorder_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -27,6 +28,8 @@ import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
 import '../../models/race_model.dart';
 import '../../models/background_model.dart';
+import '../../models/tab_config_model.dart';
+import '../../services/user_preferences_service.dart';
 import '../../helpers/character_ability_helper.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
@@ -44,7 +47,7 @@ class CharacterEditScreen extends StatefulWidget {
 }
 
 class _CharacterEditScreenState extends State<CharacterEditScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
   String? _customImagePath;
   String? _appearanceImagePath;
@@ -144,10 +147,20 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   String? _selectedClassFilter;
   String? _selectedSchoolFilter;
 
+  // Tab customization
+  List<String> _tabOrder = [];
+  List<CharacterTabConfig> _orderedTabs = [];
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 11, vsync: this);
+    
+    // Initialize with default tabs immediately to prevent empty TabBar
+    _initializeDefaultTabs();
+    
+    // Initialize tab controller with default length first to prevent LateInitializationError
+    _tabController = TabController(length: _orderedTabs.length, vsync: this);
+    _initializeTabOrder();
     _initializeCharacterData();
 
     // Load races and backgrounds data
@@ -155,6 +168,27 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       context.read<RacesViewModel>().loadRaces();
       context.read<BackgroundsViewModel>().loadBackgrounds();
     });
+  }
+
+  /// Initialize default tabs synchronously to prevent empty TabBar during initial build
+  void _initializeDefaultTabs() {
+    _tabOrder = CharacterTabManager.getDefaultTabOrder();
+    
+    final Map<String, Widget Function()> tabBuilders = {
+      'character': () => _buildCharacterCoverTab(),
+      'quick_guide': () => _buildQuickGuideTab(),
+      'stats': () => _buildStatsTab(),
+      'skills': () => _buildSkillsTab(),
+      'attacks': () => _buildAttacksTab(),
+      'spell_slots': () => _buildSpellSlotsTab(),
+      'spells': () => _buildSpellsTab(),
+      'feats': () => _buildFeatsTab(),
+      'class_slots': () => _buildPersonalizedSlotsTab(),
+      'appearance': () => _buildAppearanceTab(),
+      'notes': () => _buildNotesTab(),
+    };
+    
+    _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
   }
 
   void _initializeCharacterData() {
@@ -477,6 +511,99 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _hitDiceTypeController.addListener(_autoSaveCharacter);
   }
 
+  /// Initialize tab order from user preferences
+  Future<void> _initializeTabOrder() async {
+    try {
+      // Initialize user preferences service
+      await UserPreferencesService.initializeStorage();
+      
+      // Load user preferences
+      final preferences = await UserPreferencesService.loadPreferences();
+      _tabOrder = preferences.characterTabOrder;
+      
+      // Create tab builders map
+      final Map<String, Widget Function()> tabBuilders = {
+        'character': () => _buildCharacterCoverTab(),
+        'quick_guide': () => _buildQuickGuideTab(),
+        'stats': () => _buildStatsTab(),
+        'skills': () => _buildSkillsTab(),
+        'attacks': () => _buildAttacksTab(),
+        'spell_slots': () => _buildSpellSlotsTab(),
+        'spells': () => _buildSpellsTab(),
+        'feats': () => _buildFeatsTab(),
+        'class_slots': () => _buildPersonalizedSlotsTab(),
+        'appearance': () => _buildAppearanceTab(),
+        'notes': () => _buildNotesTab(),
+      };
+      
+      // Get ordered tabs
+      _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
+      
+      // Only recreate controller if length changed
+      if (_tabController.length != _orderedTabs.length) {
+        _tabController.dispose();
+        _tabController = TabController(length: _orderedTabs.length, vsync: this);
+      }
+      setState(() {});
+    } catch (e) {
+      debugPrint('Error initializing tab order: $e');
+      // Fallback to default order
+      _tabOrder = CharacterTabManager.getDefaultTabOrder();
+      final Map<String, Widget Function()> tabBuilders = {
+        'character': () => _buildCharacterCoverTab(),
+        'quick_guide': () => _buildQuickGuideTab(),
+        'stats': () => _buildStatsTab(),
+        'skills': () => _buildSkillsTab(),
+        'attacks': () => _buildAttacksTab(),
+        'spell_slots': () => _buildSpellSlotsTab(),
+        'spells': () => _buildSpellsTab(),
+        'feats': () => _buildFeatsTab(),
+        'class_slots': () => _buildPersonalizedSlotsTab(),
+        'appearance': () => _buildAppearanceTab(),
+        'notes': () => _buildNotesTab(),
+      };
+      _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
+      
+      // Only recreate controller if length changed
+      if (_tabController.length != _orderedTabs.length) {
+        _tabController.dispose();
+        _tabController = TabController(length: _orderedTabs.length, vsync: this);
+      }
+      
+      setState(() {});
+    }
+  }
+
+  /// Save tab order to user preferences
+  Future<void> _saveTabOrder(List<String> newOrder) async {
+    try {
+      final preferences = await UserPreferencesService.loadPreferences();
+      final updatedPreferences = preferences.copyWith(characterTabOrder: newOrder);
+      await UserPreferencesService.savePreferences(updatedPreferences);
+      
+      _tabOrder = newOrder;
+      debugPrint('Tab order saved: $newOrder');
+    } catch (e) {
+      debugPrint('Error saving tab order: $e');
+    }
+  }
+
+  /// Show dialog to reorder tabs
+  void _showTabReorderDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return TabReorderDialog(
+          currentOrder: _tabOrder,
+          onOrderChanged: (newOrder) async {
+            await _saveTabOrder(newOrder);
+            await _initializeTabOrder(); // Refresh the tabs
+          },
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -528,21 +655,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          tabs: const [
-            Tab(text: 'Character', icon: Icon(Icons.shield)),
-            Tab(text: 'Quick Guide', icon: Icon(Icons.description)),
-            Tab(text: 'Stats', icon: Icon(Icons.bar_chart)),
-            Tab(text: 'Skills', icon: Icon(Icons.psychology)),
-            Tab(text: 'Attacks', icon: Icon(Icons.gavel)),
-            Tab(text: 'Spell Slots', icon: Icon(Icons.grid_view)),
-            Tab(text: 'Spells', icon: Icon(Icons.auto_awesome)),
-            Tab(text: 'Feats', icon: Icon(Icons.military_tech)),
-            Tab(text: 'Class Slots', icon: Icon(Icons.casino)),
-            Tab(text: 'Appearance', icon: Icon(Icons.face)),
-            Tab(text: 'Notes', icon: Icon(Icons.note)),
-          ],
+          tabs: _orderedTabs.map((tab) => Tab(
+            text: tab.label,
+            icon: Icon(tab.icon),
+          )).toList(),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.reorder),
+            onPressed: _showTabReorderDialog,
+            tooltip: 'Reorder Tabs',
+          ),
           _isLoading
               ? const Padding(
                 padding: EdgeInsets.all(16.0),
@@ -566,19 +689,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         },
         child: TabBarView(
           controller: _tabController,
-          children: [
-            _buildCharacterCoverTab(),
-            _buildQuickGuideTab(),
-            _buildStatsTab(),
-            _buildSkillsTab(),
-            _buildAttacksTab(),
-            _buildSpellSlotsTab(),
-            _buildSpellsTab(),
-            _buildFeatsTab(),
-            _buildPersonalizedSlotsTab(),
-            _buildAppearanceTab(),
-            _buildNotesTab(),
-          ],
+          children: _orderedTabs.map((tab) => tab.builder()).toList(),
         ),
       ),
     );

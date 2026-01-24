@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import '../lib/views/characters/diaries_overview_screen.dart';
+import '../lib/views/diaries/diaries_overview_screen.dart';
 import '../lib/viewmodels/characters_viewmodel.dart';
 import '../lib/models/character_model.dart';
 

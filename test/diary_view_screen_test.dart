@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:dnd_app/views/characters/diary_view_screen.dart';
+import 'package:dnd_app/views/diaries/diary_view_screen.dart';
 import 'package:dnd_app/models/character_model.dart';
 import 'package:dnd_app/models/diary_model.dart';
 
