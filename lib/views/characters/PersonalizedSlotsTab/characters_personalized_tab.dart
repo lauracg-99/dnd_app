@@ -144,6 +144,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
   ) {
     final slot = _personalizedSlots[slotIndex];
     final textController = TextEditingController(text: currentValue.toString());
+    int localValue = currentValue; // Create a mutable local variable
 
     showDialog(
       context: context,
@@ -166,7 +167,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                 labelText: type == 'slots' ? 'Max Slots' : 'Used Slots',
               ),
               onChanged: (value) {
-                final newValue = int.tryParse(value) ?? currentValue;
+                final newValue = int.tryParse(value) ?? localValue;
                 if (type == 'slots') {
                   // Ensure used slots don't exceed new max
                   final newUsedSlots =
@@ -185,9 +186,14 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                     slotIndex,
                     slot.copyWith(usedSlots: clampedValue),
                   );
+                  // Only update localValue if it was actually clamped
+                  if (clampedValue != newValue) {
+                    localValue = clampedValue;
+                    textController.text = clampedValue.toString();
+                    return;
+                  }
                 }
-                currentValue = newValue; // Update local value
-                textController.text = newValue.toString(); // Update text field
+                localValue = newValue; // Update local value
                 widget.onAutoSaveCharacter(); // Auto-save on text input
               },
             ),
@@ -202,7 +208,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                         slotIndex,
                         slot.copyWith(maxSlots: 4),
                       );
-                      currentValue = 4;
+                      localValue = 4;
                       textController.text = '4';
                       widget.onAutoSaveCharacter();
                     },
@@ -214,7 +220,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                         slotIndex,
                         slot.copyWith(maxSlots: 6),
                       );
-                      currentValue = 6;
+                      localValue = 6;
                       textController.text = '6';
                       widget.onAutoSaveCharacter();
                     },
@@ -226,7 +232,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                         slotIndex,
                         slot.copyWith(maxSlots: 8),
                       );
-                      currentValue = 8;
+                      localValue = 8;
                       textController.text = '8';
                       widget.onAutoSaveCharacter();
                     },
@@ -239,7 +245,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                         slotIndex,
                         slot.copyWith(usedSlots: 0),
                       );
-                      currentValue = 0;
+                      localValue = 0;
                       textController.text = '0';
                       widget.onAutoSaveCharacter();
                     },
@@ -251,7 +257,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                         slotIndex,
                         slot.copyWith(usedSlots: slot.maxSlots),
                       );
-                      currentValue = slot.maxSlots;
+                      localValue = slot.maxSlots;
                       textController.text = slot.maxSlots.toString();
                       widget.onAutoSaveCharacter();
                     },
@@ -264,7 +270,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                         slotIndex,
                         slot.copyWith(usedSlots: halfSlots),
                       );
-                      currentValue = halfSlots;
+                      localValue = halfSlots;
                       textController.text = halfSlots.toString();
                       widget.onAutoSaveCharacter();
                     },
@@ -278,7 +284,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('Accept'),
           ),
         ],
       ),
@@ -372,40 +378,43 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
 
             // Visual slot dots
             if (slots > 0) ...[
-              Row(
-                children: [
-                  const Text('Used: ', style: TextStyle(color: Colors.grey)),
-                  ...List.generate(slots, (index) {
-                    final isUsed = index < used;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: GestureDetector(
-                        onTap: () => _togglePersonalizedSlot(slotIndex, index),
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isUsed ? Colors.red : Colors.grey.shade300,
-                            border: Border.all(
-                              color: isUsed
-                                  ? Colors.red.shade300
-                                  : Colors.grey.shade400,
-                              width: 2,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    const Text('Used: ', style: TextStyle(color: Colors.grey)),
+                    ...List.generate(slots, (index) {
+                      final isUsed = index < used;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: GestureDetector(
+                          onTap: () => _togglePersonalizedSlot(slotIndex, index),
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isUsed ? Colors.red : Colors.grey.shade300,
+                              border: Border.all(
+                                color: isUsed
+                                    ? Colors.red.shade300
+                                    : Colors.grey.shade400,
+                                width: 2,
+                              ),
                             ),
+                            child: isUsed
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 12,
+                                  )
+                                : null,
                           ),
-                          child: isUsed
-                              ? const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 12,
-                                )
-                              : null,
                         ),
-                      ),
-                    );
-                  }),
-                ],
+                      );
+                    }),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
               Text(
