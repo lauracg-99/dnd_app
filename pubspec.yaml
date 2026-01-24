@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   path_provider: ^2.1.2  # Para manejar rutas de archivos
   provider: ^6.1.1       # Para la inyección de dependencias
   image_picker: ^1.0.7    # Para seleccionar imágenes de la galería/cámara
@@ -39,6 +41,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   keyboard_actions: ^4.1.0
   flutter_launcher_icons: ^0.14.4
+  flutter_quill: ^11.5.0
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
