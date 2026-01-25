@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'dart:io';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
+import '../../services/character_service.dart';
 import 'character_edit_screen.dart';
 import 'character_create_screen.dart';
 import '../diaries/diary_list_screen.dart';
@@ -361,7 +362,11 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
       updatedAt: DateTime.now(),
     );
 
-    context.read<CharactersViewModel>().updateCharacter(duplicatedCharacter);
+    // Save the duplicated character and add it to the list
+    CharacterService.saveCharacter(duplicatedCharacter).then((_) {
+      // Reload the characters list to refresh the UI
+      context.read<CharactersViewModel>().loadCharacters();
+    });
   }
 
 
