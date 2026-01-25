@@ -85,7 +85,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _backgroundController = TextEditingController();
   final _quickGuideController = QuillController.basic();
   final _proficienciesController = QuillController.basic();
-  final _featuresTraitsController = TextEditingController();
+  final _featuresTraitsController = QuillController.basic();
   final _backstoryController = QuillController.basic();
   final _featNotesController = QuillController.basic();
 
@@ -262,7 +262,22 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         _proficienciesController.document = Document.fromDelta(delta);
       }
     }
-    _featuresTraitsController.text = character.featuresTraits;
+
+    if (character.featuresTraits.isNotEmpty) {
+      try {
+        // Try to parse as JSON (new format with rich text)
+        final List<dynamic> jsonDelta = jsonDecode(character.featuresTraits);
+        _featuresTraitsController.document = Document.fromJson(jsonDelta);
+      } catch (e) {
+        // Fallback to plain text (old format)
+        String text = character.featuresTraits;
+        if (!text.endsWith('\n')) {
+          text += '\n';
+        }
+        final delta = Delta()..insert(text);
+        _featuresTraitsController.document = Document.fromDelta(delta);
+      }
+    }
     // Initialize backstory with rich text support
     if (character.backstory.isNotEmpty) {
       try {
@@ -449,7 +464,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _proficienciesController.document.changes.listen((_) {
       _autoSaveCharacter();
     });
-    _featuresTraitsController.addListener(_autoSaveCharacter);
+    _featuresTraitsController.document.changes.listen((_) {
+      _autoSaveCharacter();
+    });
     _backstoryController.document.changes.listen((_) {
       _autoSaveCharacter();
     });
@@ -838,16 +855,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           const SizedBox(height: 16),
 
-          OtherProficienciesSection(
-            controller: _proficienciesController,
-            onChanged: () => _autoSaveCharacter(),
+          FeaturesTraitsSection(
+            controller: _featuresTraitsController,
+            onChanged: (value) => _autoSaveCharacter(),
           ),
 
           const SizedBox(height: 16),
 
-          FeaturesTraitsSection(
-            controller: _featuresTraitsController,
-            onChanged: (value) => _autoSaveCharacter(),
+          OtherProficienciesSection(
+            controller: _proficienciesController,
+            onChanged: () => _autoSaveCharacter(),
           ),
 
           const SizedBox(height: 16),
@@ -4712,7 +4729,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         proficiencies: jsonEncode(
           _proficienciesController.document.toDelta().toJson(),
         ),
-        featuresTraits: _featuresTraitsController.text.trim(),
+        featuresTraits: jsonEncode(
+          _featuresTraitsController.document.toDelta().toJson(),
+        ),
         backstory: jsonEncode(
           _backstoryController.document.toDelta().toJson(),
         ),
@@ -5187,7 +5206,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         proficiencies: jsonEncode(
           _proficienciesController.document.toDelta().toJson(),
         ),
-        featuresTraits: _featuresTraitsController.text.trim(),
+        featuresTraits: jsonEncode(
+          _featuresTraitsController.document.toDelta().toJson(),
+        ),
         backstory: jsonEncode(
           _backstoryController.document.toDelta().toJson(),
         ),

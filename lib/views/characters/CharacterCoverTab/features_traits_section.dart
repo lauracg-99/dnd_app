@@ -1,7 +1,10 @@
+import 'package:dnd_app/utils/QuillToolbarConfigs.dart';
+import 'package:dnd_app/utils/SimpleQuillEditor.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 
 class FeaturesTraitsSection extends StatelessWidget {
-  final TextEditingController controller;
+  final QuillController controller;
   final void Function(String) onChanged;
 
   const FeaturesTraitsSection({
@@ -9,7 +12,8 @@ class FeaturesTraitsSection extends StatelessWidget {
     required this.controller,
     required this.onChanged,
   });
-
+//'Features & traits'
+//'Add features and traits...\n\n'
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -42,24 +46,11 @@ class FeaturesTraitsSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 color: Colors.grey.shade50,
               ),
-              child: TextField(
+              child: SimpleQuillEditor(
                 controller: controller,
-                decoration: const InputDecoration(
-                  hintText: 'Add features and traits...\n\n'
-                      'Examples:\n'
-                      '• Specific abilities from your Race, Class, Background, or Feats',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(16),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 12,
-                minLines: 6,
-                style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.5,
-                  color: Colors.black87,
-                ),
-                onChanged: onChanged,
+                toolbarConfig: QuillToolbarConfigs.minimal,
+                placeholder: 'Add features and traits...\n\n',
+                height: 300,
               ),
             ),
           ],
