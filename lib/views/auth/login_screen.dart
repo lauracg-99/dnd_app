@@ -392,7 +392,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (result.success) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Data downloaded successfully!'),
+              content: Text('Data sync successfully!'),
               backgroundColor: Colors.green,
             ),
           );
