@@ -324,70 +324,145 @@ class _SpellByLevelState extends State<SpellByLevel> {
                       '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
-                    if (isAlwaysPrepared || isFreeUse) ...[
+                    if (isAlwaysPrepared || isFreeUse || canPrepare) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           if (isAlwaysPrepared) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.purple.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.star,
-                                    size: 12,
-                                    color: Colors.purple.shade700,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    'Always',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
+                            GestureDetector(
+                              onTap: () => widget.onToggleAlwaysPrepared(spell.id),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      size: 12,
                                       color: Colors.purple.shade700,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Always prepared',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.purple.shade700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                          ] else if (canPrepare) ...[
+                            GestureDetector(
+                              onTap: () => widget.onToggleAlwaysPrepared(spell.id),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star_border,
+                                      size: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Always prepared',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             const SizedBox(width: 4),
                           ],
                           if (isFreeUse) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.bolt,
-                                    size: 12,
-                                    color: Colors.green.shade700,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    'Free',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
+                            GestureDetector(
+                              onTap: () => widget.onToggleFreeUse(spell.id),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.bolt,
+                                      size: 12,
                                       color: Colors.green.shade700,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Free use',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.green.shade700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ] else if (canPrepare) ...[
+                            GestureDetector(
+                              onTap: () => widget.onToggleFreeUse(spell.id),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.bolt_outlined,
+                                      size: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Free use',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -396,47 +471,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
                     ],
                   ],
                 ),
-                trailing: SizedBox(
-                  width: canPrepare ? 56 : 32,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (canPrepare) ...[
-                        // Always prepared toggle
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: IconButton(
-                            padding: EdgeInsets.zero,
-                            icon: Icon(
-                              isAlwaysPrepared ? Icons.star : Icons.star_border,
-                              color: Colors.purple,
-                              size: 16,
-                            ),
-                            onPressed: () => widget.onToggleAlwaysPrepared(spell.id),
-                            tooltip: 'Always prepared',
-                          ),
-                        ),
-                        // Free use toggle
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: IconButton(
-                            padding: EdgeInsets.zero,
-                            icon: Icon(
-                              isFreeUse ? Icons.bolt : Icons.bolt_outlined,
-                              color: Colors.green,
-                              size: 16,
-                            ),
-                            onPressed: () => widget.onToggleFreeUse(spell.id),
-                            tooltip: 'Free use once per day',
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+                trailing: const SizedBox.shrink(), // No trailing buttons needed anymore
               ),
             ),
           ),
