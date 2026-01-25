@@ -3509,7 +3509,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         final bonusController = TextEditingController();
         final damageController = TextEditingController();
         final typeController = TextEditingController();
-        final descController = TextEditingController();
+        
 
         return AlertDialog(
           title: const Text('Add Attack'),
@@ -3557,15 +3557,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: descController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (Optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 10,
-                ),
+                const SizedBox(height: 4),
               ],
             ),
           ),
@@ -3584,8 +3576,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         name: nameController.text.trim(),
                         attackBonus: bonusController.text.trim(),
                         damage: damageController.text.trim(),
-                        damageType: typeController.text.trim(),
-                        description: descController.text.trim(),
+                        damageType: typeController.text.trim(),                        
                       ),
                     );
                   });

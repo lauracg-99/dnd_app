@@ -813,7 +813,6 @@ class CharacterAttack {
   final String attackBonus;
   final String damage;
   final String damageType;
-  final String description;
 
   const CharacterAttack({
     required this.id,
@@ -821,7 +820,6 @@ class CharacterAttack {
     required this.attackBonus,
     required this.damage,
     required this.damageType,
-    this.description = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -830,7 +828,6 @@ class CharacterAttack {
     'attack_bonus': {'value': attackBonus},
     'damage': {'value': damage},
     'damage_type': {'value': damageType},
-    'description': {'value': description},
   };
 
   factory CharacterAttack.fromJson(Map<String, dynamic> json) {
@@ -840,7 +837,6 @@ class CharacterAttack {
       attackBonus: Character._getValueNullable<String>(json, 'attack_bonus', defaultValue: '') ?? '',
       damage: Character._getValueNullable<String>(json, 'damage', defaultValue: '') ?? '',
       damageType: Character._getValueNullable<String>(json, 'damage_type', defaultValue: '') ?? '',
-      description: Character._getValueNullable<String>(json, 'description', defaultValue: '') ?? '',
     );
   }
 }
