@@ -113,7 +113,7 @@ class DiaryViewScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Content',
+                'Content:',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -146,21 +146,23 @@ class DiaryViewScreen extends StatelessWidget {
       
       return Container(
         constraints: const BoxConstraints(maxHeight: 400),
-        child: QuillEditor.basic(
-          controller: controller,
-          config: QuillEditorConfig(
-            scrollable: true,
-            customStyles: DefaultStyles(
-              paragraph: DefaultTextBlockStyle(
-                const TextStyle(
-                  fontSize: 16,
-                  height: 1.5,
-                  color: Colors.black87,
+        child: IgnorePointer(
+          child: QuillEditor.basic(
+            controller: controller,
+            config: QuillEditorConfig(
+              scrollable: true,
+              customStyles: DefaultStyles(
+                paragraph: DefaultTextBlockStyle(
+                  const TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                    color: Colors.black87,
+                  ),
+                  const HorizontalSpacing(0, 0),
+                  const VerticalSpacing(0, 0),
+                  const VerticalSpacing(0, 0),
+                  const BoxDecoration(), 
                 ),
-                const HorizontalSpacing(0, 0),
-                const VerticalSpacing(0, 0),
-                const VerticalSpacing(0, 0),
-                const BoxDecoration(), 
               ),
             ),
           ),

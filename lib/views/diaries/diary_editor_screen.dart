@@ -103,11 +103,14 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
           
           // Content field
           Expanded(
-            child: SimpleQuillEditorNoCard(
-              controller: _contentController,
-              toolbarConfig: QuillToolbarConfigs.minimal,
-              placeholder: 'Write your diary entry here...',
-              height: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SimpleQuillEditorNoCard(
+                controller: _contentController,
+                toolbarConfig: QuillToolbarConfigs.minimal,
+                placeholder: 'Write your diary entry here...',
+                height: double.infinity,
+              ),
             ),
           ),
           
