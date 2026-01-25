@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'viewmodels/items_viewmodel.dart';
@@ -15,14 +16,28 @@ import 'viewmodels/races_viewmodel.dart';
 import 'viewmodels/backgrounds_viewmodel.dart';
 import 'services/character_service.dart';
 import 'services/diary_service.dart';
+import 'services/firebase_auth_service.dart';
+import 'services/cloud_sync_service.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   // Initialize storage systems
   await CharacterService.initializeStorage();
   await DiaryService.initializeStorage();
+  
+  // Initialize Firebase services
+  final authService = FirebaseAuthService();
+  final syncService = CloudSyncService();
+  await authService.initialize();
+  await syncService.initialize();
 
   runApp(
     MultiProvider(

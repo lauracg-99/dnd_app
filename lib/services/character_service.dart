@@ -6,6 +6,10 @@ import '../models/character_model.dart';
 // Conditional import for path_provider
 import 'package:path_provider/path_provider.dart';
 
+// Import Firebase services
+import 'cloud_sync_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class CharacterService {
   static const String _charactersDirName = 'characters';
@@ -113,6 +117,16 @@ class CharacterService {
       }
       
       debugPrint('Character saved to memory cache: ${updatedCharacter.name}');
+      
+      // Trigger cloud sync if user is authenticated
+      try {
+        final syncService = CloudSyncService();
+        if (syncService.authService.isAuthenticated) {
+          syncService.scheduleCharacterSync();
+        }
+      } catch (e) {
+        debugPrint('Error scheduling character sync: $e');
+      }
     } catch (e) {
       debugPrint('Error saving character ${character.name}: $e');
       
@@ -400,6 +414,18 @@ class CharacterService {
       }
       
       debugPrint('Character removed from memory cache: $characterId');
+      
+      // Also delete from cloud if user is authenticated
+      try {
+        final syncService = CloudSyncService();
+        if (syncService.authService.isAuthenticated) {
+          await _deleteCharacterFromCloud(characterId);
+          debugPrint('Character deleted from cloud: $characterId');
+        }
+      } catch (e) {
+        debugPrint('Error deleting character from cloud: $e');
+        // Don't fail the local deletion if cloud deletion fails
+      }
     } catch (e) {
       debugPrint('Error deleting character $characterId: $e');
       
@@ -412,6 +438,33 @@ class CharacterService {
 
       // Still remove from memory cache even if file deletion fails
       _memoryCache.removeWhere((c) => c.id == characterId);
+    }
+  }
+  
+  /// Delete a character from cloud storage
+  static Future<void> _deleteCharacterFromCloud(String characterId) async {
+    try {
+      final syncService = CloudSyncService();
+      if (!syncService.authService.isAuthenticated) {
+        debugPrint('User not authenticated, skipping cloud deletion');
+        return;
+      }
+      
+      final userId = syncService.authService.currentUser!.uid;
+      final firestore = FirebaseFirestore.instance;
+      
+      // Delete the character document from cloud
+      final characterRef = firestore
+          .collection('users')
+          .doc(userId)
+          .collection('characters')
+          .doc(characterId);
+          
+      await characterRef.delete();
+      debugPrint('Successfully deleted character from cloud: $characterId');
+    } catch (e) {
+      debugPrint('Error deleting character from cloud: $e');
+      rethrow;
     }
   }
   

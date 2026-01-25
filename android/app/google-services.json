@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "770427347098",
+    "firebase_url": "https://dnd-app-87ffe-default-rtdb.firebaseio.com",
+    "project_id": "dnd-app-87ffe",
+    "storage_bucket": "dnd-app-87ffe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770427347098:android:75867966e2e8b1f94dff23",
+        "android_client_info": {
+          "package_name": "com.example.dnd_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKYNZOiWyTvCVXaO2w5jRpDit4NM_OKuw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

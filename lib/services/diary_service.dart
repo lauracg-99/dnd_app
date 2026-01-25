@@ -6,6 +6,9 @@ import '../models/diary_model.dart';
 // Conditional import for path_provider
 import 'package:path_provider/path_provider.dart' if (dart.library.io) 'package:path_provider/path_provider.dart';
 
+// Import Firebase services
+import 'cloud_sync_service.dart';
+
 class DiaryService {
   static const String _diariesDirName = 'diaries';
   static List<DiaryEntry> _memoryCache = [];
@@ -140,6 +143,16 @@ class DiaryService {
       }
       
       debugPrint('Diary entry saved to memory cache: ${updatedEntry.title}');
+      
+      // Trigger cloud sync if user is authenticated
+      try {
+        final syncService = CloudSyncService();
+        if (syncService.authService.isAuthenticated) {
+          syncService.scheduleDiarySync();
+        }
+      } catch (e) {
+        debugPrint('Error scheduling diary sync: $e');
+      }
     } catch (e) {
       debugPrint('Error saving diary entry ${diaryEntry.title}: $e');
       

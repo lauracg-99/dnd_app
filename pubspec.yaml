@@ -1,5 +1,5 @@
 name: dnd_app
-description: "A new Flutter project."
+description: "A d&d project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.0+4
+version: 1.2.0+2
 
 environment:
   sdk: ^3.7.0-260.0.dev
@@ -43,10 +43,17 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_quill: ^11.5.0
   intl: ^0.20.2
+  # Firebase for authentication and cloud sync
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.5.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Firebase testing dependencies - using compatible versions
+  # Note: fake_cloud_firestore needs to be compatible with cloud_firestore ^5.x
+  fake_cloud_firestore: ^3.1.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

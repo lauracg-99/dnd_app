@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyANDGfuRBDXjGYwNTvkNIauy2X3ok4WxLQ</string>
+	<key>GCM_SENDER_ID</key>
+	<string>770427347098</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.dndApp</string>
+	<key>PROJECT_ID</key>
+	<string>dnd-app-87ffe</string>
+	<key>STORAGE_BUCKET</key>
+	<string>dnd-app-87ffe.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:770427347098:ios:7f6115148e47f9594dff23</string>
+	<key>DATABASE_URL</key>
+	<string>https://dnd-app-87ffe-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>

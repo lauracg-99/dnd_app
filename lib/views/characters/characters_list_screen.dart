@@ -5,9 +5,13 @@ import 'dart:io';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
 import '../../services/character_service.dart';
+import '../../services/diary_service.dart';
+import '../../services/firebase_auth_service.dart';
+import '../../services/cloud_sync_service.dart';
 import 'character_edit_screen.dart';
 import 'character_create_screen.dart';
 import '../diaries/diary_list_screen.dart';
+import '../auth/login_screen.dart';
 
 class CharactersListScreen extends StatefulWidget {
   const CharactersListScreen({super.key});
@@ -16,23 +20,67 @@ class CharactersListScreen extends StatefulWidget {
   State<CharactersListScreen> createState() => _CharactersListScreenState();
 }
 
-class _CharactersListScreenState extends State<CharactersListScreen> {
+class _CharactersListScreenState extends State<CharactersListScreen> with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   bool _isFilterExpanded = false;
+  final FirebaseAuthService _authService = FirebaseAuthService();
+  final CloudSyncService _syncService = CloudSyncService();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    
     // Load characters when the screen is first displayed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CharactersViewModel>().loadCharacters();
+    });
+    
+    // Listen to auth state changes to refresh characters when user signs in/out
+    _authService.authStateChanges.listen((user) {
+      if (mounted) {
+        // Add delays to ensure data is fully processed after sign-in
+        // First immediate refresh
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            context.read<CharactersViewModel>().loadCharacters();
+          }
+        });
+        
+        // Second refresh after a longer delay for data download completion
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) {
+            context.read<CharactersViewModel>().loadCharacters();
+          }
+        });
+        
+        // Third refresh as a fallback
+        Future.delayed(const Duration(milliseconds: 3000), () {
+          if (mounted) {
+            context.read<CharactersViewModel>().loadCharacters();
+          }
+        });
+      }
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      // Refresh characters when app comes to foreground (after returning from login)
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          context.read<CharactersViewModel>().loadCharacters();
+        }
+      });
+    }
   }
 
   @override
@@ -41,6 +89,38 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
       appBar: AppBar(
         title: const Text('D&D Characters'),
         actions: [
+          // Cloud sync button
+          StreamBuilder<SyncStatus>(
+            stream: _syncService.syncStatus,
+            builder: (context, snapshot) {
+              final syncStatus = snapshot.data ?? SyncStatus.disconnected;
+              return IconButton(
+                icon: Stack(
+                  children: [
+                    Icon(
+                      _authService.isAuthenticated ? Icons.cloud_done : Icons.cloud_upload,
+                      color: _getSyncStatusColor(syncStatus),
+                    ),
+                    if (syncStatus == SyncStatus.syncing)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.blue,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                onPressed: _handleCloudButtonPressed,
+                tooltip: _authService.isAuthenticated ? 'Cloud Sync Options' : 'Sign In & Sync',
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
@@ -185,6 +265,58 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
             onPressed: _navigateToCreateCharacter,
             child: const Text('Create Character'),
           ),
+          const SizedBox(height: 24),
+          // Show login option if not authenticated
+          if (!_authService.isAuthenticated) ...[
+            const Divider(),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(horizontal: 32),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.cloud_upload,
+                    color: Colors.blue.shade700,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sync Across Devices',
+                    style: TextStyle(
+                      color: Colors.blue.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Sign in to backup your data and access it from anywhere',
+                    style: TextStyle(
+                      color: Colors.blue.shade600,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _navigateToLogin,
+                    icon: const Icon(Icons.login),
+                    label: const Text('Sign In'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue.shade700,
+                      side: BorderSide(color: Colors.blue.shade300),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -366,7 +498,182 @@ class _CharactersListScreenState extends State<CharactersListScreen> {
     CharacterService.saveCharacter(duplicatedCharacter).then((_) {
       // Reload the characters list to refresh the UI
       context.read<CharactersViewModel>().loadCharacters();
+      // Schedule sync if authenticated
+      if (_authService.isAuthenticated) {
+        _syncService.scheduleCharacterSync();
+      }
     });
+  }
+
+  /// Handle cloud button press based on authentication state
+  void _handleCloudButtonPressed() {
+    if (_authService.isAuthenticated) {
+      _showCloudSyncOptions();
+    } else {
+      _navigateToLogin();
+    }
+  }
+
+  /// Navigate to login screen
+  void _navigateToLogin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
+  }
+
+  /// Show cloud sync options for authenticated users
+  void _showCloudSyncOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+          const ListTile(
+            title: Text('Cloud Sync Options'),
+            subtitle: Text('Manage your cloud synchronization'),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.sync),
+            title: const Text('Sync Now'),
+            subtitle: const Text('Upload all local changes to cloud'),
+            onTap: () {
+              Navigator.pop(context);
+              _confirmAndSync();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.download),
+            title: const Text('Download from Cloud'),
+            subtitle: const Text('Replace local data with cloud data'),
+            onTap: () {
+              Navigator.pop(context);
+              _downloadFromCloud();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+            subtitle: const Text('Sign out and disable cloud sync'),
+            onTap: () {
+              Navigator.pop(context);
+              _signOut();
+            },
+          ),
+          const SizedBox(height: 40),
+        ],
+      ),
+    ),
+    );
+  }
+
+  /// Confirm sync if there are deleted characters, then sync
+  void _confirmAndSync() async {
+    
+      // Show confirmation dialog
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirm Sync'),
+          content: const Text(
+            'This sync will permanently change the data from the cloud. Are you sure you want to continue?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: const Color.fromARGB(255, 54, 114, 244)),
+              child: const Text('Sync'),
+            ),
+          ],
+        ),
+      );
+      
+      if (confirmed == true) {
+        _syncAllData();
+      }
+  }
+
+  /// Sync all data to cloud
+  void _syncAllData() async {
+    final result = await _syncService.syncAll();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.success ? result.successMessage! : result.errorMessage!),
+          backgroundColor: result.success ? Colors.green : Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Download data from cloud
+  void _downloadFromCloud() async {
+    final result = await _syncService.downloadAllData();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.success ? result.successMessage! : result.errorMessage!),
+          backgroundColor: result.success ? Colors.green : Colors.red,
+        ),
+      );
+      // Reload characters if download was successful with a small delay
+      if (result.success) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            context.read<CharactersViewModel>().loadCharacters();
+          }
+        });
+      }
+    }
+  }
+
+  /// Sign out from Firebase
+  void _signOut() async {
+    try {
+      await _authService.signOut();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signed out successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error signing out: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Get color based on sync status
+  Color _getSyncStatusColor(SyncStatus status) {
+    switch (status) {
+      case SyncStatus.connected:
+        return Colors.green;
+      case SyncStatus.syncing:
+        return Colors.blue;
+      case SyncStatus.error:
+        return Colors.red;
+      case SyncStatus.disconnected:
+      default:
+        return Colors.grey;
+    }
   }
 
 
