@@ -169,16 +169,21 @@ class CloudSyncService {
       _syncStatusController.add(SyncStatus.syncing);
       
       final userId = _authService.currentUser!.uid;
+      print('=== Starting character sync for user: $userId ===');
+      
       final characters = await CharacterService.loadAllCharacters();
+      print('Loaded ${characters.length} characters from local storage');
+      
       final characterMaps = characters.map((c) => c.toJson()).toList();
+      print('Converted ${characterMaps.length} characters to JSON maps');
       
       await _uploadCharacters(userId, characterMaps);
       
       _syncStatusController.add(SyncStatus.connected);
       
-      if (kDebugMode) {
-        print('Successfully synced characters to Firebase');
-      }
+      
+      print('Successfully synced ${characters.length} characters to Firebase');
+      
       
       return SyncResult.success('Characters synced successfully');
     } catch (e) {
@@ -200,21 +205,28 @@ class CloudSyncService {
       _syncStatusController.add(SyncStatus.syncing);
       
       final userId = _authService.currentUser!.uid;
+      print('=== Starting diary sync for user: $userId ===');
       
       // Get all diaries for all characters
       final diaries = <Map<String, dynamic>>[];
       final charactersList = await CharacterService.loadAllCharacters();
+      print('Loaded ${charactersList.length} characters for diary sync');
+      
       for (final character in charactersList) {
         final characterDiaries = await DiaryService.loadDiaryEntriesForCharacter(character.id);
+        print('Loaded ${characterDiaries.length} diary entries for character: ${character.name}');
         diaries.addAll(characterDiaries.map((d) => d.toJson()));
       }
       
-      await _uploadDiaries(userId, diaries);
+      final diaryMaps = diaries.map((d) => d).toList();
+      print('Total diaries to sync: ${diaryMaps.length}');
+      
+      await _uploadDiaries(userId, diaryMaps);
       
       _syncStatusController.add(SyncStatus.connected);
       
       if (kDebugMode) {
-        print('Successfully synced diaries to Firebase');
+        print('Successfully synced ${diaryMaps.length} diaries to Firebase');
       }
       
       return SyncResult.success('Diaries synced successfully');
@@ -274,6 +286,15 @@ class CloudSyncService {
   
   /// Upload characters to Firebase
   Future<void> _uploadCharacters(String userId, List<Map<String, dynamic>> characters) async {
+    debugPrint('=== Starting character upload to Firebase ===');
+    debugPrint('Number of characters to upload: ${characters.length}');
+    
+    for (int i = 0; i < characters.length; i++) {
+      final characterName = characters[i]['stats']?['name']?['value'] ?? 'Unknown';
+      final characterId = characters[i]['stats']?['id']?['value'] ?? 'Unknown';
+      debugPrint('Character ${i + 1}: $characterName (ID: $characterId)');
+    }
+    
     final batch = _firestore.batch();
     final charactersRef = _firestore
         .collection('users')
@@ -281,26 +302,43 @@ class CloudSyncService {
         .collection(_charactersCollection);
     
     // Clear existing characters
+    debugPrint('Clearing existing characters from Firebase...');
     final existingDocs = await charactersRef.get();
+    debugPrint('Found ${existingDocs.docs.length} existing documents to delete');
     for (final doc in existingDocs.docs) {
       batch.delete(doc.reference);
     }
     
     // Add new characters
+    debugPrint('Adding new characters to Firebase...');
     for (final character in characters) {
-      final docRef = charactersRef.doc(character['id']?.toString() ?? 
-          DateTime.now().millisecondsSinceEpoch.toString());
+      final characterId = character['stats']?['id']?['value']?.toString() ?? 
+          DateTime.now().millisecondsSinceEpoch.toString();
+      final characterName = character['stats']?['name']?['value'] ?? 'Unknown';
+      debugPrint('Adding character: $characterName with ID: $characterId');
+      final docRef = charactersRef.doc(characterId);
       batch.set(docRef, {
         'data': character,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }
     
+    debugPrint('Committing batch operation...');
     await batch.commit();
+    debugPrint('=== Character upload completed successfully ===');
   }
   
   /// Upload diaries to Firebase
   Future<void> _uploadDiaries(String userId, List<Map<String, dynamic>> diaries) async {
+    print('=== Starting diary upload to Firebase ===');
+    print('Number of diaries to upload: ${diaries.length}');
+    
+    for (int i = 0; i < diaries.length; i++) {
+      final diaryTitle = diaries[i]['data']?['title']?['value'] ?? 'Unknown';
+      final diaryId = diaries[i]['data']?['id']?['value'] ?? 'Unknown';
+      print('Diary ${i + 1}: $diaryTitle (ID: $diaryId)');
+    }
+    
     final batch = _firestore.batch();
     final diariesRef = _firestore
         .collection('users')
@@ -308,22 +346,30 @@ class CloudSyncService {
         .collection(_diariesCollection);
     
     // Clear existing diaries
+    print('Clearing existing diaries from Firebase...');
     final existingDocs = await diariesRef.get();
+    print('Found ${existingDocs.docs.length} existing diary documents to delete');
     for (final doc in existingDocs.docs) {
       batch.delete(doc.reference);
     }
     
     // Add new diaries
+    print('Adding new diaries to Firebase...');
     for (final diary in diaries) {
-      final docRef = diariesRef.doc(diary['id']?.toString() ?? 
-          DateTime.now().millisecondsSinceEpoch.toString());
+      final diaryId = diary['data']?['id']?['value']?.toString() ?? 
+          DateTime.now().millisecondsSinceEpoch.toString();
+      final diaryTitle = diary['data']?['title']?['value'] ?? 'Unknown';
+      print('Adding diary: $diaryTitle with ID: $diaryId');
+      final docRef = diariesRef.doc(diaryId);
       batch.set(docRef, {
         'data': diary,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }
     
+    print('Committing diary batch operation...');
     await batch.commit();
+    print('=== Diary upload completed successfully ===');
   }
   
   /// Download characters from Firebase
