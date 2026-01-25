@@ -251,186 +251,191 @@ class _SpellByLevelState extends State<SpellByLevel> {
             isAlwaysPrepared;
 
         widgets.add(
-          Card(
-            margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-            child: ListTile(
-              leading: canPrepare
-                  ? Transform.scale(
-                      scale: 1.2,
-                      child: Checkbox(
-                        shape: const CircleBorder(),
-                        value: isPrepared,
-                        onChanged: (bool? value) {
-                          if (value == true) {
-                            if (canPrepareMore || isAlwaysPrepared) {
-                              widget.onToggleSpellPreparation(spell.id, true);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Cannot prepare more spells. Maximum: $currentMaxPrepared',
-                                  ),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          } else {
-                            widget.onToggleSpellPreparation(spell.id, false);
-                          }
-                        },
-                      ),
-                    )
-                  : null,
-              title: InkWell(
-                child: Text(
-                  spell.name,
-                  style: const TextStyle(color: Colors.blue),
-                ),
-                onTap: () => widget.onShowSpellDetails(spell.name),
+          Dismissible(
+            key: Key('spell_${spell.id}_$index'),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              color: Colors.red,
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 20),
+              child: const Icon(
+                Icons.delete,
+                color: Colors.white,
+                size: 24,
               ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+            onDismissed: (direction) {
+              widget.onRemoveSpell(index);
+              // Remove from preparation lists if it was prepared
+              if (isPrepared) {
+                widget.onToggleSpellPreparation(spell.id, false);
+              }
+              if (isAlwaysPrepared) {
+                widget.onToggleAlwaysPrepared(spell.id);
+              }
+              if (isFreeUse) {
+                widget.onToggleFreeUse(spell.id);
+              }
+
+              // Auto-save the character when a spell is removed
+              widget.onAutoSaveCharacter();
+            },
+            child: Card(
+              margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+              child: ListTile(
+                leading: canPrepare
+                    ? Transform.scale(
+                        scale: 1.2,
+                        child: Checkbox(
+                          shape: const CircleBorder(),
+                          value: isPrepared,
+                          onChanged: (bool? value) {
+                            if (value == true) {
+                              if (canPrepareMore || isAlwaysPrepared) {
+                                widget.onToggleSpellPreparation(spell.id, true);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Cannot prepare more spells. Maximum: $currentMaxPrepared',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } else {
+                              widget.onToggleSpellPreparation(spell.id, false);
+                            }
+                          },
+                        ),
+                      )
+                    : null,
+                title: InkWell(
+                  child: Text(
+                    spell.name,
+                    style: const TextStyle(color: Colors.blue),
                   ),
-                  if (isAlwaysPrepared || isFreeUse) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        if (isAlwaysPrepared) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.purple.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star,
-                                  size: 12,
-                                  color: Colors.purple.shade700,
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  'Always',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
+                  onTap: () => widget.onShowSpellDetails(spell.name),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}',
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    if (isAlwaysPrepared || isFreeUse) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          if (isAlwaysPrepared) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.purple.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.star,
+                                    size: 12,
                                     color: Colors.purple.shade700,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'Always',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.purple.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                        ],
-                        if (isFreeUse) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.bolt,
-                                  size: 12,
-                                  color: Colors.green.shade700,
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  'Free',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
+                            const SizedBox(width: 4),
+                          ],
+                          if (isFreeUse) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.bolt,
+                                    size: 12,
                                     color: Colors.green.shade700,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'Free',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.green.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-              trailing: SizedBox(
-                width: 80,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (canPrepare) ...[
-                      // Always prepared toggle
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            isAlwaysPrepared ? Icons.star : Icons.star_border,
-                            color: Colors.purple,
-                            size: 16,
-                          ),
-                          onPressed: () => widget.onToggleAlwaysPrepared(spell.id),
-                          tooltip: 'Always prepared',
-                        ),
-                      ),
-                      // Free use toggle
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            isFreeUse ? Icons.bolt : Icons.bolt_outlined,
-                            color: Colors.green,
-                            size: 16,
-                          ),
-                          onPressed: () => widget.onToggleFreeUse(spell.id),
-                          tooltip: 'Free use once per day',
-                        ),
                       ),
                     ],
-                    // Delete button
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(Icons.delete, size: 16),
-                        onPressed: () {
-                          widget.onRemoveSpell(index);
-                          // Remove from preparation lists if it was prepared
-                          if (isPrepared) {
-                            widget.onToggleSpellPreparation(spell.id, false);
-                          }
-                          if (isAlwaysPrepared) {
-                            widget.onToggleAlwaysPrepared(spell.id);
-                          }
-                          if (isFreeUse) {
-                            widget.onToggleFreeUse(spell.id);
-                          }
-
-                          // Auto-save the character when a spell is removed
-                          widget.onAutoSaveCharacter();
-                        },
-                      ),
-                    ),
                   ],
+                ),
+                trailing: SizedBox(
+                  width: canPrepare ? 56 : 32,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (canPrepare) ...[
+                        // Always prepared toggle
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: Icon(
+                              isAlwaysPrepared ? Icons.star : Icons.star_border,
+                              color: Colors.purple,
+                              size: 16,
+                            ),
+                            onPressed: () => widget.onToggleAlwaysPrepared(spell.id),
+                            tooltip: 'Always prepared',
+                          ),
+                        ),
+                        // Free use toggle
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: Icon(
+                              isFreeUse ? Icons.bolt : Icons.bolt_outlined,
+                              color: Colors.green,
+                              size: 16,
+                            ),
+                            onPressed: () => widget.onToggleFreeUse(spell.id),
+                            tooltip: 'Free use once per day',
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ),
