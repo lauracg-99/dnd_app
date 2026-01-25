@@ -1,4 +1,5 @@
 import 'package:dnd_app/views/characters/CharacterCoverTab/character_header_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/features_traits_section.dart';
 import 'package:dnd_app/views/characters/QuickGuide/characters_quick_guide.dart';
 import 'package:dnd_app/views/characters/StatsTab/stats_tab.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/combat_stats_section.dart';
@@ -840,6 +841,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           OtherProficienciesSection(
             controller: _proficienciesController,
             onChanged: () => _autoSaveCharacter(),
+          ),
+
+          const SizedBox(height: 16),
+
+          FeaturesTraitsSection(
+            controller: _featuresTraitsController,
+            onChanged: (value) => _autoSaveCharacter(),
           ),
 
           const SizedBox(height: 16),
