@@ -2,7 +2,7 @@
 
 A comprehensive Flutter mobile application for managing Dungeons & Dragons 5th Edition characters, spells, and game references.
 
-## 🎯 Features
+## Features
 
 ### Character Management
 - **Complete Character Creation**: Create new D&D 5E characters with all essential attributes
