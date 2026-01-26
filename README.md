@@ -183,6 +183,23 @@ flutter test
 5. Open a Pull Request
 
 
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+### Third-party Resources
+
+System and Resource files (creative content) from RPG Companion App Systems are licensed under:
+**Creative Commons Attribution–NonCommercial–ShareAlike 4.0 International (CC BY-NC-SA 4.0)**
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+This means:
+- **Attribution**: You must give appropriate credit to the original creator
+- **NonCommercial**: You may not use the material for commercial purposes
+- **ShareAlike**: If you remix, transform, or build upon the material, you must distribute your contributions under the same license
+
+**Note**: Any code, scripts, or build tools provided in the RPG Companion App Systems repository are licensed under the MIT License.
+
 ## Acknowledgments
 
 - Dungeons & Dragons 5th Edition rules and content
