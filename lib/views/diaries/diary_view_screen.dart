@@ -105,21 +105,13 @@ class DiaryViewScreen extends StatelessWidget {
     return Container(
       width: double.infinity,
       child: Card(
-        margin: EdgeInsets.all(18.0),
+        margin: EdgeInsets.only(top: 5.0, left: 25.0, right: 25.0),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Content:',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
               diaryEntry.content.isNotEmpty
                   ? _buildRichContent()
                   : Text(
@@ -145,12 +137,11 @@ class DiaryViewScreen extends StatelessWidget {
         ..document = Document.fromJson(jsonDelta);
       
       return Container(
-        constraints: const BoxConstraints(maxHeight: 400),
         child: IgnorePointer(
           child: QuillEditor.basic(
             controller: controller,
             config: QuillEditorConfig(
-              scrollable: true,
+              scrollable: false,
               customStyles: DefaultStyles(
                 paragraph: DefaultTextBlockStyle(
                   const TextStyle(
