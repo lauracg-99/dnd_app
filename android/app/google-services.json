@@ -8,6 +8,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:770427347098:android:83f04d2df790f69d4dff23",
+        "android_client_info": {
+          "package_name": "com.dndApp.es"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKYNZOiWyTvCVXaO2w5jRpDit4NM_OKuw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:770427347098:android:75867966e2e8b1f94dff23",
         "android_client_info": {
           "package_name": "com.example.dnd_app"
