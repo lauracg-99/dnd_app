@@ -1,3 +1,4 @@
+import 'package:dnd_app/views/characters/character_create_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
@@ -170,12 +171,13 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
         children: [
           const Icon(Icons.person_off, size: 48, color: Colors.grey),
           const SizedBox(height: 16),
-          const Text('No characters found. Create your first character to start writing diaries!'),
+          const Text(
+            'No characters found. \n Create your first character to start writing diaries!',
+          ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {
-              // Navigate to characters tab
-              DefaultTabController.of(context).animateTo(0);
+            onPressed: () {              
+              _navigateToCreateCharacter();
             },
             child: const Text('Go to Characters'),
           ),
@@ -203,9 +205,7 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: ListTile(
-        leading: CircleAvatar(
-          child: _buildCharacterImage(character),
-        ),
+        leading: CircleAvatar(child: _buildCharacterImage(character)),
         title: Text(
           character.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -223,10 +223,7 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
                 const SizedBox(width: 4),
                 Text(
                   'View diary entries',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
             ),
@@ -247,8 +244,11 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
 
   Widget _buildCharacterImage(Character character) {
     // Prioritize base64 data if available
-    if (character.customImageData != null && character.customImageData!.isNotEmpty) {
-      final imageBytes = ImageUtils.base64ToImageBytes(character.customImageData);
+    if (character.customImageData != null &&
+        character.customImageData!.isNotEmpty) {
+      final imageBytes = ImageUtils.base64ToImageBytes(
+        character.customImageData,
+      );
       if (imageBytes != null) {
         return ClipOval(
           child: Image.memory(
@@ -263,9 +263,10 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
         );
       }
     }
-    
+
     // Fallback to file path if base64 is not available
-    if (character.customImagePath != null && character.customImagePath!.isNotEmpty) {
+    if (character.customImagePath != null &&
+        character.customImagePath!.isNotEmpty) {
       return ClipOval(
         child: Image.file(
           File(character.customImagePath!),
@@ -278,8 +279,15 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
         ),
       );
     }
-    
+
     // Default icon if no image is available
     return const Icon(Icons.person);
+  }
+
+  void _navigateToCreateCharacter() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CharacterCreateScreen()),
+    );
   }
 }
