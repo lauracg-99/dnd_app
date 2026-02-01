@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/viewmodels/characters_viewmodel.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
   group('Character Creation Tests', () {
     test('Should create character through viewmodel', () async {
       final viewModel = CharactersViewModel();

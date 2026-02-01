@@ -5,6 +5,8 @@ import 'package:dnd_app/models/character_model.dart';
 import 'package:dnd_app/services/character_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
   group('JSON Corruption Recovery Tests', () {
     late File testFile;
     late Character testCharacter;

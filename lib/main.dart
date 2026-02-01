@@ -118,7 +118,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     DiariesOverviewScreen(),
     SpellsListScreen(),
     InformationScreen(),
-   // ItemsListScreen(),
   ];
 
   static const List<NavigationDestination> _destinations = [
@@ -129,7 +128,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       label: 'Spells',
     ),  
     NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),  
-    //NavigationDestination(icon: Icon(Icons.inventory), label: 'Items'),
   ];
 
   void _onItemTapped(int index) {

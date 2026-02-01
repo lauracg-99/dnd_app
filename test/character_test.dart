@@ -3,6 +3,8 @@ import 'package:dnd_app/viewmodels/characters_viewmodel.dart';
 import 'package:dnd_app/models/character_model.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
   group('Character System Tests', () {
     test('CharactersViewModel should initialize correctly', () {
       final viewModel = CharactersViewModel();
@@ -45,6 +47,10 @@ void main() {
         level: 5, // Test level
         spellSlots: CharacterSpellSlots(),
         pillars: CharacterPillars(),
+        appearance: CharacterAppearance(),
+        deathSaves: CharacterDeathSaves(),
+        languages: CharacterLanguages(),
+        moneyItems: CharacterMoneyItems(),
         createdAt: now,
         updatedAt: now,
       );
@@ -104,6 +110,10 @@ void main() {
           needs: 'Revenge',
           conflict: 'Anger vs. Compassion',
         ),
+        appearance: CharacterAppearance(),
+        deathSaves: CharacterDeathSaves(),
+        languages: CharacterLanguages(),
+        moneyItems: CharacterMoneyItems(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
