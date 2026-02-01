@@ -129,6 +129,9 @@ flutter build web
 1. Download the apk from the `build apk` directory
 2. Install the apk on your Android device
 
+### Install app for iOS
+Waiting for it to be uploaded to the app store (hopefully soon).
+
 ## App Structure
 
 ### Core Components
