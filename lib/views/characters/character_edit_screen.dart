@@ -492,37 +492,49 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       debugPrint(
         'STRENGTH controller changed - setting _hasUnsavedAbilityChanges = true',
       );
-      _hasUnsavedAbilityChanges = true;
+      setState(() {
+        _hasUnsavedAbilityChanges = true;
+      });
     });
     _dexterityController.addListener(() {
       debugPrint(
         'DEXTERITY controller changed - setting _hasUnsavedAbilityChanges = true',
       );
-      _hasUnsavedAbilityChanges = true;
+      setState(() {
+        _hasUnsavedAbilityChanges = true;
+      });
     });
     _constitutionController.addListener(() {
       debugPrint(
         'CONSTITUTION controller changed - setting _hasUnsavedAbilityChanges = true',
       );
-      _hasUnsavedAbilityChanges = true;
+      setState(() {
+        _hasUnsavedAbilityChanges = true;
+      });
     });
     _intelligenceController.addListener(() {
       debugPrint(
         'INTELLIGENCE controller changed - setting _hasUnsavedAbilityChanges = true',
       );
-      _hasUnsavedAbilityChanges = true;
+      setState(() {
+        _hasUnsavedAbilityChanges = true;
+      });
     });
     _wisdomController.addListener(() {
       debugPrint(
         'WISDOM controller changed - setting _hasUnsavedAbilityChanges = true',
       );
-      _hasUnsavedAbilityChanges = true;
+      setState(() {
+        _hasUnsavedAbilityChanges = true;
+      });
     });
     _charismaController.addListener(() {
       debugPrint(
         'CHARISMA controller changed - setting _hasUnsavedAbilityChanges = true',
       );
-      _hasUnsavedAbilityChanges = true;
+      setState(() {
+        _hasUnsavedAbilityChanges = true;
+      });
     });
     _proficiencyBonusController.addListener(() {
       _hasUnsavedAbilityChanges = true;
@@ -1423,10 +1435,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildSpellsTab() {
-    // Calculate maximum prepared spells using current state
-    final modifier = CharacterSpellPreparation.getSpellcastingModifier(
-      widget.character,
-    );
+    // Calculate maximum prepared spells using current state from controllers
+    final modifier = _getCurrentSpellcastingModifier();
     final calculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
       _classController.text.trim(), // Use current class from controller
       int.tryParse(_levelController.text) ??
@@ -1752,6 +1762,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     final abilityModifier = _getAbilityModifier(spellcastingAbility);
 
     return proficiencyBonus + abilityModifier;
+  }
+
+  /// Get the current spellcasting modifier from controllers (not saved character data)
+  int _getCurrentSpellcastingModifier() {
+    final spellcastingAbility = _getSpellcastingAbility();
+    if (spellcastingAbility == null) return 0;
+    
+    return _getAbilityModifier(spellcastingAbility);
   }
 
   Widget _buildSpellcastingInfoRow(
@@ -5475,15 +5493,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   /// Show dialog to modify maximum prepared spells
   void _showMaxPreparedDialog() {
-    // Calculate current max to show in dialog
+    // Calculate current max to show in dialog using current controller values
     final currentMax =
         _spellPreparation.maxPreparedSpells == 0
             ? CharacterSpellPreparation.calculateMaxPreparedSpells(
               _classController.text.trim(),
               int.tryParse(_levelController.text) ?? 1,
-              CharacterSpellPreparation.getSpellcastingModifier(
-                widget.character,
-              ),
+              _getCurrentSpellcastingModifier(),
             )
             : _spellPreparation.maxPreparedSpells;
 
@@ -5511,7 +5527,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Calculated maximum: ${CharacterSpellPreparation.calculateMaxPreparedSpells(widget.character.characterClass, widget.character.level, CharacterSpellPreparation.getSpellcastingModifier(widget.character))}',
+                  'Calculated maximum: ${CharacterSpellPreparation.calculateMaxPreparedSpells(_classController.text.trim(), int.tryParse(_levelController.text) ?? 1, _getCurrentSpellcastingModifier())}',
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
