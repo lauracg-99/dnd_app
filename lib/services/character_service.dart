@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../models/character_model.dart';
 import 'character_storage_service.dart';
+import '../utils/constants.dart';
 
 class CharacterService {
   static final _storage = CharacterStorageService();
@@ -28,8 +29,8 @@ class CharacterService {
   /// Create a new character
   static Future<Character> createCharacter({
     required String name,
-    int level = 1,
-    String characterClass = 'Fighter',
+    int level = CharacterLevelConstants.minLevel,
+    String characterClass = DndClasses.defaultClass,
     String? subclass,
     String? race,
     String? background,
@@ -37,9 +38,9 @@ class CharacterService {
     final now = DateTime.now();
     final characterId = '${name.toLowerCase().replaceAll(' ', '_')}_${now.millisecondsSinceEpoch}';
     
-    // Validate level is within D&D 5e bounds (1-20)
-    if (level < 1 || level > 20) {
-      throw ArgumentError('Character level must be between 1 and 20');
+    // Validate level is within D&D 5e bounds
+    if (level < CharacterLevelConstants.minLevel || level > CharacterLevelConstants.maxLevel) {
+      throw ArgumentError('Character level must be between ${CharacterLevelConstants.minLevel} and ${CharacterLevelConstants.maxLevel}');
     }
     
     // Create default character with basic stats

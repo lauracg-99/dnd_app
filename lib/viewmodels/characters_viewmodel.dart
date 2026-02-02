@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/character_model.dart';
 import '../services/character_service.dart';
+import '../utils/constants.dart';
 
 class CharactersViewModel extends ChangeNotifier {
   List<Character> _allCharacters = [];
@@ -17,22 +18,7 @@ class CharactersViewModel extends ChangeNotifier {
   String get selectedClass => _selectedClass;
 
   /// Available options for filtering
-  List<String> get availableClasses => [
-    'Barbarian',
-    'Bard',
-    'Cleric',
-    'Druid',
-    'Fighter',
-    'Monk',
-    'Paladin',
-    'Ranger',
-    'Rogue',
-    'Sorcerer',
-    'Warlock',
-    'Wizard',
-    'Artificer',
-    'Blood Hunter',
-  ];
+  List<String> get availableClasses => DndClasses.all;
 
   /// Load all characters
   Future<void> loadCharacters() async {

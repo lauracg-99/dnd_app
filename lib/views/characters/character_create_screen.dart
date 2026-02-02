@@ -4,6 +4,7 @@ import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
 import '../../models/race_model.dart';
+import '../../utils/constants.dart';
 
 class CharacterCreateScreen extends StatefulWidget {
   const CharacterCreateScreen({super.key});
@@ -15,7 +16,7 @@ class CharacterCreateScreen extends StatefulWidget {
 class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
   final _nameController = TextEditingController();
   final _levelController = TextEditingController(text: '1');
-  String _selectedClass = 'Fighter';
+  String _selectedClass = DndClasses.defaultClass;
   final _subclassController = TextEditingController();
   final _raceController = TextEditingController();
   final _backgroundController = TextEditingController();
@@ -44,151 +45,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
 
   // Helper method to get subclasses for each class
   List<String> _getSubclassesForClass(String className) {
-    switch (className.toLowerCase()) {
-      case 'fighter':
-        return [
-          'Battle Master',
-          'Champion',
-          'Eldritch Knight',
-          'Psi Warrior',
-          'Rune Knight',
-          'Samurai',
-          'Cavalier',
-          'Gunslinger',
-          'Banneret',
-        ];
-      case 'wizard':
-        return [
-          'School of Abjuration',
-          'School of Conjuration',
-          'School of Divination',
-          'School of Enchantment',
-          'School of Evocation',
-          'School of Illusion',
-          'School of Necromancy',
-          'School of Transmutation',
-          'School of Bladesinging',
-          'School of Chronurgy',
-          'School of Graviturgy',
-          'School of Scribes',
-          'School of Order',
-          'School of Invention',
-          'School of War Magic',
-        ];
-      case 'cleric':
-        return [
-          'Knowledge Domain',
-          'Life Domain',
-          'Light Domain',
-          'Nature Domain',
-          'Order Domain',
-          'Peace Domain',
-          'Trickery Domain',
-          'War Domain',
-          'Forge Domain',
-          'Grave Domain',
-          'Twilight Domain',
-          'Arcana Domain',
-        ];
-      case 'rogue':
-        return [
-          'Thief',
-          'Assassin',
-          'Arcane Trickster',
-          'Inquisitive',
-          'Mastermind',
-          'Scout',
-          'Soulknife',
-          'Swashbuckler',
-          'Phantom',
-        ];
-      case 'ranger':
-        return [
-          'Hunter',
-          'Beast Master',
-          'Gloom Stalker',
-          'Horizon Walker',
-          'Monster Slayer',
-          'Fey Wanderer',
-          'Druidic Warrior',
-          'Swarmkeeper',
-        ];
-      case 'paladin':
-        return [
-          'Devotion',
-          'Ancients',
-          'Vengeance',
-          'Crown',
-          'Oathbreaker',
-          'Glory',
-          'Watchers',
-        ];
-      case 'barbarian':
-        return [
-          'Path of the Berserker',
-          'Path of the Totem Warrior',
-          'Path of the Zealot',
-          'Path of the Wild Magic',
-          'Path of the Beast',
-          'Path of the Storm Herald',
-          'Path of the Battlerager',
-        ];
-      case 'bard':
-        return [
-          'College of Lore',
-          'College of Valor',
-          'College of Glamour',
-          'College of Swords',
-          'College of Whispers',
-          'College of Creation',
-        ];
-      case 'druid':
-        return [
-          'Circle of the Land',
-          'Circle of the Moon',
-          'Circle of the Shepherd',
-          'Circle of Spores',
-          'Circle of Stars',
-          'Circle of Wildfire',
-        ];
-      case 'monk':
-        return [
-          'Way of the Open Hand',
-          'Way of Shadow',
-          'Way of the Four Elements',
-          'Way of Mercy',
-          'Way of the Drunken Master',
-          'Way of the Astral Self',
-        ];
-      case 'sorcerer':
-        return [
-          'Draconic Bloodline',
-          'Wild Magic',
-          'Divine Soul',
-          'Shadow Magic',
-          'Storm Sorcery',
-          'Clockwork Soul',
-          'Aberrant Mind',
-        ];
-      case 'warlock':
-        return [
-          'The Fiend',
-          'The Great Old One',
-          'The Celestial',
-          'The Hexblade',
-          'The Fathomless',
-          'The Genie',
-        ];
-      case 'artificer':
-        return [
-          'Alchemist',
-          'Armorer',
-          'Artillerist',
-          'Battle Smith',
-        ];
-      default:
-        return [];
-    }
+    return DndSubclasses.getForClass(className);
   }
 
   Future<void> _createCharacter() async {
@@ -197,10 +54,10 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
     }
 
     final level = int.tryParse(_levelController.text.trim());
-    if (level == null || level < 1 || level > 20) {
+    if (level == null || level < CharacterLevelConstants.minLevel || level > CharacterLevelConstants.maxLevel) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid level between 1 and 20'),
+        SnackBar(
+          content: Text('Please enter a valid level between ${CharacterLevelConstants.minLevel} and ${CharacterLevelConstants.maxLevel}'),
           backgroundColor: Colors.red,
         ),
       );
