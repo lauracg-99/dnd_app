@@ -17,7 +17,7 @@ class ClassService {
           .listAssets()
           .where(
             (key) =>
-              key.startsWith('assets/data/classes/') &&
+              key.startsWith(_classesPath) &&
               key.endsWith('.rpg.json') &&
               key.contains('class_'))
           .toList();
