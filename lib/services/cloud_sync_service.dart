@@ -169,8 +169,13 @@ class CloudSyncService {
     _scheduleSyncIfAuthenticated(SyncType.diaries);
   }
   
-  /// Force immediate sync of characters
-  Future<SyncResult> syncCharacters() async {
+  /// Generic method to sync data to Firebase
+  Future<SyncResult> _syncData({
+    required SyncType type,
+    required Future<List<Map<String, dynamic>>> Function() loadData,
+    required Future<void> Function(String userId, List<Map<String, dynamic>> data) uploadData,
+    required String entityName,
+  }) async {
     if (!_authService.isAuthenticated) {
       return SyncResult.failure('User not authenticated');
     }
@@ -179,74 +184,58 @@ class CloudSyncService {
       _syncStatusController.add(SyncStatus.syncing);
       
       final userId = _authService.currentUser!.uid;
-      print('=== Starting character sync for user: $userId ===');
+      print('=== Starting $entityName sync for user: $userId ===');
       
-      final characters = await CharacterService.loadAllCharacters();
-      print('Loaded ${characters.length} characters from local storage');
+      final dataMaps = await loadData();
+      print('Loaded ${dataMaps.length} $entityName from local storage');
       
-      final characterMaps = characters.map((c) => c.toJson()).toList();
-      print('Converted ${characterMaps.length} characters to JSON maps');
-      
-      await _uploadCharacters(userId, characterMaps);
+      await uploadData(userId, dataMaps);
       
       _syncStatusController.add(SyncStatus.connected);
       
+      print('Successfully synced ${dataMaps.length} $entityName to Firebase');
       
-      print('Successfully synced ${characters.length} characters to Firebase');
-      
-      
-      return SyncResult.success('Characters synced successfully');
+      return SyncResult.success('$entityName synced successfully');
     } catch (e) {
       _syncStatusController.add(SyncStatus.error);
       if (kDebugMode) {
-        print('Error syncing characters: $e');
+        print('Error syncing $entityName: $e');
       }
-      return SyncResult.failure('Failed to sync characters: $e');
+      return SyncResult.failure('Failed to sync $entityName: $e');
     }
+  }
+  
+  /// Force immediate sync of characters
+  Future<SyncResult> syncCharacters() async {
+    return _syncData(
+      type: SyncType.characters,
+      loadData: () async {
+        final characters = await CharacterService.loadAllCharacters();
+        return characters.map((c) => c.toJson()).toList();
+      },
+      uploadData: _uploadCharacters,
+      entityName: 'characters',
+    );
   }
   
   /// Force immediate sync of diaries
   Future<SyncResult> syncDiaries() async {
-    if (!_authService.isAuthenticated) {
-      return SyncResult.failure('User not authenticated');
-    }
-    
-    try {
-      _syncStatusController.add(SyncStatus.syncing);
-      
-      final userId = _authService.currentUser!.uid;
-      print('=== Starting diary sync for user: $userId ===');
-      
-      // Get all diaries for all characters
-      final diaries = <Map<String, dynamic>>[];
-      final charactersList = await CharacterService.loadAllCharacters();
-      print('Loaded ${charactersList.length} characters for diary sync');
-      
-      for (final character in charactersList) {
-        final characterDiaries = await DiaryService.loadDiaryEntriesForCharacter(character.id);
-        print('Loaded ${characterDiaries.length} diary entries for character: ${character.name}');
-        diaries.addAll(characterDiaries.map((d) => d.toJson()));
-      }
-      
-      final diaryMaps = diaries.map((d) => d).toList();
-      print('Total diaries to sync: ${diaryMaps.length}');
-      
-      await _uploadDiaries(userId, diaryMaps);
-      
-      _syncStatusController.add(SyncStatus.connected);
-      
-      if (kDebugMode) {
-        print('Successfully synced ${diaryMaps.length} diaries to Firebase');
-      }
-      
-      return SyncResult.success('Diaries synced successfully');
-    } catch (e) {
-      _syncStatusController.add(SyncStatus.error);
-      if (kDebugMode) {
-        print('Error syncing diaries: $e');
-      }
-      return SyncResult.failure('Failed to sync diaries: $e');
-    }
+    return _syncData(
+      type: SyncType.diaries,
+      loadData: () async {
+        final diaries = <Map<String, dynamic>>[];
+        final charactersList = await CharacterService.loadAllCharacters();
+        
+        for (final character in charactersList) {
+          final characterDiaries = await DiaryService.loadDiaryEntriesForCharacter(character.id);
+          diaries.addAll(characterDiaries.map((d) => d.toJson()));
+        }
+        
+        return diaries;
+      },
+      uploadData: _uploadDiaries,
+      entityName: 'diaries',
+    );
   }
   
   /// Check if there are characters in cloud that don't exist locally (deleted locally)
