@@ -44,6 +44,8 @@ import 'services/character_auto_save_service.dart';
 import 'dialogs/add_spell_dialog.dart';
 import 'dialogs/spell_details_dialog.dart';
 import 'dialogs/add_attack_dialog.dart';
+import 'tabs/attacks_tab.dart';
+import 'tabs/skills_tab.dart';
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -615,151 +617,25 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   Widget _buildAttacksTab() {
     final spellcastingAbility = _getSpellcastingAbility();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Attacks',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s attacks and weapons',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-
-          // Attacks list
-          ..._attacks.asMap().entries.map((entry) {
-            final index = entry.key;
-            final attack = entry.value;
-            return Card(
-              child: ListTile(
-                title: Text(attack.name),
-                subtitle: Text(
-                  '${attack.attackBonus} | ${attack.damage} ${attack.damageType}',
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _attacks.removeAt(index);
-                    });
-
-                    // Auto-save the character when an attack is removed
-                    _autoSaveCharacter();
-                  },
-                ),
-              ),
-            );
-          }),
-
-          const SizedBox(height: 16),
-
-          // Debug: Always show spellcasting section for testing
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.purple.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.purple.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      color: Colors.purple.shade700,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Spellcasting',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.purple,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Debug info
-                /* Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade100,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Debug Info:', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('Class: "${_controllers.classController.text}"'),
-                      Text('Subclass: "${_controllers.subclassController.text}"'),
-                      Text('Spellcasting Ability: $spellcastingAbility'),
-                    ],
-                  ),
-                ), */
-                const SizedBox(height: 12),
-
-                // Only show spellcasting details if ability is detected
-                if (spellcastingAbility != null) ...[
-                  // Spellcasting Ability
-                  _buildSpellcastingInfoRow(
-                    'Spellcasting Ability',
-                    _getAbilityName(spellcastingAbility),
-                    '+${_getAbilityModifier(spellcastingAbility)}',
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Spell Save DC
-                  _buildSpellcastingInfoRow(
-                    'Spell Save DC',
-                    '8 + Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
-                    _getSpellSaveDC().toString(),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Spell Attack Bonus
-                  _buildSpellcastingInfoRow(
-                    'Spell Attack Bonus',
-                    'Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
-                    '+${_getSpellAttackBonus()}',
-                  ),
-                ] else ...[
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'No spellcasting ability detected for this class/subclass',
-                      style: TextStyle(color: Colors.grey.shade700),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          TextButton.icon(
-            onPressed: _showAddAttackDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Attack'),
-          ),
-        ],
-      ),
+    
+    return AttacksTab(
+      attacks: _attacks,
+      spellcastingAbility: spellcastingAbility,
+      spellSaveDC: _getSpellSaveDC(),
+      spellAttackBonus: _getSpellAttackBonus(),
+      abilityModifier: spellcastingAbility != null 
+          ? _getAbilityModifier(spellcastingAbility)
+          : 0,
+      abilityName: spellcastingAbility != null
+          ? _getAbilityName(spellcastingAbility)
+          : '',
+      onAddAttack: _showAddAttackDialog,
+      onRemoveAttack: (index) {
+        setState(() {
+          _attacks.removeAt(index);
+        });
+        _autoSaveCharacter();
+      },
     );
   }
 
@@ -882,159 +758,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildSkillsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Skills grouped by ability scores
-          _buildSkillGroup('Strength', [
-            _buildSkillRow(
-              'Athletics',
-              'STR',
-              _skillChecks.athleticsProficiency,
-              _skillChecks.athleticsExpertise,
-              'athletics',
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Dexterity', [
-            _buildSkillRow(
-              'Acrobatics',
-              'DEX',
-              _skillChecks.acrobaticsProficiency,
-              _skillChecks.acrobaticsExpertise,
-              'acrobatics',
-            ),
-            _buildSkillRow(
-              'Sleight of Hand',
-              'DEX',
-              _skillChecks.sleightOfHandProficiency,
-              _skillChecks.sleightOfHandExpertise,
-              'sleight_of_hand',
-            ),
-            _buildSkillRow(
-              'Stealth',
-              'DEX',
-              _skillChecks.stealthProficiency,
-              _skillChecks.stealthExpertise,
-              'stealth',
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Intelligence', [
-            _buildSkillRow(
-              'Arcana',
-              'INT',
-              _skillChecks.arcanaProficiency,
-              _skillChecks.arcanaExpertise,
-              'arcana',
-            ),
-            _buildSkillRow(
-              'History',
-              'INT',
-              _skillChecks.historyProficiency,
-              _skillChecks.historyExpertise,
-              'history',
-            ),
-            _buildSkillRow(
-              'Investigation',
-              'INT',
-              _skillChecks.investigationProficiency,
-              _skillChecks.investigationExpertise,
-              'investigation',
-            ),
-            _buildSkillRow(
-              'Nature',
-              'INT',
-              _skillChecks.natureProficiency,
-              _skillChecks.natureExpertise,
-              'nature',
-            ),
-            _buildSkillRow(
-              'Religion',
-              'INT',
-              _skillChecks.religionProficiency,
-              _skillChecks.religionExpertise,
-              'religion',
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Wisdom', [
-            _buildSkillRow(
-              'Animal Handling',
-              'WIS',
-              _skillChecks.animalHandlingProficiency,
-              _skillChecks.animalHandlingExpertise,
-              'animal_handling',
-            ),
-            _buildSkillRow(
-              'Insight',
-              'WIS',
-              _skillChecks.insightProficiency,
-              _skillChecks.insightExpertise,
-              'insight',
-            ),
-            _buildSkillRow(
-              'Medicine',
-              'WIS',
-              _skillChecks.medicineProficiency,
-              _skillChecks.medicineExpertise,
-              'medicine',
-            ),
-            _buildSkillRow(
-              'Perception',
-              'WIS',
-              _skillChecks.perceptionProficiency,
-              _skillChecks.perceptionExpertise,
-              'perception',
-            ),
-            _buildSkillRow(
-              'Survival',
-              'WIS',
-              _skillChecks.survivalProficiency,
-              _skillChecks.survivalExpertise,
-              'survival',
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Charisma', [
-            _buildSkillRow(
-              'Deception',
-              'CHA',
-              _skillChecks.deceptionProficiency,
-              _skillChecks.deceptionExpertise,
-              'deception',
-            ),
-            _buildSkillRow(
-              'Intimidation',
-              'CHA',
-              _skillChecks.intimidationProficiency,
-              _skillChecks.intimidationExpertise,
-              'intimidation',
-            ),
-            _buildSkillRow(
-              'Performance',
-              'CHA',
-              _skillChecks.performanceProficiency,
-              _skillChecks.performanceExpertise,
-              'performance',
-            ),
-            _buildSkillRow(
-              'Persuasion',
-              'CHA',
-              _skillChecks.persuasionProficiency,
-              _skillChecks.persuasionExpertise,
-              'persuasion',
-            ),
-          ]),
-          const SizedBox(height: 45), // Extra space at bottom of screen
-        ],
-      ),
+    return SkillsTab(
+      skillChecks: _skillChecks,
+      level: int.tryParse(_controllers.levelController.text) ?? 1,
+      strengthScore: int.tryParse(_controllers.strengthController.text) ?? 10,
+      dexterityScore: int.tryParse(_controllers.dexterityController.text) ?? 10,
+      constitutionScore: int.tryParse(_controllers.constitutionController.text) ?? 10,
+      intelligenceScore: int.tryParse(_controllers.intelligenceController.text) ?? 10,
+      wisdomScore: int.tryParse(_controllers.wisdomController.text) ?? 10,
+      charismaScore: int.tryParse(_controllers.charismaController.text) ?? 10,
+      onUpdateProficiency: _updateSkillCheck,
+      onUpdateExpertise: _updateSkillExpertise,
     );
   }
 
@@ -1446,62 +1180,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     return _getAbilityModifier(spellcastingAbility);
   }
 
-  Widget _buildSpellcastingInfoRow(
-    String label,
-    String description,
-    String value,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.purple.shade300),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.purple,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.purple.shade600,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   String _getAbilityName(String ability) {
     return CharacterAbilityHelper.getAbilityName(ability);
@@ -1839,184 +1517,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
-  Widget _buildSkillGroup(String abilityName, List<Widget> skills) {
-    // Get the ability modifier for this group
-    final abilityAbbreviation = _getAbilityAbbreviation(abilityName);
-    final abilityScore = _getAbilityScore(abilityAbbreviation);
-    final modifier = ((abilityScore - 10) / 2).floor();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.blue.shade200, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.blue.withOpacity(0.15),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                abilityName,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blue.shade700,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Text(
-                  '${modifier >= 0 ? '+' : ''}$modifier',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        ...skills,
-      ],
-    );
-  }
-
   String _getAbilityAbbreviation(String abilityName) {
     return CharacterAbilityHelper.getAbilityAbbreviation(abilityName);
-  }
-
-  Widget _buildSkillRow(
-    String skillName,
-    String ability,
-    bool isProficient,
-    bool hasExpertise,
-    String skillKey,
-  ) {
-    final abilityScore = _getAbilityScore(ability);
-    final modifier = ((abilityScore - 10) / 2).floor();
-    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
-      int.tryParse(_controllers.levelController.text) ?? 1,
-    );
-
-    // Calculate total bonus directly instead of using old _stats object
-    int total = modifier;
-    if (hasExpertise) {
-      total += proficiencyBonus * 2; // Expertise adds double proficiency bonus
-    } else if (isProficient) {
-      total += proficiencyBonus;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(6),
-        color:
-            hasExpertise
-                ? Colors.purple.shade50
-                : (isProficient ? Colors.green.shade50 : Colors.white),
-      ),
-      child: Row(
-        children: [
-          // Skill name
-          Expanded(
-            flex: 3,
-            child: Text(
-              skillName,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-          // Ability and modifier
-          SizedBox(
-            width: 50,
-            child: Text(
-              '$ability\n${modifier >= 0 ? '+' : ''}$modifier',
-              style: const TextStyle(fontSize: 11),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Proficiency checkbox
-          GestureDetector(
-            onTap: () => _updateSkillCheck(skillKey, !isProficient),
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isProficient ? Colors.green : Colors.grey,
-                ),
-                borderRadius: BorderRadius.circular(4),
-                color: isProficient ? Colors.green : Colors.transparent,
-              ),
-              child:
-                  isProficient
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : null,
-            ),
-          ),
-          const SizedBox(width: 4),
-          // Expertise checkbox
-          GestureDetector(
-            onTap: () => _updateSkillExpertise(skillKey, !hasExpertise),
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: hasExpertise ? Colors.purple : Colors.grey,
-                ),
-                borderRadius: BorderRadius.circular(4),
-                color: hasExpertise ? Colors.purple : Colors.transparent,
-              ),
-              child:
-                  hasExpertise
-                      ? const Icon(Icons.star, color: Colors.white, size: 16)
-                      : null,
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Total bonus
-          SizedBox(
-            width: 40,
-            child: Text(
-              '${total >= 0 ? '+' : ''}$total',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color:
-                    hasExpertise
-                        ? Colors.purple
-                        : (isProficient ? Colors.green : Colors.black),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildPickImageButton() {
