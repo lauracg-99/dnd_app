@@ -3,10 +3,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'cloud_sync_service.dart';
+import '../models/timestamped_entity.dart';
 
 /// Base storage service that provides common functionality for file and memory storage
-/// T: The type of entity being stored (must have toJson/fromJson)
-abstract class BaseStorageService<T> {
+/// T: The type of entity being stored (must have toJson/fromJson and implement TimestampedEntity)
+abstract class BaseStorageService<T extends TimestampedEntity> {
   final String _dirName;
   final List<T> _memoryCache = [];
   bool _useMemoryStorage = false;
@@ -87,7 +88,7 @@ abstract class BaseStorageService<T> {
   Future<void> save(T entity) async {
     await ensureInitialized();
     try {
-      final updatedEntity = updateTimestamp(entity);
+      final updatedEntity = entity.withUpdatedTimestamp() as T;
       final id = getId(updatedEntity);
 
       if (_useMemoryStorage) {
@@ -397,9 +398,6 @@ abstract class BaseStorageService<T> {
 
   /// Convert JSON to entity
   T fromJson(Map<String, dynamic> json);
-
-  /// Update timestamp on entity
-  T updateTimestamp(T entity);
 
   /// Sort entities list
   void sortEntities(List<T> entities);

@@ -28,11 +28,6 @@ class DiaryStorageService extends BaseStorageService<DiaryEntry> {
   DiaryEntry fromJson(Map<String, dynamic> json) => DiaryEntry.fromJson(json);
 
   @override
-  DiaryEntry updateTimestamp(DiaryEntry entity) {
-    return entity.copyWith(updatedAt: DateTime.now());
-  }
-
-  @override
   void sortEntities(List<DiaryEntry> entities) {
     entities.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
   }

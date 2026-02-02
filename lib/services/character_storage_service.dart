@@ -29,11 +29,6 @@ class CharacterStorageService extends BaseStorageService<Character> {
   Character fromJson(Map<String, dynamic> json) => Character.fromJson(json);
 
   @override
-  Character updateTimestamp(Character entity) {
-    return entity.copyWith(updatedAt: DateTime.now());
-  }
-
-  @override
   void sortEntities(List<Character> entities) {
     entities.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }

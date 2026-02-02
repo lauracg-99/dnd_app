@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'base_model.dart';
+import 'timestamped_entity.dart';
 
-class Character extends BaseModel {
+class Character extends BaseModel with TimestampedEntity {
   final String id;
   final String name;
   final String? customImagePath;
@@ -31,7 +32,11 @@ class Character extends BaseModel {
   final CharacterDeathSaves deathSaves;
   final CharacterLanguages languages;
   final CharacterMoneyItems moneyItems;
+  
+  @override
   final DateTime createdAt;
+  
+  @override
   final DateTime updatedAt;
 
   const Character({
@@ -221,6 +226,11 @@ class Character extends BaseModel {
       if (defaultValue != null) return defaultValue;
       rethrow;
     }
+  }
+
+  @override
+  Character withUpdatedTimestamp() {
+    return copyWith(updatedAt: DateTime.now());
   }
 
   Character copyWith({

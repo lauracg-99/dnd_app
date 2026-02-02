@@ -1,11 +1,16 @@
 import 'base_model.dart';
+import 'timestamped_entity.dart';
 
-class DiaryEntry extends BaseModel {
+class DiaryEntry extends BaseModel with TimestampedEntity {
   final String id;
   final String characterId;
   final String title;
   final String content;
+  
+  @override
   final DateTime createdAt;
+  
+  @override
   final DateTime updatedAt;
 
   const DiaryEntry({
@@ -43,6 +48,11 @@ class DiaryEntry extends BaseModel {
       createdAt: DateTime.parse(_getValue<String>(data, 'created_at')),
       updatedAt: DateTime.parse(_getValue<String>(data, 'updated_at')),
     );
+  }
+
+  @override
+  DiaryEntry withUpdatedTimestamp() {
+    return copyWith(updatedAt: DateTime.now());
   }
 
   DiaryEntry copyWith({
