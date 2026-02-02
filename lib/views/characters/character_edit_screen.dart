@@ -31,6 +31,8 @@ import '../../models/tab_config_model.dart';
 import '../../services/user_preferences_service.dart';
 import '../../helpers/character_ability_helper.dart';
 import '../../helpers/spell_calculation_helper.dart';
+import '../../helpers/skill_update_helper.dart';
+import '../../helpers/subclass_data_helper.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
@@ -108,6 +110,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   // Tab customization
   List<String> _tabOrder = [];
   List<CharacterTabConfig> _orderedTabs = [];
+  late final Map<String, Widget Function()> _tabBuilders;
 
   @override
   void initState() {
@@ -118,6 +121,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _controllers = FormControllersManager()
       ..initializeFromCharacter(widget.character);
     _autoSaveService = CharacterAutoSaveService();
+    
+    // Initialize tab builders once
+    _tabBuilders = _createTabBuilders();
     
     // Initialize with default tabs immediately to prevent empty TabBar
     _initializeDefaultTabs();
@@ -134,11 +140,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     });
   }
 
-  /// Initialize default tabs synchronously to prevent empty TabBar during initial build
-  void _initializeDefaultTabs() {
-    _tabOrder = CharacterTabManager.getDefaultTabOrder();
-    
-    final Map<String, Widget Function()> tabBuilders = {
+  Map<String, Widget Function()> _createTabBuilders() {
+    return {
       'character': () => _buildCharacterCoverTab(),
       'quick_guide': () => _buildQuickGuideTab(),
       'stats': () => _buildStatsTab(),
@@ -151,8 +154,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       'appearance': () => _buildAppearanceTab(),
       'notes': () => _buildNotesTab(),
     };
-    
-    _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
+  }
+
+  void _initializeDefaultTabs() {
+    _tabOrder = CharacterTabManager.getDefaultTabOrder();
+    _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, _tabBuilders);
   }
 
   void _initializeCharacterData() {
@@ -210,6 +216,24 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _setupAutoSaveListeners();
   }
 
+  void _setupAbilityScoreListeners() {
+    final abilityControllers = [
+      _controllers.strengthController,
+      _controllers.dexterityController,
+      _controllers.constitutionController,
+      _controllers.intelligenceController,
+      _controllers.wisdomController,
+      _controllers.charismaController,
+    ];
+
+    for (final controller in abilityControllers) {
+      controller.addListener(() {
+        debugPrint('Ability score changed - setting _hasUnsavedAbilityChanges = true');
+        setState(() => _hasUnsavedAbilityChanges = true);
+      });
+    }
+  }
+
   void _setupAutoSaveListeners() {
     // Usar FormControllersManager para agregar listeners centralizados
     _controllers.addListeners(
@@ -233,54 +257,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       setState(() {}); // Rebuild to update proficiency bonus display
     });
 
-    _controllers.strengthController.addListener(() {
-      debugPrint(
-        'STRENGTH controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _controllers.dexterityController.addListener(() {
-      debugPrint(
-        'DEXTERITY controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _controllers.constitutionController.addListener(() {
-      debugPrint(
-        'CONSTITUTION controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _controllers.intelligenceController.addListener(() {
-      debugPrint(
-        'INTELLIGENCE controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _controllers.wisdomController.addListener(() {
-      debugPrint(
-        'WISDOM controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _controllers.charismaController.addListener(() {
-      debugPrint(
-        'CHARISMA controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
+    _setupAbilityScoreListeners();
     _controllers.proficiencyBonusController.addListener(() {
       _hasUnsavedAbilityChanges = true;
     });
@@ -294,33 +271,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _controllers.hitDiceTypeController.addListener(_autoSaveCharacter);
   }
 
-  /// Initialize tab order from user preferences
   Future<void> _initializeTabOrder() async {
     try {
-      // Initialize user preferences service
       await UserPreferencesService.initializeStorage();
       
-      // Load user preferences
       final preferences = await UserPreferencesService.loadPreferences();
       _tabOrder = preferences.characterTabOrder;
       
-      // Create tab builders map
-      final Map<String, Widget Function()> tabBuilders = {
-        'character': () => _buildCharacterCoverTab(),
-        'quick_guide': () => _buildQuickGuideTab(),
-        'stats': () => _buildStatsTab(),
-        'skills': () => _buildSkillsTab(),
-        'attacks': () => _buildAttacksTab(),
-        'spell_slots': () => _buildSpellSlotsTab(),
-        'spells': () => _buildSpellsTab(),
-        'feats': () => _buildFeatsTab(),
-        'class_slots': () => _buildPersonalizedSlotsTab(),
-        'appearance': () => _buildAppearanceTab(),
-        'notes': () => _buildNotesTab(),
-      };
-      
-      // Get ordered tabs
-      _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
+      _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, _tabBuilders);
       
       // Only recreate controller if length changed
       if (_tabController.length != _orderedTabs.length) {
@@ -330,22 +288,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       setState(() {});
     } catch (e) {
       debugPrint('Error initializing tab order: $e');
-      // Fallback to default order
       _tabOrder = CharacterTabManager.getDefaultTabOrder();
-      final Map<String, Widget Function()> tabBuilders = {
-        'character': () => _buildCharacterCoverTab(),
-        'quick_guide': () => _buildQuickGuideTab(),
-        'stats': () => _buildStatsTab(),
-        'skills': () => _buildSkillsTab(),
-        'attacks': () => _buildAttacksTab(),
-        'spell_slots': () => _buildSpellSlotsTab(),
-        'spells': () => _buildSpellsTab(),
-        'feats': () => _buildFeatsTab(),
-        'class_slots': () => _buildPersonalizedSlotsTab(),
-        'appearance': () => _buildAppearanceTab(),
-        'notes': () => _buildNotesTab(),
-      };
-      _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
+      _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, _tabBuilders);
       
       // Only recreate controller if length changed
       if (_tabController.length != _orderedTabs.length) {
@@ -494,7 +438,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               });
             },
             onRaceChanged: (value) {
+              debugPrint('Race changed to: $value');
               setState(() {
+                _controllers.raceController.text = value;
                 _hasUnsavedClassChanges = true;
               });
             },
@@ -502,6 +448,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               debugPrint('Background changed to: $value');
               setState(() {
                 _selectedBackground = value;
+                _controllers.backgroundController.text = value;
                 _hasUnsavedClassChanges = true;
               });
             },
@@ -1186,157 +1133,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   List<String> _getSubclassesForClass(String className) {
-    switch (className.toLowerCase()) {
-      case 'fighter':
-        return [
-          'Battle Master',
-          'Champion',
-          'Eldritch Knight',
-          'Psi Warrior',
-          'Rune Knight',
-          'Samurai',
-          'Cavalier',
-          'Gunslinger',
-          'Banneret',
-        ];
-      case 'wizard':
-        return [
-          'School of Abjuration',
-          'School of Conjuration',
-          'School of Divination',
-          'School of Enchantment',
-          'School of Evocation',
-          'School of Illusion',
-          'School of Necromancy',
-          'School of Transmutation',
-          'School of Bladesinging',
-          'School of Chronurgy',
-          'School of Graviturgy',
-          'School of Scribes',
-          'School of Order',
-          'School of Invention',
-          'School of War Magic',
-        ];
-      case 'cleric':
-        return [
-          'Knowledge Domain',
-          'Life Domain',
-          'Light Domain',
-          'Nature Domain',
-          'Order Domain',
-          'Peace Domain',
-          'Trickery Domain',
-          'War Domain',
-          'Forge Domain',
-          'Grave Domain',
-          'Twilight Domain',
-          'Arcana Domain',
-        ];
-      case 'rogue':
-        return [
-          'Thief',
-          'Assassin',
-          'Arcane Trickster',
-          'Inquisitive',
-          'Mastermind',
-          'Scout',
-          'Soulknife',
-          'Swashbuckler',
-          'Phantom',
-        ];
-      case 'ranger':
-        return [
-          'Hunter',
-          'Beast Master',
-          'Gloom Stalker',
-          'Horizon Walker',
-          'Monster Slayer',
-          'Fey Wanderer',
-          'Druidic Warrior',
-          'Swarmkeeper',
-        ];
-      case 'paladin':
-        return [
-          'Devotion',
-          'Ancients',
-          'Vengeance',
-          'Oathbreaker',
-          'Glory',
-          'Crown',
-          'Watchers',
-        ];
-      case 'barbarian':
-        return [
-          'Path of the Berserker',
-          'Path of the Totem Warrior',
-          'Path of the Zealot',
-          'Path of the Wild Magic',
-          'Path of the Storm Herald',
-          'Path of the Ancestral Guardian',
-          'Path of the Battlerager',
-          'Path of the Beast',
-          'Path of the Wild Soul',
-        ];
-      case 'bard':
-        return [
-          'College of Lore',
-          'College of Valor',
-          'College of Glamour',
-          'College of Swords',
-          'College of Whispers',
-          'College of Creation',
-          'College of Eloquence',
-          'College of Spirits',
-        ];
-      case 'druid':
-        return [
-          'Circle of the Land',
-          'Circle of the Moon',
-          'Circle of the Shepherd',
-          'Circle of Spores',
-          'Circle of Stars',
-          'Circle of Wildfire',
-          'Circle of Dreams',
-          'Circle of the Coast',
-        ];
-      case 'monk':
-        return [
-          'Way of the Open Hand',
-          'Way of Shadow',
-          'Way of the Four Elements',
-          'Way of the Long Death',
-          'Way of Mercy',
-          'Way of the Drunken Master',
-          'Way of the Kensei',
-          'Way of the Astral Self',
-        ];
-      case 'sorcerer':
-        return [
-          'Draconic Bloodline',
-          'Wild Magic',
-          'Divine Soul',
-          'Shadow Magic',
-          'Storm Sorcery',
-          'Clockwork Soul',
-          'Aberrant Mind',
-        ];
-      case 'warlock':
-        return [
-          'The Fiend',
-          'The Great Old One',
-          'The Celestial',
-          'The Hexblade',
-          'The Archfey',
-          'The Undying',
-          'The Genie',
-          'The Fathomless',
-          'The Undead',
-        ];
-      case 'artificer':
-        return ['Alchemist', 'Armorer', 'Artillerist', 'Battle Smith'];
-      default:
-        return [];
-    }
+    return SubclassDataHelper.getSubclassesForClass(className);
   }
 
   // Check if the current class or subclass can cast spells
@@ -1798,202 +1595,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   void _updateSkillCheck(String skill, bool value) {
     setState(() {
-      _skillChecks = CharacterSkillChecks(
-        acrobaticsProficiency:
-            skill == 'acrobatics' ? value : _skillChecks.acrobaticsProficiency,
-        acrobaticsExpertise:
-            skill == 'acrobatics'
-                ? (value ? _skillChecks.acrobaticsExpertise : false)
-                : _skillChecks.acrobaticsExpertise,
-        animalHandlingProficiency:
-            skill == 'animal_handling'
-                ? value
-                : _skillChecks.animalHandlingProficiency,
-        animalHandlingExpertise:
-            skill == 'animal_handling'
-                ? (value ? _skillChecks.animalHandlingExpertise : false)
-                : _skillChecks.animalHandlingExpertise,
-        arcanaProficiency:
-            skill == 'arcana' ? value : _skillChecks.arcanaProficiency,
-        arcanaExpertise:
-            skill == 'arcana'
-                ? (value ? _skillChecks.arcanaExpertise : false)
-                : _skillChecks.arcanaExpertise,
-        athleticsProficiency:
-            skill == 'athletics' ? value : _skillChecks.athleticsProficiency,
-        athleticsExpertise:
-            skill == 'athletics'
-                ? (value ? _skillChecks.athleticsExpertise : false)
-                : _skillChecks.athleticsExpertise,
-        deceptionProficiency:
-            skill == 'deception' ? value : _skillChecks.deceptionProficiency,
-        deceptionExpertise:
-            skill == 'deception'
-                ? (value ? _skillChecks.deceptionExpertise : false)
-                : _skillChecks.deceptionExpertise,
-        historyProficiency:
-            skill == 'history' ? value : _skillChecks.historyProficiency,
-        historyExpertise:
-            skill == 'history'
-                ? (value ? _skillChecks.historyExpertise : false)
-                : _skillChecks.historyExpertise,
-        insightProficiency:
-            skill == 'insight' ? value : _skillChecks.insightProficiency,
-        insightExpertise:
-            skill == 'insight'
-                ? (value ? _skillChecks.insightExpertise : false)
-                : _skillChecks.insightExpertise,
-        intimidationProficiency:
-            skill == 'intimidation'
-                ? value
-                : _skillChecks.intimidationProficiency,
-        intimidationExpertise:
-            skill == 'intimidation'
-                ? (value ? _skillChecks.intimidationExpertise : false)
-                : _skillChecks.intimidationExpertise,
-        investigationProficiency:
-            skill == 'investigation'
-                ? value
-                : _skillChecks.investigationProficiency,
-        investigationExpertise:
-            skill == 'investigation'
-                ? (value ? _skillChecks.investigationExpertise : false)
-                : _skillChecks.investigationExpertise,
-        medicineProficiency:
-            skill == 'medicine' ? value : _skillChecks.medicineProficiency,
-        medicineExpertise:
-            skill == 'medicine'
-                ? (value ? _skillChecks.medicineExpertise : false)
-                : _skillChecks.medicineExpertise,
-        natureProficiency:
-            skill == 'nature' ? value : _skillChecks.natureProficiency,
-        natureExpertise:
-            skill == 'nature'
-                ? (value ? _skillChecks.natureExpertise : false)
-                : _skillChecks.natureExpertise,
-        perceptionProficiency:
-            skill == 'perception' ? value : _skillChecks.perceptionProficiency,
-        perceptionExpertise:
-            skill == 'perception'
-                ? (value ? _skillChecks.perceptionExpertise : false)
-                : _skillChecks.perceptionExpertise,
-        performanceProficiency:
-            skill == 'performance'
-                ? value
-                : _skillChecks.performanceProficiency,
-        performanceExpertise:
-            skill == 'performance'
-                ? (value ? _skillChecks.performanceExpertise : false)
-                : _skillChecks.performanceExpertise,
-        persuasionProficiency:
-            skill == 'persuasion' ? value : _skillChecks.persuasionProficiency,
-        persuasionExpertise:
-            skill == 'persuasion'
-                ? (value ? _skillChecks.persuasionExpertise : false)
-                : _skillChecks.persuasionExpertise,
-        religionProficiency:
-            skill == 'religion' ? value : _skillChecks.religionProficiency,
-        religionExpertise:
-            skill == 'religion'
-                ? (value ? _skillChecks.religionExpertise : false)
-                : _skillChecks.religionExpertise,
-        sleightOfHandProficiency:
-            skill == 'sleight_of_hand'
-                ? value
-                : _skillChecks.sleightOfHandProficiency,
-        sleightOfHandExpertise:
-            skill == 'sleight_of_hand'
-                ? (value ? _skillChecks.sleightOfHandExpertise : false)
-                : _skillChecks.sleightOfHandExpertise,
-        stealthProficiency:
-            skill == 'stealth' ? value : _skillChecks.stealthProficiency,
-        stealthExpertise:
-            skill == 'stealth'
-                ? (value ? _skillChecks.stealthExpertise : false)
-                : _skillChecks.stealthExpertise,
-        survivalProficiency:
-            skill == 'survival' ? value : _skillChecks.survivalProficiency,
-        survivalExpertise:
-            skill == 'survival'
-                ? (value ? _skillChecks.survivalExpertise : false)
-                : _skillChecks.survivalExpertise,
-      );
+      _skillChecks = SkillUpdateHelper.updateProficiency(_skillChecks, skill, value);
       _autoSaveCharacter(); // Auto-save skill changes
     });
   }
 
   void _updateSkillExpertise(String skill, bool value) {
     setState(() {
-      // If setting expertise to true, also set proficiency to true
-      if (value) {
-        _updateSkillCheck(skill, true);
-      }
-
-      _skillChecks = CharacterSkillChecks(
-        acrobaticsProficiency: _skillChecks.acrobaticsProficiency,
-        acrobaticsExpertise:
-            skill == 'acrobatics' ? value : _skillChecks.acrobaticsExpertise,
-        animalHandlingProficiency: _skillChecks.animalHandlingProficiency,
-        animalHandlingExpertise:
-            skill == 'animal_handling'
-                ? value
-                : _skillChecks.animalHandlingExpertise,
-        arcanaProficiency: _skillChecks.arcanaProficiency,
-        arcanaExpertise:
-            skill == 'arcana' ? value : _skillChecks.arcanaExpertise,
-        athleticsProficiency: _skillChecks.athleticsProficiency,
-        athleticsExpertise:
-            skill == 'athletics' ? value : _skillChecks.athleticsExpertise,
-        deceptionProficiency: _skillChecks.deceptionProficiency,
-        deceptionExpertise:
-            skill == 'deception' ? value : _skillChecks.deceptionExpertise,
-        historyProficiency: _skillChecks.historyProficiency,
-        historyExpertise:
-            skill == 'history' ? value : _skillChecks.historyExpertise,
-        insightProficiency: _skillChecks.insightProficiency,
-        insightExpertise:
-            skill == 'insight' ? value : _skillChecks.insightExpertise,
-        intimidationProficiency: _skillChecks.intimidationProficiency,
-        intimidationExpertise:
-            skill == 'intimidation'
-                ? value
-                : _skillChecks.intimidationExpertise,
-        investigationProficiency: _skillChecks.investigationProficiency,
-        investigationExpertise:
-            skill == 'investigation'
-                ? value
-                : _skillChecks.investigationExpertise,
-        medicineProficiency: _skillChecks.medicineProficiency,
-        medicineExpertise:
-            skill == 'medicine' ? value : _skillChecks.medicineExpertise,
-        natureProficiency: _skillChecks.natureProficiency,
-        natureExpertise:
-            skill == 'nature' ? value : _skillChecks.natureExpertise,
-        perceptionProficiency: _skillChecks.perceptionProficiency,
-        perceptionExpertise:
-            skill == 'perception' ? value : _skillChecks.perceptionExpertise,
-        performanceProficiency: _skillChecks.performanceProficiency,
-        performanceExpertise:
-            skill == 'performance' ? value : _skillChecks.performanceExpertise,
-        persuasionProficiency: _skillChecks.persuasionProficiency,
-        persuasionExpertise:
-            skill == 'persuasion' ? value : _skillChecks.persuasionExpertise,
-        religionProficiency: _skillChecks.religionProficiency,
-        religionExpertise:
-            skill == 'religion' ? value : _skillChecks.religionExpertise,
-        sleightOfHandProficiency: _skillChecks.sleightOfHandProficiency,
-        sleightOfHandExpertise:
-            skill == 'sleight_of_hand'
-                ? value
-                : _skillChecks.sleightOfHandExpertise,
-        stealthProficiency: _skillChecks.stealthProficiency,
-        stealthExpertise:
-            skill == 'stealth' ? value : _skillChecks.stealthExpertise,
-        survivalProficiency: _skillChecks.survivalProficiency,
-        survivalExpertise:
-            skill == 'survival' ? value : _skillChecks.survivalExpertise,
-      );
-      _autoSaveCharacter(); // Auto-save skill expertise changes
+      _skillChecks = SkillUpdateHelper.updateExpertise(_skillChecks, skill, value);
+      _autoSaveCharacter();
     });
   }
 
