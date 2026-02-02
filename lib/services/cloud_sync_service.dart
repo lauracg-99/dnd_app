@@ -139,24 +139,34 @@ class CloudSyncService {
     }
   }
   
-  /// Schedule character sync (debounced)
-  void scheduleCharacterSync() {
+  /// Schedule sync (debounced) - generic method
+  void _scheduleSyncIfAuthenticated(SyncType type) {
     if (!_authService.isAuthenticated) return;
     
-    _charactersSyncTimer?.cancel();
-    _charactersSyncTimer = Timer(_syncDebounceDelay, () {
-      syncCharacters();
-    });
+    switch (type) {
+      case SyncType.characters:
+        _charactersSyncTimer?.cancel();
+        _charactersSyncTimer = Timer(_syncDebounceDelay, () {
+          syncCharacters();
+        });
+        break;
+      case SyncType.diaries:
+        _diariesSyncTimer?.cancel();
+        _diariesSyncTimer = Timer(_syncDebounceDelay, () {
+          syncDiaries();
+        });
+        break;
+    }
+  }
+  
+  /// Schedule character sync (debounced)
+  void scheduleCharacterSync() {
+    _scheduleSyncIfAuthenticated(SyncType.characters);
   }
   
   /// Schedule diary sync (debounced)
   void scheduleDiarySync() {
-    if (!_authService.isAuthenticated) return;
-    
-    _diariesSyncTimer?.cancel();
-    _diariesSyncTimer = Timer(_syncDebounceDelay, () {
-      syncDiaries();
-    });
+    _scheduleSyncIfAuthenticated(SyncType.diaries);
   }
   
   /// Force immediate sync of characters
@@ -526,6 +536,12 @@ class CloudSyncService {
     _cancelAllSyncTimers();
     _syncStatusController.close();
   }
+}
+
+/// Sync type enumeration
+enum SyncType {
+  characters,
+  diaries,
 }
 
 /// Sync status enumeration
