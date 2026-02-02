@@ -23,8 +23,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'dart:io';
 import 'dart:convert';
-import 'package:flutter_quill/flutter_quill.dart';
-import 'package:flutter_quill/quill_delta.dart';
 import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
 import '../../models/race_model.dart';
@@ -32,6 +30,7 @@ import '../../models/background_model.dart';
 import '../../models/tab_config_model.dart';
 import '../../services/user_preferences_service.dart';
 import '../../helpers/character_ability_helper.dart';
+import '../../helpers/spell_calculation_helper.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
@@ -39,6 +38,12 @@ import '../../viewmodels/backgrounds_viewmodel.dart';
 import '../../utils/image_utils.dart';
 import 'SpellsTab/spell_by_level.dart';
 import '../diaries/diary_list_screen.dart';
+import 'state/character_edit_state_manager.dart';
+import 'state/form_controllers_manager.dart';
+import 'services/character_auto_save_service.dart';
+import 'dialogs/add_spell_dialog.dart';
+import 'dialogs/spell_details_dialog.dart';
+import 'dialogs/add_attack_dialog.dart';
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -63,63 +68,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   String _selectedClass = 'Fighter';
   bool _useCustomSubclass = false;
   String _selectedBackground = '';
-  bool _toolbarExpanded = false;
 
-  // Death saves controllers
-  List<bool> _deathSaveSuccesses = [false, false, false];
-  List<bool> _deathSaveFailures = [false, false, false];
-
-  // Languages controller
-  final _languagesController = TextEditingController();
-
-  // Money and items controllers
-  final _moneyController = TextEditingController();
-  final _itemsController = QuillController.basic();
-
-  // Form controllers
-  final _nameController = TextEditingController();
-  final _levelController = TextEditingController();
-  final _classController = TextEditingController();
-  final _subclassController = TextEditingController();
-  final _raceController = TextEditingController();
-  final _backgroundController = TextEditingController();
-  final _quickGuideController = QuillController.basic();
-  final _proficienciesController = QuillController.basic();
-  final _featuresTraitsController = QuillController.basic();
-  final _backstoryController = QuillController.basic();
-  final _featNotesController = QuillController.basic();
-
-  // Appearance controllers
-  final _heightController = TextEditingController();
-  final _ageController = TextEditingController();
-  final _eyeColorController = TextEditingController();
-  final _additionalDetailsController = QuillController.basic();
-
-  // Pillars controllers
-  final _gimmickController = TextEditingController();
-  final _quirkController = TextEditingController();
-  final _wantsController = TextEditingController();
-  final _needsController = TextEditingController();
-  final _conflictController = TextEditingController();
-
-  // Stats controllers
-  final _strengthController = TextEditingController();
-  final _dexterityController = TextEditingController();
-  final _constitutionController = TextEditingController();
-  final _intelligenceController = TextEditingController();
-  final _wisdomController = TextEditingController();
-  final _charismaController = TextEditingController();
-  final _proficiencyBonusController = TextEditingController();
-  final _armorClassController = TextEditingController();
-  final _speedController = TextEditingController();
-  final _initiativeController = TextEditingController();
-
-  // Health controllers
-  final _maxHpController = TextEditingController();
-  final _currentHpController = TextEditingController();
-  final _tempHpController = TextEditingController();
-  final _hitDiceController = TextEditingController();
-  final _hitDiceTypeController = TextEditingController();
+  // Managers centralizados
+  late FormControllersManager _controllers;
+  late CharacterEditStateManager _stateManager;
+  late CharacterAutoSaveService _autoSaveService;
 
   // Character data
   late CharacterStats _stats;
@@ -146,11 +99,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   // Shield state
   bool _hasShield = false;
 
-  // Spell filter states
-  bool _filterByCharacterClass = true;
-  String? _selectedLevelFilter;
-  String? _selectedClassFilter;
-  String? _selectedSchoolFilter;
+  // Death saves state
+  List<bool> _deathSaveSuccesses = [false, false, false];
+  List<bool> _deathSaveFailures = [false, false, false];
 
   // Tab customization
   List<String> _tabOrder = [];
@@ -159,6 +110,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   @override
   void initState() {
     super.initState();
+    
+    // Inicializar managers
+    _stateManager = CharacterEditStateManager(character: widget.character);
+    _controllers = FormControllersManager()
+      ..initializeFromCharacter(widget.character);
+    _autoSaveService = CharacterAutoSaveService();
     
     // Initialize with default tabs immediately to prevent empty TabBar
     _initializeDefaultTabs();
@@ -207,169 +164,20 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _customImageData = character.customImageData;
     _appearanceImageData = character.appearance.appearanceImageData;
 
-    // Initialize controllers
-    _nameController.text = character.name;
-    _levelController.text = character.level.toString();
-    _levelController.addListener(() {
-      _autoSaveCharacter();
-      setState(() {}); // Rebuild to update proficiency bonus display
-    });
+    // Initialize UI state (controllers ya están inicializados por FormControllersManager)
     _selectedClass = character.characterClass;
-    _classController.text = character.characterClass;
-    _subclassController.text = character.subclass ?? '';
-    _raceController.text = character.race ?? '';
-    _backgroundController.text = character.background ?? '';
     _selectedBackground = character.background ?? '';
 
     // Check if current subclass is custom (not in preset list)
-    final availableSubclasses = _getSubclassesForClass(
-      character.characterClass,
-    );
-    _useCustomSubclass =
-        character.subclass != null &&
-        !availableSubclasses.contains(character.subclass);
+    final availableSubclasses = _getSubclassesForClass(character.characterClass);
+    _useCustomSubclass = character.subclass != null && !availableSubclasses.contains(character.subclass);
 
-    // Initialize quick guide with Delta format from plain text
-    if (character.quickGuide.isNotEmpty) {
-      try {
-        // Try to parse as JSON (new format with rich text)
-        final List<dynamic> jsonDelta = jsonDecode(character.quickGuide);
-        _quickGuideController.document = Document.fromJson(jsonDelta);
-      } catch (e) {
-        // Fallback to plain text (old format)
-        String text = character.quickGuide;
-        // Ensure text ends with newline as required by flutter_quill
-        if (!text.endsWith('\n')) {
-          text += '\n';
-        }
-        final delta = Delta()..insert(text);
-        _quickGuideController.document = Document.fromDelta(delta);
-      }
-    }
-    // Initialize proficiencies with rich text support
-    if (character.proficiencies.isNotEmpty) {
-      try {
-        // Try to parse as JSON (new format with rich text)
-        final List<dynamic> jsonDelta = jsonDecode(character.proficiencies);
-        _proficienciesController.document = Document.fromJson(jsonDelta);
-      } catch (e) {
-        // Fallback to plain text (old format)
-        String text = character.proficiencies;
-        if (!text.endsWith('\n')) {
-          text += '\n';
-        }
-        final delta = Delta()..insert(text);
-        _proficienciesController.document = Document.fromDelta(delta);
-      }
-    }
+    // Quill controllers y death saves ya están inicializados por FormControllersManager
+    // Solo necesitamos copiar death saves al estado local para compatibilidad
+    // TODO: Migrar death saves completamente a StateManager
 
-    if (character.featuresTraits.isNotEmpty) {
-      try {
-        // Try to parse as JSON (new format with rich text)
-        final List<dynamic> jsonDelta = jsonDecode(character.featuresTraits);
-        _featuresTraitsController.document = Document.fromJson(jsonDelta);
-      } catch (e) {
-        // Fallback to plain text (old format)
-        String text = character.featuresTraits;
-        if (!text.endsWith('\n')) {
-          text += '\n';
-        }
-        final delta = Delta()..insert(text);
-        _featuresTraitsController.document = Document.fromDelta(delta);
-      }
-    }
-    // Initialize backstory with rich text support
-    if (character.backstory.isNotEmpty) {
-      try {
-        // Try to parse as JSON (new format with rich text)
-        final List<dynamic> jsonDelta = jsonDecode(character.backstory);
-        _backstoryController.document = Document.fromJson(jsonDelta);
-      } catch (e) {
-        // Fallback to plain text (old format)
-        String text = character.backstory;
-        if (!text.endsWith('\n')) {
-          text += '\n';
-        }
-        final delta = Delta()..insert(text);
-        _backstoryController.document = Document.fromDelta(delta);
-      }
-    }
-
-    // Initialize death saves
-    _deathSaveSuccesses = List.from(character.deathSaves.successes);
-    _deathSaveFailures = List.from(character.deathSaves.failures);
-
-    // Initialize languages and money/items
-    _languagesController.text = character.languages.languages.join(', ');
-    _moneyController.text = character.moneyItems.money;
-    
-    // Initialize items with rich text support
-    if (character.moneyItems.items.isNotEmpty) {
-      try {
-        // Try to parse as JSON (new format with rich text)
-        final List<dynamic> jsonDelta = jsonDecode(character.moneyItems.items.first);
-        _itemsController.document = Document.fromJson(jsonDelta);
-      } catch (e) {
-        // Fallback to plain text (old format)
-        String text = character.moneyItems.items.join('\n');
-        if (!text.endsWith('\n')) {
-          text += '\n';
-        }
-        final delta = Delta()..insert(text);
-        _itemsController.document = Document.fromDelta(delta);
-      }
-    }
-
-    // Add listeners for class changes
-    _classController.addListener(() {
-      if (_classController.text != character.characterClass) {
-        setState(() {
-          _hasUnsavedClassChanges = true;
-        });
-      }
-    });
-
-    _subclassController.addListener(() {
-      if (_subclassController.text != (character.subclass ?? '')) {
-        setState(() {
-          _hasUnsavedClassChanges = true;
-        });
-      }
-    });
-
-    _raceController.addListener(() {
-      if (_raceController.text != (character.race ?? '')) {
-        setState(() {
-          _hasUnsavedClassChanges = true;
-        });
-      }
-    });
-    _backgroundController.addListener(() {
-      if (_backgroundController.text != (character.background ?? '')) {
-        setState(() {
-          _hasUnsavedClassChanges = true;
-        });
-      }
-    });
-
-    // Initialize stats
+    // Initialize character data models
     _stats = character.stats;
-    _strengthController.text = _stats.strength.toString();
-    _dexterityController.text = _stats.dexterity.toString();
-    _constitutionController.text = _stats.constitution.toString();
-    _intelligenceController.text = _stats.intelligence.toString();
-    _wisdomController.text = _stats.wisdom.toString();
-    _charismaController.text = _stats.charisma.toString();
-    _proficiencyBonusController.text = _stats.proficiencyBonus.toString();
-    _armorClassController.text = _stats.armorClass.toString();
-    _speedController.text = _stats.speed.toString();
-    // Initialize initiative - check if it matches dexterity modifier to determine if manually modified
-    final dexterityModifier = _stats.getModifier(_stats.dexterity);
-    if (_stats.initiative == dexterityModifier) {
-      _initiativeController.text = dexterityModifier.toString();
-    } else {
-      _initiativeController.text = _stats.initiative.toString();
-    }
     _hasInspiration = _stats.inspiration;
     _hasConcentration = _stats.hasConcentration;
     _hasShield = _stats.hasShield;
@@ -380,11 +188,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Initialize health
     _health = character.health;
-    _maxHpController.text = _health.maxHitPoints.toString();
-    _currentHpController.text = _health.currentHitPoints.toString();
-    _tempHpController.text = _health.temporaryHitPoints.toString();
-    _hitDiceController.text = _health.hitDice.toString();
-    _hitDiceTypeController.text = _health.hitDiceType;
 
     // Initialize attacks
     _attacks = List.from(character.attacks);
@@ -398,97 +201,37 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Initialize pillars
     _pillars = character.pillars;
-    _gimmickController.text = _pillars.gimmick;
-    _quirkController.text = _pillars.quirk;
-    _wantsController.text = _pillars.wants;
-    _needsController.text = _pillars.needs;
-    _conflictController.text = _pillars.conflict;
+    
+    // Appearance, feat notes, y otros Quill controllers ya están inicializados por FormControllersManager
 
-    // Initialize feat notes
-    if (character.featNotes.isNotEmpty) {
-      try {
-        // Try to parse as JSON (new format with rich text)
-        final List<dynamic> jsonDelta = jsonDecode(character.featNotes);
-        _featNotesController.document = Document.fromJson(jsonDelta);
-      } catch (e) {
-        // Fallback to plain text (old format)
-        String text = character.featNotes;
-        // Ensure text ends with newline as required by flutter_quill
-        if (!text.endsWith('\n')) {
-          text += '\n';
-        }
-        final delta = Delta()..insert(text);
-        _featNotesController.document = Document.fromDelta(delta);
-      }
-    }
-    // Initialize appearance
-    _heightController.text = character.appearance.height;
-    _ageController.text = character.appearance.age;
-    _eyeColorController.text = character.appearance.eyeColor;
-    // Initialize appearance additional details with rich text support
-    if (character.appearance.additionalDetails.isNotEmpty) {
-      try {
-        // Try to parse as JSON (new format with rich text)
-        final List<dynamic> jsonDelta = jsonDecode(character.appearance.additionalDetails);
-        _additionalDetailsController.document = Document.fromJson(jsonDelta);
-      } catch (e) {
-        // Fallback to plain text (old format)
-        String text = character.appearance.additionalDetails;
-        if (!text.endsWith('\n')) {
-          text += '\n';
-        }
-        final delta = Delta()..insert(text);
-        _additionalDetailsController.document = Document.fromDelta(delta);
-      }
-    }
-
-    // Set up auto-save listeners
+    // Set up auto-save listeners usando FormControllersManager
     _setupAutoSaveListeners();
   }
 
   void _setupAutoSaveListeners() {
-    // Add listeners to all text controllers for auto-save
-    _nameController.addListener(_autoSaveCharacter);
-    _classController.addListener(() {
-      _autoSaveCharacter();
+    // Usar FormControllersManager para agregar listeners centralizados
+    _controllers.addListeners(
+      onBasicInfoChanged: _autoSaveCharacter,
+      onStatsChanged: _autoSaveCharacter,
+      onHealthChanged: _autoSaveCharacter,
+      onAppearanceChanged: _autoSaveCharacter,
+      onPillarsChanged: _autoSaveCharacter,
+      onOtherChanged: _autoSaveCharacter,
+      onQuillChanged: _autoSaveCharacter,
+    );
+    
+    // Listeners adicionales para rebuild de UI
+    _controllers.classController.addListener(() {
       setState(() {}); // Rebuild to show/hide concentration field
     });
-    _subclassController.addListener(() {
-      _autoSaveCharacter();
+    _controllers.subclassController.addListener(() {
       setState(() {}); // Rebuild to show/hide concentration field
     });
-    _raceController.addListener(_autoSaveCharacter);
-    _quickGuideController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _proficienciesController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _featuresTraitsController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _backstoryController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _featNotesController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _additionalDetailsController.document.changes.listen((_) {
-      _autoSaveCharacter();
+    _controllers.levelController.addListener(() {
+      setState(() {}); // Rebuild to update proficiency bonus display
     });
 
-    _moneyController.addListener(_autoSaveCharacter);
-    _itemsController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-
-    _gimmickController.addListener(_autoSaveCharacter);
-    _quirkController.addListener(_autoSaveCharacter);
-    _wantsController.addListener(_autoSaveCharacter);
-    _needsController.addListener(_autoSaveCharacter);
-    _conflictController.addListener(_autoSaveCharacter);
-
-    _strengthController.addListener(() {
+    _controllers.strengthController.addListener(() {
       debugPrint(
         'STRENGTH controller changed - setting _hasUnsavedAbilityChanges = true',
       );
@@ -496,7 +239,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         _hasUnsavedAbilityChanges = true;
       });
     });
-    _dexterityController.addListener(() {
+    _controllers.dexterityController.addListener(() {
       debugPrint(
         'DEXTERITY controller changed - setting _hasUnsavedAbilityChanges = true',
       );
@@ -504,7 +247,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         _hasUnsavedAbilityChanges = true;
       });
     });
-    _constitutionController.addListener(() {
+    _controllers.constitutionController.addListener(() {
       debugPrint(
         'CONSTITUTION controller changed - setting _hasUnsavedAbilityChanges = true',
       );
@@ -512,7 +255,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         _hasUnsavedAbilityChanges = true;
       });
     });
-    _intelligenceController.addListener(() {
+    _controllers.intelligenceController.addListener(() {
       debugPrint(
         'INTELLIGENCE controller changed - setting _hasUnsavedAbilityChanges = true',
       );
@@ -520,7 +263,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         _hasUnsavedAbilityChanges = true;
       });
     });
-    _wisdomController.addListener(() {
+    _controllers.wisdomController.addListener(() {
       debugPrint(
         'WISDOM controller changed - setting _hasUnsavedAbilityChanges = true',
       );
@@ -528,7 +271,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         _hasUnsavedAbilityChanges = true;
       });
     });
-    _charismaController.addListener(() {
+    _controllers.charismaController.addListener(() {
       debugPrint(
         'CHARISMA controller changed - setting _hasUnsavedAbilityChanges = true',
       );
@@ -536,17 +279,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         _hasUnsavedAbilityChanges = true;
       });
     });
-    _proficiencyBonusController.addListener(() {
+    _controllers.proficiencyBonusController.addListener(() {
       _hasUnsavedAbilityChanges = true;
     });
-    _armorClassController.addListener(_autoSaveCharacter);
-    _speedController.addListener(_autoSaveCharacter);
+    _controllers.armorClassController.addListener(_autoSaveCharacter);
+    _controllers.speedController.addListener(_autoSaveCharacter);
 
-    _maxHpController.addListener(_autoSaveCharacter);
-    _currentHpController.addListener(_autoSaveCharacter);
-    _tempHpController.addListener(_autoSaveCharacter);
-    _hitDiceController.addListener(_autoSaveCharacter);
-    _hitDiceTypeController.addListener(_autoSaveCharacter);
+    _controllers.maxHpController.addListener(_autoSaveCharacter);
+    _controllers.currentHpController.addListener(_autoSaveCharacter);
+    _controllers.tempHpController.addListener(_autoSaveCharacter);
+    _controllers.hitDiceController.addListener(_autoSaveCharacter);
+    _controllers.hitDiceTypeController.addListener(_autoSaveCharacter);
   }
 
   /// Initialize tab order from user preferences
@@ -654,43 +397,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   @override
   void dispose() {
     _tabController.dispose();
-
-    // Dispose all controllers
-    _nameController.dispose();
-    _levelController.dispose();
-    _classController.dispose();
-    _subclassController.dispose();
-    _raceController.dispose();
-    _backgroundController.dispose();
-    _quickGuideController.dispose();
-    _proficienciesController.dispose();
-    _featuresTraitsController.dispose();
-    _backstoryController.dispose();
-    _featNotesController.dispose();
-    _additionalDetailsController.dispose();
-    _moneyController.dispose();
-    _itemsController.dispose();
-    _gimmickController.dispose();
-    _quirkController.dispose();
-    _wantsController.dispose();
-    _needsController.dispose();
-    _conflictController.dispose();
-    _strengthController.dispose();
-    _dexterityController.dispose();
-    _constitutionController.dispose();
-    _intelligenceController.dispose();
-    _wisdomController.dispose();
-    _charismaController.dispose();
-    _proficiencyBonusController.dispose();
-    _armorClassController.dispose();
-    _speedController.dispose();
-    _initiativeController.dispose();
-    _maxHpController.dispose();
-    _currentHpController.dispose();
-    _tempHpController.dispose();
-    _hitDiceController.dispose();
-    _hitDiceTypeController.dispose();
-
+    _controllers.dispose();
+    _stateManager.dispose();
     super.dispose();
   }
 
@@ -761,12 +469,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 _isEditingCharacterCover = isEditing;
               });
             },
-            nameController: _nameController,
-            levelController: _levelController,
-            classController: _classController,
-            subclassController: _subclassController,
-            raceController: _raceController,
-            backgroundController: _backgroundController,
+            nameController: _controllers.nameController,
+            levelController: _controllers.levelController,
+            classController: _controllers.classController,
+            subclassController: _controllers.subclassController,
+            raceController: _controllers.raceController,
+            backgroundController: _controllers.backgroundController,
             customImagePath: _customImagePath,
             customImageData: _customImageData,
             onPickImage: _showImageOptionsDialog,
@@ -812,8 +520,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           const SizedBox(height: 16),
 
           InitiativeSection(
-            controller: _initiativeController,
-            dexterityController: _dexterityController,
+            controller: _controllers.initiativeController,
+            dexterityController: _controllers.dexterityController,
             onChanged: (value) {
               _autoSaveCharacter();
             },
@@ -832,11 +540,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ),
 
           HealthSection(
-            maxHpController: _maxHpController,
-            currentHpController: _currentHpController,
-            tempHpController: _tempHpController,
-            hitDiceController: _hitDiceController,
-            hitDiceTypeController: _hitDiceTypeController,
+            maxHpController: _controllers.maxHpController,
+            currentHpController: _controllers.currentHpController,
+            tempHpController: _controllers.tempHpController,
+            hitDiceController: _controllers.hitDiceController,
+            hitDiceTypeController: _controllers.hitDiceTypeController,
           ),
 
           const SizedBox(height: 24),
@@ -868,14 +576,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           const SizedBox(height: 16),
 
           FeaturesTraitsSection(
-            controller: _featuresTraitsController,
+            controller: _controllers.featuresTraitsController,
             onChanged: (value) => _autoSaveCharacter(),
           ),
 
           const SizedBox(height: 16),
 
           OtherProficienciesSection(
-            controller: _proficienciesController,
+            controller: _controllers.proficienciesController,
             onChanged: () => _autoSaveCharacter(),
           ),
 
@@ -883,14 +591,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           LanguagesSection(
             onChanged: (value) => _autoSaveCharacter(),
-            languagesController: _languagesController,
+            languagesController: _controllers.languagesController,
           ),
 
           const SizedBox(height: 16),
 
           MoneyItemsSection(
-            moneyController: _moneyController,
-            itemsController: _itemsController,
+            moneyController: _controllers.moneyController,
+            itemsController: _controllers.itemsController,
             onMoneyChanged: (value) => _autoSaveCharacter(),
             onItemsChanged: () => _autoSaveCharacter(),
           ),
@@ -993,8 +701,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Debug Info:', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('Class: "${_classController.text}"'),
-                      Text('Subclass: "${_subclassController.text}"'),
+                      Text('Class: "${_controllers.classController.text}"'),
+                      Text('Subclass: "${_controllers.subclassController.text}"'),
                       Text('Spellcasting Ability: $spellcastingAbility'),
                     ],
                   ),
@@ -1057,20 +765,20 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   Widget _buildQuickGuideTab() {
     return CharactersQuickGuide(
-      controller: _quickGuideController,
+      controller: _controllers.quickGuideController,
       onSaveCharacter: _autoSaveCharacter,
     );
   }
 
   Widget _buildStatsTab() {
     return StatsTab(
-      levelController: _levelController,
-      strengthController: _strengthController,
-      dexterityController: _dexterityController,
-      constitutionController: _constitutionController,
-      intelligenceController: _intelligenceController,
-      wisdomController: _wisdomController,
-      charismaController: _charismaController,
+      levelController: _controllers.levelController,
+      strengthController: _controllers.strengthController,
+      dexterityController: _controllers.dexterityController,
+      constitutionController: _controllers.constitutionController,
+      intelligenceController: _controllers.intelligenceController,
+      wisdomController: _controllers.wisdomController,
+      charismaController: _controllers.charismaController,
       hasUnsavedAbilityChanges: _hasUnsavedAbilityChanges,
       savingThrows: _savingThrows,
       onSaveAbilities: () {
@@ -1438,8 +1146,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Calculate maximum prepared spells using current state from controllers
     final modifier = _getCurrentSpellcastingModifier();
     final calculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
-      _classController.text.trim(), // Use current class from controller
-      int.tryParse(_levelController.text) ??
+      _controllers.classController.text.trim(), // Use current class from controller
+      int.tryParse(_controllers.levelController.text) ??
           1, // Use current level from controller
       modifier,
     );
@@ -1538,7 +1246,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Maximum prepared spells: $maxPrepared (${_classController.text.trim()} level ${int.tryParse(_levelController.text) ?? 1} + ${_getModifierName(modifier)} $modifier modifier = $calculatedMax)${maxPrepared != calculatedMax ? ' (modified: +${(maxPrepared - calculatedMax).abs()})' : ''}',
+                    'Maximum prepared spells: $maxPrepared (${_controllers.classController.text.trim()} level ${int.tryParse(_controllers.levelController.text) ?? 1} + ${_getModifierName(modifier)} $modifier modifier = $calculatedMax)${maxPrepared != calculatedMax ? ' (modified: +${(maxPrepared - calculatedMax).abs()})' : ''}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.indigo.shade600,
@@ -1642,8 +1350,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             spells: _spells,
             spellPreparation: _spellPreparation,
             character: widget.character,
-            classController: _classController,
-            levelController: _levelController,
+            classController: _controllers.classController,
+            levelController: _controllers.levelController,
             onShowSpellDetails: _showSpellDetails,
             onToggleSpellPreparation: _toggleSpellPreparation,
             onToggleAlwaysPrepared: _toggleAlwaysPrepared,
@@ -1664,7 +1372,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   Widget _buildFeatsTab() {
     return CharactersFeatsTab(
       feats: _feats,
-      featNotesController: _featNotesController,
+      featNotesController: _controllers.featNotesController,
       onFeatsChanged: (newFeats) {
         setState(() {
           _feats = newFeats;
@@ -1677,66 +1385,32 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   // Helper methods for spellcasting information
   String? _getSpellcastingAbility() {
-    final className = _classController.text.toLowerCase();
-    final subclass = _subclassController.text.toLowerCase();
-
-    // Define spellcasting abilities for different classes
-    final Map<String, String> classSpellcasting = {
-      'wizard': 'INT',
-      'sorcerer': 'CHA',
-      'warlock': 'CHA',
-      'bard': 'CHA',
-      'cleric': 'WIS',
-      'druid': 'WIS',
-      'paladin': 'CHA',
-      'ranger': 'WIS',
-      'artificer': 'INT',
-    };
-
-    // Check main class first
-    if (classSpellcasting.containsKey(className)) {
-      return classSpellcasting[className];
-    }
-
-    // Check subclasses that grant spellcasting
-    final Map<String, String> subclassSpellcasting = {
-      'eldritch knight': 'INT',
-      'arcane trickster': 'INT',
-      'divine soul': 'CHA',
-      'favored soul': 'CHA',
-      'shadow monk': 'WIS',
-      'four elements monk': 'WIS',
-      'way of mercy monk': 'WIS',
-    };
-
-    if (subclassSpellcasting.containsKey(subclass)) {
-      return subclassSpellcasting[subclass];
-    }
-
-    return null;
+    return SpellCalculationHelper.getSpellcastingAbility(
+      _controllers.classController.text.trim(),
+    );
   }
 
   int _getAbilityScore(String ability) {
     return CharacterAbilityHelper.getAbilityScore(
       ability,
-      strengthController: _strengthController,
-      dexterityController: _dexterityController,
-      constitutionController: _constitutionController,
-      intelligenceController: _intelligenceController,
-      wisdomController: _wisdomController,
-      charismaController: _charismaController,
+      strengthController: _controllers.strengthController,
+      dexterityController: _controllers.dexterityController,
+      constitutionController: _controllers.constitutionController,
+      intelligenceController: _controllers.intelligenceController,
+      wisdomController: _controllers.wisdomController,
+      charismaController: _controllers.charismaController,
     );
   }
 
   int _getAbilityModifier(String ability) {
     return CharacterAbilityHelper.getAbilityModifierFromControllers(
       ability,
-      strengthController: _strengthController,
-      dexterityController: _dexterityController,
-      constitutionController: _constitutionController,
-      intelligenceController: _intelligenceController,
-      wisdomController: _wisdomController,
-      charismaController: _charismaController,
+      strengthController: _controllers.strengthController,
+      dexterityController: _controllers.dexterityController,
+      constitutionController: _controllers.constitutionController,
+      intelligenceController: _controllers.intelligenceController,
+      wisdomController: _controllers.wisdomController,
+      charismaController: _controllers.charismaController,
     );
   }
 
@@ -1745,7 +1419,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     if (spellcastingAbility == null) return 0;
 
     final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
-      int.tryParse(_levelController.text) ?? 1,
+      int.tryParse(_controllers.levelController.text) ?? 1,
     );
     final abilityModifier = _getAbilityModifier(spellcastingAbility);
 
@@ -1757,7 +1431,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     if (spellcastingAbility == null) return 0;
 
     final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
-      int.tryParse(_levelController.text) ?? 1,
+      int.tryParse(_controllers.levelController.text) ?? 1,
     );
     final abilityModifier = _getAbilityModifier(spellcastingAbility);
 
@@ -1989,57 +1663,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   // Check if the current class or subclass can cast spells
   bool _canCastSpells() {
-    final characterClass = _classController.text.trim().toLowerCase();
-    final subclass = _subclassController.text.trim().toLowerCase();
-
-    // Debug log to track spellcasting detection
-    debugPrint(
-      'Checking spellcasting for class: "$characterClass", subclass: "$subclass"',
+    return SpellCalculationHelper.canCastSpells(
+      _controllers.classController.text.trim(),
     );
-
-    // Full spellcasting classes
-    final spellcastingClasses = {
-      'wizard',
-      'sorcerer',
-      'warlock',
-      'bard',
-      'cleric',
-      'druid',
-      'artificer',
-      'blood hunter',
-      'mystic',
-    };
-
-    // Partial spellcasting classes (subclasses that grant spellcasting)
-    final spellcastingSubclasses = {
-      'eldritch knight', // Fighter subclass
-      'arcane trickster', // Rogue subclass
-    };
-
-    // Check if main class is a spellcasting class
-    if (spellcastingClasses.contains(characterClass)) {
-      debugPrint('Class "$characterClass" is a spellcasting class');
-      return true;
-    }
-
-    // Check if subclass grants spellcasting
-    if (spellcastingSubclasses.contains(subclass)) {
-      debugPrint('Subclass "$subclass" grants spellcasting');
-      return true;
-    }
-
-    // Special case: Ranger and Paladin are spellcasting classes
-    if (characterClass == 'ranger' || characterClass == 'paladin') {
-      debugPrint(
-        'Class "$characterClass" is a spellcasting class (special case)',
-      );
-      return true;
-    }
-
-    debugPrint(
-      'Class "$characterClass" with subclass "$subclass" cannot cast spells',
-    );
-    return false;
   }
 
   Widget _buildArmorClassField() {
@@ -2081,7 +1707,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 border: Border.all(color: isActiveColor.shade100),
               ),
               child: TextField(
-                controller: _armorClassController,
+                controller: _controllers.armorClassController,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 8),
@@ -2190,7 +1816,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 border: Border.all(color: Colors.blue.shade100),
               ),
               child: TextField(
-                controller: _speedController,
+                controller: _controllers.speedController,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 8),
@@ -2290,7 +1916,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     final abilityScore = _getAbilityScore(ability);
     final modifier = ((abilityScore - 10) / 2).floor();
     final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
-      int.tryParse(_levelController.text) ?? 1,
+      int.tryParse(_controllers.levelController.text) ?? 1,
     );
 
     // Calculate total bonus directly instead of using old _stats object
@@ -3534,12 +3160,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   Widget _buildNotesTab() {
     return CharactersNotes(
-      backstoryController: _backstoryController,
-      gimmickController: _gimmickController,
-      quirkController: _quirkController,
-      wantsController: _wantsController,
-      needsController: _needsController,
-      conflictController: _conflictController,
+      backstoryController: _controllers.backstoryController,
+      gimmickController: _controllers.gimmickController,
+      quirkController: _controllers.quirkController,
+      wantsController: _controllers.wantsController,
+      needsController: _controllers.needsController,
+      conflictController: _controllers.conflictController,
       onSaveCharacter: _autoSaveCharacter,
     );
   }
@@ -3547,621 +3173,31 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   void _showAddAttackDialog() {
     showDialog(
       context: context,
-      builder: (context) {
-        final nameController = TextEditingController();
-        final bonusController = TextEditingController();
-        final damageController = TextEditingController();
-        final typeController = TextEditingController();
-        
-
-        return AlertDialog(
-          title: const Text('Add Attack'),
-          content: SizedBox(
-            width: 300,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Attack Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: bonusController,
-                  decoration: const InputDecoration(
-                    labelText: 'Attack Bonus',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: damageController,
-                        decoration: const InputDecoration(
-                          labelText: 'Damage',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: typeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Type',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (nameController.text.trim().isNotEmpty) {
-                  setState(() {
-                    _attacks.add(
-                      CharacterAttack(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        name: nameController.text.trim(),
-                        attackBonus: bonusController.text.trim(),
-                        damage: damageController.text.trim(),
-                        damageType: typeController.text.trim(),                        
-                      ),
-                    );
-                  });
-                  _autoSaveCharacter();
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AddAttackDialog(
+        onAttackAdded: (attack) {
+          setState(() {
+            _attacks.add(attack);
+          });
+          _autoSaveCharacter();
+        },
+      ),
     );
   }
 
   void _showAddSpellDialog() {
-    // Load spells if not already loaded
-    context.read<SpellsViewModel>().loadSpells();
-
-    final Set<String> selectedSpells = <String>{};
-
     showDialog(
       context: context,
-      builder:
-          (context) => StatefulBuilder(
-            builder:
-                (context, setState) => Dialog(
-                  child: Container(
-                    width: double.maxFinite,
-                    height: 600,
-                    child: Column(
-                      children: [
-                        // Header
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.auto_awesome),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Add Spells to ${widget.character.name}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              if (selectedSpells.isNotEmpty)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.shade100,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${selectedSpells.length} selected',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.blue.shade700,
-                                    ),
-                                  ),
-                                ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                onPressed: () => Navigator.pop(context),
-                                icon: const Icon(Icons.close),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Divider(height: 1),
-
-                        // Filters section
-                        Container(
-                          padding: const EdgeInsets.all(16.0),
-                          color: Colors.grey.shade50,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Filter by character class toggle
-                              Row(
-                                children: [
-                                  Switch(
-                                    value: _filterByCharacterClass,
-                                    onChanged: (value) {
-                                      this.setState(() {
-                                        _filterByCharacterClass = value;
-                                      });
-                                      setState(() {});
-                                    },
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Only show ${widget.character.characterClass} spells',
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Filter dropdowns
-                              Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Consumer<SpellsViewModel>(
-                                          builder: (
-                                            context,
-                                            spellsViewModel,
-                                            child,
-                                          ) {
-                                            final levels = [
-                                              'All',
-                                              'Cantrips',
-                                              'Level 1',
-                                              'Level 2',
-                                              'Level 3',
-                                              'Level 4',
-                                              'Level 5',
-                                              'Level 6',
-                                              'Level 7',
-                                              'Level 8',
-                                              'Level 9',
-                                            ];
-                                            return DropdownButtonFormField<
-                                              String
-                                            >(
-                                              value:
-                                                  _selectedLevelFilter ?? 'All',
-                                              isExpanded: true,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Level',
-                                                border: OutlineInputBorder(),
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 8,
-                                                    ),
-                                              ),
-                                              items:
-                                                  levels.map((level) {
-                                                    return DropdownMenuItem(
-                                                      value: level,
-                                                      child: Text(
-                                                        level,
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                              onChanged: (value) {
-                                                this.setState(() {
-                                                  _selectedLevelFilter =
-                                                      value == 'All'
-                                                          ? null
-                                                          : value;
-                                                });
-                                                setState(() {});
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Consumer<SpellsViewModel>(
-                                          builder: (
-                                            context,
-                                            spellsViewModel,
-                                            child,
-                                          ) {
-                                            final classes = [
-                                              'All',
-                                              ...spellsViewModel.spells
-                                                  .map((s) => s.classes)
-                                                  .expand((c) => c)
-                                                  .toSet()
-                                                  .toList()
-                                                ..sort(),
-                                            ];
-                                            return DropdownButtonFormField<
-                                              String
-                                            >(
-                                              value:
-                                                  _selectedClassFilter ?? 'All',
-                                              isExpanded: true,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Class',
-                                                border: OutlineInputBorder(),
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 8,
-                                                    ),
-                                              ),
-                                              items:
-                                                  classes.map((className) {
-                                                    final displayName =
-                                                        className == 'All'
-                                                            ? 'All'
-                                                            : className
-                                                                .split('_')
-                                                                .map(
-                                                                  (word) =>
-                                                                      word.isNotEmpty
-                                                                          ? word[0].toUpperCase() +
-                                                                              word.substring(1)
-                                                                          : '',
-                                                                )
-                                                                .join(' ');
-                                                    return DropdownMenuItem(
-                                                      value: className,
-                                                      child: Text(
-                                                        displayName.length > 15
-                                                            ? '${displayName.substring(0, 15)}...'
-                                                            : displayName,
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                              onChanged: (value) {
-                                                this.setState(() {
-                                                  _selectedClassFilter =
-                                                      value == 'All'
-                                                          ? null
-                                                          : value;
-                                                });
-                                                setState(() {});
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Consumer<SpellsViewModel>(
-                                          builder: (
-                                            context,
-                                            spellsViewModel,
-                                            child,
-                                          ) {
-                                            final schools = [
-                                              'All',
-                                              ...spellsViewModel.spells
-                                                  .map((s) => s.schoolName)
-                                                  .toSet()
-                                                  .toList()
-                                                ..sort(),
-                                            ];
-                                            return DropdownButtonFormField<
-                                              String
-                                            >(
-                                              value:
-                                                  _selectedSchoolFilter ??
-                                                  'All',
-                                              isExpanded: true,
-                                              decoration: const InputDecoration(
-                                                labelText: 'School',
-                                                border: OutlineInputBorder(),
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 8,
-                                                    ),
-                                              ),
-                                              items:
-                                                  schools.map((school) {
-                                                    return DropdownMenuItem(
-                                                      value: school,
-                                                      child: Text(
-                                                        school
-                                                            .split('_')
-                                                            .map(
-                                                              (word) =>
-                                                                  word.isNotEmpty
-                                                                      ? word[0]
-                                                                              .toUpperCase() +
-                                                                          word.substring(
-                                                                            1,
-                                                                          )
-                                                                      : '',
-                                                            )
-                                                            .join(' '),
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                              onChanged: (value) {
-                                                this.setState(() {
-                                                  _selectedSchoolFilter =
-                                                      value == 'All'
-                                                          ? null
-                                                          : value;
-                                                });
-                                                setState(() {});
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Divider(height: 1),
-
-                        /*  // Search bar
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Consumer<SpellsViewModel>(
-                        builder: (context, spellsViewModel, child) {
-                          return TextField(
-                            decoration: const InputDecoration(
-                              labelText: 'Search spells...',
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (query) {
-                              spellsViewModel.setSearchQuery(query);
-                            },
-                          );
-                        },
-                      ),
-                    ), */
-
-                        // Spells list
-                        Expanded(
-                          child: Consumer<SpellsViewModel>(
-                            builder: (context, spellsViewModel, child) {
-                              if (spellsViewModel.isLoading) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-
-                              if (spellsViewModel.error != null) {
-                                return Center(
-                                  child: Text(
-                                    'Error: ${spellsViewModel.error}',
-                                  ),
-                                );
-                              }
-
-                              // Apply filters
-                              List<Spell> filteredSpells =
-                                  spellsViewModel.spells.where((spell) {
-                                    // Filter by character class if enabled
-                                    if (_filterByCharacterClass) {
-                                      final characterClass =
-                                          widget.character.characterClass
-                                              .toLowerCase();
-                                      if (!spell.classes.any(
-                                        (className) =>
-                                            className.toLowerCase() ==
-                                            characterClass,
-                                      )) {
-                                        return false;
-                                      }
-                                    }
-
-                                    // Filter by level
-                                    if (_selectedLevelFilter != null) {
-                                      if (_selectedLevelFilter == 'Cantrips') {
-                                        if (spell.levelNumber != 0)
-                                          return false;
-                                      } else if (_selectedLevelFilter!
-                                          .startsWith('Level')) {
-                                        final level = int.tryParse(
-                                          _selectedLevelFilter!.split(' ')[1],
-                                        );
-                                        if (spell.levelNumber != level)
-                                          return false;
-                                      }
-                                    }
-
-                                    // Filter by class
-                                    if (_selectedClassFilter != null) {
-                                      if (!spell.classes.contains(
-                                        _selectedClassFilter,
-                                      ))
-                                        return false;
-                                    }
-
-                                    // Filter by school
-                                    if (_selectedSchoolFilter != null) {
-                                      if (spell.schoolName !=
-                                          _selectedSchoolFilter)
-                                        return false;
-                                    }
-
-                                    return true;
-                                  }).toList();
-
-                              if (filteredSpells.isEmpty) {
-                                return const Center(
-                                  child: Text(
-                                    'No spells found with current filters',
-                                  ),
-                                );
-                              }
-
-                              return ListView.builder(
-                                itemCount: filteredSpells.length,
-                                itemBuilder: (context, index) {
-                                  final spell = filteredSpells[index];
-                                  final isKnown = _spells.contains(spell.name);
-                                  final isSelected = selectedSpells.contains(
-                                    spell.name,
-                                  );
-
-                                  return CheckboxListTile(
-                                    value: isSelected,
-                                    onChanged:
-                                        isKnown
-                                            ? null
-                                            : (bool? value) {
-                                              setState(() {
-                                                if (value == true) {
-                                                  selectedSpells.add(
-                                                    spell.name,
-                                                  );
-                                                } else {
-                                                  selectedSpells.remove(
-                                                    spell.name,
-                                                  );
-                                                }
-                                              });
-                                            },
-                                    title: Text(
-                                      spell.name,
-                                      style: TextStyle(
-                                        color: isKnown ? Colors.grey : null,
-                                        decoration:
-                                            isKnown
-                                                ? TextDecoration.lineThrough
-                                                : null,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      '${spell.schoolName.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    secondary:
-                                        isKnown
-                                            ? const Icon(
-                                              Icons.check,
-                                              color: Colors.green,
-                                            )
-                                            : Icon(
-                                              isSelected
-                                                  ? Icons.check_circle
-                                                  : Icons.check_circle_outline,
-                                              color:
-                                                  isSelected
-                                                      ? Colors.blue
-                                                      : Colors.grey,
-                                            ),
-                                    enabled: !isKnown,
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
-
-                        // Footer
-                        const Divider(height: 1),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Cancel'),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  '${_spells.length} spells known',
-                                  style: const TextStyle(color: Colors.grey),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              ElevatedButton(
-                                onPressed:
-                                    selectedSpells.isEmpty
-                                        ? null
-                                        : () {
-                                          // Update the parent state first
-                                          this.setState(() {
-                                            _spells.addAll(selectedSpells);
-                                          });
-                                          Navigator.pop(context);
-
-                                          // Auto-save the character when spells are added
-                                          _autoSaveCharacter();
-
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Added ${selectedSpells.length} spell${selectedSpells.length == 1 ? '' : 's'} to ${widget.character.name}',
-                                              ),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        },
-                                child: Text(
-                                  'Add ${selectedSpells.isEmpty ? 'Spells' : '${selectedSpells.length} Spell${selectedSpells.length == 1 ? '' : 's'}'}',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-          ),
+      builder: (context) => AddSpellDialog(
+        characterName: widget.character.name,
+        characterClass: widget.character.characterClass,
+        currentSpells: _spells,
+        onSpellsAdded: (selectedSpells) {
+          setState(() {
+            _spells.addAll(selectedSpells);
+          });
+          _autoSaveCharacter();
+        },
+      ),
     );
   }
 
@@ -4476,185 +3512,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder:
-          (context) => DraggableScrollableSheet(
-            initialChildSize: 0.7,
-            minChildSize: 0.5,
-            maxChildSize: 0.9,
-            expand: false,
-            builder: (_, controller) {
-              try {
-                return SingleChildScrollView(
-                  controller: controller,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[400],
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-                        Text(
-                          spell.name,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Character info
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.person, color: Colors.blue),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Known by: ${widget.character.name}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Divider(),
-
-                        // Casting Time
-                        _buildDetailRow('Casting Time', spell.castingTime),
-
-                        // Range
-                        _buildDetailRow('Range', spell.range),
-
-                        // Components
-                        _buildDetailRow('Components', _formatComponents(spell)),
-
-                        // Duration
-                        _buildDetailRow('Duration', spell.duration),
-
-                        // Ritual
-                        if (spell.ritual) _buildDetailRow('Ritual', 'Yes'),
-
-                        // Classes
-                        _buildDetailRow(
-                          'Classes',
-                          spell.classes.isNotEmpty
-                              ? spell.classes
-                                  .map(
-                                    (c) => c
-                                        .split('_')
-                                        .map(
-                                          (word) =>
-                                              word.isNotEmpty
-                                                  ? word[0].toUpperCase() +
-                                                      word.substring(1)
-                                                  : '',
-                                        )
-                                        .join(' '),
-                                  )
-                                  .join(', ')
-                              : 'None',
-                        ),
-
-                        const Divider(),
-
-                        // Description
-                        Text(
-                          spell.description,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Action buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                icon: const Icon(Icons.edit),
-                                label: const Text('Remove Spell'),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  setState(() {
-                                    _spells.remove(spell.name);
-                                  });
-
-                                  // Auto-save the character when a spell is removed
-                                  _autoSaveCharacter();
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Removed ${spell.name} from ${widget.character.name}',
-                                      ),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                icon: const Icon(Icons.close),
-                                label: const Text('Close'),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              } catch (e) {
-                // Fallback UI in case of any errors
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error, color: Colors.red, size: 48),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error displaying spell details',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'There was an error loading the spell details for "${spell.name}".',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-            },
-          ),
+      builder: (context) => SpellDetailsDialog(
+        spell: spell,
+        characterName: widget.character.name,
+        onRemoveSpell: () {
+          setState(() {
+            _spells.remove(spell.name);
+          });
+          _autoSaveCharacter();
+        },
+      ),
     );
   }
 
@@ -4671,15 +3538,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
-  String _formatComponents(Spell spell) {
-    final components = <String>[];
-    if (spell.verbal) components.add('V');
-    if (spell.somatic) components.add('S');
-    if (spell.material && spell.components != null) {
-      components.add('M (${spell.components})');
-    }
-    return components.join(', ');
-  }
 
   void _autoSaveCharacter() async {
     // Don't proceed if widget is not mounted (context is not safe)
@@ -4689,36 +3547,36 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     try {
       // Create updated character with all current data
       final updatedCharacter = widget.character.copyWith(
-        name: _nameController.text.trim(),
+        name: _controllers.nameController.text.trim(),
         customImagePath: _customImagePath,
         customImageData: _customImageData,
-        characterClass: _classController.text.trim(),
-        level: int.tryParse(_levelController.text) ?? 1,
+        characterClass: _controllers.classController.text.trim(),
+        level: int.tryParse(_controllers.levelController.text) ?? 1,
         subclass:
-            _subclassController.text.trim().isEmpty
+            _controllers.subclassController.text.trim().isEmpty
                 ? null
-                : _subclassController.text.trim(),
+                : _controllers.subclassController.text.trim(),
         race:
-            _raceController.text.trim().isEmpty
+            _controllers.raceController.text.trim().isEmpty
                 ? null
-                : _raceController.text.trim(),
+                : _controllers.raceController.text.trim(),
         background:
-            _backgroundController.text.trim().isEmpty
+            _controllers.backgroundController.text.trim().isEmpty
                 ? null
-                : _backgroundController.text.trim(),
+                : _controllers.backgroundController.text.trim(),
         stats: CharacterStats(
-          strength: int.tryParse(_strengthController.text) ?? 10,
-          dexterity: int.tryParse(_dexterityController.text) ?? 10,
-          constitution: int.tryParse(_constitutionController.text) ?? 10,
-          intelligence: int.tryParse(_intelligenceController.text) ?? 10,
-          wisdom: int.tryParse(_wisdomController.text) ?? 10,
-          charisma: int.tryParse(_charismaController.text) ?? 10,
+          strength: int.tryParse(_controllers.strengthController.text) ?? 10,
+          dexterity: int.tryParse(_controllers.dexterityController.text) ?? 10,
+          constitution: int.tryParse(_controllers.constitutionController.text) ?? 10,
+          intelligence: int.tryParse(_controllers.intelligenceController.text) ?? 10,
+          wisdom: int.tryParse(_controllers.wisdomController.text) ?? 10,
+          charisma: int.tryParse(_controllers.charismaController.text) ?? 10,
           proficiencyBonus: CharacterStats.calculateProficiencyBonus(
-            int.tryParse(_levelController.text) ?? 1,
+            int.tryParse(_controllers.levelController.text) ?? 1,
           ),
-          armorClass: int.tryParse(_armorClassController.text) ?? 10,
-          speed: int.tryParse(_speedController.text) ?? 30,
-          initiative: int.tryParse(_initiativeController.text) ?? 0,
+          armorClass: int.tryParse(_controllers.armorClassController.text) ?? 10,
+          speed: int.tryParse(_controllers.speedController.text) ?? 30,
+          initiative: int.tryParse(_controllers.initiativeController.text) ?? 0,
           inspiration: _hasInspiration,
           hasConcentration: _hasConcentration,
           hasShield: _hasShield,
@@ -4726,14 +3584,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         savingThrows: _savingThrows,
         skillChecks: _skillChecks,
         health: CharacterHealth(
-          maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
-          currentHitPoints: int.tryParse(_currentHpController.text) ?? 10,
-          temporaryHitPoints: int.tryParse(_tempHpController.text) ?? 0,
-          hitDice: int.tryParse(_hitDiceController.text) ?? 1,
+          maxHitPoints: int.tryParse(_controllers.maxHpController.text) ?? 10,
+          currentHitPoints: int.tryParse(_controllers.currentHpController.text) ?? 10,
+          temporaryHitPoints: int.tryParse(_controllers.tempHpController.text) ?? 0,
+          hitDice: int.tryParse(_controllers.hitDiceController.text) ?? 1,
           hitDiceType:
-              _hitDiceTypeController.text.trim().isEmpty
+              _controllers.hitDiceTypeController.text.trim().isEmpty
                   ? 'd8'
-                  : _hitDiceTypeController.text.trim(),
+                  : _controllers.hitDiceTypeController.text.trim(),
         ),
         attacks: _attacks,
         spellSlots: _spellSlots,
@@ -4742,33 +3600,33 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         personalizedSlots: _personalizedSlots,
         spellPreparation: _spellPreparation,
         quickGuide: jsonEncode(
-          _quickGuideController.document.toDelta().toJson(),
+          _controllers.quickGuideController.document.toDelta().toJson(),
         ),
         proficiencies: jsonEncode(
-          _proficienciesController.document.toDelta().toJson(),
+          _controllers.proficienciesController.document.toDelta().toJson(),
         ),
         featuresTraits: jsonEncode(
-          _featuresTraitsController.document.toDelta().toJson(),
+          _controllers.featuresTraitsController.document.toDelta().toJson(),
         ),
         backstory: jsonEncode(
-          _backstoryController.document.toDelta().toJson(),
+          _controllers.backstoryController.document.toDelta().toJson(),
         ),
         featNotes: jsonEncode(
-          _featNotesController.document.toDelta().toJson(),
+          _controllers.featNotesController.document.toDelta().toJson(),
         ),
         pillars: CharacterPillars(
-          gimmick: _gimmickController.text.trim(),
-          quirk: _quirkController.text.trim(),
-          wants: _wantsController.text.trim(),
-          needs: _needsController.text.trim(),
-          conflict: _conflictController.text.trim(),
+          gimmick: _controllers.gimmickController.text.trim(),
+          quirk: _controllers.quirkController.text.trim(),
+          wants: _controllers.wantsController.text.trim(),
+          needs: _controllers.needsController.text.trim(),
+          conflict: _controllers.conflictController.text.trim(),
         ),
         appearance: CharacterAppearance(
-          height: _heightController.text.trim(),
-          age: _ageController.text.trim(),
-          eyeColor: _eyeColorController.text.trim(),
+          height: _controllers.heightController.text.trim(),
+          age: _controllers.ageController.text.trim(),
+          eyeColor: _controllers.eyeColorController.text.trim(),
           additionalDetails: jsonEncode(
-            _additionalDetailsController.document.toDelta().toJson(),
+            _controllers.additionalDetailsController.document.toDelta().toJson(),
           ),
           appearanceImagePath: _appearanceImagePath ?? '',
           appearanceImageData: _appearanceImageData,
@@ -4779,16 +3637,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ),
         languages: CharacterLanguages(
           languages:
-              _languagesController.text
+              _controllers.languagesController.text
                   .split(',')
                   .map((lang) => lang.trim())
                   .where((lang) => lang.isNotEmpty)
                   .toList(),
         ),
         moneyItems: CharacterMoneyItems(
-          money: _moneyController.text.trim(),
+          money: _controllers.moneyController.text.trim(),
           items: [jsonEncode(
-            _itemsController.document.toDelta().toJson(),
+            _controllers.itemsController.document.toDelta().toJson(),
           )],
         ),
         updatedAt: DateTime.now(),
@@ -4813,13 +3671,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   void _takeComprehensiveLongRest() {
     setState(() {
       // Restore hit points to maximum
-      _currentHpController.text = _maxHpController.text;
-      _tempHpController.text = '0';
+      _controllers.currentHpController.text = _controllers.maxHpController.text;
+      _controllers.tempHpController.text = '0';
 
       // Update health object
       _health = CharacterHealth(
-        maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
-        currentHitPoints: int.tryParse(_maxHpController.text) ?? 10,
+        maxHitPoints: int.tryParse(_controllers.maxHpController.text) ?? 10,
+        currentHitPoints: int.tryParse(_controllers.maxHpController.text) ?? 10,
         temporaryHitPoints: 0,
         hitDice: _health.hitDice,
         hitDiceType: _health.hitDiceType,
@@ -5161,41 +4019,41 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     try {
       // Update all character data from controllers
       debugPrint('=== SAVE CHARACTER DEBUG ===');
-      debugPrint('Background controller text: "${_backgroundController.text}"');
+      debugPrint('Background controller text: "${_controllers.backgroundController.text}"');
       debugPrint('Selected background: "$_selectedBackground"');
       debugPrint('Has unsaved changes: $_hasUnsavedClassChanges');
 
       final updatedCharacter = widget.character.copyWith(
-        name: _nameController.text.trim(),
+        name: _controllers.nameController.text.trim(),
         customImagePath: _customImagePath,
         customImageData: _customImageData,
-        characterClass: _classController.text.trim(),
-        level: int.tryParse(_levelController.text) ?? 1,
+        characterClass: _controllers.classController.text.trim(),
+        level: int.tryParse(_controllers.levelController.text) ?? 1,
         subclass:
-            _subclassController.text.trim().isEmpty
+            _controllers.subclassController.text.trim().isEmpty
                 ? null
-                : _subclassController.text.trim(),
+                : _controllers.subclassController.text.trim(),
         race:
-            _raceController.text.trim().isEmpty
+            _controllers.raceController.text.trim().isEmpty
                 ? null
-                : _raceController.text.trim(),
+                : _controllers.raceController.text.trim(),
         background:
-            _backgroundController.text.trim().isEmpty
+            _controllers.backgroundController.text.trim().isEmpty
                 ? null
-                : _backgroundController.text.trim(),
+                : _controllers.backgroundController.text.trim(),
         stats: CharacterStats(
-          strength: int.tryParse(_strengthController.text) ?? 10,
-          dexterity: int.tryParse(_dexterityController.text) ?? 10,
-          constitution: int.tryParse(_constitutionController.text) ?? 10,
-          intelligence: int.tryParse(_intelligenceController.text) ?? 10,
-          wisdom: int.tryParse(_wisdomController.text) ?? 10,
-          charisma: int.tryParse(_charismaController.text) ?? 10,
+          strength: int.tryParse(_controllers.strengthController.text) ?? 10,
+          dexterity: int.tryParse(_controllers.dexterityController.text) ?? 10,
+          constitution: int.tryParse(_controllers.constitutionController.text) ?? 10,
+          intelligence: int.tryParse(_controllers.intelligenceController.text) ?? 10,
+          wisdom: int.tryParse(_controllers.wisdomController.text) ?? 10,
+          charisma: int.tryParse(_controllers.charismaController.text) ?? 10,
           proficiencyBonus: CharacterStats.calculateProficiencyBonus(
-            int.tryParse(_levelController.text) ?? 1,
+            int.tryParse(_controllers.levelController.text) ?? 1,
           ),
-          armorClass: int.tryParse(_armorClassController.text) ?? 10,
-          speed: int.tryParse(_speedController.text) ?? 30,
-          initiative: int.tryParse(_initiativeController.text) ?? 0,
+          armorClass: int.tryParse(_controllers.armorClassController.text) ?? 10,
+          speed: int.tryParse(_controllers.speedController.text) ?? 30,
+          initiative: int.tryParse(_controllers.initiativeController.text) ?? 0,
           inspiration: _hasInspiration,
           hasConcentration: _hasConcentration,
           hasShield: _hasShield,
@@ -5203,14 +4061,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         savingThrows: _savingThrows,
         skillChecks: _skillChecks,
         health: CharacterHealth(
-          maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
-          currentHitPoints: int.tryParse(_currentHpController.text) ?? 10,
-          temporaryHitPoints: int.tryParse(_tempHpController.text) ?? 0,
-          hitDice: int.tryParse(_hitDiceController.text) ?? 1,
+          maxHitPoints: int.tryParse(_controllers.maxHpController.text) ?? 10,
+          currentHitPoints: int.tryParse(_controllers.currentHpController.text) ?? 10,
+          temporaryHitPoints: int.tryParse(_controllers.tempHpController.text) ?? 0,
+          hitDice: int.tryParse(_controllers.hitDiceController.text) ?? 1,
           hitDiceType:
-              _hitDiceTypeController.text.trim().isEmpty
+              _controllers.hitDiceTypeController.text.trim().isEmpty
                   ? 'd8'
-                  : _hitDiceTypeController.text.trim(),
+                  : _controllers.hitDiceTypeController.text.trim(),
         ),
         attacks: _attacks,
         spellSlots: _spellSlots,
@@ -5219,34 +4077,34 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         personalizedSlots: _personalizedSlots,
         spellPreparation: _spellPreparation,
         quickGuide: jsonEncode(
-          _quickGuideController.document.toDelta().toJson(),
+          _controllers.quickGuideController.document.toDelta().toJson(),
         ),
         proficiencies: jsonEncode(
-          _proficienciesController.document.toDelta().toJson(),
+          _controllers.proficienciesController.document.toDelta().toJson(),
         ),
         featuresTraits: jsonEncode(
-          _featuresTraitsController.document.toDelta().toJson(),
+          _controllers.featuresTraitsController.document.toDelta().toJson(),
         ),
         backstory: jsonEncode(
-          _backstoryController.document.toDelta().toJson(),
+          _controllers.backstoryController.document.toDelta().toJson(),
         ),
         featNotes: 
         jsonEncode(
-          _featNotesController.document.toDelta().toJson(),
+          _controllers.featNotesController.document.toDelta().toJson(),
         ),
         pillars: CharacterPillars(
-          gimmick: _gimmickController.text.trim(),
-          quirk: _quirkController.text.trim(),
-          wants: _wantsController.text.trim(),
-          needs: _needsController.text.trim(),
-          conflict: _conflictController.text.trim(),
+          gimmick: _controllers.gimmickController.text.trim(),
+          quirk: _controllers.quirkController.text.trim(),
+          wants: _controllers.wantsController.text.trim(),
+          needs: _controllers.needsController.text.trim(),
+          conflict: _controllers.conflictController.text.trim(),
         ),
         appearance: CharacterAppearance(
-          height: _heightController.text.trim(),
-          age: _ageController.text.trim(),
-          eyeColor: _eyeColorController.text.trim(),
+          height: _controllers.heightController.text.trim(),
+          age: _controllers.ageController.text.trim(),
+          eyeColor: _controllers.eyeColorController.text.trim(),
           additionalDetails: jsonEncode(
-            _additionalDetailsController.document.toDelta().toJson(),
+            _controllers.additionalDetailsController.document.toDelta().toJson(),
           ),
           appearanceImagePath: _appearanceImagePath ?? '',
           appearanceImageData: _appearanceImageData,
@@ -5257,16 +4115,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ),
         languages: CharacterLanguages(
           languages:
-              _languagesController.text
+              _controllers.languagesController.text
                   .split(',')
                   .map((lang) => lang.trim())
                   .where((lang) => lang.isNotEmpty)
                   .toList(),
         ),
         moneyItems: CharacterMoneyItems(
-          money: _moneyController.text.trim(),
+          money: _controllers.moneyController.text.trim(),
           items: [jsonEncode(
-            _itemsController.document.toDelta().toJson(),
+            _controllers.itemsController.document.toDelta().toJson(),
           )],
         ),
         updatedAt: DateTime.now(),
@@ -5407,30 +4265,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   /// Get the name of the modifier based on character class
   String _getModifierName(int modifier) {
-    final className = _classController.text.trim().toLowerCase();
-
-    switch (className) {
-      case 'wizard':
-      case 'artificer':
-        return 'Intelligence';
-      case 'cleric':
-      case 'druid':
-      case 'ranger':
-        return 'Wisdom';
-      case 'paladin':
-      case 'sorcerer':
-      case 'bard':
-      case 'warlock':
-        return 'Charisma';
-      default:
-        return 'Intelligence'; // Default fallback
-    }
+    return SpellCalculationHelper.getModifierName(
+      _controllers.classController.text.trim(),
+    );
   }
 
   /// Show dialog to modify initiative modifier
   void _showInitiativeDialog() {
-    final currentInitiative = int.tryParse(_initiativeController.text) ?? 0;
-    final dexterityScore = int.tryParse(_dexterityController.text) ?? 10;
+    final currentInitiative = int.tryParse(_controllers.initiativeController.text) ?? 0;
+    final dexterityScore = int.tryParse(_controllers.dexterityController.text) ?? 10;
     final dexterityModifier = ((dexterityScore - 10) / 2).floor();
 
     final controller = TextEditingController(
@@ -5472,7 +4315,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   final newInitiative = int.tryParse(controller.text);
                   if (newInitiative != null) {
                     setState(() {
-                      _initiativeController.text = newInitiative.toString();
+                      _controllers.initiativeController.text = newInitiative.toString();
                     });
                     _autoSaveCharacter();
                     Navigator.pop(context);
@@ -5497,8 +4340,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     final currentMax =
         _spellPreparation.maxPreparedSpells == 0
             ? CharacterSpellPreparation.calculateMaxPreparedSpells(
-              _classController.text.trim(),
-              int.tryParse(_levelController.text) ?? 1,
+              _controllers.classController.text.trim(),
+              int.tryParse(_controllers.levelController.text) ?? 1,
               _getCurrentSpellcastingModifier(),
             )
             : _spellPreparation.maxPreparedSpells;
@@ -5527,7 +4370,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Calculated maximum: ${CharacterSpellPreparation.calculateMaxPreparedSpells(_classController.text.trim(), int.tryParse(_levelController.text) ?? 1, _getCurrentSpellcastingModifier())}',
+                  'Calculated maximum: ${CharacterSpellPreparation.calculateMaxPreparedSpells(_controllers.classController.text.trim(), int.tryParse(_controllers.levelController.text) ?? 1, _getCurrentSpellcastingModifier())}',
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
@@ -5590,10 +4433,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       isPickingImage: _isPickingImage,
       pickAppearanceImage: _pickAppearanceImage,
       removeAppearanceImage: _removeAppearanceImage,
-      heightController: _heightController,
-      ageController: _ageController,
-      eyeColorController: _eyeColorController,
-      additionalDetailsController: _additionalDetailsController,
+      heightController: _controllers.heightController,
+      ageController: _controllers.ageController,
+      eyeColorController: _controllers.eyeColorController,
+      additionalDetailsController: _controllers.additionalDetailsController,
       autoSaveCharacter: _autoSaveCharacter,
     );
   }
