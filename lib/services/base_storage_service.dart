@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'cloud_sync_service.dart';
 import '../models/timestamped_entity.dart';
+import '../utils/logger.dart';
 
 /// Base storage service that provides common functionality for file and memory storage
 /// T: The type of entity being stored (must have toJson/fromJson and implement TimestampedEntity)
@@ -12,8 +13,11 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
   final List<T> _memoryCache = [];
   bool _useMemoryStorage = false;
   bool _initialized = false;
+  late final ModuleLogger _logger;
 
-  BaseStorageService(this._dirName);
+  BaseStorageService(this._dirName) {
+    _logger = AppLogger.forModule('Storage:$_dirName');
+  }
 
   bool get _isIOSRelease => !kIsWeb && Platform.isIOS && kReleaseMode;
 
@@ -22,7 +26,7 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
     if (kIsWeb) {
       _useMemoryStorage = true;
       _initialized = true;
-      debugPrint('Web platform detected, using memory-only storage for $_dirName');
+      _logger.info('Web platform detected, using memory-only storage');
       return;
     }
 
@@ -33,11 +37,11 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
       }
       _useMemoryStorage = false;
       _initialized = true;
-      debugPrint('File storage initialized for $_dirName');
+      _logger.info('File storage initialized');
     } catch (e) {
       _useMemoryStorage = true;
       _initialized = true;
-      debugPrint('Failed to initialize file storage for $_dirName, using memory: $e');
+      _logger.warning('Failed to initialize file storage, using memory: $e');
     }
   }
 
@@ -60,12 +64,13 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
 
       if (!await dir.exists()) {
         await dir.create(recursive: true);
-        debugPrint('Created $_dirName directory: ${dir.path}');
+        _logger.debug('Created directory: ${dir.path}');
       }
 
       return dir;
     } catch (e) {
       _useMemoryStorage = true;
+      _logger.error('Failed to access documents directory', error: e);
       throw Exception('Failed to access documents directory for $_dirName');
     }
   }
@@ -93,7 +98,7 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
 
       if (_useMemoryStorage) {
         _saveToMemory(updatedEntity);
-        debugPrint('Saved ${getEntityName()} to memory storage: ${getDisplayName(updatedEntity)}');
+        _logger.debug('Saved ${getEntityName()} to memory: ${getDisplayName(updatedEntity)}');
       } else {
         final jsonString = json.encode(toJson(updatedEntity));
         final file = await getFile(id, subDir: getSubDirectory(updatedEntity));
@@ -103,11 +108,11 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
         _saveToMemory(updatedEntity);
       }
 
-      debugPrint('${getEntityName()} saved to memory cache: ${getDisplayName(updatedEntity)}');
+      _logger.debug('${getEntityName()} saved to cache: ${getDisplayName(updatedEntity)}');
 
       await scheduleSyncIfAuthenticated();
     } catch (e) {
-      debugPrint('Error saving ${getEntityName()} ${getDisplayName(entity)}: $e');
+      _logger.error('Error saving ${getEntityName()} ${getDisplayName(entity)}', error: e);
 
       if (_isIOSRelease) {
         rethrow;
@@ -132,7 +137,7 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
         entities = filter != null 
             ? _memoryCache.where((e) => matchesFilter(e, filter)).toList()
             : List.from(_memoryCache);
-        debugPrint('Loaded ${entities.length} ${getEntityName()}s from memory storage');
+        _logger.debug('Loaded ${entities.length} ${getEntityName()}s from memory');
       } else {
         if (filter == null) {
           _memoryCache.clear();
@@ -141,7 +146,7 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
         final dir = await getDirectory();
 
         if (!await dir.exists()) {
-          debugPrint('${getEntityName()} directory does not exist, returning empty list');
+          _logger.debug('Directory does not exist, returning empty list');
           return [];
         }
 
@@ -166,14 +171,14 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
 
         for (final file in files) {
           try {
-            debugPrint('Loading ${getEntityName()} from: ${file.path}');
+            _logger.debug('Loading ${getEntityName()} from: ${file.path}');
             final entity = await loadFromFile(file);
             if (filter == null || matchesFilter(entity, filter)) {
               entities.add(entity);
-              debugPrint('Successfully loaded ${getEntityName()}: ${getDisplayName(entity)}');
+              _logger.debug('Loaded ${getEntityName()}: ${getDisplayName(entity)}');
             }
           } catch (e) {
-            debugPrint('Error loading ${getEntityName()} from ${file.path}: $e');
+            _logger.error('Error loading ${getEntityName()} from ${file.path}', error: e);
           }
         }
 
@@ -188,10 +193,10 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
 
       sortEntities(entities);
 
-      debugPrint('Loaded ${entities.length} ${getEntityName()}s from storage');
+      _logger.info('Loaded ${entities.length} ${getEntityName()}s from storage');
       return entities;
     } catch (e) {
-      debugPrint('Error loading ${getEntityName()}s: $e');
+      _logger.error('Error loading ${getEntityName()}s', error: e);
 
       if (_isIOSRelease) {
         rethrow;
@@ -211,25 +216,25 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
 
       if (_useMemoryStorage) {
         _memoryCache.removeWhere((e) => getId(e) == id);
-        debugPrint('Deleted ${getEntityName()} from memory storage: $id');
+        _logger.debug('Deleted ${getEntityName()} from memory: $id');
       } else {
         final file = await getFile(id, subDir: subDir);
 
         if (await file.exists()) {
           await file.delete();
-          debugPrint('Successfully deleted ${getEntityName()} file: ${file.path}');
+          _logger.debug('Deleted ${getEntityName()} file: ${file.path}');
         } else {
-          debugPrint('${getEntityName()} file not found for ID: $id');
+          _logger.warning('${getEntityName()} file not found for ID: $id');
         }
 
         _memoryCache.removeWhere((e) => getId(e) == id);
       }
 
-      debugPrint('${getEntityName()} removed from memory cache: $id');
+      _logger.debug('${getEntityName()} removed from cache: $id');
 
       await deleteFromCloudIfAuthenticated(id);
     } catch (e) {
-      debugPrint('Error deleting ${getEntityName()} $id: $e');
+      _logger.error('Error deleting ${getEntityName()} $id', error: e);
 
       if (_isIOSRelease) {
         rethrow;
@@ -249,10 +254,10 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
 
       return fromJson(jsonData);
     } catch (e, stackTrace) {
-      debugPrint('Error loading ${getEntityName()} from ${file.path}: $e');
-      debugPrint('Stack trace: $stackTrace');
-
+      _logger.error('Error loading ${getEntityName()} from ${file.path}', error: e, stackTrace: stackTrace);
+      
       await createCorruptedFileBackup(file);
+      
       rethrow;
     }
   }
@@ -279,8 +284,8 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
       await tempFile.copy(file.path);
       await tempFile.delete();
       await file.stat();
-
-      debugPrint('Successfully saved ${getEntityName()} to file: $displayName at ${file.path}');
+            
+      _logger.debug('Saved ${getEntityName()} to file: $displayName');
     } catch (e) {
       if (tempPath != null) {
         final tempFile = File(tempPath);
@@ -298,7 +303,7 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
       json.decode(jsonString);
       return jsonString;
     } catch (e) {
-      debugPrint('JSON corruption detected in $filePath, attempting recovery...');
+      _logger.warning('JSON corruption detected in $filePath, attempting recovery...');
 
       String recoveredJson = jsonString;
 
@@ -314,10 +319,10 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
 
       try {
         json.decode(recoveredJson);
-        debugPrint('Successfully recovered JSON from corruption');
+        _logger.success('Successfully recovered JSON from corruption');
         return recoveredJson;
       } catch (e) {
-        debugPrint('JSON recovery failed, original error: $e');
+        _logger.error('JSON recovery failed', error: e);
         rethrow;
       }
     }
@@ -333,9 +338,9 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
         flush: true,
       );
 
-      debugPrint('Created backup of corrupted file: $backupPath');
+      _logger.info('Created backup of corrupted file: $backupPath');
     } catch (e) {
-      debugPrint('Failed to create backup of corrupted file: $e');
+      _logger.error('Failed to create backup of corrupted file', error: e);
     }
   }
 
@@ -357,7 +362,7 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
         await scheduleSync(syncService);
       }
     } catch (e) {
-      debugPrint('Error scheduling ${getEntityName()} sync: $e');
+      _logger.error('Error scheduling ${getEntityName()} sync', error: e);
     }
   }
 
@@ -369,14 +374,14 @@ abstract class BaseStorageService<T extends TimestampedEntity> {
         await deleteFromCloud(id, syncService);
       }
     } catch (e) {
-      debugPrint('Error deleting ${getEntityName()} from cloud: $e');
+      _logger.error('Error deleting ${getEntityName()} from cloud', error: e);
     }
   }
 
   /// Clear memory cache
   void clearMemoryCache() {
     _memoryCache.clear();
-    debugPrint('${getEntityName()} memory cache cleared');
+    _logger.debug('Memory cache cleared');
   }
 
   // Abstract methods to be implemented by subclasses

@@ -1,19 +1,20 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'firebase_auth_service.dart';
 import 'character_service.dart';
 import 'diary_service.dart';
 import '../models/character_model.dart';
 import '../models/diary_model.dart';
+import '../utils/logger.dart';
 
 /// Service for handling cloud synchronization with Firebase
 class CloudSyncService {
   static final CloudSyncService _instance = CloudSyncService._internal();
   factory CloudSyncService() => _instance;
   CloudSyncService._internal();
+  
+  static final _logger = AppLogger.forModule('CloudSync');
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuthService _authService = FirebaseAuthService();
@@ -39,16 +40,10 @@ class CloudSyncService {
     // Listen to auth state changes
     _authService.authStateChanges.listen((User? user) {
       if (user != null) {
-        if (kDebugMode) {
-          print('User logged in, initializing cloud sync');
-        }
-        // User logged in, we can start syncing
+        _logger.info('User logged in, initializing cloud sync');
         _syncStatusController.add(SyncStatus.connected);
       } else {
-        if (kDebugMode) {
-          print('User logged out, stopping cloud sync');
-        }
-        // User logged out, stop sync timers
+        _logger.info('User logged out, stopping cloud sync');
         _cancelAllSyncTimers();
         _syncStatusController.add(SyncStatus.disconnected);
       }
@@ -82,16 +77,12 @@ class CloudSyncService {
       
       _syncStatusController.add(SyncStatus.connected);
       
-      if (kDebugMode) {
-        print('Successfully uploaded all local data to Firebase');
-      }
+      _logger.success('Successfully uploaded all local data to Firebase');
       
       return SyncResult.success('All data uploaded successfully');
     } catch (e) {
       _syncStatusController.add(SyncStatus.error);
-      if (kDebugMode) {
-        print('Error uploading local data: $e');
-      }
+      _logger.error('Error uploading local data', error: e);
       return SyncResult.failure('Failed to upload data: $e');
     }
   }
@@ -125,16 +116,12 @@ class CloudSyncService {
       
       _syncStatusController.add(SyncStatus.connected);
       
-      if (kDebugMode) {
-        print('Successfully downloaded all data from Firebase');
-      }
+      _logger.success('Successfully downloaded all data from Firebase');
       
       return SyncResult.success('All data downloaded successfully');
     } catch (e) {
       _syncStatusController.add(SyncStatus.error);
-      if (kDebugMode) {
-        print('Error downloading data: $e');
-      }
+      _logger.error('Error downloading data', error: e);
       return SyncResult.failure('Failed to download data: $e');
     }
   }
@@ -184,23 +171,21 @@ class CloudSyncService {
       _syncStatusController.add(SyncStatus.syncing);
       
       final userId = _authService.currentUser!.uid;
-      print('=== Starting $entityName sync for user: $userId ===');
+      _logger.section('Starting $entityName sync for user: $userId');
       
       final dataMaps = await loadData();
-      print('Loaded ${dataMaps.length} $entityName from local storage');
+      _logger.info('Loaded ${dataMaps.length} $entityName from local storage');
       
       await uploadData(userId, dataMaps);
       
       _syncStatusController.add(SyncStatus.connected);
       
-      print('Successfully synced ${dataMaps.length} $entityName to Firebase');
+      _logger.success('Successfully synced ${dataMaps.length} $entityName to Firebase');
       
       return SyncResult.success('$entityName synced successfully');
     } catch (e) {
       _syncStatusController.add(SyncStatus.error);
-      if (kDebugMode) {
-        print('Error syncing $entityName: $e');
-      }
+      _logger.error('Error syncing $entityName', error: e);
       return SyncResult.failure('Failed to sync $entityName: $e');
     }
   }
@@ -261,9 +246,7 @@ class CloudSyncService {
       // Check if there are cloud characters that don't exist locally
       return cloudCharacterIds.any((cloudId) => !localCharacterIds.contains(cloudId));
     } catch (e) {
-      if (kDebugMode) {
-        print('Error checking for deleted characters: $e');
-      }
+      _logger.error('Error checking for deleted characters', error: e);
       return false;
     }
   }
@@ -285,13 +268,13 @@ class CloudSyncService {
   
   /// Upload characters to Firebase
   Future<void> _uploadCharacters(String userId, List<Map<String, dynamic>> characters) async {
-    debugPrint('=== Starting character upload to Firebase ===');
-    debugPrint('Number of characters to upload: ${characters.length}');
+    _logger.section('Starting character upload to Firebase');
+    _logger.info('Number of characters to upload: ${characters.length}');
     
     for (int i = 0; i < characters.length; i++) {
       final characterName = characters[i]['stats']?['name']?['value'] ?? 'Unknown';
       final characterId = characters[i]['stats']?['id']?['value'] ?? 'Unknown';
-      debugPrint('Character ${i + 1}: $characterName (ID: $characterId)');
+      _logger.debug('Character ${i + 1}: $characterName (ID: $characterId)');
     }
     
     final batch = _firestore.batch();
@@ -301,20 +284,20 @@ class CloudSyncService {
         .collection(_charactersCollection);
     
     // Clear existing characters
-    debugPrint('Clearing existing characters from Firebase...');
+    _logger.debug('Clearing existing characters from Firebase...');
     final existingDocs = await charactersRef.get();
-    debugPrint('Found ${existingDocs.docs.length} existing documents to delete');
+    _logger.debug('Found ${existingDocs.docs.length} existing documents to delete');
     for (final doc in existingDocs.docs) {
       batch.delete(doc.reference);
     }
     
     // Add new characters
-    debugPrint('Adding new characters to Firebase...');
+    _logger.debug('Adding new characters to Firebase...');
     for (final character in characters) {
       final characterId = character['stats']?['id']?['value']?.toString() ?? 
           DateTime.now().millisecondsSinceEpoch.toString();
       final characterName = character['stats']?['name']?['value'] ?? 'Unknown';
-      debugPrint('Adding character: $characterName with ID: $characterId');
+      _logger.debug('Adding character: $characterName with ID: $characterId');
       final docRef = charactersRef.doc(characterId);
       batch.set(docRef, {
         'data': character,
@@ -322,20 +305,20 @@ class CloudSyncService {
       });
     }
     
-    debugPrint('Committing batch operation...');
+    _logger.debug('Committing batch operation...');
     await batch.commit();
-    debugPrint('=== Character upload completed successfully ===');
+    _logger.success('Character upload completed successfully');
   }
   
   /// Upload diaries to Firebase
   Future<void> _uploadDiaries(String userId, List<Map<String, dynamic>> diaries) async {
-    print('=== Starting diary upload to Firebase ===');
-    print('Number of diaries to upload: ${diaries.length}');
+    _logger.section('Starting diary upload to Firebase');
+    _logger.info('Number of diaries to upload: ${diaries.length}');
     
     for (int i = 0; i < diaries.length; i++) {
       final diaryTitle = diaries[i]['data']?['title']?['value'] ?? 'Unknown';
       final diaryId = diaries[i]['data']?['id']?['value'] ?? 'Unknown';
-      print('Diary ${i + 1}: $diaryTitle (ID: $diaryId)');
+      _logger.debug('Diary ${i + 1}: $diaryTitle (ID: $diaryId)');
     }
     
     final batch = _firestore.batch();
@@ -345,20 +328,20 @@ class CloudSyncService {
         .collection(_diariesCollection);
     
     // Clear existing diaries
-    print('Clearing existing diaries from Firebase...');
+    _logger.debug('Clearing existing diaries from Firebase...');
     final existingDocs = await diariesRef.get();
-    print('Found ${existingDocs.docs.length} existing diary documents to delete');
+    _logger.debug('Found ${existingDocs.docs.length} existing diary documents to delete');
     for (final doc in existingDocs.docs) {
       batch.delete(doc.reference);
     }
     
     // Add new diaries
-    print('Adding new diaries to Firebase...');
+    _logger.debug('Adding new diaries to Firebase...');
     for (final diary in diaries) {
       final diaryId = diary['data']?['id']?['value']?.toString() ?? 
           DateTime.now().millisecondsSinceEpoch.toString();
       final diaryTitle = diary['data']?['title']?['value'] ?? 'Unknown';
-      print('Adding diary: $diaryTitle with ID: $diaryId');
+      _logger.debug('Adding diary: $diaryTitle with ID: $diaryId');
       final docRef = diariesRef.doc(diaryId);
       batch.set(docRef, {
         'data': diary,
@@ -366,9 +349,9 @@ class CloudSyncService {
       });
     }
     
-    print('Committing diary batch operation...');
+    _logger.debug('Committing diary batch operation...');
     await batch.commit();
-    print('=== Diary upload completed successfully ===');
+    _logger.success('Diary upload completed successfully');
   }
   
   /// Download characters from Firebase
@@ -450,9 +433,7 @@ class CloudSyncService {
       
       return charactersSnapshot.docs.isNotEmpty || diariesSnapshot.docs.isNotEmpty;
     } catch (e) {
-      if (kDebugMode) {
-        print('Error checking existing cloud data: $e');
-      }
+      _logger.error('Error checking existing cloud data', error: e);
       return false;
     }
   }
@@ -498,16 +479,12 @@ class CloudSyncService {
       
       _syncStatusController.add(SyncStatus.connected);
       
-      if (kDebugMode) {
-        print('Successfully deleted all cloud data for user: $userId');
-      }
+      _logger.success('Successfully deleted all cloud data for user: $userId');
       
       return SyncResult.success('All cloud data deleted successfully');
     } catch (e) {
       _syncStatusController.add(SyncStatus.error);
-      if (kDebugMode) {
-        print('Error deleting cloud data: $e');
-      }
+      _logger.error('Error deleting cloud data', error: e);
       return SyncResult.failure('Failed to delete cloud data: $e');
     }
   }
