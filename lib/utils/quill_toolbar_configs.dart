@@ -73,9 +73,6 @@ class QuillToolbarConfigs {
     showSearchButton: false,
     showSubscript: false,
     showSuperscript: false,
-    showClipboardCut: false,
-    showClipboardCopy: false,
-    showClipboardPaste: false,
   );
 
   static const basic = QuillSimpleToolbarConfig(

@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import '../models/spell_model.dart';
 
 class SpellService {
-  static const String _spellsPath = 'assets/data/spells/';
   
   /// Loads all spell files from the spells directory
   static Future<List<Spell>> loadAllSpells() async {

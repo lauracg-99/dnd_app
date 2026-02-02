@@ -5,7 +5,7 @@ import 'dart:convert';
 import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
 import '../../services/diary_service.dart';
-import '../../utils/QuillToolbarConfigs.dart';
+import '../../utils/quill_toolbar_configs.dart';
 import '../../utils/simple_quill_editor_no_card.dart';
 
 class DiaryEditorScreen extends StatefulWidget {

@@ -34,8 +34,6 @@ class _ExpandableQuillEditorState extends State<ExpandableQuillEditor>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    final containerColor = colorScheme.surface;
     final headerColor = colorScheme.surfaceVariant;
     final borderColor = colorScheme.outlineVariant;
     final textColor = colorScheme.onSurfaceVariant;

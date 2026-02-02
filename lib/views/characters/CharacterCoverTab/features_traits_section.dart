@@ -1,5 +1,5 @@
-import 'package:dnd_app/utils/QuillToolbarConfigs.dart';
-import 'package:dnd_app/utils/SimpleQuillEditor.dart';
+import 'package:dnd_app/utils/quill_toolbar_configs.dart';
+import 'package:dnd_app/utils/simple_quill_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 

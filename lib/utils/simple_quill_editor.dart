@@ -31,11 +31,8 @@ class _SimpleQuillEditorState extends State<SimpleQuillEditor> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    final containerColor = colorScheme.surface;
     final headerColor = colorScheme.surfaceVariant;
     final borderColor = colorScheme.outlineVariant;
-    final textColor = colorScheme.onSurfaceVariant;
 
     return Container(
       decoration: BoxDecoration(

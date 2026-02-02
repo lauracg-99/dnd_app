@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'base_model.dart';
 
 class DiaryEntry extends BaseModel {
@@ -91,28 +90,4 @@ class DiaryEntry extends BaseModel {
     }
   }
 
-  static T? _getValueNullable<T>(Map<String, dynamic> map, String key, {T? defaultValue}) {
-    try {
-      if (!map.containsKey(key)) {
-        return defaultValue;
-      }
-      
-      final value = map[key];
-      
-      if (value == null) {
-        return defaultValue;
-      }
-      
-      if (value is Map && value.containsKey('value')) {
-        final nestedValue = value['value'];
-        if (nestedValue == null && defaultValue != null) return defaultValue;
-        return nestedValue as T?;
-      }
-      
-      return value as T?;
-    } catch (e) {
-      debugPrint('Error parsing field $key: $e');
-      return defaultValue;
-    }
-  }
 }

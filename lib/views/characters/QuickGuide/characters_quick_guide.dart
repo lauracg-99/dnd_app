@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import '../../../utils/SimpleQuillEditor.dart';
-import '../../../utils/QuillToolbarConfigs.dart';
+import '../../../utils/simple_quill_editor.dart';
+import '../../../utils/quill_toolbar_configs.dart';
 
 class CharactersQuickGuide extends StatefulWidget {
   final QuillController controller;
