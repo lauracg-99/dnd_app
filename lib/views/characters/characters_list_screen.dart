@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:io';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
 import '../../services/character_service.dart';
-import '../../services/diary_service.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/cloud_sync_service.dart';
 import 'character_edit_screen.dart';
@@ -565,6 +563,16 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
               _signOut();
             },
           ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.delete_forever, color: Colors.red),
+            title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
+            subtitle: const Text('Permanently delete your account and all cloud data'),
+            onTap: () {
+              Navigator.pop(context);
+              _confirmAndDeleteAccount();
+            },
+          ),
           const SizedBox(height: 40),
         ],
       ),
@@ -655,6 +663,167 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
           SnackBar(
             content: Text('Error signing out: $e'),
             backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Confirm and delete account with multi-step confirmation
+  void _confirmAndDeleteAccount() async {
+    // First confirmation dialog - explain what will be deleted
+    final firstConfirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account?'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This will permanently delete:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            Text('• Your account'),
+            Text('• All cloud-synced characters'),
+            Text('• All cloud-synced diaries'),            
+            SizedBox(height: 16),
+            Text(
+              'Note: Local data on this device will NOT be deleted.',
+              style: TextStyle(fontStyle: FontStyle.italic),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'This action cannot be undone.',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+
+    if (firstConfirm != true) return;
+
+    // Second confirmation dialog - final warning
+    final secondConfirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Are you absolutely sure?'),
+        content: const Text(
+          'Your account and all cloud data will be permanently deleted. This action cannot be undone.\n\nDo you want to proceed?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Delete My Account'),
+          ),
+        ],
+      ),
+    );
+
+    if (secondConfirm != true) return;
+
+    // Proceed with account deletion
+    _deleteAccount();
+  }
+
+  /// Delete account and all cloud data
+  void _deleteAccount() async {
+    try {
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Text('Deleting account...'),
+              ],
+            ),
+            duration: Duration(seconds: 30),
+          ),
+        );
+      }
+
+      // Step 1: Delete all cloud data
+      final cloudDeleteResult = await _syncService.deleteAllCloudData();
+      if (!cloudDeleteResult.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete cloud data: ${cloudDeleteResult.errorMessage}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Step 2: Delete authentication account
+      final authDeleteResult = await _authService.deleteAccount();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        
+        if (authDeleteResult.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account deleted successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authDeleteResult.errorMessage!),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting account: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }

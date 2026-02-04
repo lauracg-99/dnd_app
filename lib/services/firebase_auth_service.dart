@@ -97,6 +97,51 @@ class FirebaseAuthService {
     }
   }
   
+  /// Delete the current user account permanently
+  /// This will delete the user's authentication account from Firebase
+  /// Note: Cloud data (Firestore) must be deleted separately before calling this
+  Future<AuthResult> deleteAccount() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        if (kDebugMode) {
+          print('No user logged in to delete');
+        }
+        return AuthResult.failure('No user is currently logged in');
+      }
+      
+      if (kDebugMode) {
+        print('Deleting account for user: ${user.email}');
+      }
+      
+      await user.delete();
+      
+      if (kDebugMode) {
+        print('Successfully deleted account');
+      }
+      
+      return AuthResult.success(null);
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        print('Error deleting account: ${e.message}');
+      }
+      
+      // Handle re-authentication required error
+      if (e.code == 'requires-recent-login') {
+        return AuthResult.failure(
+          'For security reasons, please sign out and sign in again before deleting your account.',
+        );
+      }
+      
+      return AuthResult.failure(_getErrorMessage(e));
+    } catch (e) {
+      if (kDebugMode) {
+        print('Unexpected error during account deletion: $e');
+      }
+      return AuthResult.failure('An unexpected error occurred while deleting your account. Please try again.');
+    }
+  }
+  
   /// Get user-friendly error message from FirebaseAuthException
   String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
