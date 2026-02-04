@@ -97,6 +97,37 @@ class FirebaseAuthService {
     }
   }
   
+  /// Send password reset email to the user
+  Future<AuthResult> resetPassword(String email) async {
+    try {
+      if (email.isEmpty) {
+        return AuthResult.failure('Please enter your email address');
+      }
+      
+      if (kDebugMode) {
+        print('Sending password reset email to: $email');
+      }
+      
+      await _auth.sendPasswordResetEmail(email: email);
+      
+      if (kDebugMode) {
+        print('Password reset email sent successfully');
+      }
+      
+      return AuthResult.success(null);
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        print('Error sending password reset email: ${e.message}');
+      }
+      return AuthResult.failure(_getErrorMessage(e));
+    } catch (e) {
+      if (kDebugMode) {
+        print('Unexpected error during password reset: $e');
+      }
+      return AuthResult.failure('An unexpected error occurred. Please try again.');
+    }
+  }
+  
   /// Delete the current user account permanently
   /// This will delete the user's authentication account from Firebase
   /// Note: Cloud data (Firestore) must be deleted separately before calling this

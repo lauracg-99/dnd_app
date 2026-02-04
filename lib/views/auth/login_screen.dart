@@ -138,7 +138,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   onFieldSubmitted: (_) => _handleSubmit(),
                 ),
                 
-                const SizedBox(height: 32),
+                const SizedBox(height: 8),
+                
+                // Forgot password link
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isLoading ? null : _showForgotPasswordDialog,
+                    child: const Text('Forgot Password?'),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
                 
                 // Info text about account creation
                 Container(
@@ -426,5 +437,133 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pop(context);
       }
     }
+  }
+
+  /// Show forgot password dialog
+  void _showForgotPasswordDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => _ForgotPasswordDialog(
+        authService: _authService,
+        initialEmail: _emailController.text,
+        parentContext: context,
+      ),
+    );
+  }
+}
+
+class _ForgotPasswordDialog extends StatefulWidget {
+  final FirebaseAuthService authService;
+  final String initialEmail;
+  final BuildContext parentContext;
+
+  const _ForgotPasswordDialog({
+    required this.authService,
+    required this.initialEmail,
+    required this.parentContext,
+  });
+
+  @override
+  State<_ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();
+}
+
+class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
+  late final TextEditingController _emailController;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(text: widget.initialEmail);
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Reset Password'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Enter your email address and we\'ll send you a link to reset your password.',
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: 'Email',
+              hintText: 'Enter your email address',
+              prefixIcon: const Icon(Icons.email),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            final email = _emailController.text.trim();
+            
+            if (email.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please enter your email address'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+            
+            // Close dialog
+            Navigator.pop(context);
+            
+            // Send password reset email
+            final result = await widget.authService.resetPassword(email);
+            
+            if (widget.parentContext.mounted) {
+              ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(
+                        result.success ? Icons.check_circle : Icons.error,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          result.success
+                              ? 'Password reset email sent! Check your inbox (or spam folder).'
+                              : result.errorMessage!,
+                        ),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: result.success ? Colors.green : Colors.red,
+                  duration: const Duration(seconds: 5),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+          child: const Text('Send Reset Link'),
+        ),
+      ],
+    );
   }
 }
