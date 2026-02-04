@@ -524,6 +524,8 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
 
   /// Show cloud sync options for authenticated users
   void _showCloudSyncOptions() {
+    final userEmail = _authService.currentUser?.email ?? 'Unknown';
+    
     showModalBottomSheet(
       context: context,
       builder: (context) => Padding(
@@ -531,9 +533,9 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-          const ListTile(
-            title: Text('Cloud Sync Options'),
-            subtitle: Text('Manage your cloud synchronization'),
+          ListTile(
+            title: const Text('Cloud Sync Options'),
+            subtitle: Text('Signed in as: $userEmail'),
           ),
           const Divider(),
           ListTile(
