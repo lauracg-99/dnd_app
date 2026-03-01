@@ -128,7 +128,9 @@ class _CharactersQuickGuideState extends State<CharactersQuickGuide>
                     child: SimpleQuillEditor(
                       controller: widget.controller,
                       toolbarConfig: QuillToolbarConfigs.minimal,
-                      height: 400,                      
+                      height: MediaQuery.of(context).size.height < 600 
+                          ? MediaQuery.of(context).size.height * 0.4
+                          : MediaQuery.of(context).size.height * 0.6,                      
                     ),
                   ),
                 ],

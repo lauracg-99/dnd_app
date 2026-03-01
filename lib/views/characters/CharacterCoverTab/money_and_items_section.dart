@@ -80,16 +80,6 @@ class MoneyItemsSection extends StatelessWidget {
               ),
             ),            
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: Colors.grey.shade600,
-                ),
-                const SizedBox(width: 6),
-              ],
-            ),
           ],
         ),
       ),
