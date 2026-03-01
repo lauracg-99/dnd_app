@@ -48,7 +48,7 @@ class LanguagesSection extends StatelessWidget {
               hint: 'Enter your character\'s languages...',
               onChanged: onChanged,
               maxLines: 6,
-              minLines: 4,
+              minLines: 1,
             ),
           ],
         ),

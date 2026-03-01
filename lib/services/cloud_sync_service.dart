@@ -6,8 +6,10 @@ import 'package:flutter/foundation.dart';
 import 'firebase_auth_service.dart';
 import 'character_service.dart';
 import 'diary_service.dart';
+import 'device_service.dart';
 import '../models/character_model.dart';
 import '../models/diary_model.dart';
+import '../models/user_data_model.dart';
 
 /// Service for handling cloud synchronization with Firebase
 class CloudSyncService {
@@ -17,6 +19,7 @@ class CloudSyncService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuthService _authService = FirebaseAuthService();
+  final DeviceService _deviceService = DeviceService();
   
   // Expose auth service for other services to check authentication status
   FirebaseAuthService get authService => _authService;
@@ -24,6 +27,10 @@ class CloudSyncService {
   // Debounce timers to prevent excessive Firebase calls
   Timer? _charactersSyncTimer;
   Timer? _diariesSyncTimer;
+  
+  // Real-time listeners for cross-device sync
+  StreamSubscription<QuerySnapshot>? _charactersListener;
+  StreamSubscription<QuerySnapshot>? _diariesListener;
   
   // Sync status tracking
   final StreamController<SyncStatus> _syncStatusController = StreamController<SyncStatus>.broadcast();
@@ -33,26 +40,184 @@ class CloudSyncService {
   static const Duration _syncDebounceDelay = Duration(seconds: 5);
   static const String _charactersCollection = 'characters';
   static const String _diariesCollection = 'diaries';
+  static const String _devicesCollection = 'devices';
   
   /// Initialize the cloud sync service
   Future<void> initialize() async {
+    if (kDebugMode) {
+      print('=== CloudSyncService.initialize() ===');
+    }
+    
     // Listen to auth state changes
     _authService.authStateChanges.listen((User? user) {
+      if (kDebugMode) {
+        print('Auth state changed: user=${user?.uid ?? 'null'}');
+      }
+      
       if (user != null) {
         if (kDebugMode) {
           print('User logged in, initializing cloud sync');
         }
         // User logged in, we can start syncing
         _syncStatusController.add(SyncStatus.connected);
+        _startRealtimeListeners();
       } else {
         if (kDebugMode) {
           print('User logged out, stopping cloud sync');
         }
-        // User logged out, stop sync timers
+        // User logged out, stop sync timers and listeners
         _cancelAllSyncTimers();
+        _stopRealtimeListeners();
         _syncStatusController.add(SyncStatus.disconnected);
       }
     });
+    
+    // Check if user is already authenticated (handles case where auth happened before initialization)
+    if (_authService.isAuthenticated) {
+      if (kDebugMode) {
+        print('User already authenticated, starting sync immediately');
+        print('Current user: ${_authService.currentUser?.uid}');
+      }
+      _syncStatusController.add(SyncStatus.connected);
+      _startRealtimeListeners();
+    }
+    
+    if (kDebugMode) {
+      print('Auth state listener set up');
+    }
+  }
+  
+  /// Register current device for tracking
+  Future<void> registerCurrentDevice() async {
+    if (!_authService.isAuthenticated) {
+      if (kDebugMode) {
+        print('Cannot register device: User not authenticated');
+      }
+      return;
+    }
+    
+    try {
+      final deviceInfo = await _deviceService.getCurrentDeviceInfo();
+      final userId = _authService.currentUser!.uid;
+      
+      final deviceRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection(_devicesCollection)
+          .doc(deviceInfo.deviceId);
+      
+      await deviceRef.set({
+        'deviceInfo': deviceInfo.toJson(),
+        'registeredAt': FieldValue.serverTimestamp(),
+        'lastSyncAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      
+      if (kDebugMode) {
+        print('Device registered: ${deviceInfo.deviceId} (${deviceInfo.deviceName})');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error registering device: $e');
+      }
+    }
+  }
+  
+  /// Update device last sync timestamp
+  Future<void> updateDeviceLastSync() async {
+    if (!_authService.isAuthenticated) return;
+    
+    try {
+      final deviceInfo = await _deviceService.getCurrentDeviceInfo();
+      final userId = _authService.currentUser!.uid;
+      
+      final deviceRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection(_devicesCollection)
+          .doc(deviceInfo.deviceId);
+      
+      await deviceRef.update({
+        'lastSyncAt': FieldValue.serverTimestamp(),
+        'deviceInfo.lastSeen': DateTime.now().toIso8601String(),
+      });
+      
+      // Also update local cache
+      await _deviceService.updateLastSeen();
+      
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating device last sync: $e');
+      }
+    }
+  }
+  
+  /// Get all registered devices for the current user
+  Future<List<DeviceInfo>> getUserDevices() async {
+    if (!_authService.isAuthenticated) return [];
+    
+    try {
+      final userId = _authService.currentUser!.uid;
+      final devicesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection(_devicesCollection)
+          .get();
+      
+      final devices = <DeviceInfo>[];
+      for (final doc in devicesSnapshot.docs) {
+        final deviceData = doc.data();
+        if (deviceData.containsKey('deviceInfo')) {
+          final deviceInfoMap = deviceData['deviceInfo'] as Map<String, dynamic>;
+          devices.add(DeviceInfo.fromJson(deviceInfoMap));
+        }
+      }
+      
+      // Sort by last seen (most recent first)
+      devices.sort((a, b) => b.lastSeen.compareTo(a.lastSeen));
+      
+      return devices;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting user devices: $e');
+      }
+      return [];
+    }
+  }
+  
+  /// Check if there are other devices that have synced more recently
+  Future<bool> hasMoreRecentDeviceSync() async {
+    if (!_authService.isAuthenticated) return false;
+    
+    try {
+      final currentDevice = await _deviceService.getCurrentDeviceInfo();
+      final allDevices = await getUserDevices();
+      
+      // Find the most recent device (excluding current)
+      DeviceInfo? mostRecentOtherDevice;
+      for (final device in allDevices) {
+        if (device.deviceId != currentDevice.deviceId) {
+          if (mostRecentOtherDevice == null || 
+              device.lastSeen.isAfter(mostRecentOtherDevice.lastSeen)) {
+            mostRecentOtherDevice = device;
+          }
+        }
+      }
+      
+      if (mostRecentOtherDevice != null) {
+        final isMoreRecent = mostRecentOtherDevice.lastSeen.isAfter(currentDevice.lastSeen);
+        if (kDebugMode && isMoreRecent) {
+          print('More recent sync detected on device: ${mostRecentOtherDevice.deviceName}');
+        }
+        return isMoreRecent;
+      }
+      
+      return false;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking for more recent device sync: $e');
+      }
+      return false;
+    }
   }
   
   /// Upload all local data to Firebase (for new account creation)
@@ -63,6 +228,9 @@ class CloudSyncService {
     
     try {
       _syncStatusController.add(SyncStatus.syncing);
+      
+      // Register current device before uploading
+      await registerCurrentDevice();
       
       final userId = _authService.currentUser!.uid;
       
@@ -79,6 +247,9 @@ class CloudSyncService {
         diaries.addAll(characterDiaries.map((d) => d.toJson()));
       }
       await _uploadDiaries(userId, diaries);
+      
+      // Update device last sync timestamp
+      await updateDeviceLastSync();
       
       _syncStatusController.add(SyncStatus.connected);
       
@@ -105,6 +276,9 @@ class CloudSyncService {
     try {
       _syncStatusController.add(SyncStatus.syncing);
       
+      // Register current device before downloading
+      await registerCurrentDevice();
+      
       final userId = _authService.currentUser!.uid;
       
       // Download characters
@@ -122,6 +296,9 @@ class CloudSyncService {
         final diary = DiaryEntry.fromJson(diaryMap);
         await DiaryService.saveDiaryEntry(diary);
       }
+      
+      // Update device last sync timestamp
+      await updateDeviceLastSync();
       
       _syncStatusController.add(SyncStatus.connected);
       
@@ -183,6 +360,9 @@ class CloudSyncService {
     try {
       _syncStatusController.add(SyncStatus.syncing);
       
+      // Register device if not already registered
+      await registerCurrentDevice();
+      
       final userId = _authService.currentUser!.uid;
       print('=== Starting $entityName sync for user: $userId ===');
       
@@ -190,6 +370,9 @@ class CloudSyncService {
       print('Loaded ${dataMaps.length} $entityName from local storage');
       
       await uploadData(userId, dataMaps);
+      
+      // Update device last sync timestamp
+      await updateDeviceLastSync();
       
       _syncStatusController.add(SyncStatus.connected);
       
@@ -520,9 +703,383 @@ class CloudSyncService {
     _diariesSyncTimer = null;
   }
   
+  /// Smart sync with device conflict resolution
+  Future<SyncResult> smartSync() async {
+    if (!_authService.isAuthenticated) {
+      return SyncResult.failure('User not authenticated');
+    }
+    
+    try {
+      _syncStatusController.add(SyncStatus.syncing);
+      
+      // Check for device conflicts
+      final hasMoreRecentSync = await hasMoreRecentDeviceSync();
+      
+      if (hasMoreRecentSync) {
+        // Another device has more recent sync, download from cloud
+        if (kDebugMode) {
+          print('Detected more recent sync on another device, downloading from cloud');
+        }
+        final result = await downloadAllData();
+        
+        if (result.success) {
+          return SyncResult.success('Sync completed: Downloaded latest data from cloud');
+        } else {
+          return result;
+        }
+      } else {
+        // Current device is up-to-date or has latest changes, upload to cloud
+        if (kDebugMode) {
+          print('Current device has latest data, uploading to cloud');
+        }
+        final result = await syncAll();
+        
+        if (result.success) {
+          return SyncResult.success('Sync completed: Uploaded local data to cloud');
+        } else {
+          return result;
+        }
+      }
+    } catch (e) {
+      _syncStatusController.add(SyncStatus.error);
+      if (kDebugMode) {
+        print('Error during smart sync: $e');
+      }
+      return SyncResult.failure('Smart sync failed: $e');
+    }
+  }
+  
+  /// Force sync from cloud (download and overwrite local data)
+  Future<SyncResult> forceSyncFromCloud() async {
+    if (!_authService.isAuthenticated) {
+      return SyncResult.failure('User not authenticated');
+    }
+    
+    try {
+      _syncStatusController.add(SyncStatus.syncing);
+      
+      if (kDebugMode) {
+        print('Force syncing from cloud (will overwrite local data)');
+      }
+      
+      final result = await downloadAllData();
+      
+      if (result.success) {
+        // Register current device after successful download
+        await registerCurrentDevice();
+        return SyncResult.success('Force sync completed: Local data overwritten with cloud data');
+      } else {
+        return result;
+      }
+    } catch (e) {
+      _syncStatusController.add(SyncStatus.error);
+      if (kDebugMode) {
+        print('Error during force sync from cloud: $e');
+      }
+      return SyncResult.failure('Force sync failed: $e');
+    }
+  }
+  
+  /// Force sync to cloud (upload and overwrite cloud data)
+  Future<SyncResult> forceSyncToCloud() async {
+    if (!_authService.isAuthenticated) {
+      return SyncResult.failure('User not authenticated');
+    }
+    
+    try {
+      _syncStatusController.add(SyncStatus.syncing);
+      
+      if (kDebugMode) {
+        print('Force syncing to cloud (will overwrite cloud data)');
+      }
+      
+      final result = await uploadAllLocalData();
+      
+      if (result.success) {
+        return SyncResult.success('Force sync completed: Cloud data overwritten with local data');
+      } else {
+        return result;
+      }
+    } catch (e) {
+      _syncStatusController.add(SyncStatus.error);
+      if (kDebugMode) {
+        print('Error during force sync to cloud: $e');
+      }
+      return SyncResult.failure('Force sync failed: $e');
+    }
+  }
+  
+  /// Get sync status with device information
+  Future<Map<String, dynamic>> getSyncStatus() async {
+    if (!_authService.isAuthenticated) {
+      return {
+        'authenticated': false,
+        'devices': <DeviceInfo>[],
+        'hasConflict': false,
+        'lastSyncDevice': null,
+        'lastSyncTime': null,
+      };
+    }
+    
+    try {
+      final devices = await getUserDevices();
+      final currentDevice = await _deviceService.getCurrentDeviceInfo();
+      final hasMoreRecentSync = await hasMoreRecentDeviceSync();
+      
+      // Find last sync device
+      DeviceInfo? lastSyncDevice;
+      for (final device in devices) {
+        if (lastSyncDevice == null || device.lastSeen.isAfter(lastSyncDevice.lastSeen)) {
+          lastSyncDevice = device;
+        }
+      }
+      
+      return {
+        'authenticated': true,
+        'currentDevice': currentDevice,
+        'devices': devices,
+        'deviceCount': devices.length,
+        'hasConflict': hasMoreRecentSync,
+        'lastSyncDevice': lastSyncDevice,
+        'lastSyncTime': lastSyncDevice?.lastSeen,
+        'isCurrentDeviceMostRecent': lastSyncDevice?.deviceId == currentDevice.deviceId,
+      };
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting sync status: $e');
+      }
+      return {
+        'authenticated': true,
+        'error': e.toString(),
+        'devices': <DeviceInfo>[],
+        'hasConflict': false,
+      };
+    }
+  }
+  
+  /// Remove device from tracking (for example, when user logs out from a device)
+  Future<SyncResult> removeDevice(String deviceId) async {
+    if (!_authService.isAuthenticated) {
+      return SyncResult.failure('User not authenticated');
+    }
+    
+    try {
+      final userId = _authService.currentUser!.uid;
+      
+      // Remove device from Firestore
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection(_devicesCollection)
+          .doc(deviceId)
+          .delete();
+      
+      if (kDebugMode) {
+        print('Device removed from tracking: $deviceId');
+      }
+      
+      return SyncResult.success('Device removed successfully');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error removing device: $e');
+      }
+      return SyncResult.failure('Failed to remove device: $e');
+    }
+  }
+  
+  /// Start real-time listeners for cross-device synchronization
+  void _startRealtimeListeners() {
+    if (kDebugMode) {
+      print('=== _startRealtimeListeners() ===');
+      print('Is authenticated: ${_authService.isAuthenticated}');
+    }
+    
+    if (!_authService.isAuthenticated) {
+      if (kDebugMode) {
+        print('Cannot start listeners: User not authenticated');
+      }
+      return;
+    }
+    
+    final userId = _authService.currentUser!.uid;
+    
+    if (kDebugMode) {
+      print('Starting real-time listeners for user: $userId');
+    }
+    
+    // Start characters listener
+    if (kDebugMode) {
+      print('Setting up characters listener...');
+    }
+    
+    _charactersListener = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection(_charactersCollection)
+        .snapshots()
+        .listen((snapshot) {
+          if (kDebugMode) {
+            print('!!! CHARACTERS SNAPSHOT RECEIVED !!!');
+            print('Characters snapshot received: ${snapshot.docs.length} documents');
+            print('Doc changes: ${snapshot.docChanges.length}');
+          }
+          _handleCharactersSnapshot(snapshot);
+        }, onError: (error) {
+          if (kDebugMode) {
+            print('!!! CHARACTERS LISTENER ERROR !!!');
+            print('Error in characters listener: $error');
+          }
+        });
+    
+    if (kDebugMode) {
+      print('Characters listener set up successfully');
+    }
+    
+    // Start diaries listener
+    if (kDebugMode) {
+      print('Setting up diaries listener...');
+    }
+    
+    _diariesListener = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection(_diariesCollection)
+        .snapshots()
+        .listen((snapshot) {
+          if (kDebugMode) {
+            print('!!! DIARIES SNAPSHOT RECEIVED !!!');
+            print('Diaries snapshot received: ${snapshot.docs.length} documents');
+            print('Doc changes: ${snapshot.docChanges.length}');
+          }
+          _handleDiariesSnapshot(snapshot);
+        }, onError: (error) {
+          if (kDebugMode) {
+            print('!!! DIARIES LISTENER ERROR !!!');
+            print('Error in diaries listener: $error');
+          }
+        });
+    
+    if (kDebugMode) {
+      print('Diaries listener set up successfully');
+      print('Started real-time listeners for cross-device sync');
+    }
+  }
+  
+  /// Stop real-time listeners
+  void _stopRealtimeListeners() {
+    _charactersListener?.cancel();
+    _charactersListener = null;
+    _diariesListener?.cancel();
+    _diariesListener = null;
+    
+    if (kDebugMode) {
+      print('Stopped real-time listeners');
+    }
+  }
+  
+  /// Handle characters snapshot changes
+  Future<void> _handleCharactersSnapshot(QuerySnapshot snapshot) async {
+    if (kDebugMode) {
+      print('=== CHARACTER SNAPSHOT HANDLER ===');
+      print('Snapshot docChanges length: ${snapshot.docChanges.length}');
+      print('Snapshot docs length: ${snapshot.docs.length}');
+    }
+    
+    if (snapshot.docChanges.isEmpty) {
+      if (kDebugMode) {
+        print('No doc changes, returning early');
+      }
+      return;
+    }
+    
+    try {
+      if (kDebugMode) {
+        print('Detected character changes in Firestore, setting changesAvailable status');
+      }
+      
+      // Set status to indicate changes are available for manual sync
+      _syncStatusController.add(SyncStatus.changesAvailable);
+      
+      if (kDebugMode) {
+        print('Status set to changesAvailable - user can manually sync now');
+      }
+      
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error handling characters snapshot: $e');
+        print('Stack trace: ${StackTrace.current}');
+      }
+    }
+  }
+  
+  /// Handle diaries snapshot changes
+  Future<void> _handleDiariesSnapshot(QuerySnapshot snapshot) async {
+    if (kDebugMode) {
+      print('=== DIARY SNAPSHOT HANDLER ===');
+      print('Snapshot docChanges length: ${snapshot.docChanges.length}');
+      print('Snapshot docs length: ${snapshot.docs.length}');
+    }
+    
+    if (snapshot.docChanges.isEmpty) {
+      if (kDebugMode) {
+        print('No diary doc changes, returning early');
+      }
+      return;
+    }
+    
+    try {
+      if (kDebugMode) {
+        print('Detected diary changes in Firestore, setting changesAvailable status');
+      }
+      
+      // Set status to indicate changes are available for manual sync
+      _syncStatusController.add(SyncStatus.changesAvailable);
+      
+      if (kDebugMode) {
+        print('Status set to changesAvailable - user can manually sync now');
+      }
+      
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error handling diaries snapshot: $e');
+        print('Stack trace: ${StackTrace.current}');
+      }
+    }
+  }
+  
+  /// Manually sync changes when user taps cloud button in changesAvailable state
+  Future<SyncResult> manualSyncFromCloud() async {
+    if (!_authService.isAuthenticated) {
+      return SyncResult.failure('User not authenticated');
+    }
+    
+    try {
+      _syncStatusController.add(SyncStatus.syncing);
+      
+      if (kDebugMode) {
+        print('Manual sync from cloud triggered by user');
+      }
+      
+      // Download all data from cloud
+      final result = await downloadAllData();
+      
+      // Reset to connected status after manual sync
+      _syncStatusController.add(SyncStatus.connected);
+      
+      return result;
+    } catch (e) {
+      _syncStatusController.add(SyncStatus.error);
+      if (kDebugMode) {
+        print('Error during manual sync: $e');
+      }
+      return SyncResult.failure('Manual sync failed: $e');
+    }
+  }
+
   /// Dispose the service
   void dispose() {
     _cancelAllSyncTimers();
+    _stopRealtimeListeners();
     _syncStatusController.close();
   }
 }
@@ -538,6 +1095,7 @@ enum SyncStatus {
   disconnected,
   connected,
   syncing,
+  changesAvailable, // New status: changes detected, ready for manual sync
   error,
 }
 

@@ -27,6 +27,9 @@ class CharactersViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Add minimum delay to show spinner for better UX
+      await Future.delayed(const Duration(milliseconds: 500));
+      
       _allCharacters = await CharacterService.loadAllCharacters();
       _applyFilters();
     } catch (e) {

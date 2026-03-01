@@ -161,6 +161,7 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                                         'Added ${feat.name} to ${widget.characterName}',
                                       ),
                                       backgroundColor: Colors.green,
+                                      duration: const Duration(seconds: 2),
                                     ),
                                   );
                                 },

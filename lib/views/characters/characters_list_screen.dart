@@ -20,9 +20,9 @@ class CharactersListScreen extends StatefulWidget {
 
 class _CharactersListScreenState extends State<CharactersListScreen> with WidgetsBindingObserver {
   final _searchController = TextEditingController();
+  final _syncService = CloudSyncService();
+  final _authService = FirebaseAuthService();
   bool _isFilterExpanded = false;
-  final FirebaseAuthService _authService = FirebaseAuthService();
-  final CloudSyncService _syncService = CloudSyncService();
 
   @override
   void initState() {
@@ -44,16 +44,8 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
             context.read<CharactersViewModel>().loadCharacters();
           }
         });
-        
-        // Second refresh after a longer delay for data download completion
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted) {
-            context.read<CharactersViewModel>().loadCharacters();
-          }
-        });
-        
-        // Third refresh as a fallback
-        Future.delayed(const Duration(milliseconds: 3000), () {
+        // Second refresh after a bit more time to ensure cloud data is loaded
+        Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
             context.read<CharactersViewModel>().loadCharacters();
           }
@@ -114,8 +106,8 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
                       ),
                   ],
                 ),
-                onPressed: _handleCloudButtonPressed,
-                tooltip: _authService.isAuthenticated ? 'Cloud Sync Options' : 'Sign In & Sync',
+                onPressed: () => _handleCloudButtonPressed(syncStatus),
+                tooltip: _getCloudButtonTooltip(syncStatus),
               );
             },
           ),
@@ -496,19 +488,23 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
     CharacterService.saveCharacter(duplicatedCharacter).then((_) {
       // Reload the characters list to refresh the UI
       context.read<CharactersViewModel>().loadCharacters();
-      // Schedule sync if authenticated
-      if (_authService.isAuthenticated) {
-        _syncService.scheduleCharacterSync();
-      }
     });
   }
 
   /// Handle cloud button press based on authentication state
-  void _handleCloudButtonPressed() {
-    if (_authService.isAuthenticated) {
-      _showCloudSyncOptions();
-    } else {
+  void _handleCloudButtonPressed(SyncStatus currentStatus) {
+    if (!_authService.isAuthenticated) {
       _navigateToLogin();
+      return;
+    }
+    
+    // Check current sync status
+    if (currentStatus == SyncStatus.changesAvailable) {
+      // If changes are available, trigger manual sync immediately
+      _manualSyncChanges();
+    } else {
+      // Otherwise, show full sync options
+      _showCloudSyncOptions();
     }
   }
 
@@ -520,6 +516,72 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
         builder: (context) => const LoginScreen(),
       ),
     );
+  }
+
+  /// Manual sync when changes are available
+  void _manualSyncChanges() async {
+    // Show confirmation dialog before downloading changes
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Download Changes'),
+        content: const Text(
+          'Changes from other devices are available. Download them now?\n\n'
+          'This will replace your local data with the latest changes from the cloud.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Download'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == null || !confirmed) return;
+
+    try {
+      final result = await _syncService.manualSyncFromCloud();
+      
+      if (result.success) {
+        // Refresh characters after sync
+        context.read<CharactersViewModel>().loadCharacters();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Changes downloaded successfully!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Download failed: ${result.errorMessage}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Download error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   /// Show cloud sync options for authenticated users
@@ -621,6 +683,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
         SnackBar(
           content: Text(result.success ? result.successMessage! : result.errorMessage!),
           backgroundColor: result.success ? Colors.green : Colors.red,
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -634,6 +697,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
         SnackBar(
           content: Text(result.success ? result.successMessage! : result.errorMessage!),
           backgroundColor: result.success ? Colors.green : Colors.red,
+          duration: const Duration(seconds: 2),
         ),
       );
       // Reload characters if download was successful with a small delay
@@ -656,6 +720,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
           const SnackBar(
             content: Text('Signed out successfully'),
             backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
           ),
         );
       }
@@ -665,6 +730,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
           SnackBar(
             content: Text('Error signing out: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -839,11 +905,32 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
         return Colors.green;
       case SyncStatus.syncing:
         return Colors.blue;
+      case SyncStatus.changesAvailable:
+        return Colors.purple; // Violet color for changes available
       case SyncStatus.error:
         return Colors.red;
       case SyncStatus.disconnected:
-      default:
         return Colors.grey;
+    }
+  }
+
+  /// Get tooltip text based on sync status
+  String _getCloudButtonTooltip(SyncStatus status) {
+    if (!_authService.isAuthenticated) {
+      return 'Sign In & Sync';
+    }
+    
+    switch (status) {
+      case SyncStatus.changesAvailable:
+        return 'Tap to download changes from other devices';
+      case SyncStatus.connected:
+        return 'Cloud Sync Options';
+      case SyncStatus.syncing:
+        return 'Syncing...';
+      case SyncStatus.error:
+        return 'Sync Error - Tap to retry';
+      case SyncStatus.disconnected:
+        return 'Cloud Sync Options';
     }
   }
 

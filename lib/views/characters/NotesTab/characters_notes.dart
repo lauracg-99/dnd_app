@@ -211,28 +211,6 @@ class _CharactersNotesState extends State<CharactersNotes>
               ),
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Auto-save info
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'All notes auto-save automatically • No character limit • Rich text supported',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 56),
         ],
       ),

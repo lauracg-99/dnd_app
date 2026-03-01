@@ -88,15 +88,6 @@ class MoneyItemsSection extends StatelessWidget {
                   color: Colors.grey.shade600,
                 ),
                 const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Auto-saves automatically • No character limit • Rich text supported',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600,
-                          fontStyle: FontStyle.italic,
-                        ),
-                  ),
-                ),
               ],
             ),
           ],

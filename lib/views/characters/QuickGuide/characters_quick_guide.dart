@@ -81,17 +81,7 @@ class _CharactersQuickGuideState extends State<CharactersQuickGuide>
                     Icons.schedule,
                     size: 20,
                     color: Colors.orange.shade700,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Auto-save in 30 seconds...',
-                      style: TextStyle(
-                        color: Colors.orange.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                  ),                  
                 ],
               ),
             ),

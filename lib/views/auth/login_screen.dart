@@ -319,6 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     : 'Signed in successfully!',
               ),
               backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
             ),
           );
 
@@ -338,6 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
             SnackBar(
               content: Text(result.errorMessage!),
               backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -348,6 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
           SnackBar(
             content: Text('An unexpected error occurred: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }

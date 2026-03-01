@@ -535,6 +535,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         SnackBar(
           content: Text('${character.name} already knows ${spell.name}'),
           backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
@@ -554,6 +555,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
       SnackBar(
         content: Text('Added ${spell.name} to ${character.name}'),
         backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
       ),
     );
   }

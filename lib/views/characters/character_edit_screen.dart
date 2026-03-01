@@ -60,7 +60,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   bool _isPickingImage = false;
   bool _hasUnsavedAbilityChanges = false;
   bool _hasUnsavedClassChanges = false;
-  bool _isLoading = false;
+  bool _isSaving = false;
   String _selectedClass = 'Fighter';
   bool _useCustomSubclass = false;
   String _selectedBackground = '';
@@ -160,10 +160,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize with default tabs immediately to prevent empty TabBar
     _initializeDefaultTabs();
-    
+
     // Initialize tab controller with default length first to prevent LateInitializationError
     _tabController = TabController(length: _orderedTabs.length, vsync: this);
     _initializeTabOrder();
@@ -179,7 +179,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   /// Initialize default tabs synchronously to prevent empty TabBar during initial build
   void _initializeDefaultTabs() {
     _tabOrder = CharacterTabManager.getDefaultTabOrder();
-    
+
     final Map<String, Widget Function()> tabBuilders = {
       'character': () => _buildCharacterCoverTab(),
       'quick_guide': () => _buildQuickGuideTab(),
@@ -193,7 +193,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       'appearance': () => _buildAppearanceTab(),
       'notes': () => _buildNotesTab(),
     };
-    
+
     _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
   }
 
@@ -203,7 +203,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Initialize profile image
     _customImagePath = character.customImagePath;
     _appearanceImagePath = character.appearance.appearanceImagePath;
-    
+
     // Initialize base64 image data
     _customImageData = character.customImageData;
     _appearanceImageData = character.appearance.appearanceImageData;
@@ -212,7 +212,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _nameController.text = character.name;
     _levelController.text = character.level.toString();
     _levelController.addListener(() {
-      _autoSaveCharacter();
       setState(() {}); // Rebuild to update proficiency bonus display
     });
     _selectedClass = character.characterClass;
@@ -303,12 +302,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Initialize languages and money/items
     _languagesController.text = character.languages.languages.join(', ');
     _moneyController.text = character.moneyItems.money;
-    
+
     // Initialize items with rich text support
     if (character.moneyItems.items.isNotEmpty) {
       try {
         // Try to parse as JSON (new format with rich text)
-        final List<dynamic> jsonDelta = jsonDecode(character.moneyItems.items.first);
+        final List<dynamic> jsonDelta = jsonDecode(
+          character.moneyItems.items.first,
+        );
         _itemsController.document = Document.fromJson(jsonDelta);
       } catch (e) {
         // Fallback to plain text (old format)
@@ -443,123 +444,21 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       }
     }
 
-    // Set up auto-save listeners
-    _setupAutoSaveListeners();
+    // Set up manual save (no auto-save listeners)
   }
 
-  void _setupAutoSaveListeners() {
-    // Add listeners to all text controllers for auto-save
-    _nameController.addListener(_autoSaveCharacter);
-    _classController.addListener(() {
-      _autoSaveCharacter();
-      setState(() {}); // Rebuild to show/hide concentration field
-    });
-    _subclassController.addListener(() {
-      _autoSaveCharacter();
-      setState(() {}); // Rebuild to show/hide concentration field
-    });
-    _raceController.addListener(_autoSaveCharacter);
-    _quickGuideController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _proficienciesController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _featuresTraitsController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _backstoryController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _featNotesController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-    _additionalDetailsController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-
-    _moneyController.addListener(_autoSaveCharacter);
-    _itemsController.document.changes.listen((_) {
-      _autoSaveCharacter();
-    });
-
-    _gimmickController.addListener(_autoSaveCharacter);
-    _quirkController.addListener(_autoSaveCharacter);
-    _wantsController.addListener(_autoSaveCharacter);
-    _needsController.addListener(_autoSaveCharacter);
-    _conflictController.addListener(_autoSaveCharacter);
-
-    _strengthController.addListener(() {
-      debugPrint(
-        'STRENGTH controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _dexterityController.addListener(() {
-      debugPrint(
-        'DEXTERITY controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _constitutionController.addListener(() {
-      debugPrint(
-        'CONSTITUTION controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _intelligenceController.addListener(() {
-      debugPrint(
-        'INTELLIGENCE controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _wisdomController.addListener(() {
-      debugPrint(
-        'WISDOM controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _charismaController.addListener(() {
-      debugPrint(
-        'CHARISMA controller changed - setting _hasUnsavedAbilityChanges = true',
-      );
-      setState(() {
-        _hasUnsavedAbilityChanges = true;
-      });
-    });
-    _proficiencyBonusController.addListener(() {
-      _hasUnsavedAbilityChanges = true;
-    });
-    _armorClassController.addListener(_autoSaveCharacter);
-    _speedController.addListener(_autoSaveCharacter);
-
-    _maxHpController.addListener(_autoSaveCharacter);
-    _currentHpController.addListener(_autoSaveCharacter);
-    _tempHpController.addListener(_autoSaveCharacter);
-    _hitDiceController.addListener(_autoSaveCharacter);
-    _hitDiceTypeController.addListener(_autoSaveCharacter);
-  }
+  // Manual save - no auto-save listeners
 
   /// Initialize tab order from user preferences
   Future<void> _initializeTabOrder() async {
     try {
       // Initialize user preferences service
       await UserPreferencesService.initializeStorage();
-      
+
       // Load user preferences
       final preferences = await UserPreferencesService.loadPreferences();
       _tabOrder = preferences.characterTabOrder;
-      
+
       // Create tab builders map
       final Map<String, Widget Function()> tabBuilders = {
         'character': () => _buildCharacterCoverTab(),
@@ -574,14 +473,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         'appearance': () => _buildAppearanceTab(),
         'notes': () => _buildNotesTab(),
       };
-      
+
       // Get ordered tabs
       _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
-      
+
       // Only recreate controller if length changed
       if (_tabController.length != _orderedTabs.length) {
         _tabController.dispose();
-        _tabController = TabController(length: _orderedTabs.length, vsync: this);
+        _tabController = TabController(
+          length: _orderedTabs.length,
+          vsync: this,
+        );
       }
       setState(() {});
     } catch (e) {
@@ -602,13 +504,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         'notes': () => _buildNotesTab(),
       };
       _orderedTabs = CharacterTabManager.getOrderedTabs(_tabOrder, tabBuilders);
-      
+
       // Only recreate controller if length changed
       if (_tabController.length != _orderedTabs.length) {
         _tabController.dispose();
-        _tabController = TabController(length: _orderedTabs.length, vsync: this);
+        _tabController = TabController(
+          length: _orderedTabs.length,
+          vsync: this,
+        );
       }
-      
+
       setState(() {});
     }
   }
@@ -617,9 +522,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   Future<void> _saveTabOrder(List<String> newOrder) async {
     try {
       final preferences = await UserPreferencesService.loadPreferences();
-      final updatedPreferences = preferences.copyWith(characterTabOrder: newOrder);
+      final updatedPreferences = preferences.copyWith(
+        characterTabOrder: newOrder,
+      );
       await UserPreferencesService.savePreferences(updatedPreferences);
-      
+
       _tabOrder = newOrder;
       debugPrint('Tab order saved: $newOrder');
     } catch (e) {
@@ -703,10 +610,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          tabs: _orderedTabs.map((tab) => Tab(
-            text: tab.label,
-            icon: Icon(tab.icon),
-          )).toList(),
+          tabs:
+              _orderedTabs
+                  .map((tab) => Tab(text: tab.label, icon: Icon(tab.icon)))
+                  .toList(),
         ),
         actions: [
           IconButton(
@@ -719,7 +626,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             onPressed: _showTabReorderDialog,
             tooltip: 'Reorder Tabs',
           ),
-          _isLoading
+          _isSaving
               ? const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: SizedBox(
@@ -734,16 +641,40 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ),
         ],
       ),
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () {
-          // Dismiss keyboard when tapping anywhere on screen
-          FocusScope.of(context).unfocus();
-        },
-        child: TabBarView(
-          controller: _tabController,
-          children: _orderedTabs.map((tab) => tab.builder()).toList(),
-        ),
+      body: Stack(
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              // Dismiss keyboard when tapping anywhere on screen
+              FocusScope.of(context).unfocus();
+            },
+            child: TabBarView(
+              controller: _tabController,
+              children: _orderedTabs.map((tab) => tab.builder()).toList(),
+            ),
+          ),
+          // Blocking save overlay
+          if (_isSaving)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Saving...'),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -816,7 +747,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             controller: _initiativeController,
             dexterityController: _dexterityController,
             onChanged: (value) {
-              _autoSaveCharacter();
+              // Manual save only - no auto-save
             },
             showInitiativeDialog: _showInitiativeDialog,
           ),
@@ -828,7 +759,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 setState(() {
                   _hasConcentration = !_hasConcentration;
                 });
-                _autoSaveCharacter(); // save changes
+                // Manual save only - no auto-save
               },
             ),
 
@@ -849,20 +780,20 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               setState(() {
                 _deathSaveSuccesses[index] = !_deathSaveSuccesses[index];
               });
-              _autoSaveCharacter();
+              // Manual save only - no auto-save
             },
             onToggleFailure: (index) {
               setState(() {
                 _deathSaveFailures[index] = !_deathSaveFailures[index];
               });
-              _autoSaveCharacter();
+              // Manual save only - no auto-save
             },
             onClear: () {
               setState(() {
                 _deathSaveSuccesses = [false, false, false];
                 _deathSaveFailures = [false, false, false];
               });
-              _autoSaveCharacter();
+              // Manual save only - no auto-save
             },
           ),
 
@@ -870,20 +801,26 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           FeaturesTraitsSection(
             controller: _featuresTraitsController,
-            onChanged: (value) => _autoSaveCharacter(),
+            onChanged: (value) {
+              // Manual save only - no auto-save
+            },
           ),
 
           const SizedBox(height: 16),
 
           OtherProficienciesSection(
             controller: _proficienciesController,
-            onChanged: () => _autoSaveCharacter(),
+            onChanged: () {
+              // Manual save only - no auto-save
+            },
           ),
 
           const SizedBox(height: 16),
 
           LanguagesSection(
-            onChanged: (value) => _autoSaveCharacter(),
+            onChanged: (value) {
+              // Manual save only - no auto-save
+            },
             languagesController: _languagesController,
           ),
 
@@ -892,8 +829,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           MoneyItemsSection(
             moneyController: _moneyController,
             itemsController: _itemsController,
-            onMoneyChanged: (value) => _autoSaveCharacter(),
-            onItemsChanged: () => _autoSaveCharacter(),
+            onMoneyChanged: (value) {
+              // Manual save only - no auto-save
+            },
+            onItemsChanged: () {
+              // Manual save only - no auto-save
+            },
           ),
 
           const SizedBox(height: 30),
@@ -940,9 +881,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     setState(() {
                       _attacks.removeAt(index);
                     });
-
-                    // Auto-save the character when an attack is removed
-                    _autoSaveCharacter();
+                    // Remove attack without auto-save
                   },
                 ),
               ),
@@ -982,26 +921,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   ],
                 ),
                 const SizedBox(height: 12),
-
-                // Debug info
-                /* Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade100,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Debug Info:', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('Class: "${_classController.text}"'),
-                      Text('Subclass: "${_subclassController.text}"'),
-                      Text('Spellcasting Ability: $spellcastingAbility'),
-                    ],
-                  ),
-                ), */
-                const SizedBox(height: 12),
-
                 // Only show spellcasting details if ability is detected
                 if (spellcastingAbility != null) ...[
                   // Spellcasting Ability
@@ -1059,7 +978,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   Widget _buildQuickGuideTab() {
     return CharactersQuickGuide(
       controller: _quickGuideController,
-      onSaveCharacter: _autoSaveCharacter,
+      onSaveCharacter: () {
+        // Manual save only - no auto-save
+      },
     );
   }
 
@@ -1075,7 +996,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       hasUnsavedAbilityChanges: _hasUnsavedAbilityChanges,
       savingThrows: _savingThrows,
       onSaveAbilities: () {
-        _saveCharacter(successMessage: 'Ability scores saved!');
+        // Update saving throws to reflect new ability scores
+        _updateSavingThrowsFromAbilityScores();
+        
+        // Save the character with updated ability scores and saving throws
+        _saveCharacter(successMessage: 'Ability scores and saving throws updated!');
         setState(() {
           _hasUnsavedAbilityChanges = false;
         });
@@ -1154,8 +1079,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 onTap: () {
                   setState(() {
                     _hasInspiration = !_hasInspiration;
-                    _autoSaveCharacter();
                   });
+                  // Manual save only - no auto-save
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Icon(
@@ -1619,7 +1544,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                       .copyWith(maxPreparedSpells: 0);
                                 }
                               });
-                              _autoSaveCharacter();
+                              // Manual save only - no auto-save
                             },
                             icon: const Icon(Icons.refresh, size: 16),
                             style: IconButton.styleFrom(
@@ -1649,7 +1574,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             onToggleSpellPreparation: _toggleSpellPreparation,
             onToggleAlwaysPrepared: _toggleAlwaysPrepared,
             onToggleFreeUse: _toggleFreeUse,
-            onAutoSaveCharacter: _autoSaveCharacter,
+            onAutoSaveCharacter: () {
+              // Manual save only - no auto-save
+            },
             onRemoveSpell: (index) {
               setState(() {
                 _spells.removeAt(index);
@@ -1671,7 +1598,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _feats = newFeats;
         });
       },
-      onAutoSaveCharacter: _autoSaveCharacter,
+      onAutoSaveCharacter: () {
+        // Manual save only - no auto-save
+      },
       characterName: widget.character.name,
     );
   }
@@ -1741,6 +1670,34 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
+  /// Updates saving throws to reflect current ability scores
+  /// This should be called when ability scores are saved
+  void _updateSavingThrowsFromAbilityScores() {
+    // Create new saving throws with current proficiency settings
+    // The proficiency values remain the same, but the modifiers will be
+    // recalculated in the UI based on the updated ability scores
+    final updatedSavingThrows = CharacterSavingThrows(
+      strengthProficiency: _savingThrows.strengthProficiency,
+      dexterityProficiency: _savingThrows.dexterityProficiency,
+      constitutionProficiency: _savingThrows.constitutionProficiency,
+      intelligenceProficiency: _savingThrows.intelligenceProficiency,
+      wisdomProficiency: _savingThrows.wisdomProficiency,
+      charismaProficiency: _savingThrows.charismaProficiency,
+    );
+    
+    setState(() {
+      _savingThrows = updatedSavingThrows;
+    });
+    
+    debugPrint('=== Saving throws updated based on new ability scores ===');
+    debugPrint('STR modifier: ${_getAbilityModifier('strength')} (prof: ${updatedSavingThrows.strengthProficiency})');
+    debugPrint('DEX modifier: ${_getAbilityModifier('dexterity')} (prof: ${updatedSavingThrows.dexterityProficiency})');
+    debugPrint('CON modifier: ${_getAbilityModifier('constitution')} (prof: ${updatedSavingThrows.constitutionProficiency})');
+    debugPrint('INT modifier: ${_getAbilityModifier('intelligence')} (prof: ${updatedSavingThrows.intelligenceProficiency})');
+    debugPrint('WIS modifier: ${_getAbilityModifier('wisdom')} (prof: ${updatedSavingThrows.wisdomProficiency})');
+    debugPrint('CHA modifier: ${_getAbilityModifier('charisma')} (prof: ${updatedSavingThrows.charismaProficiency})');
+  }
+
   int _getSpellSaveDC() {
     final spellcastingAbility = _getSpellcastingAbility();
     if (spellcastingAbility == null) return 0;
@@ -1769,7 +1726,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   int _getCurrentSpellcastingModifier() {
     final spellcastingAbility = _getSpellcastingAbility();
     if (spellcastingAbility == null) return 0;
-    
+
     return _getAbilityModifier(spellcastingAbility);
   }
 
@@ -1833,7 +1790,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   String _getAbilityName(String ability) {
     return CharacterAbilityHelper.getAbilityName(ability);
   }
-
 
   // Check if the current class or subclass can cast spells
   bool _canCastSpells() {
@@ -1965,8 +1921,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       onTap: () {
                         setState(() {
                           _hasShield = !_hasShield;
-                          _autoSaveCharacter();
                         });
+                        // Manual save only - no auto-save
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Icon(
@@ -2638,7 +2594,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.survivalExpertise : false)
                 : _skillChecks.survivalExpertise,
       );
-      _autoSaveCharacter(); // Auto-save skill changes
+      // Manual save only - no auto-save for skill changes
     });
   }
 
@@ -2713,7 +2669,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         survivalExpertise:
             skill == 'survival' ? value : _skillChecks.survivalExpertise,
       );
-      _autoSaveCharacter(); // Auto-save skill expertise changes
+      // Manual save only - no auto-save for skill expertise changes
     });
   }
 
@@ -3146,8 +3102,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       _updateSpellSlot(level, 'used', newUsed);
     });
 
-    // Auto-save when spell slot usage changes
-    _autoSaveCharacter();
+    // Manual save only - no auto-save for spell slot changes
   }
 
   void _showSlotModifierDialog(int level, String type, int currentValue) {
@@ -3188,7 +3143,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         currentValue = newValue; // Update local value
                         textController.text =
                             newValue.toString(); // Update text field
-                        _autoSaveCharacter(); // Auto-save on decrement
+                        // Manual save only - no auto-save
                       },
                     ),
                     const SizedBox(width: 8),
@@ -3204,19 +3159,24 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         onChanged: (value) {
                           final newValue = int.tryParse(value) ?? 0;
                           if (type == 'slots') {
-                            _updateSpellSlot(
-                              level,
-                              type,
-                              newValue.clamp(0, 99),
-                            );
-                            _autoSaveCharacter(); // Auto-save on text input
+                            if (currentValue >= 0 && currentValue <= 99) {
+                              _updateSpellSlot(level, type, currentValue);
+                              // Manual save only - no auto-save
+                            } else {
+                              _updateSpellSlot(
+                                level,
+                                type,
+                                newValue.clamp(0, 99),
+                              );
+                              // Manual save only - no auto-save
+                            }
                           } else {
                             _updateSpellSlot(
                               level,
                               type,
                               newValue.clamp(0, _getMaxSlots(level)),
                             );
-                            _autoSaveCharacter(); // Auto-save on text input
+                            // Manual save only - no auto-save
                           }
                           currentValue = newValue; // Update local value
                         },
@@ -3233,7 +3193,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         currentValue = newValue; // Update local value
                         textController.text =
                             newValue.toString(); // Update text field
-                        _autoSaveCharacter(); // Auto-save on increment
+                        // Manual save only - no auto-save
                       },
                     ),
                   ],
@@ -3256,7 +3216,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           _updateSpellSlot(level, 'slots', 4);
                           currentValue = 4;
                           textController.text = '4';
-                          _autoSaveCharacter();
+                          // Manual save only - no auto-save
                         },
                         child: const Text('Set 4'),
                       ),
@@ -3265,7 +3225,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           _updateSpellSlot(level, 'slots', 6);
                           currentValue = 6;
                           textController.text = '6';
-                          _autoSaveCharacter();
+                          // Manual save only - no auto-save
                         },
                         child: const Text('Set 6'),
                       ),
@@ -3274,7 +3234,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           _updateSpellSlot(level, 'slots', 9);
                           currentValue = 9;
                           textController.text = '9';
-                          _autoSaveCharacter();
+                          // Manual save only - no auto-save
                         },
                         child: const Text('Set 9'),
                       ),
@@ -3295,7 +3255,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           _updateSpellSlot(level, 'used', 0);
                           currentValue = 0;
                           textController.text = '0';
-                          _autoSaveCharacter();
+                          // Manual save only - no auto-save
                         },
                         child: const Text('Clear All'),
                       ),
@@ -3305,7 +3265,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           _updateSpellSlot(level, 'used', maxSlots);
                           currentValue = maxSlots;
                           textController.text = maxSlots.toString();
-                          _autoSaveCharacter();
+                          // Manual save only - no auto-save
                         },
                         child: const Text('Use All'),
                       ),
@@ -3315,7 +3275,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           _updateSpellSlot(level, 'used', halfSlots);
                           currentValue = halfSlots;
                           textController.text = halfSlots.toString();
-                          _autoSaveCharacter();
+                          // Manual save only - no auto-save
                         },
                         child: const Text('Half Used'),
                       ),
@@ -3375,7 +3335,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _personalizedSlots = newSlots;
         });
       },
-      onAutoSaveCharacter: _autoSaveCharacter,
+      onAutoSaveCharacter: () {
+        // Manual save only - no auto-save
+      },
       characterName: widget.character.name,
     );
   }
@@ -3388,7 +3350,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       wantsController: _wantsController,
       needsController: _needsController,
       conflictController: _conflictController,
-      onSaveCharacter: _autoSaveCharacter,
+      onSaveCharacter: () {
+        // Manual save only - no auto-save
+      },
     );
   }
 
@@ -3400,7 +3364,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         final bonusController = TextEditingController();
         final damageController = TextEditingController();
         final typeController = TextEditingController();
-        
 
         return AlertDialog(
           title: const Text('Add Attack'),
@@ -3467,11 +3430,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         name: nameController.text.trim(),
                         attackBonus: bonusController.text.trim(),
                         damage: damageController.text.trim(),
-                        damageType: typeController.text.trim(),                        
+                        damageType: typeController.text.trim(),
                       ),
                     );
                   });
-                  _autoSaveCharacter();
+                  // Manual save only - no auto-save
                   Navigator.pop(context);
                 }
               },
@@ -3984,8 +3947,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                           });
                                           Navigator.pop(context);
 
-                                          // Auto-save the character when spells are added
-                                          _autoSaveCharacter();
+                                          // Manual save only - no auto-save
 
                                           ScaffoldMessenger.of(
                                             context,
@@ -3995,6 +3957,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                                 'Added ${selectedSpells.length} spell${selectedSpells.length == 1 ? '' : 's'} to ${widget.character.name}',
                                               ),
                                               backgroundColor: Colors.green,
+                                              duration: const Duration(seconds: 2),
                                             ),
                                           );
                                         },
@@ -4446,8 +4409,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                     _spells.remove(spell.name);
                                   });
 
-                                  // Auto-save the character when a spell is removed
-                                  _autoSaveCharacter();
+                                  // Manual save only - no auto-save
 
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -4455,6 +4417,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                         'Removed ${spell.name} from ${widget.character.name}',
                                       ),
                                       backgroundColor: Colors.orange,
+                                      duration: const Duration(seconds: 2),
                                     ),
                                   );
                                 },
@@ -4529,135 +4492,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     return components.join(', ');
   }
 
-  void _autoSaveCharacter() async {
-    // Don't proceed if widget is not mounted (context is not safe)
-    if (!mounted) return;
-    
-    debugPrint("============= _autoSaveCharacter is called ======");
-    try {
-      // Create updated character with all current data
-      final updatedCharacter = widget.character.copyWith(
-        name: _nameController.text.trim(),
-        customImagePath: _customImagePath,
-        customImageData: _customImageData,
-        characterClass: _classController.text.trim(),
-        level: int.tryParse(_levelController.text) ?? 1,
-        subclass:
-            _subclassController.text.trim().isEmpty
-                ? null
-                : _subclassController.text.trim(),
-        race:
-            _raceController.text.trim().isEmpty
-                ? null
-                : _raceController.text.trim(),
-        background:
-            _backgroundController.text.trim().isEmpty
-                ? null
-                : _backgroundController.text.trim(),
-        stats: CharacterStats(
-          strength: int.tryParse(_strengthController.text) ?? 10,
-          dexterity: int.tryParse(_dexterityController.text) ?? 10,
-          constitution: int.tryParse(_constitutionController.text) ?? 10,
-          intelligence: int.tryParse(_intelligenceController.text) ?? 10,
-          wisdom: int.tryParse(_wisdomController.text) ?? 10,
-          charisma: int.tryParse(_charismaController.text) ?? 10,
-          proficiencyBonus: CharacterStats.calculateProficiencyBonus(
-            int.tryParse(_levelController.text) ?? 1,
-          ),
-          armorClass: int.tryParse(_armorClassController.text) ?? 10,
-          speed: int.tryParse(_speedController.text) ?? 30,
-          initiative: int.tryParse(_initiativeController.text) ?? 0,
-          inspiration: _hasInspiration,
-          hasConcentration: _hasConcentration,
-          hasShield: _hasShield,
-        ),
-        savingThrows: _savingThrows,
-        skillChecks: _skillChecks,
-        health: CharacterHealth(
-          maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
-          currentHitPoints: int.tryParse(_currentHpController.text) ?? 10,
-          temporaryHitPoints: int.tryParse(_tempHpController.text) ?? 0,
-          hitDice: int.tryParse(_hitDiceController.text) ?? 1,
-          hitDiceType:
-              _hitDiceTypeController.text.trim().isEmpty
-                  ? 'd8'
-                  : _hitDiceTypeController.text.trim(),
-        ),
-        attacks: _attacks,
-        spellSlots: _spellSlots,
-        spells: _spells,
-        feats: _feats,
-        personalizedSlots: _personalizedSlots,
-        spellPreparation: _spellPreparation,
-        quickGuide: jsonEncode(
-          _quickGuideController.document.toDelta().toJson(),
-        ),
-        proficiencies: jsonEncode(
-          _proficienciesController.document.toDelta().toJson(),
-        ),
-        featuresTraits: jsonEncode(
-          _featuresTraitsController.document.toDelta().toJson(),
-        ),
-        backstory: jsonEncode(
-          _backstoryController.document.toDelta().toJson(),
-        ),
-        featNotes: jsonEncode(
-          _featNotesController.document.toDelta().toJson(),
-        ),
-        pillars: CharacterPillars(
-          gimmick: _gimmickController.text.trim(),
-          quirk: _quirkController.text.trim(),
-          wants: _wantsController.text.trim(),
-          needs: _needsController.text.trim(),
-          conflict: _conflictController.text.trim(),
-        ),
-        appearance: CharacterAppearance(
-          height: _heightController.text.trim(),
-          age: _ageController.text.trim(),
-          eyeColor: _eyeColorController.text.trim(),
-          additionalDetails: jsonEncode(
-            _additionalDetailsController.document.toDelta().toJson(),
-          ),
-          appearanceImagePath: _appearanceImagePath ?? '',
-          appearanceImageData: _appearanceImageData,
-        ),
-        deathSaves: CharacterDeathSaves(
-          successes: _deathSaveSuccesses,
-          failures: _deathSaveFailures,
-        ),
-        languages: CharacterLanguages(
-          languages:
-              _languagesController.text
-                  .split(',')
-                  .map((lang) => lang.trim())
-                  .where((lang) => lang.isNotEmpty)
-                  .toList(),
-        ),
-        moneyItems: CharacterMoneyItems(
-          money: _moneyController.text.trim(),
-          items: [jsonEncode(
-            _itemsController.document.toDelta().toJson(),
-          )],
-        ),
-        updatedAt: DateTime.now(),
-      );
-
-      // Check if still mounted before accessing context
-      if (!mounted) return;
-
-      // Save the character silently and wait for completion
-      await context.read<CharactersViewModel>().updateCharacter(
-        updatedCharacter,
-      );
-
-      // Clear unsaved changes flag
-      _hasUnsavedAbilityChanges = false;
-    } catch (e) {
-      // Silent error handling for auto-save - don't show UI messages
-      debugPrint('Auto-save error: $e');
-    }
-  }
-
   void _takeComprehensiveLongRest() {
     setState(() {
       // Restore hit points to maximum
@@ -4702,8 +4536,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               .toList();
     });
 
-    // Auto-save the comprehensive long rest
-    _autoSaveCharacter();
+    // Manual save only - no auto-save for comprehensive long rest
 
     // Show confirmation message
     ScaffoldMessenger.of(context).showSnackBar(
@@ -4742,8 +4575,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       );
     });
 
-    // Auto-save the long rest
-    _autoSaveCharacter();
+    // Manual save only - no auto-save for long rest
 
     // Show confirmation message
     ScaffoldMessenger.of(context).showSnackBar(
@@ -4806,20 +4638,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _customImagePath = savedFile.path;
           // Convert image to base64 for JSON persistence
           _customImageData = ImageUtils.imageFileToBase64(savedFile.path);
-          debugPrint('Profile image converted to base64: ${_customImageData?.length ?? 0} characters');
+          debugPrint(
+            'Profile image converted to base64: ${_customImageData?.length ?? 0} characters',
+          );
         });
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile image updated!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-
-        // Auto-save after image change
-        _autoSaveCharacter();
+        // Manual save only - no auto-save after image change
       }
     } catch (e) {
       if (mounted) {
@@ -4827,6 +4651,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           SnackBar(
             content: Text('Error picking image: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -4867,18 +4692,19 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           const SnackBar(
             content: Text('Profile image removed'),
             backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
           ),
         );
       }
 
-      // Auto-save after image removal
-      _autoSaveCharacter();
+      // Manual save only - no auto-save after profile image removal
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error removing image: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -4932,18 +4758,20 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _appearanceImagePath = savedFile.path;
           // Convert appearance image to base64 for JSON persistence
           _appearanceImageData = ImageUtils.imageFileToBase64(savedFile.path);
-          debugPrint('Appearance image converted to base64: ${_appearanceImageData?.length ?? 0} characters');
+          debugPrint(
+            'Appearance image converted to base64: ${_appearanceImageData?.length ?? 0} characters',
+          );
         });
 
         if (mounted) {
-          _autoSaveCharacter();
+          // Manual save only - no auto-save
         }
       }
     } catch (e) {
       debugPrint('Error picking appearance image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking appearance image: $e')),
+          SnackBar(content: Text('Error picking appearance image: $e'), duration: const Duration(seconds: 3)),
         );
       }
     } finally {
@@ -4981,12 +4809,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           const SnackBar(
             content: Text('Appearance image removed'),
             backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
           ),
         );
       }
 
-      // Auto-save after image removal
-      _autoSaveCharacter();
+      // Manual save only - no auto-save after appearance image removal
     } catch (e) {
       debugPrint('Error removing appearance image: $e');
       if (mounted) {
@@ -4994,6 +4822,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           SnackBar(
             content: Text('Error removing appearance image: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -5001,12 +4830,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   void _saveCharacter({String? successMessage, bool showToast = true}) async {
-    // Show loading indicator
+    // Show loading indicator with blocking overlay
     setState(() {
-      _isLoading = true;
+      _isSaving = true;
     });
 
     try {
+      // Add minimum delay to show spinner for better UX
+      await Future.delayed(const Duration(milliseconds: 500));
+      
       // Update all character data from controllers
       debugPrint('=== SAVE CHARACTER DEBUG ===');
       debugPrint('Background controller text: "${_backgroundController.text}"');
@@ -5075,13 +4907,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         featuresTraits: jsonEncode(
           _featuresTraitsController.document.toDelta().toJson(),
         ),
-        backstory: jsonEncode(
-          _backstoryController.document.toDelta().toJson(),
-        ),
-        featNotes: 
-        jsonEncode(
-          _featNotesController.document.toDelta().toJson(),
-        ),
+        backstory: jsonEncode(_backstoryController.document.toDelta().toJson()),
+        featNotes: jsonEncode(_featNotesController.document.toDelta().toJson()),
         pillars: CharacterPillars(
           gimmick: _gimmickController.text.trim(),
           quirk: _quirkController.text.trim(),
@@ -5113,9 +4940,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ),
         moneyItems: CharacterMoneyItems(
           money: _moneyController.text.trim(),
-          items: [jsonEncode(
-            _itemsController.document.toDelta().toJson(),
-          )],
+          items: [jsonEncode(_itemsController.document.toDelta().toJson())],
         ),
         updatedAt: DateTime.now(),
       );
@@ -5143,6 +4968,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           SnackBar(
             content: Text(successMessage ?? 'Character saved successfully!'),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
           ),
         );
 
@@ -5157,6 +4983,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           SnackBar(
             content: Text('Failed to save character: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -5164,7 +4991,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       // Hide loading indicator
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isSaving = false;
         });
       }
     }
@@ -5178,17 +5005,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _spellPreparation = _spellPreparation.copyWith(
             preparedSpells: [..._spellPreparation.preparedSpells, spellId],
           );
+        } else {
+          _spellPreparation = _spellPreparation.copyWith(
+            preparedSpells:
+                _spellPreparation.preparedSpells
+                    .where((id) => id != spellId)
+                    .toList(),
+          );
         }
-      } else {
-        _spellPreparation = _spellPreparation.copyWith(
-          preparedSpells:
-              _spellPreparation.preparedSpells
-                  .where((id) => id != spellId)
-                  .toList(),
-        );
       }
+      // Manual save only - no auto-save for toggle preparation
     });
-    _autoSaveCharacter();
   }
 
   /// Toggle always prepared status
@@ -5231,7 +5058,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         }
       }
     });
-    _autoSaveCharacter();
+    // Manual save only - no auto-save for toggle always prepared
   }
 
   /// Toggle free use status
@@ -5250,7 +5077,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         );
       }
     });
-    _autoSaveCharacter();
+    // Manual save only - no auto-save for toggle free use
   }
 
   /// Get the name of the modifier based on character class
@@ -5322,12 +5149,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     setState(() {
                       _initiativeController.text = newInitiative.toString();
                     });
-                    _autoSaveCharacter();
+                    // Manual save only - no auto-save
                     Navigator.pop(context);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Please enter a valid number'),
+                        duration: Duration(seconds: 2),
                       ),
                     );
                   }
@@ -5413,13 +5241,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         );
                       }
                     });
-                    _autoSaveCharacter();
+                    // Manual save only - no auto-save
                     Navigator.pop(context);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Please enter a valid number'),
                         backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
                       ),
                     );
                   }
@@ -5442,8 +5271,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       ageController: _ageController,
       eyeColorController: _eyeColorController,
       additionalDetailsController: _additionalDetailsController,
-      autoSaveCharacter: _autoSaveCharacter,
+      autoSaveCharacter: () {
+        // Manual save only - no auto-save
+      },
     );
   }
-
 }
