@@ -381,32 +381,6 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Action buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.person_add),
-                        label: const Text('Add to Character'),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _showCharacterSelectionDialog(context, spell);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.info_outline),
-                        label: const Text('Details Only'),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
-                
                 // Casting Time
                 _buildDetailRow('Casting Time', spell.castingTime),
                 

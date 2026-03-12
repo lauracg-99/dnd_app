@@ -83,7 +83,6 @@ class HealthSection extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
-        keyboardType: TextInputType.number,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: iconColor),

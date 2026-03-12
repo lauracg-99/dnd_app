@@ -152,6 +152,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   String? _selectedLevelFilter;
   String? _selectedClassFilter;
   String? _selectedSchoolFilter;
+  String _searchQuery = '';
 
   // Tab customization
   List<String> _tabOrder = [];
@@ -3454,6 +3455,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     showDialog(
       context: context,
+      barrierDismissible: false, // Prevent automatic dismissal to ensure we handle cleanup
       builder:
           (context) => StatefulBuilder(
             builder:
@@ -3500,7 +3502,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                 ),
                               const SizedBox(width: 8),
                               IconButton(
-                                onPressed: () => Navigator.pop(context),
+                                onPressed: () {
+                                  // Reset all filter states when dialog is closed
+                                  this.setState(() {
+                                    _searchQuery = '';
+                                    _selectedLevelFilter = null;
+                                    _selectedClassFilter = null;
+                                    _selectedSchoolFilter = null;
+                                  });
+                                  Navigator.pop(context);
+                                },
                                 icon: const Icon(Icons.close),
                               ),
                             ],
@@ -3757,24 +3768,22 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         ),
                         const Divider(height: 1),
 
-                        /*  // Search bar
+                        // Search bar
                     Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Consumer<SpellsViewModel>(
-                        builder: (context, spellsViewModel, child) {
-                          return TextField(
-                            decoration: const InputDecoration(
-                              labelText: 'Search spells...',
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (query) {
-                              spellsViewModel.setSearchQuery(query);
-                            },
-                          );
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Search spells by name...',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (query) {
+                          setState(() {
+                            _searchQuery = query.toLowerCase();
+                          });
                         },
                       ),
-                    ), */
+                    ),
 
                         // Spells list
                         Expanded(
@@ -3797,6 +3806,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                               // Apply filters
                               List<Spell> filteredSpells =
                                   spellsViewModel.spells.where((spell) {
+                                    // Search by name
+                                    if (_searchQuery.isNotEmpty) {
+                                      if (!spell.name.toLowerCase().contains(_searchQuery)) {
+                                        return false;
+                                      }
+                                    }
+
                                     // Filter by character class if enabled
                                     if (_filterByCharacterClass) {
                                       final characterClass =
@@ -3926,7 +3942,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           child: Row(
                             children: [
                               TextButton(
-                                onPressed: () => Navigator.pop(context),
+                                onPressed: () {
+                                  // Reset all filter states when dialog is closed
+                                  this.setState(() {
+                                    _searchQuery = '';
+                                    _selectedLevelFilter = null;
+                                    _selectedClassFilter = null;
+                                    _selectedSchoolFilter = null;
+                                  });
+                                  Navigator.pop(context);
+                                },
                                 child: const Text('Cancel'),
                               ),
                               Expanded(
@@ -3944,6 +3969,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                           // Update the parent state first
                                           this.setState(() {
                                             _spells.addAll(selectedSpells);
+                                            // Reset all filter states when dialog is closed
+                                            _searchQuery = '';
+                                            _selectedLevelFilter = null;
+                                            _selectedClassFilter = null;
+                                            _selectedSchoolFilter = null;
                                           });
                                           Navigator.pop(context);
 

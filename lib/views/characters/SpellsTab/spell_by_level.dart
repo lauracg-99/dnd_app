@@ -264,7 +264,13 @@ class _SpellByLevelState extends State<SpellByLevel> {
                 size: 24,
               ),
             ),
+            confirmDismiss: (direction) async {
+              // Show confirmation dialog and wait for user response
+              final shouldRemove = await _showRemoveSpellConfirmation(spell, index, isPrepared, isAlwaysPrepared, isFreeUse);
+              return shouldRemove;
+            },
             onDismissed: (direction) {
+              // This will only be called if confirmDismiss returns true
               widget.onRemoveSpell(index);
               // Remove from preparation lists if it was prepared
               if (isPrepared) {
@@ -321,7 +327,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}',
+                      '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}${spell.ritual ? ' • (ritual)' : ''}',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     if (isAlwaysPrepared || isFreeUse || canPrepare) ...[
@@ -485,6 +491,67 @@ class _SpellByLevelState extends State<SpellByLevel> {
     }
 
     return widgets;
+  }
+
+  /// Show confirmation dialog before removing a spell
+  Future<bool> _showRemoveSpellConfirmation(Spell spell, int index, bool isPrepared, bool isAlwaysPrepared, bool isFreeUse) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Remove Spell'),
+          content: Text('Are you sure you want to remove "${spell.name}" from your character\'s spell list?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: Text(
+                'Remove',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If user confirmed (result is true), perform the removal
+    if (result == true) {
+      // Remove the spell
+      widget.onRemoveSpell(index);
+      
+      // Remove from preparation lists if it was prepared
+      if (isPrepared) {
+        widget.onToggleSpellPreparation(spell.id, false);
+      }
+      if (isAlwaysPrepared) {
+        widget.onToggleAlwaysPrepared(spell.id);
+      }
+      if (isFreeUse) {
+        widget.onToggleFreeUse(spell.id);
+      }
+
+      // Auto-save the character when a spell is removed
+      widget.onAutoSaveCharacter();
+
+      // Show success message - use mounted check to avoid async context issues
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${spell.name} removed from spell list'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+
+    return result ?? false; // Return false if dialog was dismissed
   }
 
   /// Get the appropriate icon for a spell level
