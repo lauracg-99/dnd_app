@@ -891,81 +891,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           const SizedBox(height: 16),
 
-          // Debug: Always show spellcasting section for testing
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.purple.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.purple.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      color: Colors.purple.shade700,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Spellcasting',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.purple,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Only show spellcasting details if ability is detected
-                if (spellcastingAbility != null) ...[
-                  // Spellcasting Ability
-                  _buildSpellcastingInfoRow(
-                    'Spellcasting Ability',
-                    _getAbilityName(spellcastingAbility),
-                    '+${_getAbilityModifier(spellcastingAbility)}',
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Spell Save DC
-                  _buildSpellcastingInfoRow(
-                    'Spell Save DC',
-                    '8 + Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
-                    _getSpellSaveDC().toString(),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Spell Attack Bonus
-                  _buildSpellcastingInfoRow(
-                    'Spell Attack Bonus',
-                    'Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
-                    '+${_getSpellAttackBonus()}',
-                  ),
-                ] else ...[
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'No spellcasting ability detected for this class/subclass',
-                      style: TextStyle(color: Colors.grey.shade700),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
+          
           TextButton.icon(
             onPressed: _showAddAttackDialog,
             icon: const Icon(Icons.add),
@@ -1362,6 +1288,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildSpellsTab() {
+    final spellcastingAbility = _getSpellcastingAbility();
+    
     // Calculate maximum prepared spells using current state from controllers
     final modifier = _getCurrentSpellcastingModifier();
     final calculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
@@ -1405,6 +1333,83 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ),
             ],
           ),
+          const SizedBox(height: 16),
+
+          // Spellcasting info section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.purple.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.purple.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome,
+                      color: Colors.purple.shade700,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Spellcasting',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Only show spellcasting details if ability is detected
+                if (spellcastingAbility != null) ...[
+                  // Spellcasting Ability
+                  _buildSpellcastingInfoRow(
+                    'Spellcasting Ability',
+                    _getAbilityName(spellcastingAbility),
+                    '+${_getAbilityModifier(spellcastingAbility)}',
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Spell Save DC
+                  _buildSpellcastingInfoRow(
+                    'Spell Save DC',
+                    '8 + Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
+                    _getSpellSaveDC().toString(),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Spell Attack Bonus
+                  _buildSpellcastingInfoRow(
+                    'Spell Attack Bonus',
+                    'Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
+                    '+${_getSpellAttackBonus()}',
+                  ),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'No spellcasting ability detected for this class/subclass',
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Spell preparation section - only show for classes that prepare spells
           if (canPrepare) ...[
             Container(
