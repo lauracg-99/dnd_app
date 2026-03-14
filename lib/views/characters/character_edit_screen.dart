@@ -843,6 +843,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           LongRestSection(
             takeComprehensiveLongRest: _takeComprehensiveLongRest,
           ),
+
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -865,7 +867,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             'Manage your character\'s attacks and weapons',
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
-
+          const SizedBox(height: 4),
           // Attacks list
           ..._attacks.asMap().entries.map((entry) {
             final index = entry.key;
@@ -1317,12 +1319,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s known spells.',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 8),          
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -1333,7 +1330,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Spellcasting info section
           Container(
@@ -5036,18 +5033,19 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   void _toggleSpellPreparation(String spellId, bool prepare) {
     setState(() {
       if (prepare) {
+        // Add spell to preparation if not already there
         if (!_spellPreparation.preparedSpells.contains(spellId)) {
           _spellPreparation = _spellPreparation.copyWith(
             preparedSpells: [..._spellPreparation.preparedSpells, spellId],
           );
-        } else {
-          _spellPreparation = _spellPreparation.copyWith(
-            preparedSpells:
-                _spellPreparation.preparedSpells
-                    .where((id) => id != spellId)
-                    .toList(),
-          );
         }
+      } else {
+        // Remove spell from preparation
+        _spellPreparation = _spellPreparation.copyWith(
+          preparedSpells: _spellPreparation.preparedSpells
+              .where((id) => id != spellId)
+              .toList(),
+        );
       }
       // Manual save only - no auto-save for toggle preparation
     });

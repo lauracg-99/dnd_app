@@ -137,6 +137,8 @@ class _CharactersQuickGuideState extends State<CharactersQuickGuide>
               ),
             ),
           ),
+
+          const SizedBox(height: 40),
         ],
       ),
     );

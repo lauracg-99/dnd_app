@@ -115,7 +115,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: level == 0
-                      ? [Colors.purple.shade50, Colors.purple.shade100]
+                      ? [Colors.green.shade50, Colors.green.shade100]
                       : [Colors.blue.shade50, Colors.blue.shade100],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
@@ -123,7 +123,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: level == 0
-                      ? Colors.purple.shade200
+                      ? Colors.green.shade200
                       : Colors.blue.shade200,
                 ),
               ),
@@ -132,7 +132,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
                   Icon(
                     _getSpellLevelIcon(level),
                     color: level == 0
-                        ? Colors.purple.shade700
+                        ? Colors.green.shade700
                         : Colors.blue.shade700,
                     size: 20,
                   ),
@@ -143,7 +143,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: level == 0
-                          ? Colors.purple.shade700
+                          ? Colors.green.shade700
                           : Colors.blue.shade700,
                     ),
                   ),
@@ -154,7 +154,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: (level == 0 ? Colors.purple : Colors.blue)
+                      color: (level == 0 ? Colors.green : Colors.blue)
                           .withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -164,7 +164,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: level == 0
-                            ? Colors.purple.shade700
+                            ? Colors.green.shade700
                             : Colors.blue.shade700,
                       ),
                     ),
@@ -175,7 +175,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
             // Only show prepared count if class can prepare spells and level > 0
             if (level > 0 && currentCalculatedMax > 0)
               Positioned(
-                top: 8,
+                top: 12,
                 right: 8,
                 child: Container(
                   padding: const EdgeInsets.symmetric(

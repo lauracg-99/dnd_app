@@ -65,7 +65,7 @@ class _StatsTabState extends State<StatsTab> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    ' Level ${widget.levelController.text.isNotEmpty ? widget.levelController.text : '1'} • proficiency bonus: +${CharacterStats.calculateProficiencyBonus(int.tryParse(widget.levelController.text) ?? 1)}',
+                    ' Level ${widget.levelController.text.isNotEmpty ? widget.levelController.text : '1'} • Proficiency bonus: +${CharacterStats.calculateProficiencyBonus(int.tryParse(widget.levelController.text) ?? 1)}',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,
