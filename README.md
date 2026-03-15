@@ -130,7 +130,7 @@ flutter build web
 2. Install the apk on your Android device
 
 ### Install app for iOS
-Waiting for it to be uploaded to the app store (hopefully soon).
+https://apps.apple.com/us/app/d-d-app/id6758160251
 
 ## App Structure
 
