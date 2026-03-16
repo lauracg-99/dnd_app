@@ -65,6 +65,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   bool _useCustomSubclass = false;
   String _selectedBackground = '';
   bool _toolbarExpanded = false;
+  
+  // Baseline character data for change detection
+  late Character _baselineCharacter;
 
   // Death saves controllers
   List<bool> _deathSaveSuccesses = [false, false, false];
@@ -200,6 +203,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   void _initializeCharacterData() {
     final character = widget.character;
+    
+    // Set baseline character for change detection
+    _baselineCharacter = character;
 
     // Initialize profile image
     _customImagePath = character.customImagePath;
@@ -636,9 +642,30 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               )
-              : IconButton(
-                icon: const Icon(Icons.save),
-                onPressed: _saveCharacter,
+              : Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.save,
+                      color: hasUnsavedChanges ? Colors.purple : Colors.grey,
+                    ),
+                    onPressed: _saveCharacter,
+                  ),
+                  if (hasUnsavedChanges)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Colors.purple,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
               ),
         ],
       ),
@@ -4861,6 +4888,242 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     }
   }
 
+  /// Check if there are any unsaved changes in the character data
+  bool get hasUnsavedChanges {
+    final character = _baselineCharacter;
+    
+    // Check basic info changes
+    if (_nameController.text.trim() != character.name) return true;
+    if ((int.tryParse(_levelController.text) ?? 1) != character.level) return true;
+    if (_classController.text.trim() != character.characterClass) return true;
+    if ((_subclassController.text.trim().isEmpty ? null : _subclassController.text.trim()) != character.subclass) return true;
+    if ((_raceController.text.trim().isEmpty ? null : _raceController.text.trim()) != character.race) return true;
+    if ((_backgroundController.text.trim().isEmpty ? null : _backgroundController.text.trim()) != character.background) return true;
+    
+    // Check image changes
+    if (_customImagePath != character.customImagePath) return true;
+    if (_appearanceImagePath != character.appearance.appearanceImagePath) return true;
+    
+    // Check stats changes
+    if ((int.tryParse(_strengthController.text) ?? 10) != character.stats.strength) return true;
+    if ((int.tryParse(_dexterityController.text) ?? 10) != character.stats.dexterity) return true;
+    if ((int.tryParse(_constitutionController.text) ?? 10) != character.stats.constitution) return true;
+    if ((int.tryParse(_intelligenceController.text) ?? 10) != character.stats.intelligence) return true;
+    if ((int.tryParse(_wisdomController.text) ?? 10) != character.stats.wisdom) return true;
+    if ((int.tryParse(_charismaController.text) ?? 10) != character.stats.charisma) return true;
+    if ((int.tryParse(_armorClassController.text) ?? 10) != character.stats.armorClass) return true;
+    if ((int.tryParse(_speedController.text) ?? 30) != character.stats.speed) return true;
+    if ((int.tryParse(_initiativeController.text) ?? 0) != character.stats.initiative) return true;
+    if (_hasInspiration != character.stats.inspiration) return true;
+    if (_hasConcentration != character.stats.hasConcentration) return true;
+    if (_hasShield != character.stats.hasShield) return true;
+    
+    // Check health changes
+    if ((int.tryParse(_maxHpController.text) ?? 10) != character.health.maxHitPoints) return true;
+    if ((int.tryParse(_currentHpController.text) ?? 10) != character.health.currentHitPoints) return true;
+    if ((int.tryParse(_tempHpController.text) ?? 0) != character.health.temporaryHitPoints) return true;
+    if ((int.tryParse(_hitDiceController.text) ?? 1) != character.health.hitDice) return true;
+    if ((_hitDiceTypeController.text.trim().isEmpty ? 'd8' : _hitDiceTypeController.text.trim()) != character.health.hitDiceType) return true;
+    
+    // Check death saves changes
+    if (!_listsEqual(_deathSaveSuccesses, character.deathSaves.successes)) return true;
+    if (!_listsEqual(_deathSaveFailures, character.deathSaves.failures)) return true;
+    
+    // Check languages changes
+    final currentLanguages = _languagesController.text
+        .split(',')
+        .map((lang) => lang.trim())
+        .where((lang) => lang.isNotEmpty)
+        .toList();
+    if (!_listsEqual(currentLanguages, character.languages.languages)) return true;
+    
+    // Check saving throws changes
+    if (_savingThrows.strengthProficiency != character.savingThrows.strengthProficiency) return true;
+    if (_savingThrows.dexterityProficiency != character.savingThrows.dexterityProficiency) return true;
+    if (_savingThrows.constitutionProficiency != character.savingThrows.constitutionProficiency) return true;
+    if (_savingThrows.intelligenceProficiency != character.savingThrows.intelligenceProficiency) return true;
+    if (_savingThrows.wisdomProficiency != character.savingThrows.wisdomProficiency) return true;
+    if (_savingThrows.charismaProficiency != character.savingThrows.charismaProficiency) return true;
+    
+    // Check skill checks changes
+    if (_skillChecks.acrobaticsProficiency != character.skillChecks.acrobaticsProficiency) return true;
+    if (_skillChecks.acrobaticsExpertise != character.skillChecks.acrobaticsExpertise) return true;
+    if (_skillChecks.animalHandlingProficiency != character.skillChecks.animalHandlingProficiency) return true;
+    if (_skillChecks.animalHandlingExpertise != character.skillChecks.animalHandlingExpertise) return true;
+    if (_skillChecks.arcanaProficiency != character.skillChecks.arcanaProficiency) return true;
+    if (_skillChecks.arcanaExpertise != character.skillChecks.arcanaExpertise) return true;
+    if (_skillChecks.athleticsProficiency != character.skillChecks.athleticsProficiency) return true;
+    if (_skillChecks.athleticsExpertise != character.skillChecks.athleticsExpertise) return true;
+    if (_skillChecks.deceptionProficiency != character.skillChecks.deceptionProficiency) return true;
+    if (_skillChecks.deceptionExpertise != character.skillChecks.deceptionExpertise) return true;
+    if (_skillChecks.historyProficiency != character.skillChecks.historyProficiency) return true;
+    if (_skillChecks.historyExpertise != character.skillChecks.historyExpertise) return true;
+    if (_skillChecks.insightProficiency != character.skillChecks.insightProficiency) return true;
+    if (_skillChecks.insightExpertise != character.skillChecks.insightExpertise) return true;
+    if (_skillChecks.intimidationProficiency != character.skillChecks.intimidationProficiency) return true;
+    if (_skillChecks.intimidationExpertise != character.skillChecks.intimidationExpertise) return true;
+    if (_skillChecks.investigationProficiency != character.skillChecks.investigationProficiency) return true;
+    if (_skillChecks.investigationExpertise != character.skillChecks.investigationExpertise) return true;
+    if (_skillChecks.medicineProficiency != character.skillChecks.medicineProficiency) return true;
+    if (_skillChecks.medicineExpertise != character.skillChecks.medicineExpertise) return true;
+    if (_skillChecks.natureProficiency != character.skillChecks.natureProficiency) return true;
+    if (_skillChecks.natureExpertise != character.skillChecks.natureExpertise) return true;
+    if (_skillChecks.perceptionProficiency != character.skillChecks.perceptionProficiency) return true;
+    if (_skillChecks.perceptionExpertise != character.skillChecks.perceptionExpertise) return true;
+    if (_skillChecks.performanceProficiency != character.skillChecks.performanceProficiency) return true;
+    if (_skillChecks.performanceExpertise != character.skillChecks.performanceExpertise) return true;
+    if (_skillChecks.persuasionProficiency != character.skillChecks.persuasionProficiency) return true;
+    if (_skillChecks.persuasionExpertise != character.skillChecks.persuasionExpertise) return true;
+    if (_skillChecks.religionProficiency != character.skillChecks.religionProficiency) return true;
+    if (_skillChecks.religionExpertise != character.skillChecks.religionExpertise) return true;
+    if (_skillChecks.sleightOfHandProficiency != character.skillChecks.sleightOfHandProficiency) return true;
+    if (_skillChecks.sleightOfHandExpertise != character.skillChecks.sleightOfHandExpertise) return true;
+    if (_skillChecks.stealthProficiency != character.skillChecks.stealthProficiency) return true;
+    if (_skillChecks.stealthExpertise != character.skillChecks.stealthExpertise) return true;
+    if (_skillChecks.survivalProficiency != character.skillChecks.survivalProficiency) return true;
+    if (_skillChecks.survivalExpertise != character.skillChecks.survivalExpertise) return true;
+    
+    // Check attacks changes
+    if (!_attacksEqual(_attacks, character.attacks)) return true;
+    
+    // Check spells changes
+    if (!_listsEqual(_spells, character.spells)) return true;
+    
+    // Check feats changes
+    if (!_listsEqual(_feats, character.feats)) return true;
+    
+    // Check spell slots changes
+    if (_spellSlots.level1Slots != character.spellSlots.level1Slots) return true;
+    if (_spellSlots.level1Used != character.spellSlots.level1Used) return true;
+    if (_spellSlots.level2Slots != character.spellSlots.level2Slots) return true;
+    if (_spellSlots.level2Used != character.spellSlots.level2Used) return true;
+    if (_spellSlots.level3Slots != character.spellSlots.level3Slots) return true;
+    if (_spellSlots.level3Used != character.spellSlots.level3Used) return true;
+    if (_spellSlots.level4Slots != character.spellSlots.level4Slots) return true;
+    if (_spellSlots.level4Used != character.spellSlots.level4Used) return true;
+    if (_spellSlots.level5Slots != character.spellSlots.level5Slots) return true;
+    if (_spellSlots.level5Used != character.spellSlots.level5Used) return true;
+    if (_spellSlots.level6Slots != character.spellSlots.level6Slots) return true;
+    if (_spellSlots.level6Used != character.spellSlots.level6Used) return true;
+    if (_spellSlots.level7Slots != character.spellSlots.level7Slots) return true;
+    if (_spellSlots.level7Used != character.spellSlots.level7Used) return true;
+    if (_spellSlots.level8Slots != character.spellSlots.level8Slots) return true;
+    if (_spellSlots.level8Used != character.spellSlots.level8Used) return true;
+    if (_spellSlots.level9Slots != character.spellSlots.level9Slots) return true;
+    if (_spellSlots.level9Used != character.spellSlots.level9Used) return true;
+    
+    // Check spell preparation changes
+    if (_spellPreparation.preparedSpells != character.spellPreparation.preparedSpells) return true;
+    if (_spellPreparation.alwaysPreparedSpells != character.spellPreparation.alwaysPreparedSpells) return true;
+    if (_spellPreparation.freeUseSpells != character.spellPreparation.freeUseSpells) return true;
+    
+    // Check personalized slots changes
+    if (!_personalizedSlotsEqual(_personalizedSlots, character.personalizedSlots)) return true;
+    
+    // Check money changes
+    if (_moneyController.text.trim() != character.moneyItems.money) return true;
+    
+    // Check rich text content changes
+    if (!_areDeltasEqual(_quickGuideController.document.toDelta().toJson(), character.quickGuide)) return true;
+    if (!_areDeltasEqual(_proficienciesController.document.toDelta().toJson(), character.proficiencies)) return true;
+    if (!_areDeltasEqual(_featuresTraitsController.document.toDelta().toJson(), character.featuresTraits)) return true;
+    if (!_areDeltasEqual(_backstoryController.document.toDelta().toJson(), character.backstory)) return true;
+    if (!_areDeltasEqual(_featNotesController.document.toDelta().toJson(), character.featNotes)) return true;
+    if (!_areDeltasEqual(_itemsController.document.toDelta().toJson(), character.moneyItems.items.isNotEmpty ? character.moneyItems.items.first : '')) return true;
+    if (!_areDeltasEqual(_additionalDetailsController.document.toDelta().toJson(), character.appearance.additionalDetails)) return true;
+    
+    // Check pillars changes
+    if (_gimmickController.text.trim() != character.pillars.gimmick) return true;
+    if (_quirkController.text.trim() != character.pillars.quirk) return true;
+    if (_wantsController.text.trim() != character.pillars.wants) return true;
+    if (_needsController.text.trim() != character.pillars.needs) return true;
+    if (_conflictController.text.trim() != character.pillars.conflict) return true;
+    
+    // Check appearance changes
+    if (_heightController.text.trim() != character.appearance.height) return true;
+    if (_ageController.text.trim() != character.appearance.age) return true;
+    if (_eyeColorController.text.trim() != character.appearance.eyeColor) return true;
+    
+    // Check existing flags
+    if (_hasUnsavedClassChanges || _hasUnsavedAbilityChanges) return true;
+    
+    return false;
+  }
+  
+  /// Helper method to compare deltas properly
+  bool _areDeltasEqual(List<dynamic> currentDelta, String storedJson) {
+    if (storedJson.isEmpty) {
+      // If stored is empty, check if current is also empty (just a newline)
+      final currentText = currentDelta.isNotEmpty ? currentDelta.first['insert']?.toString() ?? '' : '';
+      return currentText.trim().isEmpty;
+    }
+    
+    try {
+      final storedDelta = jsonDecode(storedJson);
+      // Compare the JSON strings for reliable comparison
+      return jsonEncode(currentDelta) == jsonEncode(storedDelta);
+    } catch (e) {
+      // If stored is not valid JSON, treat it as plain text
+      final currentText = currentDelta.isNotEmpty ? currentDelta.first['insert']?.toString() ?? '' : '';
+      return currentText.trim() == storedJson.trim();
+    }
+  }
+  
+  /// Helper method to parse JSON delta from string
+  List<dynamic> _parseJsonDelta(String jsonString) {
+    try {
+      return jsonDecode(jsonString);
+    } catch (e) {
+      // Fallback to plain text
+      final delta = Delta()..insert(jsonString.endsWith('\n') ? jsonString : '$jsonString\n');
+      return delta.toJson();
+    }
+  }
+  
+  /// Helper method to compare lists
+  bool _listsEqual<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+  
+  /// Helper method to compare attack lists
+  bool _attacksEqual(List<CharacterAttack> a, List<CharacterAttack> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (!_attackEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  
+  /// Helper method to compare individual attacks
+  bool _attackEqual(CharacterAttack a, CharacterAttack b) {
+    return a.id == b.id &&
+           a.name == b.name &&
+           a.attackBonus == b.attackBonus &&
+           a.damage == b.damage &&
+           a.damageType == b.damageType;
+  }
+  
+  /// Helper method to compare personalized slots lists
+  bool _personalizedSlotsEqual(List<CharacterPersonalizedSlot> a, List<CharacterPersonalizedSlot> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (!_personalizedSlotEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  
+  /// Helper method to compare individual personalized slots
+  bool _personalizedSlotEqual(CharacterPersonalizedSlot a, CharacterPersonalizedSlot b) {
+    return a.name == b.name &&
+           a.maxSlots == b.maxSlots &&
+           a.usedSlots == b.usedSlots &&
+           a.diceType == b.diceType;
+  }
+
   void _saveCharacter({String? successMessage, bool showToast = true}) async {
     // Show loading indicator with blocking overlay
     setState(() {
@@ -4988,8 +5251,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         updatedCharacter,
       );
 
-      // Clear unsaved changes flags
+      // Update baseline character and clear unsaved changes flags
       setState(() {
+        _baselineCharacter = updatedCharacter;
         _hasUnsavedClassChanges = false;
         _hasUnsavedAbilityChanges = false;
       });
