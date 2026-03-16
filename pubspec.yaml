@@ -50,6 +50,7 @@ dependencies:
   # Device identification for multi-device sync
   device_info_plus: ^10.1.2
   shared_preferences: ^2.3.2
+  crop_your_image: ^2.0.0
 
 dev_dependencies:
   flutter_test:

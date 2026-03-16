@@ -23,6 +23,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import '../../models/character_model.dart';
@@ -38,6 +39,7 @@ import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
 import '../../utils/image_utils.dart';
+import '../../widgets/image_crop_widget.dart';
 import 'SpellsTab/spell_by_level.dart';
 import '../diaries/diary_list_screen.dart';
 
@@ -4677,52 +4679,83 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 80,
+        imageQuality: 100, // Don't compress here, let crop handle it
       );
 
       if (image != null && mounted) {
-        // Create a permanent directory for character images
-        final directory = await getApplicationDocumentsDirectory();
-        final characterImagesDir = Directory(
-          path.join(directory.path, 'character_images'),
+        final File imageFile = File(image.path);
+        
+        // Navigate to crop screen
+        final result = await Navigator.of(context).push<Uint8List>(
+          MaterialPageRoute(
+            builder: (context) => ImageCropWidget(
+              imageFile: imageFile,
+              title: 'Crop Profile Image',
+              isCircleCrop: true, // Profile images are typically circular
+              aspectRatio: 1.0, // Square aspect ratio for profile
+              onCropped: (croppedBytes) {
+                // Let parent handle navigation with result
+                Navigator.of(context).pop(croppedBytes);
+              },
+              onCancelled: () {
+                // Let parent handle navigation with null result
+                Navigator.of(context).pop(null);
+              },
+            ),
+          ),
         );
 
-        // Create directory if it doesn't exist
-        if (!await characterImagesDir.exists()) {
-          await characterImagesDir.create(recursive: true);
-        }
+        if (result != null && mounted) {
+          // Create a permanent directory for character images
+          final directory = await getApplicationDocumentsDirectory();
+          final characterImagesDir = Directory(
+            path.join(directory.path, 'character_images'),
+          );
 
-        // Generate unique filename
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fileName = '${widget.character.id}_$timestamp.jpg';
-        final savedImagePath = path.join(characterImagesDir.path, fileName);
+          // Create directory if it doesn't exist
+          if (!await characterImagesDir.exists()) {
+            await characterImagesDir.create(recursive: true);
+          }
 
-        // Copy image to permanent location
-        final File sourceFile = File(image.path);
-        final File savedFile = await sourceFile.copy(savedImagePath);
+          // Generate unique filename
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final fileName = '${widget.character.id}_$timestamp.jpg';
+          final savedImagePath = path.join(characterImagesDir.path, fileName);
 
-        // Clean up old image if exists
-        if (_customImagePath != null &&
-            _customImagePath!.startsWith(characterImagesDir.path)) {
-          try {
-            await File(_customImagePath!).delete();
-          } catch (e) {
-            // Error deleting old image: $e
+          // Save cropped image
+          final File savedFile = File(savedImagePath);
+          await savedFile.writeAsBytes(result);
+
+          // Clean up old image if exists
+          if (_customImagePath != null &&
+              _customImagePath!.startsWith(characterImagesDir.path)) {
+            try {
+              await File(_customImagePath!).delete();
+            } catch (e) {
+              // Error deleting old image: $e
+            }
+          }
+
+          setState(() {
+            _customImagePath = savedFile.path;
+            // Convert image to base64 for JSON persistence
+            _customImageData = ImageUtils.imageFileToBase64(savedFile.path);
+            debugPrint(
+              'Profile image cropped and saved: ${_customImageData?.length ?? 0} characters',
+            );
+          });
+
+          // Show success message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile image updated successfully!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
           }
         }
-
-        setState(() {
-          _customImagePath = savedFile.path;
-          // Convert image to base64 for JSON persistence
-          _customImageData = ImageUtils.imageFileToBase64(savedFile.path);
-          debugPrint(
-            'Profile image converted to base64: ${_customImageData?.length ?? 0} characters',
-          );
-        });
-
-        // Manual save only - no auto-save after image change
       }
     } catch (e) {
       if (mounted) {
@@ -4801,49 +4834,81 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 75,
+        imageQuality: 100, // Don't compress here, let crop handle it
       );
 
       if (image != null) {
-        final directory = await getApplicationDocumentsDirectory();
-        final appearanceImagesDir = Directory(
-          path.join(directory.path, 'appearance_images'),
+        final File imageFile = File(image.path);
+        
+        // Navigate to crop screen
+        final result = await Navigator.of(context).push<Uint8List>(
+          MaterialPageRoute(
+            builder: (context) => ImageCropWidget(
+              imageFile: imageFile,
+              title: 'Crop Appearance Image',
+              isCircleCrop: false, // Appearance images can be rectangular
+              aspectRatio: null, // Free aspect ratio for appearance images
+              onCropped: (croppedBytes) {
+                // Let parent handle navigation with result
+                Navigator.of(context).pop(croppedBytes);
+              },
+              onCancelled: () {
+                // Let parent handle navigation with null result
+                Navigator.of(context).pop(null);
+              },
+            ),
+          ),
         );
-        if (!await appearanceImagesDir.exists()) {
-          await appearanceImagesDir.create(recursive: true);
-        }
 
-        final String fileName = path.basename(image.path);
-        final String savedImagePath = path.join(
-          appearanceImagesDir.path,
-          fileName,
-        );
-        final File sourceFile = File(image.path);
-        final File savedFile = await sourceFile.copy(savedImagePath);
-
-        // Clean up old appearance image if exists
-        if (_appearanceImagePath != null &&
-            _appearanceImagePath!.startsWith(appearanceImagesDir.path)) {
-          try {
-            await File(_appearanceImagePath!).delete();
-          } catch (e) {
-            debugPrint('Error deleting old appearance image: $e');
-          }
-        }
-
-        setState(() {
-          _appearanceImagePath = savedFile.path;
-          // Convert appearance image to base64 for JSON persistence
-          _appearanceImageData = ImageUtils.imageFileToBase64(savedFile.path);
-          debugPrint(
-            'Appearance image converted to base64: ${_appearanceImageData?.length ?? 0} characters',
+        if (result != null && mounted) {
+          final directory = await getApplicationDocumentsDirectory();
+          final appearanceImagesDir = Directory(
+            path.join(directory.path, 'appearance_images'),
           );
-        });
+          if (!await appearanceImagesDir.exists()) {
+            await appearanceImagesDir.create(recursive: true);
+          }
 
-        if (mounted) {
-          // Manual save only - no auto-save
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final String fileName = '${widget.character.id}_appearance_$timestamp.jpg';
+          final String savedImagePath = path.join(
+            appearanceImagesDir.path,
+            fileName,
+          );
+          
+          // Save cropped image
+          final File savedFile = File(savedImagePath);
+          await savedFile.writeAsBytes(result);
+
+          // Clean up old appearance image if exists
+          if (_appearanceImagePath != null &&
+              _appearanceImagePath!.startsWith(appearanceImagesDir.path)) {
+            try {
+              await File(_appearanceImagePath!).delete();
+            } catch (e) {
+              debugPrint('Error deleting old appearance image: $e');
+            }
+          }
+
+          setState(() {
+            _appearanceImagePath = savedFile.path;
+            // Convert appearance image to base64 for JSON persistence
+            _appearanceImageData = ImageUtils.imageFileToBase64(savedFile.path);
+            debugPrint(
+              'Appearance image cropped and converted to base64: ${_appearanceImageData?.length ?? 0} characters',
+            );
+          });
+
+          // Show success message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Appearance image updated successfully!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
