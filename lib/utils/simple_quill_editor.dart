@@ -36,22 +36,23 @@ class _SimpleQuillEditorState extends State<SimpleQuillEditor> {
 
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: borderColor),
         borderRadius: BorderRadius.circular(8),
-        color: Colors.white,
+        color: Colors.transparent,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Toolbar
-          Container(
-            decoration: BoxDecoration(
-              color: headerColor,
-              border: Border(top: BorderSide(color: borderColor)),
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(8),
             ),
-            child: QuillSimpleToolbar(
-              controller: widget.controller,
-              config: widget.toolbarConfig,
+            child: Container(
+              color: headerColor,
+              child: QuillSimpleToolbar(
+                controller: widget.controller,
+                config: widget.toolbarConfig,
+              ),
             ),
           ),
           // Editor
