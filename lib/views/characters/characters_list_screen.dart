@@ -6,6 +6,7 @@ import '../../models/character_model.dart';
 import '../../services/character_service.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/cloud_sync_service.dart';
+import '../../widgets/cached_profile_image.dart';
 import 'character_edit_screen.dart';
 import 'character_create_screen.dart';
 import '../diaries/diary_list_screen.dart';
@@ -331,21 +332,9 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: ListTile(
-        leading: CircleAvatar(
-          child:
-              character.customImageData != null && character.customImageData!.isNotEmpty
-                  ? ClipOval(
-                    child: Image.memory(
-                      base64Decode(character.customImageData!),
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.person);
-                      },
-                    ),
-                  )
-                  : const Icon(Icons.person),
+        leading: CharacterAvatar(
+          base64ImageData: character.customImageData,
+          size: 40,
         ),
         title: Text(character.name),
         subtitle: Text(
