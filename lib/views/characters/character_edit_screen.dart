@@ -72,6 +72,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   // Death saves controllers
   List<bool> _deathSaveSuccesses = [false, false, false];
   List<bool> _deathSaveFailures = [false, false, false];
+  int _exhaustionLevel = 0;
 
   // Languages controller
   final _languagesController = TextEditingController();
@@ -305,6 +306,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Initialize death saves
     _deathSaveSuccesses = List.from(character.deathSaves.successes);
     _deathSaveFailures = List.from(character.deathSaves.failures);
+    _exhaustionLevel = character.deathSaves.exhaustionLevel;
 
     // Initialize languages and money/items
     _languagesController.text = character.languages.languages.join(', ');
@@ -797,6 +799,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             tempHpController: _tempHpController,
             hitDiceController: _hitDiceController,
             hitDiceTypeController: _hitDiceTypeController,
+            exhaustionLevel: _exhaustionLevel,
+            onExhaustionChanged: (level) {
+              setState(() {
+                _exhaustionLevel = level;
+              });
+              // Manual save only - no auto-save
+            },
           ),
 
           const SizedBox(height: 24),
@@ -4552,6 +4561,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   void _takeComprehensiveLongRest() {
+    final hadExhaustion = _exhaustionLevel > 0;
+    final previousLevel = _exhaustionLevel;
+    
     setState(() {
       // Restore hit points to maximum
       _currentHpController.text = _maxHpController.text;
@@ -4593,16 +4605,24 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _personalizedSlots
               .map((slot) => slot.copyWith(usedSlots: 0))
               .toList();
+
+      // Reduce exhaustion level by 1 (minimum 0)
+      if (_exhaustionLevel > 0) {
+        _exhaustionLevel--;
+      }
     });
 
     // Manual save only - no auto-save for comprehensive long rest
 
     // Show confirmation message
+    String message = 'Long rest completed! HP, spell slots, and all class resources restored!';
+    if (hadExhaustion && _exhaustionLevel < previousLevel) {
+      message += ' Exhaustion reduced by 1.';
+    }
+    
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Long rest completed! HP, spell slots, and all class resources restored!',
-        ),
+      SnackBar(
+        content: Text(message),
         backgroundColor: Colors.green,
         duration: Duration(seconds: 3),
       ),
@@ -4928,6 +4948,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Check death saves changes
     if (!_listsEqual(_deathSaveSuccesses, character.deathSaves.successes)) return true;
     if (!_listsEqual(_deathSaveFailures, character.deathSaves.failures)) return true;
+    if (_exhaustionLevel != character.deathSaves.exhaustionLevel) return true;
     
     // Check languages changes
     final currentLanguages = _languagesController.text
@@ -5224,6 +5245,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         deathSaves: CharacterDeathSaves(
           successes: _deathSaveSuccesses,
           failures: _deathSaveFailures,
+          exhaustionLevel: _exhaustionLevel,
         ),
         languages: CharacterLanguages(
           languages:

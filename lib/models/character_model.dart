@@ -1217,31 +1217,37 @@ class CharacterSpellPreparation {
 class CharacterDeathSaves {
   final List<bool> successes;
   final List<bool> failures;
+  final int exhaustionLevel; // 0-6 levels of exhaustion
 
   const CharacterDeathSaves({
     this.successes = const [false, false, false],
     this.failures = const [false, false, false],
+    this.exhaustionLevel = 0,
   });
 
   Map<String, dynamic> toJson() => {
     'successes': successes,
     'failures': failures,
+    'exhaustion_level': exhaustionLevel,
   };
 
   factory CharacterDeathSaves.fromJson(Map<String, dynamic> json) {
     return CharacterDeathSaves(
       successes: List<bool>.from(json['successes'] ?? [false, false, false]),
       failures: List<bool>.from(json['failures'] ?? [false, false, false]),
+      exhaustionLevel: json['exhaustion_level'] ?? 0,
     );
   }
 
   CharacterDeathSaves copyWith({
     List<bool>? successes,
     List<bool>? failures,
+    int? exhaustionLevel,
   }) {
     return CharacterDeathSaves(
       successes: successes ?? this.successes,
       failures: failures ?? this.failures,
+      exhaustionLevel: exhaustionLevel ?? this.exhaustionLevel,
     );
   }
 
