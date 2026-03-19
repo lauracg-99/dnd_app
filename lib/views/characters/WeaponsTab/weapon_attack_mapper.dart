@@ -8,8 +8,8 @@ class WeaponAttackMapper {
     // Calculate attack bonus based on weapon type and character stats
     final attackBonus = _calculateAttackBonus(weapon, character);
     
-    // Format damage string
-    final damage = weapon.formattedDamage;
+    // Get damage dice without the type (e.g., "1d6" instead of "1d6 slashing")
+    final damage = _getDamageDiceOnly(weapon);
     
     // Get damage type (use the first one if multiple)
     final damageType = weapon.damageDice.isNotEmpty 
@@ -23,6 +23,19 @@ class WeaponAttackMapper {
       damage: damage,
       damageType: damageType,
     );
+  }
+
+  /// Gets damage dice without the type (e.g., "1d6" instead of "1d6 slashing")
+  static String _getDamageDiceOnly(Weapon weapon) {
+    if (weapon.damageDice.isEmpty) return '';
+    
+    final buffer = StringBuffer();
+    for (int i = 0; i < weapon.damageDice.length; i++) {
+      if (i > 0) buffer.write(' + ');
+      final dice = weapon.damageDice[i];
+      buffer.write('${dice.diceAmount}d6');
+    }
+    return buffer.toString();
   }
 
   /// Calculates the attack bonus for a weapon based on character stats and weapon properties
