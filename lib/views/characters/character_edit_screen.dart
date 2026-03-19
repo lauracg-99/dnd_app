@@ -18,6 +18,7 @@ import 'package:dnd_app/views/characters/FeatsTab/characters_feats_tab.dart';
 import 'package:dnd_app/views/characters/TabReorderDialog/tab_reorder_dialog.dart';
 import 'package:dnd_app/utils/source_mapper.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -901,47 +902,108 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Attacks',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s attacks and weapons',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 4),
-          // Attacks list
-          ..._attacks.asMap().entries.map((entry) {
-            final index = entry.key;
-            final attack = entry.value;
-            return Card(
-              child: ListTile(
-                title: Text(attack.name),
-                subtitle: Text(
-                  'Attack bonus: ${attack.attackBonus} | Damage: ${attack.damage} | Type: ${attack.damageType}',
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _showAddAttackDialog,
+                icon: const Icon(
+                    Symbols.add_circle,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                label: const Text(
+                  'Add Attack',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    setState(() {
-                      _attacks.removeAt(index);
-                    });
-                    // Remove attack without auto-save
-                  },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shadowColor: Theme.of(context).primaryColor.withOpacity(0.3),
+                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  minimumSize: const Size(0, 45),
                 ),
               ),
-            );
-          }),
+            ],
+          ),
+          ),
+
+          const SizedBox(height: 6),
+
+          // Attacks list
+          if (_attacks.isEmpty) ...[
+            Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24.0),
+              margin: const EdgeInsets.symmetric(vertical: 16.0),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color.fromARGB(255, 205, 205, 205)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 4),
+                  Text(
+                    'No weapons added yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Add your character\'s weapons and attacks to track combat abilities',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          ] else ...[
+            ..._attacks.asMap().entries.map((entry) {
+              final index = entry.key;
+              final attack = entry.value;
+              return Card(
+                child: ListTile(
+                  title: Text(attack.name),
+                  subtitle: Text(
+                    'Attack bonus: ${attack.attackBonus} | Damage: ${attack.damage} | Type: ${attack.damageType}',
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      setState(() {
+                        _attacks.removeAt(index);
+                      });
+                      // Remove attack without auto-save
+                    },
+                  ),
+                ),
+              );
+            }),
+          ],
 
           const SizedBox(height: 16),
-
-          
-          TextButton.icon(
-            onPressed: _showAddAttackDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Attack'),
-          ),
+                  
         ],
       ),
     );
@@ -1362,18 +1424,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),          
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: _showAddSpellDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Add Spell'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 4),          
+
 
           // Spellcasting info section
           Container(
@@ -1450,6 +1502,40 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           ),
           const SizedBox(height: 16),
 
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton.icon(
+                onPressed: _showAddSpellDialog,
+                icon: const Icon(
+                    Symbols.add_circle,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                label: const Text(
+                  'Add Spell',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shadowColor: Theme.of(context).primaryColor.withOpacity(0.3),
+                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  minimumSize: const Size(0, 45),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 14),
           // Spell preparation section - only show for classes that prepare spells
           if (canPrepare) ...[
             Container(
