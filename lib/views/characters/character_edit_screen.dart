@@ -3445,19 +3445,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                               ),
                               child: Column(
                                 children: [
-                                  Icon(Icons.gavel, color: !_isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600),
-                                  const SizedBox(height: 4),
                                   Text(
-                                    'Pick from Weapons',
+                                    'Choose from existing weapons',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: !_isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600,
                                     ),
-                                  ),
-                                  const Text(
-                                    'Choose from existing weapons',
-                                    style: TextStyle(fontSize: 12),
-                                    textAlign: TextAlign.center,
                                   ),
                                 ],
                               ),
@@ -3487,19 +3480,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                               ),
                               child: Column(
                                 children: [
-                                  Icon(Icons.edit, color: _isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600),
-                                  const SizedBox(height: 4),
                                   Text(
-                                    'Custom Weapon',
+                                    'Make a custom weapon',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: _isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600,
                                     ),
-                                  ),
-                                  const Text(
-                                    'Create your own attack',
-                                    style: TextStyle(fontSize: 12),
-                                    textAlign: TextAlign.center,
                                   ),
                                 ],
                               ),
@@ -3536,18 +3522,20 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   onPressed: () async {
                     if (!_isCustomAttackMode) {
                       // Show weapon selection dialog
-                      final selectedWeapon = await showDialog<Weapon>(
+                      final selectedWeapons = await showDialog<List<Weapon>>(
                         context: context,
                         builder: (context) => const WeaponSelectionDialog(),
                       );
                       
-                      if (selectedWeapon != null) {
-                        // Map weapon to character attack
-                        final attack = WeaponAttackMapper.mapWeaponToAttack(selectedWeapon, widget.character);
+                      if (selectedWeapons != null && selectedWeapons.isNotEmpty) {
+                        // Map each selected weapon to character attack
+                        final attacks = selectedWeapons.map((weapon) => 
+                          WeaponAttackMapper.mapWeaponToAttack(weapon, widget.character)
+                        ).toList();
                         
                         // Use main widget setState to update the attacks list
                         setState(() {
-                          _attacks.add(attack);
+                          _attacks.addAll(attacks);
                         });
                         
                         // Close the add attack dialog (weapon selection dialog already closed)
@@ -3557,7 +3545,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       // Show custom attack dialog and wait for result
                       final customAttack = await showDialog<CharacterAttack>(
                         context: context,
-                        builder: (context) => _showCustomAttackDialog(),
+                        builder: (context) => AlertDialog(
+                          content: _showCustomAttackDialog(),
+                        ),
                       );
                       
                       if (customAttack != null) {
@@ -3571,7 +3561,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       }
                     }
                   },
-                  child: Text(_isCustomAttackMode ? 'Create Custom' : 'Browse Weapons'),
+                  child: Text(_isCustomAttackMode ? 'Create Custom' : 'Choose Weapons'),
                 ),
               ],
             );

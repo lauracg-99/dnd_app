@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../../../models/weapon_model.dart';
 import '../../../viewmodels/weapons_viewmodel.dart';
@@ -15,6 +16,7 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedType = 'All';
   bool _isLoading = false;
+  final Set<Weapon> _selectedWeapons = <Weapon>{};
 
   @override
   void initState() {
@@ -44,6 +46,9 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Container(
         width: double.maxFinite,
         height: 600,
@@ -54,17 +59,36 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  const Icon(Icons.gavel),
+                  const Icon(Symbols.swords),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Select a Weapon',
+                      'Select Weapons',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
+                  if (_selectedWeapons.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${_selectedWeapons.length} selected',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue.shade700,
+                        ),
+                      ),
+                    ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
@@ -183,10 +207,7 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                   return SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: [
-                        _buildTypeChip('All', 'All'),
-                        ...types.map((type) => _buildTypeChip(type, viewModel.getFormattedTypeForFilter(type))),
-                      ],
+                      children: types.map((type) => _buildTypeChip(type, viewModel.getFormattedTypeForFilter(type))).toList(),
                     ),
                   );
                 },
@@ -234,6 +255,55 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                 },
               ),
             ),
+            
+            // Bottom action buttons
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade300),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        side: BorderSide(color: Colors.grey.shade400),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _selectedWeapons.isNotEmpty
+                          ? () => Navigator.pop(context, _selectedWeapons.toList())
+                          : null,
+                      icon: const Icon(Icons.add),
+                      label: Text(
+                        _selectedWeapons.isEmpty ? 'Add Weapons' : 'Add ${_selectedWeapons.length} Weapons',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade600,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        elevation: 2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -241,17 +311,22 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   }
 
   Widget _buildWeaponTile(Weapon weapon) {
+    final isSelected = _selectedWeapons.contains(weapon);
+    
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: Colors.grey.shade200,
+        backgroundColor: isSelected ? Colors.blue.shade200 : Colors.grey.shade200,
         child: Icon(
           _getWeaponIcon(weapon.type),
-          color: Colors.grey.shade700,
+          color: isSelected ? Colors.blue.shade700 : Colors.grey.shade700,
         ),
       ),
       title: Text(
         weapon.name,
-        style: const TextStyle(fontWeight: FontWeight.bold),
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: isSelected ? Colors.blue.shade700 : null,
+        ),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,9 +337,27 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
             Text('Properties: ${weapon.formattedProperties}', style: const TextStyle(fontSize: 12)),
         ],
       ),
-      trailing: const Icon(Icons.add_circle_outline),
+      trailing: Checkbox(
+        value: isSelected,
+        onChanged: (bool? value) {
+          setState(() {
+            if (value == true) {
+              _selectedWeapons.add(weapon);
+            } else {
+              _selectedWeapons.remove(weapon);
+            }
+          });
+        },
+        activeColor: Colors.blue.shade700,
+      ),
       onTap: () {
-        Navigator.pop(context, weapon);
+        setState(() {
+          if (_selectedWeapons.contains(weapon)) {
+            _selectedWeapons.remove(weapon);
+          } else {
+            _selectedWeapons.add(weapon);
+          }
+        });
       },
     );
   }
