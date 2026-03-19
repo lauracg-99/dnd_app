@@ -19,7 +19,8 @@ class CharactersListScreen extends StatefulWidget {
   State<CharactersListScreen> createState() => _CharactersListScreenState();
 }
 
-class _CharactersListScreenState extends State<CharactersListScreen> with WidgetsBindingObserver {
+class _CharactersListScreenState extends State<CharactersListScreen>
+    with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   final _syncService = CloudSyncService();
   final _authService = FirebaseAuthService();
@@ -29,12 +30,12 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    
+
     // Load characters when the screen is first displayed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CharactersViewModel>().loadCharacters();
     });
-    
+
     // Listen to auth state changes to refresh characters when user signs in/out
     _authService.authStateChanges.listen((user) {
       if (mounted) {
@@ -89,7 +90,9 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
                 icon: Stack(
                   children: [
                     Icon(
-                      _authService.isAuthenticated ? Icons.cloud_done : Icons.cloud_upload,
+                      _authService.isAuthenticated
+                          ? Icons.cloud_done
+                          : Icons.cloud_upload,
                       color: _getSyncStatusColor(syncStatus),
                     ),
                     if (syncStatus == SyncStatus.syncing)
@@ -288,10 +291,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
                   const SizedBox(height: 4),
                   Text(
                     'Sign in to backup your data and access it from anywhere',
-                    style: TextStyle(
-                      color: Colors.blue.shade600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.blue.shade600, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
@@ -389,7 +389,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
                       Text('Duplicate'),
                     ],
                   ),
-                ),                
+                ),
                 const PopupMenuItem(
                   value: 'delete',
                   child: Row(
@@ -430,9 +430,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
   void _navigateToCreateCharacter() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CharacterCreateScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const CharacterCreateScreen()),
     );
   }
 
@@ -486,7 +484,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
       _navigateToLogin();
       return;
     }
-    
+
     // Check current sync status
     if (currentStatus == SyncStatus.changesAvailable) {
       // If changes are available, trigger manual sync immediately
@@ -501,9 +499,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
   void _navigateToLogin() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const LoginScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
 
@@ -512,34 +508,38 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
     // Show confirmation dialog before downloading changes
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Download Changes'),
-        content: const Text(
-          'Changes from other devices are available. Download them now?\n\n'
-          'This will replace your local data with the latest changes from the cloud.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Download Changes'),
+            content: const Text(
+              'Changes from other devices are available. Download them now?\n\n'
+              'This will replace your local data with the latest changes from the cloud.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                  _showCloudSyncOptions();
+                },
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Download'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Download'),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == null || !confirmed) return;
 
     try {
       final result = await _syncService.manualSyncFromCloud();
-      
+
       if (result.success) {
         // Refresh characters after sync
         context.read<CharactersViewModel>().loadCharacters();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -576,92 +576,103 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
   /// Show cloud sync options for authenticated users
   void _showCloudSyncOptions() {
     final userEmail = _authService.currentUser?.email ?? 'Unknown';
-    
+
     showModalBottomSheet(
       context: context,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-          ListTile(
-            title: const Text('Cloud Sync Options'),
-            subtitle: Text('Signed in as: $userEmail'),
+      builder:
+          (context) => Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: const Text('Cloud Sync Options'),
+                  subtitle: Text('Signed in as: $userEmail'),
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.sync),
+                  title: const Text('Sync Now'),
+                  subtitle: const Text('Upload all local changes to cloud'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmAndSync();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.download),
+                  title: const Text('Download from Cloud'),
+                  subtitle: const Text('Replace local data with cloud data'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _downloadFromCloud();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: const Text(
+                    'Sign Out',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  subtitle: const Text('Sign out and disable cloud sync'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _signOut();
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever, color: Colors.red),
+                  title: const Text(
+                    'Delete Account',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  subtitle: const Text(
+                    'Permanently delete your account and all cloud data',
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmAndDeleteAccount();
+                  },
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.sync),
-            title: const Text('Sync Now'),
-            subtitle: const Text('Upload all local changes to cloud'),
-            onTap: () {
-              Navigator.pop(context);
-              _confirmAndSync();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.download),
-            title: const Text('Download from Cloud'),
-            subtitle: const Text('Replace local data with cloud data'),
-            onTap: () {
-              Navigator.pop(context);
-              _downloadFromCloud();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Sign Out', style: TextStyle(color: Colors.red)),
-            subtitle: const Text('Sign out and disable cloud sync'),
-            onTap: () {
-              Navigator.pop(context);
-              _signOut();
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.delete_forever, color: Colors.red),
-            title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
-            subtitle: const Text('Permanently delete your account and all cloud data'),
-            onTap: () {
-              Navigator.pop(context);
-              _confirmAndDeleteAccount();
-            },
-          ),
-          const SizedBox(height: 40),
-        ],
-      ),
-    ),
     );
   }
 
   /// Confirm sync if there are deleted characters, then sync
   void _confirmAndSync() async {
-    
-      // Show confirmation dialog
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Confirm Sync'),
-          content: const Text(
-            'This sync will permanently change the data from the cloud. Are you sure you want to continue?',
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Confirm Sync'),
+            content: const Text(
+              'This sync will permanently change the data from the cloud. Are you sure you want to continue?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color.fromARGB(255, 54, 114, 244),
+                ),
+                child: const Text('Sync'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: TextButton.styleFrom(foregroundColor: const Color.fromARGB(255, 54, 114, 244)),
-              child: const Text('Sync'),
-            ),
-          ],
-        ),
-      );
-      
-      if (confirmed == true) {
-        _syncAllData();
-      }
+    );
+
+    if (confirmed == true) {
+      _syncAllData();
+    }
   }
 
   /// Sync all data to cloud
@@ -670,7 +681,9 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.success ? result.successMessage! : result.errorMessage!),
+          content: Text(
+            result.success ? result.successMessage! : result.errorMessage!,
+          ),
           backgroundColor: result.success ? Colors.green : Colors.red,
           duration: const Duration(seconds: 2),
         ),
@@ -684,7 +697,9 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.success ? result.successMessage! : result.errorMessage!),
+          content: Text(
+            result.success ? result.successMessage! : result.errorMessage!,
+          ),
           backgroundColor: result.success ? Colors.green : Colors.red,
           duration: const Duration(seconds: 2),
         ),
@@ -731,47 +746,48 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
     // First confirmation dialog - explain what will be deleted
     final firstConfirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account?'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'This will permanently delete:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Account?'),
+            content: const Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'This will permanently delete:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 12),
+                Text('• Your account'),
+                Text('• All cloud-synced characters'),
+                Text('• All cloud-synced diaries'),
+                SizedBox(height: 16),
+                Text(
+                  'Note: Local data on this device will NOT be deleted.',
+                  style: TextStyle(fontStyle: FontStyle.italic),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'This action cannot be undone.',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 12),
-            Text('• Your account'),
-            Text('• All cloud-synced characters'),
-            Text('• All cloud-synced diaries'),            
-            SizedBox(height: 16),
-            Text(
-              'Note: Local data on this device will NOT be deleted.',
-              style: TextStyle(fontStyle: FontStyle.italic),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'This action cannot be undone.',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Continue'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Continue'),
-          ),
-        ],
-      ),
     );
 
     if (firstConfirm != true) return;
@@ -779,26 +795,27 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
     // Second confirmation dialog - final warning
     final secondConfirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Are you absolutely sure?'),
-        content: const Text(
-          'Your account and all cloud data will be permanently deleted. This action cannot be undone.\n\nDo you want to proceed?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: Colors.red,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Are you absolutely sure?'),
+            content: const Text(
+              'Your account and all cloud data will be permanently deleted. This action cannot be undone.\n\nDo you want to proceed?',
             ),
-            child: const Text('Delete My Account'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('Delete My Account'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (secondConfirm != true) return;
@@ -840,7 +857,9 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to delete cloud data: ${cloudDeleteResult.errorMessage}'),
+              content: Text(
+                'Failed to delete cloud data: ${cloudDeleteResult.errorMessage}',
+              ),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 5),
             ),
@@ -851,10 +870,10 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
 
       // Step 2: Delete authentication account
       final authDeleteResult = await _authService.deleteAccount();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        
+
         if (authDeleteResult.success) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -908,7 +927,7 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
     if (!_authService.isAuthenticated) {
       return 'Sign In & Sync';
     }
-    
+
     switch (status) {
       case SyncStatus.changesAvailable:
         return 'Tap to download changes from other devices';
@@ -922,6 +941,4 @@ class _CharactersListScreenState extends State<CharactersListScreen> with Widget
         return 'Cloud Sync Options';
     }
   }
-
-
 }

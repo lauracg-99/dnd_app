@@ -35,6 +35,13 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
     super.initState();
     _feats = List.from(widget.feats);
     _featNotesController = widget.featNotesController;
+    
+    // Load feats when the widget initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<FeatsViewModel>().loadFeats();
+      }
+    });
   }
 
   @override
@@ -391,49 +398,91 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
           const SizedBox(height: 16),
 
           // Feats list
-          ..._feats.asMap().entries.map((entry) {
-            final index = entry.key;
-            final featName = entry.value;
+          Consumer<FeatsViewModel>(
+            builder: (context, featsViewModel, child) {
+              if (featsViewModel.isLoading) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
 
-            // Try to find feat details
-            final featsViewModel = context.read<FeatsViewModel>();
-            final feat = featsViewModel.feats.firstWhere(
-              (f) => f.name.toLowerCase() == featName.toLowerCase(),
-              orElse: () => Feat(
-                id: 'unknown',
-                name: featName,
-                description: 'Custom feat',
-                source: 'Unknown',
-              ),
-            );
-
-            return Card(
-              child: ListTile(
-                title: InkWell(
-                  child: Text(
-                    feat.name,
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      decoration: TextDecoration.underline,
+              if (featsViewModel.error != null) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error loading feats: ${featsViewModel.error}',
+                          style: TextStyle(color: Colors.red.shade600),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => featsViewModel.loadFeats(),
+                          child: const Text('Retry'),
+                        ),
+                      ],
                     ),
                   ),
-                  onTap: () => _showFeatDetails(feat),
-                ),
-                subtitle: Text(
-                  feat.source,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {
-                    final newFeats = List<String>.from(_feats);
-                    newFeats.removeAt(index);
-                    _updateFeats(newFeats);
-                  },
-                ),
-              ),
-            );
-          }),
+                );
+              }
+
+              return Column(
+                children: _feats.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final featName = entry.value;
+
+                  // Try to find feat details
+                  final feat = featsViewModel.feats.firstWhere(
+                    (f) => f.name.toLowerCase() == featName.toLowerCase(),
+                    orElse: () => Feat(
+                      id: 'unknown',
+                      name: featName,
+                      description: 'Custom feat',
+                      source: 'Unknown',
+                    ),
+                  );
+
+                  return Card(
+                    child: ListTile(
+                      title: InkWell(
+                        child: Text(
+                          feat.name,
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                        onTap: () => _showFeatDetails(feat),
+                      ),
+                      subtitle: Text(
+                        feat.source,
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          final newFeats = List<String>.from(_feats);
+                          newFeats.removeAt(index);
+                          _updateFeats(newFeats);
+                        },
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
 
           TextButton.icon(
             onPressed: _showAddFeatDialog,

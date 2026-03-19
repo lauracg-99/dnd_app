@@ -652,7 +652,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   IconButton(
                     icon: Icon(
                       Icons.save,
-                      color: hasUnsavedChanges ? Colors.purple : Colors.grey,
+                      color: hasUnsavedChanges ? Colors.purple : null,
                     ),
                     onPressed: _saveCharacter,
                   ),
