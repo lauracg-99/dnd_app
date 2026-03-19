@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Tab configuration model for character edit screen
 class CharacterTabConfig {
@@ -63,8 +64,8 @@ class CharacterTabManager {
     ),
     'attacks': CharacterTabConfig(
       id: 'attacks',
-      label: 'Attacks',
-      icon: Icons.gavel,
+      label: 'Weapons',
+      icon: Symbols.swords,
       builder: () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'spell_slots': CharacterTabConfig(
