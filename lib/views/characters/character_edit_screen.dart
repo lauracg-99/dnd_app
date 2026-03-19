@@ -31,6 +31,7 @@ import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
 import '../../models/race_model.dart';
 import '../../models/background_model.dart';
+import '../../models/weapon_model.dart';
 import '../../models/tab_config_model.dart';
 import '../../services/user_preferences_service.dart';
 import '../../helpers/character_ability_helper.dart';
@@ -42,6 +43,8 @@ import '../../viewmodels/backgrounds_viewmodel.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/image_crop_widget.dart';
 import 'SpellsTab/spell_by_level.dart';
+import 'WeaponsTab/weapon_selection_dialog.dart';
+import 'WeaponsTab/weapon_attack_mapper.dart';
 import '../diaries/diary_list_screen.dart';
 
 class CharacterEditScreen extends StatefulWidget {
@@ -68,6 +71,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   bool _useCustomSubclass = false;
   String _selectedBackground = '';
   bool _toolbarExpanded = false;
+  bool _isCustomAttackMode = false;
   
   // Baseline character data for change detection
   late Character _baselineCharacter;
@@ -3399,92 +3403,263 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   void _showAddAttackDialog() {
+    // Reset mode when dialog opens
+    setState(() {
+      _isCustomAttackMode = false;
+    });
+    
     showDialog(
       context: context,
       builder: (context) {
-        final nameController = TextEditingController();
-        final bonusController = TextEditingController();
-        final damageController = TextEditingController();
-        final typeController = TextEditingController();
-
-        return AlertDialog(
-          title: const Text('Add Attack'),
-          content: SizedBox(
-            width: 300,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Attack Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: bonusController,
-                  decoration: const InputDecoration(
-                    labelText: 'Attack Bonus',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
+        return StatefulBuilder(
+          builder: (context, dialogSetState) {
+            return AlertDialog(
+              title: const Text('Add Attack'),
+              content: SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: damageController,
-                        decoration: const InputDecoration(
-                          labelText: 'Damage',
-                          border: OutlineInputBorder(),
+                    // Mode selection
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              dialogSetState(() {
+                                _isCustomAttackMode = false;
+                              });
+                              // Also update main widget state
+                              setState(() {
+                                _isCustomAttackMode = false;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: !_isCustomAttackMode ? Colors.blue.shade100 : Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: !_isCustomAttackMode ? Colors.blue.shade300 : Colors.grey.shade300,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.gavel, color: !_isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Pick from Weapons',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: !_isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Choose from existing weapons',
+                                    style: TextStyle(fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: typeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Type',
-                          border: OutlineInputBorder(),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              dialogSetState(() {
+                                _isCustomAttackMode = true;
+                              });
+                              // Also update main widget state
+                              setState(() {
+                                _isCustomAttackMode = true;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _isCustomAttackMode ? Colors.blue.shade100 : Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _isCustomAttackMode ? Colors.blue.shade300 : Colors.grey.shade300,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.edit, color: _isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Custom Weapon',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: _isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Create your own attack',
+                                    style: TextStyle(fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
+                    const SizedBox(height: 16),
+                    
+                    // Content based on mode
+                    if (!_isCustomAttackMode) ...[
+                      const Text(
+                        'Browse and select from the available weapons list. Attack bonus and damage will be calculated automatically.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
+                    ] else ...[
+                      const Text(
+                        'Enter custom attack details manually.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 4),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (!_isCustomAttackMode) {
+                      // Show weapon selection dialog
+                      final selectedWeapon = await showDialog<Weapon>(
+                        context: context,
+                        builder: (context) => const WeaponSelectionDialog(),
+                      );
+                      
+                      if (selectedWeapon != null) {
+                        // Map weapon to character attack
+                        final attack = WeaponAttackMapper.mapWeaponToAttack(selectedWeapon, widget.character);
+                        
+                        // Use main widget setState to update the attacks list
+                        setState(() {
+                          _attacks.add(attack);
+                        });
+                        
+                        // Close the add attack dialog (weapon selection dialog already closed)
+                        Navigator.of(context).pop();
+                      }
+                    } else {
+                      // Show custom attack dialog and wait for result
+                      final customAttack = await showDialog<CharacterAttack>(
+                        context: context,
+                        builder: (context) => _showCustomAttackDialog(),
+                      );
+                      
+                      if (customAttack != null) {
+                        // Add the custom attack to the list
+                        setState(() {
+                          _attacks.add(customAttack);
+                        });
+                        
+                        // Close the add attack dialog
+                        Navigator.of(context).pop();
+                      }
+                    }
+                  },
+                  child: Text(_isCustomAttackMode ? 'Create Custom' : 'Browse Weapons'),
+                ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (nameController.text.trim().isNotEmpty) {
-                  setState(() {
-                    _attacks.add(
-                      CharacterAttack(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        name: nameController.text.trim(),
-                        attackBonus: bonusController.text.trim(),
-                        damage: damageController.text.trim(),
-                        damageType: typeController.text.trim(),
-                      ),
-                    );
-                  });
-                  // Manual save only - no auto-save
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _showCustomAttackDialog() {
+    final nameController = TextEditingController();
+    final bonusController = TextEditingController();
+    final damageController = TextEditingController();
+    final typeController = TextEditingController();
+    
+    return AlertDialog(
+      title: const Text('Custom Attack'),
+      content: SizedBox(
+        width: 300,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Attack Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: bonusController,
+              decoration: const InputDecoration(
+                labelText: 'Attack Bonus',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: damageController,
+                    decoration: const InputDecoration(
+                      labelText: 'Damage',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: typeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Type',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (nameController.text.trim().isNotEmpty) {
+              final attack = CharacterAttack(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                name: nameController.text.trim(),
+                attackBonus: bonusController.text.trim(),
+                damage: damageController.text.trim(),
+                damageType: typeController.text.trim(),
+              );
+              
+              // Return the created attack
+              Navigator.pop(context, attack);
+            }
+          },
+          child: const Text('Add'),
+        ),
+      ],
     );
   }
 
