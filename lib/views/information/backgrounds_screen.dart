@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/background_model.dart';
+import '../../utils/source_mapper.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
 
 class BackgroundsScreen extends StatefulWidget {
@@ -162,7 +163,7 @@ class _BackgroundsScreenState extends State<BackgroundsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Source: ${background.source}',
+                        'Source: ${SourceMapper.getFullBookName(background.source)}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 8),

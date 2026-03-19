@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/race_model.dart';
+import '../../utils/source_mapper.dart';
 import '../../viewmodels/races_viewmodel.dart';
 
 class RacesScreen extends StatefulWidget {
@@ -144,7 +145,7 @@ class _RacesScreenState extends State<RacesScreen> {
     }
     
     if (buffer.isEmpty) {
-      buffer.write('Source: ${race.source}');
+      buffer.write('Source: ${SourceMapper.getFullBookName(race.source)}');
     }
     
     return buffer.toString();
@@ -184,7 +185,7 @@ class _RacesScreenState extends State<RacesScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Source: ${race.source}',
+                        'Source: ${SourceMapper.getFullBookName(race.source)}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 16),

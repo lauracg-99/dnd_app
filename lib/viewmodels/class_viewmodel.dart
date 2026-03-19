@@ -2,6 +2,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/class_model.dart';
 import '../services/class_service.dart';
+import '../utils/source_mapper.dart';
 
 class ClassesViewModel extends ChangeNotifier {
   List<DndClass> _allClasses = [];
@@ -17,9 +18,17 @@ class ClassesViewModel extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   String get selectedSource => _selectedSource;
 
-  /// Available source books
+  /// Available source books with full names
   final List<String> availableSources = [
-    'phb', 'xge', 'tce', 'scag', 'egw', 'vrgr', 'ftd', 'mpmm', 'scc'
+    'Player\'s Handbook',
+    'Xanathar\'s Guide to Everything',
+    'Tasha\'s Cauldron of Everything',
+    'Sword Coast Adventurer\'s Guide',
+    'Explorer\'s Guide to Wildemount',
+    'Van Richten\'s Guide to Ravenloft',
+    'Fizban\'s Treasury of Dragons',
+    'Mordenkainen\'s Monsters of the Multiverse',
+    'Strixhaven: A Curriculum of Chaos',
   ];
 
   /// Load all classes
@@ -31,12 +40,17 @@ class ClassesViewModel extends ChangeNotifier {
     try {
       _allClasses = await ClassService.loadAllClasses();
       _applyFilters();
-    } catch (e, stackTrace) {
-      _error = 'Failed to load classes: $e';
+    } catch (e) {
+      _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Convert full book name to abbreviation for filtering
+  String _getAbbreviationForFilter(String fullName) {
+    return SourceMapper.getAbbreviation(fullName);
   }
 
   /// Set search query and update filtered classes
@@ -62,7 +76,8 @@ class ClassesViewModel extends ChangeNotifier {
 
     // Apply source filter
     if (_selectedSource.isNotEmpty) {
-      result = ClassService.filterBySource(result, _selectedSource);
+      final abbreviation = _getAbbreviationForFilter(_selectedSource);
+      result = ClassService.filterBySource(result, abbreviation);
     }
 
     _filteredClasses = result;

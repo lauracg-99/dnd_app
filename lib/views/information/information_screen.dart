@@ -1,4 +1,6 @@
+import 'package:dnd_app/views/information/weapons_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'feats_screen.dart';
 import 'classes_screen.dart';
 import 'races_screen.dart';
@@ -63,6 +65,18 @@ class InformationScreen extends StatelessWidget {
               );
             },
           ),
+          _buildCategoryCard(
+            context: context,
+            title: 'Weapons',
+            icon: Symbols.swords,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const WeaponsScreen()),
+              );
+            },
+          ),
+          
           /* _buildCategoryCard(
             context: context,
             title: 'Items',

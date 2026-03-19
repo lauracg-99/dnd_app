@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/feat_model.dart';
+import '../../utils/source_mapper.dart';
 import '../../viewmodels/feats_viewmodel.dart';
 
 class FeatsScreen extends StatefulWidget {
@@ -162,7 +163,7 @@ class _FeatsScreenState extends State<FeatsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Source: ${feat.source}',
+                        'Source: ${SourceMapper.getFullBookName(feat.source)}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 16),

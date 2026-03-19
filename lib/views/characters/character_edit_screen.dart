@@ -16,6 +16,7 @@ import 'package:dnd_app/views/characters/NotesTab/characters_notes.dart';
 import 'package:dnd_app/views/characters/PersonalizedSlotsTab/characters_personalized_tab.dart';
 import 'package:dnd_app/views/characters/FeatsTab/characters_feats_tab.dart';
 import 'package:dnd_app/views/characters/TabReorderDialog/tab_reorder_dialog.dart';
+import 'package:dnd_app/utils/source_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -4123,7 +4124,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Source: ${race.source}',
+                        'Source: ${SourceMapper.getFullBookName(race.source)}',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
@@ -4235,7 +4236,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Source: ${background.source}',
+                        'Source: ${SourceMapper.getFullBookName(background.source)}',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),

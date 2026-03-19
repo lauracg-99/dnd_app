@@ -1,5 +1,6 @@
 import 'package:dnd_app/utils/quill_toolbar_configs.dart';
 import 'package:dnd_app/utils/simple_quill_editor.dart';
+import 'package:dnd_app/utils/source_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:provider/provider.dart';
@@ -141,7 +142,7 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                         return ListTile(
                           title: Text(feat.name),
                           subtitle: Text(
-                            feat.source,
+                            SourceMapper.getFullBookName(feat.source),
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 12,
@@ -257,7 +258,7 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Source: ${feat.source}',
+                        'Source: ${SourceMapper.getFullBookName(feat.source)}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w500,
                           color: Colors.blue,
@@ -466,7 +467,7 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                         onTap: () => _showFeatDetails(feat),
                       ),
                       subtitle: Text(
-                        feat.source,
+                        SourceMapper.getFullBookName(feat.source),
                         style: const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       trailing: IconButton(

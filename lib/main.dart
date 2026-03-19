@@ -14,6 +14,7 @@ import 'viewmodels/feats_viewmodel.dart';
 import 'viewmodels/class_viewmodel.dart';
 import 'viewmodels/races_viewmodel.dart';
 import 'viewmodels/backgrounds_viewmodel.dart';
+import 'viewmodels/weapons_viewmodel.dart';
 import 'services/character_service.dart';
 import 'services/diary_service.dart';
 import 'services/firebase_auth_service.dart';
@@ -49,6 +50,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ClassesViewModel()),
         ChangeNotifierProvider(create: (_) => RacesViewModel()),
         ChangeNotifierProvider(create: (_) => BackgroundsViewModel()),
+        ChangeNotifierProvider(create: (_) => WeaponsViewModel()),
       ],
       child: const MyApp(),
     ),

@@ -166,7 +166,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
                 const SizedBox(height: 8),
                 ...sources.map(
                   (source) => RadioListTile<String>(
-                    title: Text(source.toUpperCase()),
+                    title: Text(source),
                     value: source,
                     groupValue: _selectedSource,
                     onChanged: (value) {

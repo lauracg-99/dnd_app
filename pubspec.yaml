@@ -51,6 +51,7 @@ dependencies:
   device_info_plus: ^10.1.2
   shared_preferences: ^2.3.2
   crop_your_image: ^2.0.0
+  material_symbols_icons: ^4.2906.0
 
 dev_dependencies:
   flutter_test:
@@ -86,6 +87,7 @@ flutter:
     - assets/data/classes/  
     - assets/data/races/  
     - assets/data/backgrounds/
+    - assets/data/weapons/
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
