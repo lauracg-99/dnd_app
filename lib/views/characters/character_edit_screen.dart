@@ -2019,12 +2019,21 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   const SizedBox(width: 8),
                   Expanded(
                     flex: 3,
-                    child: Text(
-                      'Shield',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isActiveColor.shade700,
-                        fontWeight: FontWeight.w600,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _hasShield = !_hasShield;
+                        });
+                        // Manual save only - no auto-save
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Text(
+                        'Shield',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isActiveColor.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
