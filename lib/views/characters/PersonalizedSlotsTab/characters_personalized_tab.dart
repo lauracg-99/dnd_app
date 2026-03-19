@@ -1,4 +1,6 @@
+import 'package:dnd_app/widgets/action_button.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import '../../../models/character_model.dart';
 
 class CharactersPersonalizedTab extends StatefulWidget {
@@ -301,6 +303,108 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
     );
   }
 
+  void _showEditSlotNameDialog(int slotIndex, String currentName) {
+    final textController = TextEditingController(text: currentName);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Slot Name'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Enter a new name for this slot:',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: textController,
+              textInputAction: TextInputAction.done,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Slot Name',
+                hintText: 'e.g., Superiority Dice, Ki Points',
+              ),
+              autofocus: true,
+              onSubmitted: (value) {
+                if (value.trim().isNotEmpty) {
+                  final slot = _personalizedSlots[slotIndex];
+                  _updatePersonalizedSlot(
+                    slotIndex,
+                    slot.copyWith(name: value.trim()),
+                  );
+                  Navigator.pop(context);
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newName = textController.text.trim();
+              if (newName.isNotEmpty) {
+                final slot = _personalizedSlots[slotIndex];
+                _updatePersonalizedSlot(
+                  slotIndex,
+                  slot.copyWith(name: newName),
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteSlotConfirmation(int slotIndex, String slotName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Slot'),
+        content: Text(
+          'Are you sure you want to delete "$slotName"?\n\nThis action cannot be undone.',
+          style: const TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newSlots = List<CharacterPersonalizedSlot>.from(_personalizedSlots);
+              newSlots.removeAt(slotIndex);
+              _updatePersonalizedSlots(newSlots);
+              Navigator.pop(context);
+              
+              // Show confirmation message
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('$slotName deleted'),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _restoreAllPersonalizedSlots() {
     final newSlots = _personalizedSlots
         .map((slot) => slot.copyWith(usedSlots: 0))
@@ -353,6 +457,16 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                           maxLines: 2,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.edit,
+                          color: Colors.blue,
+                          size: 18,
+                        ),
+                        onPressed: () => _showEditSlotNameDialog(slotIndex, label),
+                        tooltip: 'Edit slot name',
+                      ),
                     ],
                   ),
                 ),
@@ -391,11 +505,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                         color: Colors.red,
                         size: 20,
                       ),
-                      onPressed: () {
-                        final newSlots = List<CharacterPersonalizedSlot>.from(_personalizedSlots);
-                        newSlots.removeAt(slotIndex);
-                        _updatePersonalizedSlots(newSlots);
-                      },
+                      onPressed: () => _showDeleteSlotConfirmation(slotIndex, label),
                     ),
                   ],
                 ),
@@ -489,32 +599,20 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: const Text(
-                  'Personalized Slots',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: _restoreAllPersonalizedSlots,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Restore all'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-              ),
-            ],
+          
+          const SizedBox(height: 4),
+
+          Padding(
+            padding: const EdgeInsets.only(right: 5.0),
+            child: ActionButton.primary(
+              context: context,
+              onPressed: _showAddPersonalizedSlotDialog,
+              label: 'Add Personalized Slot',
+              icon: Symbols.add_circle,
+            ),
           ),
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 14),
 
           // Personalized slots list
           if (_personalizedSlots.isEmpty)
@@ -523,8 +621,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                 padding: const EdgeInsets.all(32.0),
                 child: Column(
                   children: [
-                    Icon(Icons.casino, color: Colors.grey.shade400, size: 48),
-                    const SizedBox(height: 16),
                     Text(
                       'No class slots configured',
                       style: TextStyle(
@@ -562,13 +658,9 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
               },
             ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 16),          
 
-          TextButton.icon(
-            onPressed: _showAddPersonalizedSlotDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Personalized Slot'),
-          ),
+          
         ],
       ),
     );

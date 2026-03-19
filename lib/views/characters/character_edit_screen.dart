@@ -17,6 +17,7 @@ import 'package:dnd_app/views/characters/PersonalizedSlotsTab/characters_persona
 import 'package:dnd_app/views/characters/FeatsTab/characters_feats_tab.dart';
 import 'package:dnd_app/views/characters/TabReorderDialog/tab_reorder_dialog.dart';
 import 'package:dnd_app/utils/source_mapper.dart';
+import 'package:dnd_app/widgets/action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
@@ -905,38 +906,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _showAddAttackDialog,
-                icon: const Icon(
-                    Symbols.add_circle,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                label: const Text(
-                  'Add Attack',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 3,
-                  shadowColor: Theme.of(context).primaryColor.withOpacity(0.3),
-                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  minimumSize: const Size(0, 45),
-                ),
-              ),
-            ],
-          ),
+            child: ActionButton.primary(
+              context: context,
+              onPressed: _showAddAttackDialog,
+              label: 'Add Attack',
+              icon: Symbols.add_circle,
+            ),
           ),
 
           const SizedBox(height: 6),
@@ -1502,37 +1477,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           ),
           const SizedBox(height: 16),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _showAddSpellDialog,
-                icon: const Icon(
-                    Symbols.add_circle,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                label: const Text(
-                  'Add Spell',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 3,
-                  shadowColor: Theme.of(context).primaryColor.withOpacity(0.3),
-                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  minimumSize: const Size(0, 45),
-                ),
-              ),
-            ],
+          ActionButton.primary(
+            context: context,
+            onPressed: _showAddSpellDialog,
+            label: 'Add Spell',
+            icon: Symbols.add_circle,
           ),
           
           const SizedBox(height: 14),

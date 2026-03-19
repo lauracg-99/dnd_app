@@ -1,8 +1,10 @@
 import 'package:dnd_app/utils/quill_toolbar_configs.dart';
 import 'package:dnd_app/utils/simple_quill_editor.dart';
 import 'package:dnd_app/utils/source_mapper.dart';
+import 'package:dnd_app/widgets/action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../../../models/feat_model.dart';
 import '../../../viewmodels/feats_viewmodel.dart';
@@ -386,19 +388,18 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Character Feats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        children: [          
+          const SizedBox(height: 4),
+         
+         ActionButton.primary(
+            context: context,
+            onPressed: _showAddFeatDialog,
+            label: 'Add Feat',
+            icon: Symbols.add_circle,
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage your character\'s feats',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 16),
 
-          // Feats list
+          const SizedBox(height: 10),
+
           Consumer<FeatsViewModel>(
             builder: (context, featsViewModel, child) {
               if (featsViewModel.isLoading) {
@@ -438,6 +439,44 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                 );
               }
 
+              if (_feats.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24.0),
+                    margin: const EdgeInsets.symmetric(vertical: 16.0),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color.fromARGB(255, 205, 205, 205)),
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(
+                          'No feats added yet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Add your character\'s feats to track special abilities and bonuses',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
               return Column(
                 children: _feats.asMap().entries.map((entry) {
                   final index = entry.key;
@@ -458,11 +497,8 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                     child: ListTile(
                       title: InkWell(
                         child: Text(
-                          feat.name,
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            decoration: TextDecoration.underline,
-                          ),
+                          feat.name,   
+                          style: const TextStyle(color: Colors.blue),                       
                         ),
                         onTap: () => _showFeatDetails(feat),
                       ),
@@ -485,11 +521,7 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
             },
           ),
 
-          TextButton.icon(
-            onPressed: _showAddFeatDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Feat'),
-          ),
+ 
           const SizedBox(height: 16),
 
           // Feat Notes Section
