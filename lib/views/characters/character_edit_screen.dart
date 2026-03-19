@@ -2367,9 +2367,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 colors: [Colors.white, Colors.grey.shade50],
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 // Header with icon
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -2555,6 +2556,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   ),
                 ),
               ],
+              ),
             ),
           ),
         );
@@ -3639,6 +3641,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           minHeight: 300,
         ),
         padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -3763,6 +3766,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -3784,10 +3788,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width * 0.95,
                       minWidth: 350,
-                      maxHeight: MediaQuery.of(context).size.height * 0.85,
-                      minHeight: 400,
+                      maxHeight: MediaQuery.of(context).size.height * 0.9,
                     ),
+                    child: SingleChildScrollView(
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         // Header
                         Padding(
@@ -3845,7 +3850,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
                         // Filters section
                         Container(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(12.0),
                           color: Colors.grey.shade50,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4094,7 +4099,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
                         // Search bar
                     Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: TextField(
                         decoration: const InputDecoration(
                           labelText: 'Search spells by name...',
@@ -4109,8 +4114,129 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       ),
                     ),
 
+                        // Active filters display
+                        Consumer<SpellsViewModel>(
+                          builder: (context, spellsViewModel, child) {
+                            final hasActiveFilters = _searchQuery.isNotEmpty || 
+                                _selectedLevelFilter != null || 
+                                _selectedClassFilter != null || 
+                                _selectedSchoolFilter != null ||
+                                _filterByCharacterClass;
+                            
+                            if (!hasActiveFilters) return const SizedBox.shrink();
+                            
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue.shade200),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.filter_list, size: 16, color: Colors.blue.shade700),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Active Filters:',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue.shade700,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      TextButton(
+                                        onPressed: () {
+                                          this.setState(() {
+                                            _searchQuery = '';
+                                            _selectedLevelFilter = null;
+                                            _selectedClassFilter = null;
+                                            _selectedSchoolFilter = null;
+                                            _filterByCharacterClass = false;
+                                          });
+                                          setState(() {});
+                                        },
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: const Text('Clear All', style: TextStyle(fontSize: 12)),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    children: [
+                                      if (_searchQuery.isNotEmpty)
+                                        _buildFilterChip(
+                                          'Search: "$_searchQuery"',
+                                          () {
+                                            this.setState(() {
+                                              _searchQuery = '';
+                                            });
+                                            setState(() {});
+                                          },
+                                        ),
+                                      if (_filterByCharacterClass)
+                                        _buildFilterChip(
+                                          'Only ${widget.character.characterClass} spells',
+                                          () {
+                                            this.setState(() {
+                                              _filterByCharacterClass = false;
+                                            });
+                                            setState(() {});
+                                          },
+                                        ),
+                                      if (_selectedLevelFilter != null)
+                                        _buildFilterChip(
+                                          'Level: $_selectedLevelFilter',
+                                          () {
+                                            this.setState(() {
+                                              _selectedLevelFilter = null;
+                                            });
+                                            setState(() {});
+                                          },
+                                        ),
+                                      if (_selectedClassFilter != null)
+                                        _buildFilterChip(
+                                          'Class: $_selectedClassFilter',
+                                          () {
+                                            this.setState(() {
+                                              _selectedClassFilter = null;
+                                            });
+                                            setState(() {});
+                                          },
+                                        ),
+                                      if (_selectedSchoolFilter != null)
+                                        _buildFilterChip(
+                                          'School: ${_selectedSchoolFilter?.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')}',
+                                          () {
+                                            this.setState(() {
+                                              _selectedSchoolFilter = null;
+                                            });
+                                            setState(() {});
+                                          },
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
                         // Spells list
-                        Expanded(
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.4,
+                          ),
                           child: Consumer<SpellsViewModel>(
                             builder: (context, spellsViewModel, child) {
                               if (spellsViewModel.isLoading) {
@@ -4324,9 +4450,43 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                         ),
                       ],
                     ),
+                    ),
                   ),
                 ),
           ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, VoidCallback onClear) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade100,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade300),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.blue.shade800,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: onClear,
+            child: Icon(
+              Icons.close,
+              size: 14,
+              color: Colors.blue.shade600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
