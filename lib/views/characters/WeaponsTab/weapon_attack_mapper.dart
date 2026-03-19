@@ -43,7 +43,6 @@ class WeaponAttackMapper {
     }
   }
 
-  /// Gets damage dice without the type (e.g., "1d6" instead of "1d6 slashing")
   static String _getDamageDiceOnly(Weapon weapon) {
     if (weapon.damageDice.isEmpty) return '';
     
@@ -51,7 +50,7 @@ class WeaponAttackMapper {
     for (int i = 0; i < weapon.damageDice.length; i++) {
       if (i > 0) buffer.write(' + ');
       final dice = weapon.damageDice[i];
-      buffer.write('${dice.diceAmount}d6');
+      buffer.write('${dice.diceAmount}${dice.diceType}');
     }
     return buffer.toString();
   }
@@ -108,7 +107,7 @@ class WeaponAttackMapper {
     for (int i = 0; i < weapon.damageDice.length; i++) {
       if (i > 0) buffer.write(' + ');
       final dice = weapon.damageDice[i];
-      buffer.write('${dice.diceAmount}d6 ${dice.damageType}');
+      buffer.write('${dice.diceAmount}${dice.diceType} ${dice.damageType}');
     }
     return buffer.toString();
   }

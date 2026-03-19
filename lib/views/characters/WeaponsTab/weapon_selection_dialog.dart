@@ -88,7 +88,6 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
     }
   }
 
-  /// Gets weapon's base damage without type (e.g., "2d6" from "2d6 slashing")
   String _getWeaponBaseDamage(Weapon weapon) {
     if (weapon.damageDice.isEmpty) return '';
     
@@ -96,7 +95,7 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
     for (int i = 0; i < weapon.damageDice.length; i++) {
       if (i > 0) buffer.write(' + ');
       final dice = weapon.damageDice[i];
-      buffer.write('${dice.diceAmount}d6');
+      buffer.write('${dice.diceAmount}${dice.diceType}');
     }
     return buffer.toString();
   }

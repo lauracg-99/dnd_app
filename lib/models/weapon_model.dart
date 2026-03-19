@@ -63,10 +63,12 @@ class Weapon {
       if (diceStats != null) {
         final dices = diceStats['dices']?['value'] as List<dynamic>? ?? [];
         final diceAmount = dices.isNotEmpty ? (dices.first['stats']?['dice_amount']?['value'] as int? ?? 1) : 1;
+        final diceType = dices.isNotEmpty ? (dices.first['stats']?['dice_type']?['value'] as String? ?? 'd6') : 'd6';
         final damageType = diceStats['damage_type']?['value'] as String? ?? 'unknown';
         
         damageDice.add(DamageDice(
           diceAmount: diceAmount,
+          diceType: diceType,
           damageType: damageType,
         ));
       }
@@ -97,7 +99,7 @@ class Weapon {
     for (int i = 0; i < damageDice.length; i++) {
       if (i > 0) buffer.write(', ');
       final dice = damageDice[i];
-      buffer.write('${dice.diceAmount}d6 ${dice.damageType}');
+      buffer.write('${dice.diceAmount}${dice.diceType} ${dice.damageType}');
     }
     return buffer.toString();
   }
@@ -127,10 +129,12 @@ class Weapon {
 
 class DamageDice {
   final int diceAmount;
+  final String diceType;
   final String damageType;
 
   DamageDice({
     required this.diceAmount,
+    required this.diceType,
     required this.damageType,
   });
 }

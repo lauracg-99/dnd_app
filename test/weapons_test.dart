@@ -78,6 +78,7 @@ void main() {
       expect(weapon.isLight, isTrue);
       expect(weapon.damageDice.length, equals(1));
       expect(weapon.damageDice.first.diceAmount, equals(1));
+      expect(weapon.damageDice.first.diceType, equals('d6')); // Default when not specified in JSON
       expect(weapon.damageDice.first.damageType, equals('piercing'));
     });
 
@@ -122,8 +123,8 @@ void main() {
         isThrown: false,
         isLight: false,
         damageDice: [
-          DamageDice(diceAmount: 1, damageType: 'slashing'),
-          DamageDice(diceAmount: 2, damageType: 'fire'),
+          DamageDice(diceAmount: 1, diceType: 'd6', damageType: 'slashing'),
+          DamageDice(diceAmount: 2, diceType: 'd6', damageType: 'fire'),
         ],
       );
 
@@ -194,9 +195,10 @@ void main() {
 
   group('DamageDice Model Tests', () {
     test('DamageDice should be created correctly', () {
-      final damageDice = DamageDice(diceAmount: 2, damageType: 'piercing');
+      final damageDice = DamageDice(diceAmount: 2, diceType: 'd8', damageType: 'piercing');
 
       expect(damageDice.diceAmount, equals(2));
+      expect(damageDice.diceType, equals('d8'));
       expect(damageDice.damageType, equals('piercing'));
     });
   });
