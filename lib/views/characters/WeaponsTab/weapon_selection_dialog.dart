@@ -5,6 +5,18 @@ import '../../../models/weapon_model.dart';
 import '../../../viewmodels/weapons_viewmodel.dart';
 import '../../../utils/source_mapper.dart';
 
+class WeaponSelectionResult {
+  final Weapon weapon;
+  final String? customAttackBonus;
+  final String? customDamage;
+
+  WeaponSelectionResult({
+    required this.weapon,
+    this.customAttackBonus,
+    this.customDamage,
+  });
+}
+
 class WeaponSelectionDialog extends StatefulWidget {
   const WeaponSelectionDialog({Key? key}) : super(key: key);
 
@@ -17,6 +29,10 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   String _selectedType = 'All';
   bool _isLoading = false;
   final Set<Weapon> _selectedWeapons = <Weapon>{};
+  final Map<String, String> _customAttackBonuses = <String, String>{};
+  final Map<String, String> _customDamages = <String, String>{};
+  final Map<String, TextEditingController> _attackBonusControllers = <String, TextEditingController>{};
+  final Map<String, TextEditingController> _damageModifierControllers = <String, TextEditingController>{};
 
   @override
   void initState() {
@@ -40,7 +56,70 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   @override
   void dispose() {
     _searchController.dispose();
+    // Dispose all controllers
+    for (final controller in _attackBonusControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _damageModifierControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  /// Calculates total damage by combining weapon base damage with user modifier
+  String _calculateTotalDamage(Weapon weapon, String userModifier) {
+    if (userModifier.isEmpty) return _getWeaponBaseDamage(weapon);
+    
+    // Extract numeric value from user input (handles +4, -2, 3, etc.)
+    final modifierValue = _extractNumericValue(userModifier);
+    
+    // Get weapon's base damage (e.g., "2d6")
+    final baseDamage = _getWeaponBaseDamage(weapon);
+    
+    if (baseDamage.isEmpty) return '';
+    
+    // Format as "2d6 + 4" or "1d8 - 2"
+    if (modifierValue > 0) {
+      return '$baseDamage + $modifierValue';
+    } else if (modifierValue < 0) {
+      return '$baseDamage - ${modifierValue.abs()}';
+    } else {
+      return baseDamage;
+    }
+  }
+
+  /// Gets weapon's base damage without type (e.g., "2d6" from "2d6 slashing")
+  String _getWeaponBaseDamage(Weapon weapon) {
+    if (weapon.damageDice.isEmpty) return '';
+    
+    final buffer = StringBuffer();
+    for (int i = 0; i < weapon.damageDice.length; i++) {
+      if (i > 0) buffer.write(' + ');
+      final dice = weapon.damageDice[i];
+      buffer.write('${dice.diceAmount}d6');
+    }
+    return buffer.toString();
+  }
+
+  /// Calculates the total attack bonus by combining weapon bonus with user input
+  String _calculateTotalAttackBonus(Weapon weapon, String userInput) {
+    if (userInput.isEmpty) return '';
+    
+    // Extract numeric value from user input (handles +3, -2, 5, etc.)
+    final userBonus = _extractNumericValue(userInput);
+    
+    // Get weapon's base attack bonus (this would need to be calculated based on character stats)
+    // For now, we'll assume 0 since we don't have character context in this dialog
+    final weaponBaseBonus = 0;
+    
+    final total = userBonus + weaponBaseBonus;
+    return total >= 0 ? '+$total' : '$total';
+  }
+
+  /// Extracts numeric value from attack bonus string
+  int _extractNumericValue(String bonusString) {
+    final cleanString = bonusString.replaceAll(RegExp(r'[^\d-]'), '');
+    return int.tryParse(cleanString) ?? 0;
   }
 
   @override
@@ -50,8 +129,12 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Container(
-        width: double.maxFinite,
-        height: 600,
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.95,
+          minWidth: 350,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          minHeight: 400,
+        ),
         child: Column(
           children: [
             // Header
@@ -107,17 +190,26 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                   hintText: 'Search weapons...',
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            _updateSearchQuery('');
-                          },
-                        )
-                      : null,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.blue.shade400),
+                  ),
+                  suffixIcon:
+                      _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                _updateSearchQuery('');
+                              },
+                            )
+                          : null,
                 ),
                 onChanged: (value) {
                   _updateSearchQuery(value);
@@ -264,6 +356,10 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                 border: Border(
                   top: BorderSide(color: Colors.grey.shade300),
                 ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
               ),
               child: Row(
                 children: [
@@ -284,7 +380,24 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: _selectedWeapons.isNotEmpty
-                          ? () => Navigator.pop(context, _selectedWeapons.toList())
+                          ? () {
+                              // Create result objects with calculated values
+                              final results = _selectedWeapons.map((weapon) {
+                                final attackBonusController = _attackBonusControllers[weapon.id]!;
+                                final damageModifierController = _damageModifierControllers[weapon.id]!;
+                                
+                                return WeaponSelectionResult(
+                                  weapon: weapon,
+                                  customAttackBonus: attackBonusController.text.trim().isEmpty 
+                                      ? null 
+                                      : attackBonusController.text.trim(),
+                                  customDamage: damageModifierController.text.trim().isEmpty 
+                                      ? null 
+                                      : _calculateTotalDamage(weapon, damageModifierController.text.trim()),
+                                );
+                              }).toList();
+                              Navigator.pop(context, results);
+                            }
                           : null,
                       icon: const Icon(Icons.add),
                       label: Text(
@@ -313,52 +426,214 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   Widget _buildWeaponTile(Weapon weapon) {
     final isSelected = _selectedWeapons.contains(weapon);
     
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: isSelected ? Colors.blue.shade200 : Colors.grey.shade200,
-        child: Icon(
-          _getWeaponIcon(weapon.type),
-          color: isSelected ? Colors.blue.shade700 : Colors.grey.shade700,
+    // Initialize custom values and controllers if not already set
+    if (!_customAttackBonuses.containsKey(weapon.id)) {
+      _customAttackBonuses[weapon.id] = ''; // Empty means use calculated value
+      _attackBonusControllers[weapon.id] = TextEditingController();
+    }
+    if (!_customDamages.containsKey(weapon.id)) {
+      _customDamages[weapon.id] = ''; // Empty means use weapon damage
+      _damageModifierControllers[weapon.id] = TextEditingController();
+    }
+    
+    final attackBonusController = _attackBonusControllers[weapon.id]!;
+    final damageModifierController = _damageModifierControllers[weapon.id]!;
+    final currentAttackTotal = _calculateTotalAttackBonus(weapon, attackBonusController.text);
+    final currentDamageTotal = _calculateTotalDamage(weapon, damageModifierController.text);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: isSelected ? Colors.blue.shade300 : Colors.grey.shade300,
         ),
+        borderRadius: BorderRadius.circular(8),
+        color: isSelected ? Colors.blue.shade50 : Colors.white,
       ),
-      title: Text(
-        weapon.name,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: isSelected ? Colors.blue.shade700 : null,
-        ),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          Text('Type: ${weapon.formattedType}'),
-          Text('Damage: ${weapon.formattedDamage}'),
-          if (weapon.formattedProperties != 'No special properties')
-            Text('Properties: ${weapon.formattedProperties}', style: const TextStyle(fontSize: 12)),
+          // Main weapon info
+          ListTile(
+            leading: Checkbox(
+              value: isSelected,
+              onChanged: (bool? value) {
+                setState(() {
+                  if (value == true) {
+                    _selectedWeapons.add(weapon);
+                  } else {
+                    _selectedWeapons.remove(weapon);
+                  }
+                });
+              },
+              activeColor: Colors.blue.shade700,
+            ),
+            title: Text(
+              weapon.name,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.blue.shade700 : null,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Type: ${weapon.formattedType}'),
+                Text('Base Damage: ${_getWeaponBaseDamage(weapon)}'),
+                if (weapon.formattedProperties != 'No special properties')
+                  Text('Properties: ${weapon.formattedProperties}', style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+            onTap: () {
+              setState(() {
+                if (_selectedWeapons.contains(weapon)) {
+                  _selectedWeapons.remove(weapon);
+                } else {
+                  _selectedWeapons.add(weapon);
+                }
+              });
+            },
+          ),
+          
+          // Custom fields (only show when selected)
+          if (isSelected) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade200),
+                ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(8),
+                  bottomRight: Radius.circular(8),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: attackBonusController,
+                          decoration: InputDecoration(
+                            labelText: 'Attack Bonus',
+                            hintText: 'e.g., +6, +5, -1',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.blue.shade400),
+                            ),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            _customAttackBonuses[weapon.id] = value.trim();
+                            setState(() {}); // Update to show new total
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: damageModifierController,
+                          decoration: InputDecoration(
+                            labelText: 'Damage Modifier',
+                            hintText: 'e.g., +4, +2, -1',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.blue.shade400),
+                            ),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            _customDamages[weapon.id] = value.trim();
+                            setState(() {}); // Update to show new total
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Show calculated totals
+                  Row(
+                    children: [
+                      if (currentAttackTotal.isNotEmpty)
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              border: Border.all(color: Colors.green.shade200),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Total Attack: $currentAttackTotal',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green.shade700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (currentAttackTotal.isNotEmpty && currentDamageTotal.isNotEmpty)
+                        const SizedBox(width: 8),
+                      if (currentDamageTotal.isNotEmpty)
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade50,
+                              border: Border.all(color: Colors.orange.shade200),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Total Damage: $currentDamageTotal',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange.shade700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Attack: Strength/Dex + proficiency + other bonuses | Damage: Strength/Dex modifier',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
-      trailing: Checkbox(
-        value: isSelected,
-        onChanged: (bool? value) {
-          setState(() {
-            if (value == true) {
-              _selectedWeapons.add(weapon);
-            } else {
-              _selectedWeapons.remove(weapon);
-            }
-          });
-        },
-        activeColor: Colors.blue.shade700,
-      ),
-      onTap: () {
-        setState(() {
-          if (_selectedWeapons.contains(weapon)) {
-            _selectedWeapons.remove(weapon);
-          } else {
-            _selectedWeapons.add(weapon);
-          }
-        });
-      },
     );
   }
 

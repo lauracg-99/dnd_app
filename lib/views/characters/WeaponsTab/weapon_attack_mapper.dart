@@ -4,12 +4,19 @@ import '../../../helpers/character_ability_helper.dart';
 
 class WeaponAttackMapper {
   /// Maps a Weapon to a CharacterAttack with calculated attack bonus and damage
-  static CharacterAttack mapWeaponToAttack(Weapon weapon, Character character) {
-    // Calculate attack bonus based on weapon type and character stats
-    final attackBonus = _calculateAttackBonus(weapon, character);
+  static CharacterAttack mapWeaponToAttack(
+    Weapon weapon, 
+    Character character, {
+    String? customAttackBonus,
+    String? customDamage,
+  }) {
+    // Calculate total attack bonus
+    final attackBonus = _calculateTotalAttackBonus(weapon, character, customAttackBonus);
     
-    // Get damage dice without the type (e.g., "1d6" instead of "1d6 slashing")
-    final damage = _getDamageDiceOnly(weapon);
+    // Use custom damage if provided, otherwise use weapon's base damage
+    final damage = customDamage?.isNotEmpty == true 
+        ? customDamage!
+        : _getDamageDiceOnly(weapon);
     
     // Get damage type (use the first one if multiple)
     final damageType = weapon.damageDice.isNotEmpty 
@@ -23,6 +30,17 @@ class WeaponAttackMapper {
       damage: damage,
       damageType: damageType,
     );
+  }
+
+  /// Calculates total attack bonus by combining weapon base bonus with user input
+  static String _calculateTotalAttackBonus(Weapon weapon, Character character, String? customAttackBonus) {
+    if (customAttackBonus?.isNotEmpty == true) {
+      // User provided custom bonus, use it directly
+      return customAttackBonus!;
+    } else {
+      // Use calculated weapon bonus
+      return _calculateAttackBonus(weapon, character);
+    }
   }
 
   /// Gets damage dice without the type (e.g., "1d6" instead of "1d6 slashing")

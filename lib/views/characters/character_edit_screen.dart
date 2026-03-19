@@ -919,7 +919,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               child: ListTile(
                 title: Text(attack.name),
                 subtitle: Text(
-                  '${attack.attackBonus} | ${attack.damage} ${attack.damageType}',
+                  'Attack bonus: ${attack.attackBonus} | Damage: ${attack.damage} ${attack.damageType}',
                 ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete),
@@ -3522,16 +3522,21 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   onPressed: () async {
                     if (!_isCustomAttackMode) {
                       // Show weapon selection dialog
-                      final selectedWeapons = await showDialog<List<Weapon>>(
+                      final selectedResults = await showDialog<List<WeaponSelectionResult>>(
                         context: context,
                         builder: (context) => const WeaponSelectionDialog(),
                       );
                       
-                      if (selectedWeapons != null && selectedWeapons.isNotEmpty) {
-                        // Map each selected weapon to character attack
-                        final attacks = selectedWeapons.map((weapon) => 
-                          WeaponAttackMapper.mapWeaponToAttack(weapon, widget.character)
-                        ).toList();
+                      if (selectedResults != null && selectedResults.isNotEmpty) {
+                        // Map each result to character attack with custom values
+                        final attacks = selectedResults.map((result) {
+                          return WeaponAttackMapper.mapWeaponToAttack(
+                            result.weapon, 
+                            widget.character,
+                            customAttackBonus: result.customAttackBonus,
+                            customDamage: result.customDamage,
+                          );
+                        }).toList();
                         
                         // Use main widget setState to update the attacks list
                         setState(() {
@@ -3580,7 +3585,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         borderRadius: BorderRadius.circular(20),
       ),
       child: Container(
-        width: 400,
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.9,
+          minWidth: 300,
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+          minHeight: 300,
+        ),
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -3724,8 +3734,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             builder:
                 (context, setState) => Dialog(
                   child: Container(
-                    width: double.maxFinite,
-                    height: 600,
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.95,
+                      minWidth: 350,
+                      maxHeight: MediaQuery.of(context).size.height * 0.85,
+                      minHeight: 400,
+                    ),
                     child: Column(
                       children: [
                         // Header
