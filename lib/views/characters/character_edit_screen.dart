@@ -919,7 +919,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               child: ListTile(
                 title: Text(attack.name),
                 subtitle: Text(
-                  'Attack bonus: ${attack.attackBonus} | Damage: ${attack.damage} ${attack.damageType}',
+                  'Attack bonus: ${attack.attackBonus} | Damage: ${attack.damage} | Type: ${attack.damageType}',
                 ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete),
