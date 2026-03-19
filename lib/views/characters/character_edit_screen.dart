@@ -3545,9 +3545,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       // Show custom attack dialog and wait for result
                       final customAttack = await showDialog<CharacterAttack>(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          content: _showCustomAttackDialog(),
-                        ),
+                        builder: (context) => _showCustomAttackDialog(),
                       );
                       
                       if (customAttack != null) {
@@ -3577,29 +3575,59 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     final damageController = TextEditingController();
     final typeController = TextEditingController();
     
-    return AlertDialog(
-      title: const Text('Custom Attack'),
-      content: SizedBox(
-        width: 300,
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        width: 400,
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Header
+            Row(
+              children: [
+                const Icon(Icons.edit),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Custom Attack',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Form fields
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
                 labelText: 'Attack Name',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             TextField(
               controller: bonusController,
               decoration: const InputDecoration(
                 labelText: 'Attack Bonus',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -3607,49 +3635,78 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     controller: damageController,
                     decoration: const InputDecoration(
                       labelText: 'Damage',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Expanded(
                   child: TextField(
                     controller: typeController,
                     decoration: const InputDecoration(
                       labelText: 'Type',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 16),
+            
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      side: BorderSide(color: Colors.grey.shade400),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (nameController.text.trim().isNotEmpty) {
+                        final attack = CharacterAttack(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          name: nameController.text.trim(),
+                          attackBonus: bonusController.text.trim(),
+                          damage: damageController.text.trim(),
+                          damageType: typeController.text.trim(),
+                        );
+                        
+                        // Return the created attack
+                        Navigator.pop(context, attack);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: const Text('Add Attack'),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (nameController.text.trim().isNotEmpty) {
-              final attack = CharacterAttack(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                name: nameController.text.trim(),
-                attackBonus: bonusController.text.trim(),
-                damage: damageController.text.trim(),
-                damageType: typeController.text.trim(),
-              );
-              
-              // Return the created attack
-              Navigator.pop(context, attack);
-            }
-          },
-          child: const Text('Add'),
-        ),
-      ],
     );
   }
 
