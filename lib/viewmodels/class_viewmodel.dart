@@ -29,6 +29,10 @@ class ClassesViewModel extends ChangeNotifier {
     'Fizban\'s Treasury of Dragons',
     'Mordenkainen\'s Monsters of the Multiverse',
     'Strixhaven: A Curriculum of Chaos',
+    'Eberron: Rising from the Last War',
+    'Eberron Campaign Setting',
+    'Dungeons of Drakkenheim: The Quest for the Crown',
+    'Storm King\'s Thunder',
   ];
 
   /// Load all classes
