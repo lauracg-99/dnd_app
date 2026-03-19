@@ -2861,42 +2861,45 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
             // Visual spell slot dots
             if (slots > 0) ...[
-              Row(
-                children: [
-                  const Text('Used: ', style: TextStyle(color: Colors.grey)),
-                  ...List.generate(slots, (index) {
-                    final isUsed = index < used;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: GestureDetector(
-                        onTap: () => _toggleSpellSlot(level, index),
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isUsed ? Colors.red : Colors.grey.shade300,
-                            border: Border.all(
-                              color:
-                                  isUsed
-                                      ? Colors.red.shade300
-                                      : Colors.grey.shade400,
-                              width: 2,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    const Text('Used: ', style: TextStyle(color: Colors.grey)),
+                    ...List.generate(slots, (index) {
+                      final isUsed = index < used;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: GestureDetector(
+                          onTap: () => _toggleSpellSlot(level, index),
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isUsed ? Colors.red : Colors.grey.shade300,
+                              border: Border.all(
+                                color:
+                                    isUsed
+                                        ? Colors.red.shade300
+                                        : Colors.grey.shade400,
+                                width: 2,
+                              ),
                             ),
+                            child:
+                                isUsed
+                                    ? const Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 12,
+                                    )
+                                    : null,
                           ),
-                          child:
-                              isUsed
-                                  ? const Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 12,
-                                  )
-                                  : null,
                         ),
-                      ),
-                    );
-                  }),
-                ],
+                      );
+                    }),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
               Text(
