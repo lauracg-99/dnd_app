@@ -755,7 +755,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               });
             },
             onRaceChanged: (value) {
+              // Debug: log race change
+              debugPrint('Race changed to: $value');
               setState(() {
+                // Update controller so _saveCharacter reads the new value
+                _raceController.text = value;
                 _hasUnsavedClassChanges = true;
               });
             },
@@ -763,6 +767,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               debugPrint('Background changed to: $value');
               setState(() {
                 _selectedBackground = value;
+                // Update controller so _saveCharacter reads the new value
+                _backgroundController.text = value;
                 _hasUnsavedClassChanges = true;
               });
             },
@@ -5952,7 +5958,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 const SizedBox(height: 16),
                 TextField(
                   controller: controller,
-                  keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Initiative Modifier',
                     border: OutlineInputBorder(),

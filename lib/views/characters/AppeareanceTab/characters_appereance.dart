@@ -39,7 +39,7 @@ class CharactersAppereance extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Character Image Section
-          Card(
+/*           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -91,9 +91,9 @@ class CharactersAppereance extends StatelessWidget {
                 ],
               ),
             ),
-          ),
+          ), */
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
 
           // Physical Traits Section
           Card(

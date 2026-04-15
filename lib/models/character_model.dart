@@ -1141,12 +1141,12 @@ class CharacterSpellPreparation {
 
     // Paladin: Charisma modifier + paladin level (minimum 1)
     if (characterClass.toLowerCase() == 'paladin') {
-      return (modifier + level).clamp(1, 999);
+      return (modifier + (level / 2).floor()).clamp(1, 999);
     }
 
     // Artificer: Intelligence modifier + artificer level (minimum 1)
     if (characterClass.toLowerCase() == 'artificer') {
-      return (modifier + level).clamp(1, 999);
+      return (modifier + (level / 2).floor()).clamp(1, 999);
     }
 
     // Default: modifier + level
