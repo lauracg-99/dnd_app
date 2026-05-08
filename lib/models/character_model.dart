@@ -498,162 +498,234 @@ class CharacterSavingThrows {
 class CharacterSkillChecks {
   final bool acrobaticsProficiency;
   final bool acrobaticsExpertise;
+  final int acrobaticsBonus;
   final bool animalHandlingProficiency;
   final bool animalHandlingExpertise;
+  final int animalHandlingBonus;
   final bool arcanaProficiency;
   final bool arcanaExpertise;
+  final int arcanaBonus;
   final bool athleticsProficiency;
   final bool athleticsExpertise;
+  final int athleticsBonus;
   final bool deceptionProficiency;
   final bool deceptionExpertise;
+  final int deceptionBonus;
   final bool historyProficiency;
   final bool historyExpertise;
+  final int historyBonus;
   final bool insightProficiency;
   final bool insightExpertise;
+  final int insightBonus;
   final bool intimidationProficiency;
   final bool intimidationExpertise;
+  final int intimidationBonus;
   final bool investigationProficiency;
   final bool investigationExpertise;
+  final int investigationBonus;
   final bool medicineProficiency;
   final bool medicineExpertise;
+  final int medicineBonus;
   final bool natureProficiency;
   final bool natureExpertise;
+  final int natureBonus;
   final bool perceptionProficiency;
   final bool perceptionExpertise;
+  final int perceptionBonus;
   final bool performanceProficiency;
   final bool performanceExpertise;
+  final int performanceBonus;
   final bool persuasionProficiency;
   final bool persuasionExpertise;
+  final int persuasionBonus;
   final bool religionProficiency;
   final bool religionExpertise;
+  final int religionBonus;
   final bool sleightOfHandProficiency;
   final bool sleightOfHandExpertise;
+  final int sleightOfHandBonus;
   final bool stealthProficiency;
   final bool stealthExpertise;
+  final int stealthBonus;
   final bool survivalProficiency;
   final bool survivalExpertise;
+  final int survivalBonus;
 
   const CharacterSkillChecks({
     this.acrobaticsProficiency = false,
     this.acrobaticsExpertise = false,
+    this.acrobaticsBonus = 0,
     this.animalHandlingProficiency = false,
     this.animalHandlingExpertise = false,
+    this.animalHandlingBonus = 0,
     this.arcanaProficiency = false,
     this.arcanaExpertise = false,
+    this.arcanaBonus = 0,
     this.athleticsProficiency = false,
     this.athleticsExpertise = false,
+    this.athleticsBonus = 0,
     this.deceptionProficiency = false,
     this.deceptionExpertise = false,
+    this.deceptionBonus = 0,
     this.historyProficiency = false,
     this.historyExpertise = false,
+    this.historyBonus = 0,
     this.insightProficiency = false,
     this.insightExpertise = false,
+    this.insightBonus = 0,
     this.intimidationProficiency = false,
     this.intimidationExpertise = false,
+    this.intimidationBonus = 0,
     this.investigationProficiency = false,
     this.investigationExpertise = false,
+    this.investigationBonus = 0,
     this.medicineProficiency = false,
     this.medicineExpertise = false,
+    this.medicineBonus = 0,
     this.natureProficiency = false,
     this.natureExpertise = false,
+    this.natureBonus = 0,
     this.perceptionProficiency = false,
     this.perceptionExpertise = false,
+    this.perceptionBonus = 0,
     this.performanceProficiency = false,
     this.performanceExpertise = false,
+    this.performanceBonus = 0,
     this.persuasionProficiency = false,
     this.persuasionExpertise = false,
+    this.persuasionBonus = 0,
     this.religionProficiency = false,
     this.religionExpertise = false,
+    this.religionBonus = 0,
     this.sleightOfHandProficiency = false,
     this.sleightOfHandExpertise = false,
+    this.sleightOfHandBonus = 0,
     this.stealthProficiency = false,
     this.stealthExpertise = false,
+    this.stealthBonus = 0,
     this.survivalProficiency = false,
     this.survivalExpertise = false,
+    this.survivalBonus = 0,
   });
 
   Map<String, dynamic> toJson() => {
     'acrobatics_proficiency': {'value': acrobaticsProficiency},
     'acrobatics_expertise': {'value': acrobaticsExpertise},
+    'acrobatics_bonus': {'value': acrobaticsBonus},
     'animal_handling_proficiency': {'value': animalHandlingProficiency},
     'animal_handling_expertise': {'value': animalHandlingExpertise},
+    'animal_handling_bonus': {'value': animalHandlingBonus},
     'arcana_proficiency': {'value': arcanaProficiency},
     'arcana_expertise': {'value': arcanaExpertise},
+    'arcana_bonus': {'value': arcanaBonus},
     'athletics_proficiency': {'value': athleticsProficiency},
     'athletics_expertise': {'value': athleticsExpertise},
+    'athletics_bonus': {'value': athleticsBonus},
     'deception_proficiency': {'value': deceptionProficiency},
     'deception_expertise': {'value': deceptionExpertise},
+    'deception_bonus': {'value': deceptionBonus},
     'history_proficiency': {'value': historyProficiency},
     'history_expertise': {'value': historyExpertise},
+    'history_bonus': {'value': historyBonus},
     'insight_proficiency': {'value': insightProficiency},
     'insight_expertise': {'value': insightExpertise},
+    'insight_bonus': {'value': insightBonus},
     'intimidation_proficiency': {'value': intimidationProficiency},
     'intimidation_expertise': {'value': intimidationExpertise},
+    'intimidation_bonus': {'value': intimidationBonus},
     'investigation_proficiency': {'value': investigationProficiency},
     'investigation_expertise': {'value': investigationExpertise},
+    'investigation_bonus': {'value': investigationBonus},
     'medicine_proficiency': {'value': medicineProficiency},
     'medicine_expertise': {'value': medicineExpertise},
+    'medicine_bonus': {'value': medicineBonus},
     'nature_proficiency': {'value': natureProficiency},
     'nature_expertise': {'value': natureExpertise},
+    'nature_bonus': {'value': natureBonus},
     'perception_proficiency': {'value': perceptionProficiency},
     'perception_expertise': {'value': perceptionExpertise},
+    'perception_bonus': {'value': perceptionBonus},
     'performance_proficiency': {'value': performanceProficiency},
     'performance_expertise': {'value': performanceExpertise},
+    'performance_bonus': {'value': performanceBonus},
     'persuasion_proficiency': {'value': persuasionProficiency},
     'persuasion_expertise': {'value': persuasionExpertise},
+    'persuasion_bonus': {'value': persuasionBonus},
     'religion_proficiency': {'value': religionProficiency},
     'religion_expertise': {'value': religionExpertise},
+    'religion_bonus': {'value': religionBonus},
     'sleight_of_hand_proficiency': {'value': sleightOfHandProficiency},
     'sleight_of_hand_expertise': {'value': sleightOfHandExpertise},
+    'sleight_of_hand_bonus': {'value': sleightOfHandBonus},
     'stealth_proficiency': {'value': stealthProficiency},
     'stealth_expertise': {'value': stealthExpertise},
+    'stealth_bonus': {'value': stealthBonus},
     'survival_proficiency': {'value': survivalProficiency},
     'survival_expertise': {'value': survivalExpertise},
+    'survival_bonus': {'value': survivalBonus},
   };
 
   factory CharacterSkillChecks.fromJson(Map<String, dynamic> json) {
     return CharacterSkillChecks(
       acrobaticsProficiency: Character._getValue<bool>(json, 'acrobatics_proficiency', defaultValue: false),
       acrobaticsExpertise: Character._getValue<bool>(json, 'acrobatics_expertise', defaultValue: false),
+      acrobaticsBonus: Character._getValue<int>(json, 'acrobatics_bonus', defaultValue: 0),
       animalHandlingProficiency: Character._getValue<bool>(json, 'animal_handling_proficiency', defaultValue: false),
       animalHandlingExpertise: Character._getValue<bool>(json, 'animal_handling_expertise', defaultValue: false),
+      animalHandlingBonus: Character._getValue<int>(json, 'animal_handling_bonus', defaultValue: 0),
       arcanaProficiency: Character._getValue<bool>(json, 'arcana_proficiency', defaultValue: false),
       arcanaExpertise: Character._getValue<bool>(json, 'arcana_expertise', defaultValue: false),
+      arcanaBonus: Character._getValue<int>(json, 'arcana_bonus', defaultValue: 0),
       athleticsProficiency: Character._getValue<bool>(json, 'athletics_proficiency', defaultValue: false),
       athleticsExpertise: Character._getValue<bool>(json, 'athletics_expertise', defaultValue: false),
+      athleticsBonus: Character._getValue<int>(json, 'athletics_bonus', defaultValue: 0),
       deceptionProficiency: Character._getValue<bool>(json, 'deception_proficiency', defaultValue: false),
       deceptionExpertise: Character._getValue<bool>(json, 'deception_expertise', defaultValue: false),
+      deceptionBonus: Character._getValue<int>(json, 'deception_bonus', defaultValue: 0),
       historyProficiency: Character._getValue<bool>(json, 'history_proficiency', defaultValue: false),
       historyExpertise: Character._getValue<bool>(json, 'history_expertise', defaultValue: false),
+      historyBonus: Character._getValue<int>(json, 'history_bonus', defaultValue: 0),
       insightProficiency: Character._getValue<bool>(json, 'insight_proficiency', defaultValue: false),
       insightExpertise: Character._getValue<bool>(json, 'insight_expertise', defaultValue: false),
+      insightBonus: Character._getValue<int>(json, 'insight_bonus', defaultValue: 0),
       intimidationProficiency: Character._getValue<bool>(json, 'intimidation_proficiency', defaultValue: false),
       intimidationExpertise: Character._getValue<bool>(json, 'intimidation_expertise', defaultValue: false),
+      intimidationBonus: Character._getValue<int>(json, 'intimidation_bonus', defaultValue: 0),
       investigationProficiency: Character._getValue<bool>(json, 'investigation_proficiency', defaultValue: false),
       investigationExpertise: Character._getValue<bool>(json, 'investigation_expertise', defaultValue: false),
+      investigationBonus: Character._getValue<int>(json, 'investigation_bonus', defaultValue: 0),
       medicineProficiency: Character._getValue<bool>(json, 'medicine_proficiency', defaultValue: false),
       medicineExpertise: Character._getValue<bool>(json, 'medicine_expertise', defaultValue: false),
+      medicineBonus: Character._getValue<int>(json, 'medicine_bonus', defaultValue: 0),
       natureProficiency: Character._getValue<bool>(json, 'nature_proficiency', defaultValue: false),
       natureExpertise: Character._getValue<bool>(json, 'nature_expertise', defaultValue: false),
+      natureBonus: Character._getValue<int>(json, 'nature_bonus', defaultValue: 0),
       perceptionProficiency: Character._getValue<bool>(json, 'perception_proficiency', defaultValue: false),
       perceptionExpertise: Character._getValue<bool>(json, 'perception_expertise', defaultValue: false),
+      perceptionBonus: Character._getValue<int>(json, 'perception_bonus', defaultValue: 0),
       performanceProficiency: Character._getValue<bool>(json, 'performance_proficiency', defaultValue: false),
       performanceExpertise: Character._getValue<bool>(json, 'performance_expertise', defaultValue: false),
+      performanceBonus: Character._getValue<int>(json, 'performance_bonus', defaultValue: 0),
       persuasionProficiency: Character._getValue<bool>(json, 'persuasion_proficiency', defaultValue: false),
       persuasionExpertise: Character._getValue<bool>(json, 'persuasion_expertise', defaultValue: false),
+      persuasionBonus: Character._getValue<int>(json, 'persuasion_bonus', defaultValue: 0),
       religionProficiency: Character._getValue<bool>(json, 'religion_proficiency', defaultValue: false),
       religionExpertise: Character._getValue<bool>(json, 'religion_expertise', defaultValue: false),
+      religionBonus: Character._getValue<int>(json, 'religion_bonus', defaultValue: 0),
       sleightOfHandProficiency: Character._getValue<bool>(json, 'sleight_of_hand_proficiency', defaultValue: false),
       sleightOfHandExpertise: Character._getValue<bool>(json, 'sleight_of_hand_expertise', defaultValue: false),
+      sleightOfHandBonus: Character._getValue<int>(json, 'sleight_of_hand_bonus', defaultValue: 0),
       stealthProficiency: Character._getValue<bool>(json, 'stealth_proficiency', defaultValue: false),
       stealthExpertise: Character._getValue<bool>(json, 'stealth_expertise', defaultValue: false),
+      stealthBonus: Character._getValue<int>(json, 'stealth_bonus', defaultValue: 0),
       survivalProficiency: Character._getValue<bool>(json, 'survival_proficiency', defaultValue: false),
       survivalExpertise: Character._getValue<bool>(json, 'survival_expertise', defaultValue: false),
+      survivalBonus: Character._getValue<int>(json, 'survival_bonus', defaultValue: 0),
     );
   }
 
-  /// Calculate skill bonus based on ability score, proficiency, and expertise
-  static int calculateSkillBonus(int abilityScore, bool isProficient, bool hasExpertise, int proficiencyBonus) {
+  /// Calculate skill bonus based on ability score, proficiency, expertise, and custom bonus
+  static int calculateSkillBonus(int abilityScore, bool isProficient, bool hasExpertise, int proficiencyBonus, [int customBonus = 0]) {
     final abilityModifier = ((abilityScore - 10) / 2).floor();
     int bonus = abilityModifier;
     
@@ -662,6 +734,8 @@ class CharacterSkillChecks {
     } else if (isProficient) {
       bonus += proficiencyBonus;
     }
+    
+    bonus += customBonus; // Add custom bonus
     
     return bonus;
   }

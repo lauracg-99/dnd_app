@@ -148,6 +148,26 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   late List<String> _feats;
   late List<CharacterPersonalizedSlot> _personalizedSlots;
 
+  // Skill bonus controllers
+  final _acrobaticsBonusController = TextEditingController();
+  final _animalHandlingBonusController = TextEditingController();
+  final _arcanaBonusController = TextEditingController();
+  final _athleticsBonusController = TextEditingController();
+  final _deceptionBonusController = TextEditingController();
+  final _historyBonusController = TextEditingController();
+  final _insightBonusController = TextEditingController();
+  final _intimidationBonusController = TextEditingController();
+  final _investigationBonusController = TextEditingController();
+  final _medicineBonusController = TextEditingController();
+  final _natureBonusController = TextEditingController();
+  final _perceptionBonusController = TextEditingController();
+  final _performanceBonusController = TextEditingController();
+  final _persuasionBonusController = TextEditingController();
+  final _religionBonusController = TextEditingController();
+  final _sleightOfHandBonusController = TextEditingController();
+  final _stealthBonusController = TextEditingController();
+  final _survivalBonusController = TextEditingController();
+
   // Character Cover tab edit state
   bool _isEditingCharacterCover = false;
 
@@ -398,6 +418,26 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _savingThrows = character.savingThrows;
     _skillChecks = character.skillChecks;
 
+    // Initialize skill bonus controllers
+    _acrobaticsBonusController.text = _skillChecks.acrobaticsBonus.toString();
+    _animalHandlingBonusController.text = _skillChecks.animalHandlingBonus.toString();
+    _arcanaBonusController.text = _skillChecks.arcanaBonus.toString();
+    _athleticsBonusController.text = _skillChecks.athleticsBonus.toString();
+    _deceptionBonusController.text = _skillChecks.deceptionBonus.toString();
+    _historyBonusController.text = _skillChecks.historyBonus.toString();
+    _insightBonusController.text = _skillChecks.insightBonus.toString();
+    _intimidationBonusController.text = _skillChecks.intimidationBonus.toString();
+    _investigationBonusController.text = _skillChecks.investigationBonus.toString();
+    _medicineBonusController.text = _skillChecks.medicineBonus.toString();
+    _natureBonusController.text = _skillChecks.natureBonus.toString();
+    _perceptionBonusController.text = _skillChecks.perceptionBonus.toString();
+    _performanceBonusController.text = _skillChecks.performanceBonus.toString();
+    _persuasionBonusController.text = _skillChecks.persuasionBonus.toString();
+    _religionBonusController.text = _skillChecks.religionBonus.toString();
+    _sleightOfHandBonusController.text = _skillChecks.sleightOfHandBonus.toString();
+    _stealthBonusController.text = _skillChecks.stealthBonus.toString();
+    _survivalBonusController.text = _skillChecks.survivalBonus.toString();
+
     // Initialize health
     _health = character.health;
     _maxHpController.text = _health.maxHitPoints.toString();
@@ -616,6 +656,26 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _tempHpController.dispose();
     _hitDiceController.dispose();
     _hitDiceTypeController.dispose();
+
+    // Dispose skill bonus controllers
+    _acrobaticsBonusController.dispose();
+    _animalHandlingBonusController.dispose();
+    _arcanaBonusController.dispose();
+    _athleticsBonusController.dispose();
+    _deceptionBonusController.dispose();
+    _historyBonusController.dispose();
+    _insightBonusController.dispose();
+    _intimidationBonusController.dispose();
+    _investigationBonusController.dispose();
+    _medicineBonusController.dispose();
+    _natureBonusController.dispose();
+    _perceptionBonusController.dispose();
+    _performanceBonusController.dispose();
+    _persuasionBonusController.dispose();
+    _religionBonusController.dispose();
+    _sleightOfHandBonusController.dispose();
+    _stealthBonusController.dispose();
+    _survivalBonusController.dispose();
 
     super.dispose();
   }
@@ -1128,6 +1188,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.athleticsProficiency,
               _skillChecks.athleticsExpertise,
               'athletics',
+              _athleticsBonusController,
             ),
           ]),
 
@@ -1139,6 +1200,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.acrobaticsProficiency,
               _skillChecks.acrobaticsExpertise,
               'acrobatics',
+              _acrobaticsBonusController,
             ),
             _buildSkillRow(
               'Sleight of Hand',
@@ -1146,6 +1208,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.sleightOfHandProficiency,
               _skillChecks.sleightOfHandExpertise,
               'sleight_of_hand',
+              _sleightOfHandBonusController,
             ),
             _buildSkillRow(
               'Stealth',
@@ -1153,6 +1216,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.stealthProficiency,
               _skillChecks.stealthExpertise,
               'stealth',
+              _stealthBonusController,
             ),
           ]),
 
@@ -1164,6 +1228,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.arcanaProficiency,
               _skillChecks.arcanaExpertise,
               'arcana',
+              _arcanaBonusController,
             ),
             _buildSkillRow(
               'History',
@@ -1171,6 +1236,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.historyProficiency,
               _skillChecks.historyExpertise,
               'history',
+              _historyBonusController,
             ),
             _buildSkillRow(
               'Investigation',
@@ -1178,6 +1244,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.investigationProficiency,
               _skillChecks.investigationExpertise,
               'investigation',
+              _investigationBonusController,
             ),
             _buildSkillRow(
               'Nature',
@@ -1185,6 +1252,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.natureProficiency,
               _skillChecks.natureExpertise,
               'nature',
+              _natureBonusController,
             ),
             _buildSkillRow(
               'Religion',
@@ -1192,6 +1260,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.religionProficiency,
               _skillChecks.religionExpertise,
               'religion',
+              _religionBonusController,
             ),
           ]),
 
@@ -1203,6 +1272,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.animalHandlingProficiency,
               _skillChecks.animalHandlingExpertise,
               'animal_handling',
+              _animalHandlingBonusController,
             ),
             _buildSkillRow(
               'Insight',
@@ -1210,6 +1280,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.insightProficiency,
               _skillChecks.insightExpertise,
               'insight',
+              _insightBonusController,
             ),
             _buildSkillRow(
               'Medicine',
@@ -1217,6 +1288,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.medicineProficiency,
               _skillChecks.medicineExpertise,
               'medicine',
+              _medicineBonusController,
             ),
             _buildSkillRow(
               'Perception',
@@ -1224,6 +1296,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.perceptionProficiency,
               _skillChecks.perceptionExpertise,
               'perception',
+              _perceptionBonusController,
             ),
             _buildSkillRow(
               'Survival',
@@ -1231,6 +1304,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.survivalProficiency,
               _skillChecks.survivalExpertise,
               'survival',
+              _survivalBonusController,
             ),
           ]),
 
@@ -1242,6 +1316,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.deceptionProficiency,
               _skillChecks.deceptionExpertise,
               'deception',
+              _deceptionBonusController,
             ),
             _buildSkillRow(
               'Intimidation',
@@ -1249,6 +1324,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.intimidationProficiency,
               _skillChecks.intimidationExpertise,
               'intimidation',
+              _intimidationBonusController,
             ),
             _buildSkillRow(
               'Performance',
@@ -1256,6 +1332,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.performanceProficiency,
               _skillChecks.performanceExpertise,
               'performance',
+              _performanceBonusController,
             ),
             _buildSkillRow(
               'Persuasion',
@@ -1263,6 +1340,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               _skillChecks.persuasionProficiency,
               _skillChecks.persuasionExpertise,
               'persuasion',
+              _persuasionBonusController,
             ),
           ]),
           const SizedBox(height: 45), // Extra space at bottom of screen
@@ -2186,20 +2264,23 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     bool isProficient,
     bool hasExpertise,
     String skillKey,
+    TextEditingController bonusController,
   ) {
     final abilityScore = _getAbilityScore(ability);
     final modifier = ((abilityScore - 10) / 2).floor();
     final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
       int.tryParse(_levelController.text) ?? 1,
     );
+    final customBonus = int.tryParse(bonusController.text) ?? 0;
 
-    // Calculate total bonus directly instead of using old _stats object
-    int total = modifier;
-    if (hasExpertise) {
-      total += proficiencyBonus * 2; // Expertise adds double proficiency bonus
-    } else if (isProficient) {
-      total += proficiencyBonus;
-    }
+    // Calculate total bonus using the updated calculateSkillBonus method
+    int total = CharacterSkillChecks.calculateSkillBonus(
+      abilityScore, 
+      isProficient, 
+      hasExpertise, 
+      proficiencyBonus, 
+      customBonus
+    );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -2231,6 +2312,72 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
               textAlign: TextAlign.center,
             ),
           ),
+          const SizedBox(width: 4),
+          // Bonus input field
+          Container(
+            width: 40,
+            height: 30,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.blue.shade300, width: 1.5),
+              borderRadius: BorderRadius.circular(6),
+              color: (int.tryParse(bonusController.text) ?? 0) != 0 
+                  ? Colors.blue.shade50 
+                  : (isProficient && hasExpertise) 
+                      ? Colors.purple.shade50  
+                      : (isProficient)
+                          ? Colors.green.shade50 
+                          : Colors.white,
+            ),
+            child: SizedBox(
+              height: 30,
+              child: Align(
+                alignment: Alignment.center,
+                child: TextField(
+                  controller: bonusController,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    fontSize: 12, 
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade700,
+                  ),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    hintText: '0',
+                    hintStyle: TextStyle(
+                      color: Colors.blue.shade400, 
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    isDense: true,
+                  ),
+                onChanged: (value) {
+                  // Format the input to remove leading zeros
+                  String formattedValue = value;
+                  if (value.isNotEmpty && value != '0' && value.startsWith('0')) {
+                    // Remove leading zeros, but keep single zero if value is just "0"
+                    formattedValue = value.replaceFirst(RegExp(r'^0+'), '');
+                    if (formattedValue.isEmpty) {
+                      formattedValue = '0';
+                    }
+                    bonusController.value = TextEditingValue(
+                      text: formattedValue,
+                      selection: TextSelection.collapsed(offset: formattedValue.length),
+                    );
+                  }                  
+                },
+                onEditingComplete: () {
+                  // No auto-save - bonus fields save only with manual character save
+                },
+                onTapOutside: (event) {
+                  // No auto-save - bonus fields save only with manual character save
+                },
+              ),
+              ),
+            ),
+          ),
+          
           const SizedBox(width: 8),
           // Proficiency checkbox
           GestureDetector(
@@ -2272,6 +2419,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ),
           ),
           const SizedBox(width: 8),
+
           // Total bonus
           SizedBox(
             width: 40,
@@ -2579,6 +2727,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             skill == 'acrobatics'
                 ? (value ? _skillChecks.acrobaticsExpertise : false)
                 : _skillChecks.acrobaticsExpertise,
+        acrobaticsBonus: acrobaticsBonus,
         animalHandlingProficiency:
             skill == 'animal_handling'
                 ? value
@@ -2587,36 +2736,42 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             skill == 'animal_handling'
                 ? (value ? _skillChecks.animalHandlingExpertise : false)
                 : _skillChecks.animalHandlingExpertise,
+        animalHandlingBonus: animalHandlingBonus,
         arcanaProficiency:
             skill == 'arcana' ? value : _skillChecks.arcanaProficiency,
         arcanaExpertise:
             skill == 'arcana'
                 ? (value ? _skillChecks.arcanaExpertise : false)
                 : _skillChecks.arcanaExpertise,
+        arcanaBonus: arcanaBonus,
         athleticsProficiency:
             skill == 'athletics' ? value : _skillChecks.athleticsProficiency,
         athleticsExpertise:
             skill == 'athletics'
                 ? (value ? _skillChecks.athleticsExpertise : false)
                 : _skillChecks.athleticsExpertise,
+        athleticsBonus: athleticsBonus,
         deceptionProficiency:
             skill == 'deception' ? value : _skillChecks.deceptionProficiency,
         deceptionExpertise:
             skill == 'deception'
                 ? (value ? _skillChecks.deceptionExpertise : false)
                 : _skillChecks.deceptionExpertise,
+        deceptionBonus: deceptionBonus,
         historyProficiency:
             skill == 'history' ? value : _skillChecks.historyProficiency,
         historyExpertise:
             skill == 'history'
                 ? (value ? _skillChecks.historyExpertise : false)
                 : _skillChecks.historyExpertise,
+        historyBonus: historyBonus,
         insightProficiency:
             skill == 'insight' ? value : _skillChecks.insightProficiency,
         insightExpertise:
             skill == 'insight'
                 ? (value ? _skillChecks.insightExpertise : false)
                 : _skillChecks.insightExpertise,
+        insightBonus: insightBonus,
         intimidationProficiency:
             skill == 'intimidation'
                 ? value
@@ -2625,6 +2780,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             skill == 'intimidation'
                 ? (value ? _skillChecks.intimidationExpertise : false)
                 : _skillChecks.intimidationExpertise,
+        intimidationBonus: intimidationBonus,
         investigationProficiency:
             skill == 'investigation'
                 ? value
@@ -2633,24 +2789,28 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             skill == 'investigation'
                 ? (value ? _skillChecks.investigationExpertise : false)
                 : _skillChecks.investigationExpertise,
+        investigationBonus: investigationBonus,
         medicineProficiency:
             skill == 'medicine' ? value : _skillChecks.medicineProficiency,
         medicineExpertise:
             skill == 'medicine'
                 ? (value ? _skillChecks.medicineExpertise : false)
                 : _skillChecks.medicineExpertise,
+        medicineBonus: medicineBonus,
         natureProficiency:
             skill == 'nature' ? value : _skillChecks.natureProficiency,
         natureExpertise:
             skill == 'nature'
                 ? (value ? _skillChecks.natureExpertise : false)
                 : _skillChecks.natureExpertise,
+        natureBonus: natureBonus,
         perceptionProficiency:
             skill == 'perception' ? value : _skillChecks.perceptionProficiency,
         perceptionExpertise:
             skill == 'perception'
                 ? (value ? _skillChecks.perceptionExpertise : false)
                 : _skillChecks.perceptionExpertise,
+        perceptionBonus: perceptionBonus,
         performanceProficiency:
             skill == 'performance'
                 ? value
@@ -2659,18 +2819,21 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             skill == 'performance'
                 ? (value ? _skillChecks.performanceExpertise : false)
                 : _skillChecks.performanceExpertise,
+        performanceBonus: performanceBonus,
         persuasionProficiency:
             skill == 'persuasion' ? value : _skillChecks.persuasionProficiency,
         persuasionExpertise:
             skill == 'persuasion'
                 ? (value ? _skillChecks.persuasionExpertise : false)
                 : _skillChecks.persuasionExpertise,
+        persuasionBonus: persuasionBonus,
         religionProficiency:
             skill == 'religion' ? value : _skillChecks.religionProficiency,
         religionExpertise:
             skill == 'religion'
                 ? (value ? _skillChecks.religionExpertise : false)
                 : _skillChecks.religionExpertise,
+        religionBonus: religionBonus,
         sleightOfHandProficiency:
             skill == 'sleight_of_hand'
                 ? value
@@ -2679,18 +2842,21 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             skill == 'sleight_of_hand'
                 ? (value ? _skillChecks.sleightOfHandExpertise : false)
                 : _skillChecks.sleightOfHandExpertise,
+        sleightOfHandBonus: sleightOfHandBonus,
         stealthProficiency:
             skill == 'stealth' ? value : _skillChecks.stealthProficiency,
         stealthExpertise:
             skill == 'stealth'
                 ? (value ? _skillChecks.stealthExpertise : false)
                 : _skillChecks.stealthExpertise,
+        stealthBonus: stealthBonus,
         survivalProficiency:
             skill == 'survival' ? value : _skillChecks.survivalProficiency,
         survivalExpertise:
             skill == 'survival'
                 ? (value ? _skillChecks.survivalExpertise : false)
                 : _skillChecks.survivalExpertise,
+        survivalBonus: survivalBonus,
       );
       // Manual save only - no auto-save for skill changes
     });
@@ -2707,69 +2873,170 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         acrobaticsProficiency: _skillChecks.acrobaticsProficiency,
         acrobaticsExpertise:
             skill == 'acrobatics' ? value : _skillChecks.acrobaticsExpertise,
+        acrobaticsBonus: acrobaticsBonus,
         animalHandlingProficiency: _skillChecks.animalHandlingProficiency,
         animalHandlingExpertise:
             skill == 'animal_handling'
                 ? value
                 : _skillChecks.animalHandlingExpertise,
+        animalHandlingBonus: animalHandlingBonus,
         arcanaProficiency: _skillChecks.arcanaProficiency,
         arcanaExpertise:
             skill == 'arcana' ? value : _skillChecks.arcanaExpertise,
+        arcanaBonus: arcanaBonus,
         athleticsProficiency: _skillChecks.athleticsProficiency,
         athleticsExpertise:
             skill == 'athletics' ? value : _skillChecks.athleticsExpertise,
+        athleticsBonus: athleticsBonus,
         deceptionProficiency: _skillChecks.deceptionProficiency,
         deceptionExpertise:
             skill == 'deception' ? value : _skillChecks.deceptionExpertise,
+        deceptionBonus: deceptionBonus,
         historyProficiency: _skillChecks.historyProficiency,
         historyExpertise:
             skill == 'history' ? value : _skillChecks.historyExpertise,
+        historyBonus: historyBonus,
         insightProficiency: _skillChecks.insightProficiency,
         insightExpertise:
             skill == 'insight' ? value : _skillChecks.insightExpertise,
+        insightBonus: insightBonus,
         intimidationProficiency: _skillChecks.intimidationProficiency,
         intimidationExpertise:
             skill == 'intimidation'
                 ? value
                 : _skillChecks.intimidationExpertise,
+        intimidationBonus: intimidationBonus,
         investigationProficiency: _skillChecks.investigationProficiency,
         investigationExpertise:
             skill == 'investigation'
                 ? value
                 : _skillChecks.investigationExpertise,
+        investigationBonus: investigationBonus,
         medicineProficiency: _skillChecks.medicineProficiency,
         medicineExpertise:
             skill == 'medicine' ? value : _skillChecks.medicineExpertise,
+        medicineBonus: medicineBonus,
         natureProficiency: _skillChecks.natureProficiency,
         natureExpertise:
             skill == 'nature' ? value : _skillChecks.natureExpertise,
+        natureBonus: natureBonus,
         perceptionProficiency: _skillChecks.perceptionProficiency,
         perceptionExpertise:
             skill == 'perception' ? value : _skillChecks.perceptionExpertise,
+        perceptionBonus: perceptionBonus,
         performanceProficiency: _skillChecks.performanceProficiency,
         performanceExpertise:
             skill == 'performance' ? value : _skillChecks.performanceExpertise,
+        performanceBonus: performanceBonus,
         persuasionProficiency: _skillChecks.persuasionProficiency,
         persuasionExpertise:
             skill == 'persuasion' ? value : _skillChecks.persuasionExpertise,
+        persuasionBonus: persuasionBonus,
         religionProficiency: _skillChecks.religionProficiency,
         religionExpertise:
             skill == 'religion' ? value : _skillChecks.religionExpertise,
+        religionBonus: religionBonus,
         sleightOfHandProficiency: _skillChecks.sleightOfHandProficiency,
         sleightOfHandExpertise:
             skill == 'sleight_of_hand'
                 ? value
                 : _skillChecks.sleightOfHandExpertise,
+        sleightOfHandBonus: sleightOfHandBonus,
         stealthProficiency: _skillChecks.stealthProficiency,
         stealthExpertise:
             skill == 'stealth' ? value : _skillChecks.stealthExpertise,
+        stealthBonus: stealthBonus,
         survivalProficiency: _skillChecks.survivalProficiency,
         survivalExpertise:
             skill == 'survival' ? value : _skillChecks.survivalExpertise,
+        survivalBonus: survivalBonus,
       );
       // Manual save only - no auto-save for skill expertise changes
     });
   }
+
+  void _autoSaveCharacter() {
+    // Update skill checks with current bonus values
+    _skillChecks = CharacterSkillChecks(
+      acrobaticsProficiency: _skillChecks.acrobaticsProficiency,
+      acrobaticsExpertise: _skillChecks.acrobaticsExpertise,
+      acrobaticsBonus: acrobaticsBonus,
+      animalHandlingProficiency: _skillChecks.animalHandlingProficiency,
+      animalHandlingExpertise: _skillChecks.animalHandlingExpertise,
+      animalHandlingBonus: animalHandlingBonus,
+      arcanaProficiency: _skillChecks.arcanaProficiency,
+      arcanaExpertise: _skillChecks.arcanaExpertise,
+      arcanaBonus: arcanaBonus,
+      athleticsProficiency: _skillChecks.athleticsProficiency,
+      athleticsExpertise: _skillChecks.athleticsExpertise,
+      athleticsBonus: athleticsBonus,
+      deceptionProficiency: _skillChecks.deceptionProficiency,
+      deceptionExpertise: _skillChecks.deceptionExpertise,
+      deceptionBonus: deceptionBonus,
+      historyProficiency: _skillChecks.historyProficiency,
+      historyExpertise: _skillChecks.historyExpertise,
+      historyBonus: historyBonus,
+      insightProficiency: _skillChecks.insightProficiency,
+      insightExpertise: _skillChecks.insightExpertise,
+      insightBonus: insightBonus,
+      intimidationProficiency: _skillChecks.intimidationProficiency,
+      intimidationExpertise: _skillChecks.intimidationExpertise,
+      intimidationBonus: intimidationBonus,
+      investigationProficiency: _skillChecks.investigationProficiency,
+      investigationExpertise: _skillChecks.investigationExpertise,
+      investigationBonus: investigationBonus,
+      medicineProficiency: _skillChecks.medicineProficiency,
+      medicineExpertise: _skillChecks.medicineExpertise,
+      medicineBonus: medicineBonus,
+      natureProficiency: _skillChecks.natureProficiency,
+      natureExpertise: _skillChecks.natureExpertise,
+      natureBonus: natureBonus,
+      perceptionProficiency: _skillChecks.perceptionProficiency,
+      perceptionExpertise: _skillChecks.perceptionExpertise,
+      perceptionBonus: perceptionBonus,
+      performanceProficiency: _skillChecks.performanceProficiency,
+      performanceExpertise: _skillChecks.performanceExpertise,
+      performanceBonus: performanceBonus,
+      persuasionProficiency: _skillChecks.persuasionProficiency,
+      persuasionExpertise: _skillChecks.persuasionExpertise,
+      persuasionBonus: persuasionBonus,
+      religionProficiency: _skillChecks.religionProficiency,
+      religionExpertise: _skillChecks.religionExpertise,
+      religionBonus: religionBonus,
+      sleightOfHandProficiency: _skillChecks.sleightOfHandProficiency,
+      sleightOfHandExpertise: _skillChecks.sleightOfHandExpertise,
+      sleightOfHandBonus: sleightOfHandBonus,
+      stealthProficiency: _skillChecks.stealthProficiency,
+      stealthExpertise: _skillChecks.stealthExpertise,
+      stealthBonus: stealthBonus,
+      survivalProficiency: _skillChecks.survivalProficiency,
+      survivalExpertise: _skillChecks.survivalExpertise,
+      survivalBonus: survivalBonus,
+    );
+    
+    // Save character with updated skill checks
+    _saveCharacter(showToast: false);
+  }
+
+  // Skill bonus getter methods
+  int get acrobaticsBonus => int.tryParse(_acrobaticsBonusController.text) ?? 0;
+  int get animalHandlingBonus => int.tryParse(_animalHandlingBonusController.text) ?? 0;
+  int get arcanaBonus => int.tryParse(_arcanaBonusController.text) ?? 0;
+  int get athleticsBonus => int.tryParse(_athleticsBonusController.text) ?? 0;
+  int get deceptionBonus => int.tryParse(_deceptionBonusController.text) ?? 0;
+  int get historyBonus => int.tryParse(_historyBonusController.text) ?? 0;
+  int get insightBonus => int.tryParse(_insightBonusController.text) ?? 0;
+  int get intimidationBonus => int.tryParse(_intimidationBonusController.text) ?? 0;
+  int get investigationBonus => int.tryParse(_investigationBonusController.text) ?? 0;
+  int get medicineBonus => int.tryParse(_medicineBonusController.text) ?? 0;
+  int get natureBonus => int.tryParse(_natureBonusController.text) ?? 0;
+  int get perceptionBonus => int.tryParse(_perceptionBonusController.text) ?? 0;
+  int get performanceBonus => int.tryParse(_performanceBonusController.text) ?? 0;
+  int get persuasionBonus => int.tryParse(_persuasionBonusController.text) ?? 0;
+  int get religionBonus => int.tryParse(_religionBonusController.text) ?? 0;
+  int get sleightOfHandBonus => int.tryParse(_sleightOfHandBonusController.text) ?? 0;
+  int get stealthBonus => int.tryParse(_stealthBonusController.text) ?? 0;
+  int get survivalBonus => int.tryParse(_survivalBonusController.text) ?? 0;
 
   Widget _buildSummaryRow(String label, String value, [Color? valueColor]) {
     return Padding(
@@ -5484,40 +5751,58 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Check skill checks changes
     if (_skillChecks.acrobaticsProficiency != character.skillChecks.acrobaticsProficiency) return true;
     if (_skillChecks.acrobaticsExpertise != character.skillChecks.acrobaticsExpertise) return true;
+    if (acrobaticsBonus != character.skillChecks.acrobaticsBonus) return true;
     if (_skillChecks.animalHandlingProficiency != character.skillChecks.animalHandlingProficiency) return true;
     if (_skillChecks.animalHandlingExpertise != character.skillChecks.animalHandlingExpertise) return true;
+    if (animalHandlingBonus != character.skillChecks.animalHandlingBonus) return true;
     if (_skillChecks.arcanaProficiency != character.skillChecks.arcanaProficiency) return true;
     if (_skillChecks.arcanaExpertise != character.skillChecks.arcanaExpertise) return true;
+    if (arcanaBonus != character.skillChecks.arcanaBonus) return true;
     if (_skillChecks.athleticsProficiency != character.skillChecks.athleticsProficiency) return true;
     if (_skillChecks.athleticsExpertise != character.skillChecks.athleticsExpertise) return true;
+    if (athleticsBonus != character.skillChecks.athleticsBonus) return true;
     if (_skillChecks.deceptionProficiency != character.skillChecks.deceptionProficiency) return true;
     if (_skillChecks.deceptionExpertise != character.skillChecks.deceptionExpertise) return true;
+    if (deceptionBonus != character.skillChecks.deceptionBonus) return true;
     if (_skillChecks.historyProficiency != character.skillChecks.historyProficiency) return true;
     if (_skillChecks.historyExpertise != character.skillChecks.historyExpertise) return true;
+    if (historyBonus != character.skillChecks.historyBonus) return true;
     if (_skillChecks.insightProficiency != character.skillChecks.insightProficiency) return true;
     if (_skillChecks.insightExpertise != character.skillChecks.insightExpertise) return true;
+    if (insightBonus != character.skillChecks.insightBonus) return true;
     if (_skillChecks.intimidationProficiency != character.skillChecks.intimidationProficiency) return true;
     if (_skillChecks.intimidationExpertise != character.skillChecks.intimidationExpertise) return true;
+    if (intimidationBonus != character.skillChecks.intimidationBonus) return true;
     if (_skillChecks.investigationProficiency != character.skillChecks.investigationProficiency) return true;
     if (_skillChecks.investigationExpertise != character.skillChecks.investigationExpertise) return true;
+    if (investigationBonus != character.skillChecks.investigationBonus) return true;
     if (_skillChecks.medicineProficiency != character.skillChecks.medicineProficiency) return true;
     if (_skillChecks.medicineExpertise != character.skillChecks.medicineExpertise) return true;
+    if (medicineBonus != character.skillChecks.medicineBonus) return true;
     if (_skillChecks.natureProficiency != character.skillChecks.natureProficiency) return true;
     if (_skillChecks.natureExpertise != character.skillChecks.natureExpertise) return true;
+    if (natureBonus != character.skillChecks.natureBonus) return true;
     if (_skillChecks.perceptionProficiency != character.skillChecks.perceptionProficiency) return true;
     if (_skillChecks.perceptionExpertise != character.skillChecks.perceptionExpertise) return true;
+    if (perceptionBonus != character.skillChecks.perceptionBonus) return true;
     if (_skillChecks.performanceProficiency != character.skillChecks.performanceProficiency) return true;
     if (_skillChecks.performanceExpertise != character.skillChecks.performanceExpertise) return true;
+    if (performanceBonus != character.skillChecks.performanceBonus) return true;
     if (_skillChecks.persuasionProficiency != character.skillChecks.persuasionProficiency) return true;
     if (_skillChecks.persuasionExpertise != character.skillChecks.persuasionExpertise) return true;
+    if (persuasionBonus != character.skillChecks.persuasionBonus) return true;
     if (_skillChecks.religionProficiency != character.skillChecks.religionProficiency) return true;
     if (_skillChecks.religionExpertise != character.skillChecks.religionExpertise) return true;
+    if (religionBonus != character.skillChecks.religionBonus) return true;
     if (_skillChecks.sleightOfHandProficiency != character.skillChecks.sleightOfHandProficiency) return true;
     if (_skillChecks.sleightOfHandExpertise != character.skillChecks.sleightOfHandExpertise) return true;
+    if (sleightOfHandBonus != character.skillChecks.sleightOfHandBonus) return true;
     if (_skillChecks.stealthProficiency != character.skillChecks.stealthProficiency) return true;
     if (_skillChecks.stealthExpertise != character.skillChecks.stealthExpertise) return true;
+    if (stealthBonus != character.skillChecks.stealthBonus) return true;
     if (_skillChecks.survivalProficiency != character.skillChecks.survivalProficiency) return true;
     if (_skillChecks.survivalExpertise != character.skillChecks.survivalExpertise) return true;
+    if (survivalBonus != character.skillChecks.survivalBonus) return true;
     
     // Check attacks changes
     if (!_attacksEqual(_attacks, character.attacks)) return true;
@@ -5712,7 +5997,62 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           hasShield: _hasShield,
         ),
         savingThrows: _savingThrows,
-        skillChecks: _skillChecks,
+        skillChecks: CharacterSkillChecks(
+          acrobaticsProficiency: _skillChecks.acrobaticsProficiency,
+          acrobaticsExpertise: _skillChecks.acrobaticsExpertise,
+          acrobaticsBonus: acrobaticsBonus,
+          animalHandlingProficiency: _skillChecks.animalHandlingProficiency,
+          animalHandlingExpertise: _skillChecks.animalHandlingExpertise,
+          animalHandlingBonus: animalHandlingBonus,
+          arcanaProficiency: _skillChecks.arcanaProficiency,
+          arcanaExpertise: _skillChecks.arcanaExpertise,
+          arcanaBonus: arcanaBonus,
+          athleticsProficiency: _skillChecks.athleticsProficiency,
+          athleticsExpertise: _skillChecks.athleticsExpertise,
+          athleticsBonus: athleticsBonus,
+          deceptionProficiency: _skillChecks.deceptionProficiency,
+          deceptionExpertise: _skillChecks.deceptionExpertise,
+          deceptionBonus: deceptionBonus,
+          historyProficiency: _skillChecks.historyProficiency,
+          historyExpertise: _skillChecks.historyExpertise,
+          historyBonus: historyBonus,
+          insightProficiency: _skillChecks.insightProficiency,
+          insightExpertise: _skillChecks.insightExpertise,
+          insightBonus: insightBonus,
+          intimidationProficiency: _skillChecks.intimidationProficiency,
+          intimidationExpertise: _skillChecks.intimidationExpertise,
+          intimidationBonus: intimidationBonus,
+          investigationProficiency: _skillChecks.investigationProficiency,
+          investigationExpertise: _skillChecks.investigationExpertise,
+          investigationBonus: investigationBonus,
+          medicineProficiency: _skillChecks.medicineProficiency,
+          medicineExpertise: _skillChecks.medicineExpertise,
+          medicineBonus: medicineBonus,
+          natureProficiency: _skillChecks.natureProficiency,
+          natureExpertise: _skillChecks.natureExpertise,
+          natureBonus: natureBonus,
+          perceptionProficiency: _skillChecks.perceptionProficiency,
+          perceptionExpertise: _skillChecks.perceptionExpertise,
+          perceptionBonus: perceptionBonus,
+          performanceProficiency: _skillChecks.performanceProficiency,
+          performanceExpertise: _skillChecks.performanceExpertise,
+          performanceBonus: performanceBonus,
+          persuasionProficiency: _skillChecks.persuasionProficiency,
+          persuasionExpertise: _skillChecks.persuasionExpertise,
+          persuasionBonus: persuasionBonus,
+          religionProficiency: _skillChecks.religionProficiency,
+          religionExpertise: _skillChecks.religionExpertise,
+          religionBonus: religionBonus,
+          sleightOfHandProficiency: _skillChecks.sleightOfHandProficiency,
+          sleightOfHandExpertise: _skillChecks.sleightOfHandExpertise,
+          sleightOfHandBonus: sleightOfHandBonus,
+          stealthProficiency: _skillChecks.stealthProficiency,
+          stealthExpertise: _skillChecks.stealthExpertise,
+          stealthBonus: stealthBonus,
+          survivalProficiency: _skillChecks.survivalProficiency,
+          survivalExpertise: _skillChecks.survivalExpertise,
+          survivalBonus: survivalBonus,
+        ),
         health: CharacterHealth(
           maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
           currentHitPoints: int.tryParse(_currentHpController.text) ?? 10,
