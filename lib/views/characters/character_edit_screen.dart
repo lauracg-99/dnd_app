@@ -3193,6 +3193,469 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                   fontWeight: FontWeight.w500,
                 ),
               ),
+              
+              // Arrow controls with slot count display (fixed position)
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Left arrow - decrease used slots
+                  IconButton(
+                    onPressed: used > 0 
+                        ? () {
+                            setState(() {
+                              switch (level) {
+                                case 1:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used - 1,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 2:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used - 1,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 3:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used - 1,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 4:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used - 1,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 5:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used - 1,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 6:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used - 1,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 7:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used - 1,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 8:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used - 1,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 9:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used - 1,
+                                  );
+                                  break;
+                              }
+                            });
+                          }
+                        : null,
+                    icon: const Icon(Icons.arrow_left),
+                    iconSize: 28,
+                    color: used > 0 ? Colors.blue : Colors.grey,
+                    tooltip: 'Decrease used slots',
+                  ),
+                  
+                  // Slot count display
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: (slots - used) == 0 ? Colors.red : Colors.blue, 
+                        width: 2
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      color: (slots - used) == 0 
+                          ? Colors.red.withValues(alpha: 0.1)
+                          : Colors.blue.withValues(alpha: 0.1),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${slots - used}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: (slots - used) == 0 ? Colors.red : Colors.blue,
+                          ),                        
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Right arrow - increase used slots
+                  IconButton(
+                    onPressed: used < slots 
+                        ? () {
+                            setState(() {
+                              switch (level) {
+                                case 1:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used + 1,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 2:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used + 1,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 3:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used + 1,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 4:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used + 1,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 5:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used + 1,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 6:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used + 1,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 7:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used + 1,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 8:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used + 1,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used,
+                                  );
+                                  break;
+                                case 9:
+                                  _spellSlots = CharacterSpellSlots(
+                                    level1Slots: _spellSlots.level1Slots,
+                                    level1Used: _spellSlots.level1Used,
+                                    level2Slots: _spellSlots.level2Slots,
+                                    level2Used: _spellSlots.level2Used,
+                                    level3Slots: _spellSlots.level3Slots,
+                                    level3Used: _spellSlots.level3Used,
+                                    level4Slots: _spellSlots.level4Slots,
+                                    level4Used: _spellSlots.level4Used,
+                                    level5Slots: _spellSlots.level5Slots,
+                                    level5Used: _spellSlots.level5Used,
+                                    level6Slots: _spellSlots.level6Slots,
+                                    level6Used: _spellSlots.level6Used,
+                                    level7Slots: _spellSlots.level7Slots,
+                                    level7Used: _spellSlots.level7Used,
+                                    level8Slots: _spellSlots.level8Slots,
+                                    level8Used: _spellSlots.level8Used,
+                                    level9Slots: _spellSlots.level9Slots,
+                                    level9Used: _spellSlots.level9Used + 1,
+                                  );
+                                  break;
+                              }
+                            });
+                          }
+                        : null,
+                    icon: const Icon(Icons.arrow_right),
+                    iconSize: 28,
+                    color: used < slots ? Colors.blue : Colors.grey,
+                    tooltip: 'Increase used slots',
+                  ),
+                ],
+              ),
             ] else ...[
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),

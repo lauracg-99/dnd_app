@@ -511,10 +511,20 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                 ),
               ],
             ),
+
+            Text(
+                '$used of $slots slots used',
+                style: TextStyle(
+                  color: used == slots ? Colors.red : Colors.green,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+
             const SizedBox(height: 12),
 
-            // Visual slot dots
+            // Visual slot dots with arrow controls
             if (slots > 0) ...[
+              // Visual slot dots (for detailed control)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -553,14 +563,72 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                   ],
                 ),
               ),
+              
               const SizedBox(height: 8),
-              Text(
-                '$used of $slots slots used',
-                style: TextStyle(
-                  color: used == slots ? Colors.red : Colors.green,
-                  fontWeight: FontWeight.w500,
-                ),
+              
+              // Arrow controls with slot count display (fixed position)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Left arrow - decrease used slots
+                  IconButton(
+                    onPressed: used > 0 
+                        ? () => _updatePersonalizedSlot(
+                              slotIndex,
+                              slot.copyWith(usedSlots: used - 1),
+                            )
+                        : null,
+                    icon: const Icon(Symbols.chevron_left),
+                    iconSize: 28,
+                    color: used > 0 ? Colors.blue : Colors.grey,
+                    tooltip: 'Decrease used slots',
+                  ),
+                  
+                  // Slot count display
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: (slots - used) == 0 ? Colors.red : Colors.blue, 
+                        width: 2
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      color: (slots - used) == 0 
+                          ? Colors.red.withValues(alpha: 0.1)
+                          : Colors.blue.withValues(alpha: 0.1),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${slots - used}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: (slots - used) == 0 ? Colors.red : Colors.blue,
+                          ),                        
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Right arrow - increase used slots
+                  IconButton(
+                    onPressed: used < slots 
+                        ? () => _updatePersonalizedSlot(
+                              slotIndex,
+                              slot.copyWith(usedSlots: used + 1),
+                            )
+                        : null,
+                    icon: const Icon(Symbols.chevron_right),
+                    iconSize: 28,
+                    color: used < slots ? Colors.blue : Colors.grey,
+                    tooltip: 'Increase used slots',
+                  ),
+                ],
               ),
+              const SizedBox(height: 4),
+              
             ] else ...[
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
