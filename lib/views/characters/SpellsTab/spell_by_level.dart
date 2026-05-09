@@ -330,7 +330,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
                       '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}${spell.ritual ? ' • (ritual)' : ''}',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
-                    if (isAlwaysPrepared || isFreeUse || canPrepare) ...[
+                    if (isAlwaysPrepared || isFreeUse || canPrepare || spell.levelNumber > 0) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -437,7 +437,8 @@ class _SpellByLevelState extends State<SpellByLevel> {
                                 ),
                               ),
                             ),
-                          ] else if (canPrepare) ...[
+                          ] else ...[
+                            // Free use is available for all classes, regardless of preparation ability
                             GestureDetector(
                               onTap: () => widget.onToggleFreeUse(spell.id),
                               child: Container(
