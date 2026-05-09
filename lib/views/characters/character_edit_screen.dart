@@ -2317,6 +2317,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           Container(
             width: 40,
             height: 30,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               border: Border.all(color: Colors.blue.shade300, width: 1.5),
               borderRadius: BorderRadius.circular(6),
@@ -2328,56 +2329,42 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                           ? Colors.green.shade50 
                           : Colors.white,
             ),
-            child: SizedBox(
-              height: 30,
-              child: Align(
-                alignment: Alignment.center,
-                child: TextField(
-                  controller: bonusController,
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  style: TextStyle(
-                    fontSize: 12, 
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                  ),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                    hintText: '0',
-                    hintStyle: TextStyle(
-                      color: Colors.blue.shade400, 
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    isDense: true,
-                  ),
-                onChanged: (value) {
-                  // Format the input to remove leading zeros
-                  String formattedValue = value;
-                  if (value.isNotEmpty && value != '0' && value.startsWith('0')) {
-                    // Remove leading zeros, but keep single zero if value is just "0"
-                    formattedValue = value.replaceFirst(RegExp(r'^0+'), '');
-                    if (formattedValue.isEmpty) {
-                      formattedValue = '0';
-                    }
-                    bonusController.value = TextEditingValue(
-                      text: formattedValue,
-                      selection: TextSelection.collapsed(offset: formattedValue.length),
-                    );
-                  }                  
-                },
-                onEditingComplete: () {
-                  // No auto-save - bonus fields save only with manual character save
-                },
-                onTapOutside: (event) {
-                  // No auto-save - bonus fields save only with manual character save
-                },
+            child: TextField(
+              controller: bonusController,
+              textAlign: TextAlign.center,            
+              keyboardType: TextInputType.number,
+              cursorHeight: 14,
+              style: TextStyle(
+                fontSize: 12, 
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade700,
+                leadingDistribution: TextLeadingDistribution.even,
               ),
+              decoration: InputDecoration(
+                isCollapsed: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.only(left: 2),               
+                hintText: '0',
+                hintStyle: TextStyle(
+                  color: Colors.blue.shade400, 
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),                    
               ),
-            ),
+              onChanged: (value) {
+                String formattedValue = value;
+                if (value.isNotEmpty && value != '0' && value.startsWith('0')) {
+                  formattedValue = value.replaceFirst(RegExp(r'^0+'), '');
+                  if (formattedValue.isEmpty) formattedValue = '0';
+                  bonusController.value = TextEditingValue(
+                    text: formattedValue,
+                    selection: TextSelection.collapsed(offset: formattedValue.length),
+                  );
+                }                  
+              },                
+            ),         
           ),
-          
+
           const SizedBox(width: 8),
           // Proficiency checkbox
           GestureDetector(
