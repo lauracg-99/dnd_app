@@ -84,7 +84,8 @@ class _CharactersListScreenState extends State<CharactersListScreen>
           StreamBuilder<SyncStatus>(
             stream: _syncService.syncStatus,
             builder: (context, snapshot) {
-              final syncStatus = snapshot.data ?? SyncStatus.disconnected;
+              // Use current status from service if snapshot has no data yet
+              final syncStatus = snapshot.data ?? _syncService.currentSyncStatus;
               return IconButton(
                 icon: Stack(
                   children: [

@@ -30,10 +30,22 @@ class CloudSyncService {
   StreamSubscription<QuerySnapshot>? _charactersListener;
   StreamSubscription<QuerySnapshot>? _diariesListener;
 
+  // Cache for detecting actual data changes (ignoring metadata)
+  final Map<String, Map<String, dynamic>> _lastKnownCharacters = {};
+  final Map<String, Map<String, dynamic>> _lastKnownDiaries = {};
+
+  // Flags to track if initial snapshot has been processed
+  bool _charactersInitialSnapshotProcessed = false;
+  bool _diariesInitialSnapshotProcessed = false;
+
   // Sync status tracking
   final StreamController<SyncStatus> _syncStatusController =
       StreamController<SyncStatus>.broadcast();
   Stream<SyncStatus> get syncStatus => _syncStatusController.stream;
+
+  // Current sync status for new subscribers
+  SyncStatus _currentSyncStatus = SyncStatus.disconnected;
+  SyncStatus get currentSyncStatus => _currentSyncStatus;
 
   // Constants
   static const Duration _syncDebounceDelay = Duration(seconds: 5);
@@ -58,7 +70,7 @@ class CloudSyncService {
           print('User logged in, initializing cloud sync');
         }
         // User logged in, we can start syncing
-        _syncStatusController.add(SyncStatus.connected);
+        _updateSyncStatus(SyncStatus.connected);
         _startRealtimeListeners();
       } else {
         if (kDebugMode) {
@@ -67,7 +79,7 @@ class CloudSyncService {
         // User logged out, stop sync timers and listeners
         _cancelAllSyncTimers();
         _stopRealtimeListeners();
-        _syncStatusController.add(SyncStatus.disconnected);
+        _updateSyncStatus(SyncStatus.disconnected);
       }
     });
 
@@ -77,7 +89,7 @@ class CloudSyncService {
         print('User already authenticated, starting sync immediately');
         print('Current user: ${_authService.currentUser?.uid}');
       }
-      _syncStatusController.add(SyncStatus.connected);
+      _updateSyncStatus(SyncStatus.connected);
       _startRealtimeListeners();
     }
 
@@ -86,145 +98,12 @@ class CloudSyncService {
     }
   }
 
-  /// Register current device for tracking
-  Future<void> registerCurrentDevice() async {
-    if (!_authService.isAuthenticated) {
-      if (kDebugMode) {
-        print('Cannot register device: User not authenticated');
-      }
-      return;
-    }
-
-    try {
-      final deviceInfo = await _deviceService.getCurrentDeviceInfo();
-      final userId = _authService.currentUser!.uid;
-
-      final deviceRef = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection(_devicesCollection)
-          .doc(deviceInfo.deviceId);
-
-      await deviceRef.set({
-        'deviceInfo': deviceInfo.toJson(),
-        'registeredAt': FieldValue.serverTimestamp(),
-        'lastSyncAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      if (kDebugMode) {
-        print(
-          'Device registered: ${deviceInfo.deviceId} (${deviceInfo.deviceName})',
-        );
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error registering device: $e');
-      }
-    }
-  }
-
-  /// Update device last sync timestamp
-  Future<void> updateDeviceLastSync() async {
-    if (!_authService.isAuthenticated) return;
-
-    try {
-      final deviceInfo = await _deviceService.getCurrentDeviceInfo();
-      final userId = _authService.currentUser!.uid;
-
-      final deviceRef = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection(_devicesCollection)
-          .doc(deviceInfo.deviceId);
-
-      await deviceRef.update({
-        'lastSyncAt': FieldValue.serverTimestamp(),
-        'deviceInfo.lastSeen': DateTime.now().toIso8601String(),
-      });
-
-      // Also update local cache
-      await _deviceService.updateLastSeen();
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error updating device last sync: $e');
-      }
-    }
-  }
-
-  /// Get all registered devices for the current user
-  Future<List<DeviceInfo>> getUserDevices() async {
-    if (!_authService.isAuthenticated) return [];
-
-    try {
-      final userId = _authService.currentUser!.uid;
-      final devicesSnapshot =
-          await _firestore
-              .collection('users')
-              .doc(userId)
-              .collection(_devicesCollection)
-              .get();
-
-      final devices = <DeviceInfo>[];
-      for (final doc in devicesSnapshot.docs) {
-        final deviceData = doc.data();
-        if (deviceData.containsKey('deviceInfo')) {
-          final deviceInfoMap =
-              deviceData['deviceInfo'] as Map<String, dynamic>;
-          devices.add(DeviceInfo.fromJson(deviceInfoMap));
-        }
-      }
-
-      // Sort by last seen (most recent first)
-      devices.sort((a, b) => b.lastSeen.compareTo(a.lastSeen));
-
-      return devices;
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error getting user devices: $e');
-      }
-      return [];
-    }
-  }
-
-  /// Check if there are other devices that have synced more recently
-  Future<bool> hasMoreRecentDeviceSync() async {
-    if (!_authService.isAuthenticated) return false;
-
-    try {
-      final currentDevice = await _deviceService.getCurrentDeviceInfo();
-      final allDevices = await getUserDevices();
-
-      // Find the most recent device (excluding current)
-      DeviceInfo? mostRecentOtherDevice;
-      for (final device in allDevices) {
-        if (device.deviceId != currentDevice.deviceId) {
-          if (mostRecentOtherDevice == null ||
-              device.lastSeen.isAfter(mostRecentOtherDevice.lastSeen)) {
-            mostRecentOtherDevice = device;
-          }
-        }
-      }
-
-      if (mostRecentOtherDevice != null) {
-        final isMoreRecent = mostRecentOtherDevice.lastSeen.isAfter(
-          currentDevice.lastSeen,
-        );
-        if (kDebugMode && isMoreRecent) {
-          if (kDebugMode) {
-            print(
-              'More recent sync detected on device: ${mostRecentOtherDevice.deviceName}',
-            );
-          }
-        }
-        return isMoreRecent;
-      }
-
-      return false;
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error checking for more recent device sync: $e');
-      }
-      return false;
+  /// Update sync status and notify listeners
+  void _updateSyncStatus(SyncStatus status) {
+    _currentSyncStatus = status;
+    _syncStatusController.add(status);
+    if (kDebugMode) {
+      print('Sync status updated to: $status');
     }
   }
 
@@ -235,10 +114,7 @@ class CloudSyncService {
     }
 
     try {
-      _syncStatusController.add(SyncStatus.syncing);
-
-      // Register current device before uploading
-      await registerCurrentDevice();
+      _updateSyncStatus(SyncStatus.syncing);
 
       final userId = _authService.currentUser!.uid;
 
@@ -257,10 +133,7 @@ class CloudSyncService {
       }
       await _uploadDiaries(userId, diaries);
 
-      // Update device last sync timestamp
-      await updateDeviceLastSync();
-
-      _syncStatusController.add(SyncStatus.connected);
+      _updateSyncStatus(SyncStatus.connected);
 
       if (kDebugMode) {
         print('Successfully uploaded all local data to Firebase');
@@ -268,7 +141,7 @@ class CloudSyncService {
 
       return SyncResult.success('All data uploaded successfully');
     } catch (e) {
-      _syncStatusController.add(SyncStatus.error);
+      _updateSyncStatus(SyncStatus.error);
       if (kDebugMode) {
         print('Error uploading local data: $e');
       }
@@ -283,10 +156,7 @@ class CloudSyncService {
     }
 
     try {
-      _syncStatusController.add(SyncStatus.syncing);
-
-      // Register current device before downloading
-      await registerCurrentDevice();
+      _updateSyncStatus(SyncStatus.syncing);
 
       final userId = _authService.currentUser!.uid;
 
@@ -306,10 +176,7 @@ class CloudSyncService {
         await DiaryService.saveDiaryEntry(diary);
       }
 
-      // Update device last sync timestamp
-      await updateDeviceLastSync();
-
-      _syncStatusController.add(SyncStatus.connected);
+      _updateSyncStatus(SyncStatus.connected);
 
       if (kDebugMode) {
         print('Successfully downloaded all data from Firebase');
@@ -317,7 +184,7 @@ class CloudSyncService {
 
       return SyncResult.success('All data downloaded successfully');
     } catch (e) {
-      _syncStatusController.add(SyncStatus.error);
+      _updateSyncStatus(SyncStatus.error);
       if (kDebugMode) {
         print('Error downloading data: $e');
       }
@@ -371,10 +238,7 @@ class CloudSyncService {
     }
 
     try {
-      _syncStatusController.add(SyncStatus.syncing);
-
-      // Register device if not already registered
-      await registerCurrentDevice();
+      _updateSyncStatus(SyncStatus.syncing);
 
       final userId = _authService.currentUser!.uid;
       if (kDebugMode) {
@@ -388,10 +252,7 @@ class CloudSyncService {
 
       await uploadData(userId, dataMaps);
 
-      // Update device last sync timestamp
-      await updateDeviceLastSync();
-
-      _syncStatusController.add(SyncStatus.connected);
+      _updateSyncStatus(SyncStatus.connected);
 
       if (kDebugMode) {
         print('Successfully synced ${dataMaps.length} $entityName to Firebase');
@@ -399,7 +260,7 @@ class CloudSyncService {
 
       return SyncResult.success('$entityName synced successfully');
     } catch (e) {
-      _syncStatusController.add(SyncStatus.error);
+      _updateSyncStatus(SyncStatus.error);
       if (kDebugMode) {
         print('Error syncing $entityName: $e');
       }
@@ -701,7 +562,7 @@ class CloudSyncService {
     }
 
     try {
-      _syncStatusController.add(SyncStatus.syncing);
+      _updateSyncStatus(SyncStatus.syncing);
 
       final userId = _authService.currentUser!.uid;
 
@@ -733,7 +594,7 @@ class CloudSyncService {
       // Execute batch delete
       await batch.commit();
 
-      _syncStatusController.add(SyncStatus.connected);
+      _updateSyncStatus(SyncStatus.connected);
 
       if (kDebugMode) {
         print('Successfully deleted all cloud data for user: $userId');
@@ -741,7 +602,7 @@ class CloudSyncService {
 
       return SyncResult.success('All cloud data deleted successfully');
     } catch (e) {
-      _syncStatusController.add(SyncStatus.error);
+      _updateSyncStatus(SyncStatus.error);
       if (kDebugMode) {
         print('Error deleting cloud data: $e');
       }
@@ -755,172 +616,6 @@ class CloudSyncService {
     _charactersSyncTimer = null;
     _diariesSyncTimer?.cancel();
     _diariesSyncTimer = null;
-  }
-
-  /// Smart sync with device conflict resolution
-  Future<SyncResult> smartSync() async {
-    if (!_authService.isAuthenticated) {
-      return SyncResult.failure('User not authenticated');
-    }
-
-    try {
-      _syncStatusController.add(SyncStatus.syncing);
-
-      // Check for device conflicts
-      final hasMoreRecentSync = await hasMoreRecentDeviceSync();
-
-      if (hasMoreRecentSync) {
-        // Another device has more recent sync, download from cloud
-        if (kDebugMode) {
-          print(
-            'Detected more recent sync on another device, downloading from cloud',
-          );
-        }
-        final result = await downloadAllData();
-
-        if (result.success) {
-          return SyncResult.success(
-            'Sync completed: Downloaded latest data from cloud',
-          );
-        } else {
-          return result;
-        }
-      } else {
-        // Current device is up-to-date or has latest changes, upload to cloud
-        if (kDebugMode) {
-          print('Current device has latest data, uploading to cloud');
-        }
-        final result = await syncAll();
-
-        if (result.success) {
-          return SyncResult.success(
-            'Sync completed: Uploaded local data to cloud',
-          );
-        } else {
-          return result;
-        }
-      }
-    } catch (e) {
-      _syncStatusController.add(SyncStatus.error);
-      if (kDebugMode) {
-        print('Error during smart sync: $e');
-      }
-      return SyncResult.failure('Smart sync failed: $e');
-    }
-  }
-
-  /// Force sync from cloud (download and overwrite local data)
-  Future<SyncResult> forceSyncFromCloud() async {
-    if (!_authService.isAuthenticated) {
-      return SyncResult.failure('User not authenticated');
-    }
-
-    try {
-      _syncStatusController.add(SyncStatus.syncing);
-
-      if (kDebugMode) {
-        print('Force syncing from cloud (will overwrite local data)');
-      }
-
-      final result = await downloadAllData();
-
-      if (result.success) {
-        // Register current device after successful download
-        await registerCurrentDevice();
-        return SyncResult.success(
-          'Force sync completed: Local data overwritten with cloud data',
-        );
-      } else {
-        return result;
-      }
-    } catch (e) {
-      _syncStatusController.add(SyncStatus.error);
-      if (kDebugMode) {
-        print('Error during force sync from cloud: $e');
-      }
-      return SyncResult.failure('Force sync failed: $e');
-    }
-  }
-
-  /// Force sync to cloud (upload and overwrite cloud data)
-  Future<SyncResult> forceSyncToCloud() async {
-    if (!_authService.isAuthenticated) {
-      return SyncResult.failure('User not authenticated');
-    }
-
-    try {
-      _syncStatusController.add(SyncStatus.syncing);
-
-      if (kDebugMode) {
-        print('Force syncing to cloud (will overwrite cloud data)');
-      }
-
-      final result = await uploadAllLocalData();
-
-      if (result.success) {
-        return SyncResult.success(
-          'Force sync completed: Cloud data overwritten with local data',
-        );
-      } else {
-        return result;
-      }
-    } catch (e) {
-      _syncStatusController.add(SyncStatus.error);
-      if (kDebugMode) {
-        print('Error during force sync to cloud: $e');
-      }
-      return SyncResult.failure('Force sync failed: $e');
-    }
-  }
-
-  /// Get sync status with device information
-  Future<Map<String, dynamic>> getSyncStatus() async {
-    if (!_authService.isAuthenticated) {
-      return {
-        'authenticated': false,
-        'devices': <DeviceInfo>[],
-        'hasConflict': false,
-        'lastSyncDevice': null,
-        'lastSyncTime': null,
-      };
-    }
-
-    try {
-      final devices = await getUserDevices();
-      final currentDevice = await _deviceService.getCurrentDeviceInfo();
-      final hasMoreRecentSync = await hasMoreRecentDeviceSync();
-
-      // Find last sync device
-      DeviceInfo? lastSyncDevice;
-      for (final device in devices) {
-        if (lastSyncDevice == null ||
-            device.lastSeen.isAfter(lastSyncDevice.lastSeen)) {
-          lastSyncDevice = device;
-        }
-      }
-
-      return {
-        'authenticated': true,
-        'currentDevice': currentDevice,
-        'devices': devices,
-        'deviceCount': devices.length,
-        'hasConflict': hasMoreRecentSync,
-        'lastSyncDevice': lastSyncDevice,
-        'lastSyncTime': lastSyncDevice?.lastSeen,
-        'isCurrentDeviceMostRecent':
-            lastSyncDevice?.deviceId == currentDevice.deviceId,
-      };
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error getting sync status: $e');
-      }
-      return {
-        'authenticated': true,
-        'error': e.toString(),
-        'devices': <DeviceInfo>[],
-        'hasConflict': false,
-      };
-    }
   }
 
   /// Remove device from tracking (for example, when user logs out from a device)
@@ -1048,8 +743,16 @@ class CloudSyncService {
     _diariesListener?.cancel();
     _diariesListener = null;
 
+    // Clear caches when stopping listeners
+    _lastKnownCharacters.clear();
+    _lastKnownDiaries.clear();
+
+    // Reset initial snapshot flags
+    _charactersInitialSnapshotProcessed = false;
+    _diariesInitialSnapshotProcessed = false;
+
     if (kDebugMode) {
-      print('Stopped real-time listeners');
+      print('Stopped real-time listeners and cleared caches');
     }
   }
 
@@ -1059,6 +762,7 @@ class CloudSyncService {
       print('=== CHARACTER SNAPSHOT HANDLER ===');
       print('Snapshot docChanges length: ${snapshot.docChanges.length}');
       print('Snapshot docs length: ${snapshot.docs.length}');
+      print('Initial snapshot processed: $_charactersInitialSnapshotProcessed');
     }
 
     if (snapshot.docChanges.isEmpty) {
@@ -1069,17 +773,80 @@ class CloudSyncService {
     }
 
     try {
-      if (kDebugMode) {
-        print(
-          'Detected character changes in Firestore, setting changesAvailable status',
-        );
+      bool hasActualDataChanges = false;
+
+      // Check each document change to see if actual data changed (not just metadata)
+      for (final change in snapshot.docChanges) {
+        final docId = change.doc.id;
+        final currentData = change.doc.data() as Map<String, dynamic>;
+        final characterData = currentData['data'] as Map<String, dynamic>?;
+
+        if (characterData == null) {
+          if (kDebugMode) {
+            print('Document $docId has no data field, skipping');
+          }
+          continue;
+        }
+
+        // Compare with cached data
+        final lastKnownData = _lastKnownCharacters[docId];
+        if (lastKnownData == null) {
+          // First time seeing this document
+          if (kDebugMode) {
+            print('New character detected: $docId');
+          }
+          // Only count as change if this is NOT the initial snapshot
+          if (_charactersInitialSnapshotProcessed) {
+            hasActualDataChanges = true;
+          }
+          _lastKnownCharacters[docId] = characterData;
+        } else {
+          // Compare the actual data (ignoring metadata like updatedAt)
+          if (!_mapsEqual(lastKnownData, characterData)) {
+            if (kDebugMode) {
+              print('Character data changed: $docId');
+              print('Previous: $lastKnownData');
+              print('Current: $characterData');
+            }
+            hasActualDataChanges = true;
+            _lastKnownCharacters[docId] = characterData;
+          } else {
+            if (kDebugMode) {
+              print('Character $docId metadata changed but data is the same, ignoring');
+            }
+          }
+        }
       }
 
-      // Set status to indicate changes are available for manual sync
-      _syncStatusController.add(SyncStatus.changesAvailable);
+      // Mark initial snapshot as processed
+      if (!_charactersInitialSnapshotProcessed) {
+        _charactersInitialSnapshotProcessed = true;
+        if (kDebugMode) {
+          print('Initial characters snapshot processed, cache populated');
+        }
+        // Don't trigger status change on initial snapshot
+        return;
+      }
 
-      if (kDebugMode) {
-        print('Status set to changesAvailable - user can manually sync now');
+      // Only trigger status change if actual data changed
+      if (hasActualDataChanges) {
+        if (kDebugMode) {
+          print(
+            'Detected actual character changes in Firestore, setting changesAvailable status',
+          );
+        }
+
+        // Set status to indicate changes are available for manual sync
+        _updateSyncStatus(SyncStatus.changesAvailable);
+
+        if (kDebugMode) {
+          print('Status set to changesAvailable - user can manually sync now');
+        }
+      } else {
+        if (kDebugMode) {
+          print('No actual character data changes detected, ignoring snapshot');
+        }
+        _updateSyncStatus(SyncStatus.connected);
       }
     } catch (e) {
       if (kDebugMode) {
@@ -1095,6 +862,7 @@ class CloudSyncService {
       print('=== DIARY SNAPSHOT HANDLER ===');
       print('Snapshot docChanges length: ${snapshot.docChanges.length}');
       print('Snapshot docs length: ${snapshot.docs.length}');
+      print('Initial snapshot processed: $_diariesInitialSnapshotProcessed');
     }
 
     if (snapshot.docChanges.isEmpty) {
@@ -1105,17 +873,79 @@ class CloudSyncService {
     }
 
     try {
-      if (kDebugMode) {
-        print(
-          'Detected diary changes in Firestore, setting changesAvailable status',
-        );
+      bool hasActualDataChanges = false;
+
+      // Check each document change to see if actual data changed (not just metadata)
+      for (final change in snapshot.docChanges) {
+        final docId = change.doc.id;
+        final currentData = change.doc.data() as Map<String, dynamic>;
+        final diaryData = currentData['data'] as Map<String, dynamic>?;
+
+        if (diaryData == null) {
+          if (kDebugMode) {
+            print('Document $docId has no data field, skipping');
+          }
+          continue;
+        }
+
+        // Compare with cached data
+        final lastKnownData = _lastKnownDiaries[docId];
+        if (lastKnownData == null) {
+          // First time seeing this document
+          if (kDebugMode) {
+            print('New diary detected: $docId');
+          }
+          // Only count as change if this is NOT the initial snapshot
+          if (_diariesInitialSnapshotProcessed) {
+            hasActualDataChanges = true;
+          }
+          _lastKnownDiaries[docId] = diaryData;
+        } else {
+          // Compare the actual data (ignoring metadata like updatedAt)
+          if (!_mapsEqual(lastKnownData, diaryData)) {
+            if (kDebugMode) {
+              print('Diary data changed: $docId');
+              print('Previous: $lastKnownData');
+              print('Current: $diaryData');
+            }
+            hasActualDataChanges = true;
+            _lastKnownDiaries[docId] = diaryData;
+          } else {
+            if (kDebugMode) {
+              print('Diary $docId metadata changed but data is the same, ignoring');
+            }
+          }
+        }
       }
 
-      // Set status to indicate changes are available for manual sync
-      _syncStatusController.add(SyncStatus.changesAvailable);
+      // Mark initial snapshot as processed
+      if (!_diariesInitialSnapshotProcessed) {
+        _diariesInitialSnapshotProcessed = true;
+        if (kDebugMode) {
+          print('Initial diaries snapshot processed, cache populated');
+        }
+        // Don't trigger status change on initial snapshot
+        return;
+      }
 
-      if (kDebugMode) {
-        print('Status set to changesAvailable - user can manually sync now');
+      // Only trigger status change if actual data changed
+      if (hasActualDataChanges) {
+        if (kDebugMode) {
+          print(
+            'Detected actual diary changes in Firestore, setting changesAvailable status',
+          );
+        }
+
+        // Set status to indicate changes are available for manual sync
+        _updateSyncStatus(SyncStatus.changesAvailable);
+
+        if (kDebugMode) {
+          print('Status set to changesAvailable - user can manually sync now');
+        }
+      } else {
+        if (kDebugMode) {
+          print('No actual diary data changes detected, ignoring snapshot');
+        }
       }
     } catch (e) {
       if (kDebugMode) {
@@ -1125,6 +955,62 @@ class CloudSyncService {
     }
   }
 
+  /// Deep comparison of two maps to detect actual data changes
+  bool _mapsEqual(Map<String, dynamic> map1, Map<String, dynamic> map2) {
+    if (map1.length != map2.length) {
+      return false;
+    }
+
+    for (final key in map1.keys) {
+      if (!map2.containsKey(key)) {
+        return false;
+      }
+
+      final value1 = map1[key];
+      final value2 = map2[key];
+
+      if (value1 is Map<String, dynamic> && value2 is Map<String, dynamic>) {
+        if (!_mapsEqual(value1, value2)) {
+          return false;
+        }
+      } else if (value1 is List && value2 is List) {
+        if (!_listsEqual(value1, value2)) {
+          return false;
+        }
+      } else if (value1 != value2) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /// Deep comparison of two lists
+  bool _listsEqual(List list1, List list2) {
+    if (list1.length != list2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < list1.length; i++) {
+      final value1 = list1[i];
+      final value2 = list2[i];
+
+      if (value1 is Map<String, dynamic> && value2 is Map<String, dynamic>) {
+        if (!_mapsEqual(value1, value2)) {
+          return false;
+        }
+      } else if (value1 is List && value2 is List) {
+        if (!_listsEqual(value1, value2)) {
+          return false;
+        }
+      } else if (value1 != value2) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /// Manually sync changes when user taps cloud button in changesAvailable state
   Future<SyncResult> manualSyncFromCloud() async {
     if (!_authService.isAuthenticated) {
@@ -1132,7 +1018,7 @@ class CloudSyncService {
     }
 
     try {
-      _syncStatusController.add(SyncStatus.syncing);
+      _updateSyncStatus(SyncStatus.syncing);
 
       if (kDebugMode) {
         print('Manual sync from cloud triggered by user');
@@ -1141,12 +1027,20 @@ class CloudSyncService {
       // Download all data from cloud
       final result = await downloadAllData();
 
+      // Clear caches after manual sync so next comparison is against new data
+      _lastKnownCharacters.clear();
+      _lastKnownDiaries.clear();
+
+      if (kDebugMode) {
+        print('Cleared caches after manual sync');
+      }
+
       // Reset to connected status after manual sync
-      _syncStatusController.add(SyncStatus.connected);
+      _updateSyncStatus(SyncStatus.connected);
 
       return result;
     } catch (e) {
-      _syncStatusController.add(SyncStatus.error);
+      _updateSyncStatus(SyncStatus.error);
       if (kDebugMode) {
         print('Error during manual sync: $e');
       }
