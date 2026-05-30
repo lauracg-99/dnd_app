@@ -120,52 +120,6 @@ class ImageOptionsDialog extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 5),
-                    InkWell(
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        onPickFromCamera();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        color: Colors.white,
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.camera_alt,
-                                color: Colors.blue.shade700,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Take Photo',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade800,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              color: Colors.blue.shade300,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                     if (hasImage) ...[
                       const SizedBox(height: 5),
                       Divider(height: 1, color: Colors.grey.shade200),
