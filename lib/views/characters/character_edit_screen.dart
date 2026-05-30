@@ -3402,12 +3402,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             }
           }
 
+          // Compress and encode image to keep JSON payload small
+          final compressedBase64 = await ImageUtils.compressAndEncodeImage(
+            savedFile.path,
+          );
+
           setState(() {
             _customImagePath = savedFile.path;
-            // Convert image to base64 for JSON persistence
-            _customImageData = ImageUtils.imageFileToBase64(savedFile.path);
+            _customImageData = compressedBase64;
             debugPrint(
-              'Profile image cropped and saved: ${_customImageData?.length ?? 0} characters',
+              'Profile image cropped and saved (compressed): ${_customImageData?.length ?? 0} characters',
             );
           });
 
@@ -4232,7 +4236,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             _additionalDetailsController.document.toDelta().toJson(),
           ),
           appearanceImagePath: _appearanceImagePath ?? '',
-          appearanceImageData: _appearanceImageData,
+          // Do not include raw appearance image data in saved JSON.
+          appearanceImageData: null,
         ),
         deathSaves: CharacterDeathSaves(
           successes: _deathSaveSuccesses,

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:dnd_app/utils/quill_toolbar_configs.dart';
 import 'package:dnd_app/utils/simple_quill_editor.dart';
-import 'package:dnd_app/utils/image_utils.dart';
-import 'dart:io';
 
 class CharactersAppereance extends StatelessWidget {
   final String? appearanceImagePath;
@@ -208,57 +206,4 @@ class CharactersAppereance extends StatelessWidget {
     );
   
   }
-
-  Widget _buildAppearanceImage() {
-    // Prioritize base64 data if available
-    if (appearanceImageData != null && appearanceImageData!.isNotEmpty) {
-      final imageBytes = ImageUtils.base64ToImageBytes(appearanceImageData);
-      if (imageBytes != null) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.memory(
-            imageBytes,
-            width: 200,
-            height: 200,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(
-                Icons.person,
-                size: 60,
-                color: Colors.grey,
-              );
-            },
-          ),
-        );
-      }
-    }
-    
-    // Fallback to file path if base64 is not available
-    if (appearanceImagePath != null && appearanceImagePath!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.file(
-          File(appearanceImagePath!),
-          width: 200,
-          height: 200,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(
-              Icons.person,
-              size: 60,
-              color: Colors.grey,
-            );
-          },
-        ),
-      );
-    }
-    
-    // Default icon if no image is available
-    return const Icon(
-      Icons.person,
-      size: 60,
-      color: Colors.grey,
-    );
-  }
-  
 }

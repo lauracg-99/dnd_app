@@ -3,7 +3,6 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../../../models/weapon_model.dart';
 import '../../../viewmodels/weapons_viewmodel.dart';
-import '../../../utils/source_mapper.dart';
 import '../../../widgets/appfilter_chip.dart';
 
 class WeaponSelectionResult {

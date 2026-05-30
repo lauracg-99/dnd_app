@@ -32,10 +32,10 @@ class Character extends BaseModel with TimestampedEntity {
   final CharacterDeathSaves deathSaves;
   final CharacterLanguages languages;
   final CharacterMoneyItems moneyItems;
-  
+
   @override
   final DateTime createdAt;
-  
+
   @override
   final DateTime updatedAt;
 
@@ -80,8 +80,10 @@ class Character extends BaseModel with TimestampedEntity {
       'stats': {
         'id': {'value': id},
         'name': {'value': name},
-        if (customImagePath != null) 'custom_image_path': {'value': customImagePath},
-        if (customImageData != null) 'custom_image_data': {'value': customImageData},
+        if (customImagePath != null)
+          'custom_image_path': {'value': customImagePath},
+        if (customImageData != null)
+          'custom_image_data': {'value': customImageData},
         'stats': stats.toJson(),
         'saving_throws': savingThrows.toJson(),
         'skill_checks': skillChecks.toJson(),
@@ -95,7 +97,9 @@ class Character extends BaseModel with TimestampedEntity {
         'spell_slots': spellSlots.toJson(),
         'spells': {'value': spells},
         'feats': {'value': feats},
-        'personalized_slots': {'value': personalizedSlots.map((slot) => slot.toJson()).toList()},
+        'personalized_slots': {
+          'value': personalizedSlots.map((slot) => slot.toJson()).toList(),
+        },
         'spell_preparation': spellPreparation.toJson(),
         'quick_guide': {'value': quickGuide},
         'proficiencies': {'value': proficiencies},
@@ -115,51 +119,138 @@ class Character extends BaseModel with TimestampedEntity {
 
   factory Character.fromJson(Map<String, dynamic> json) {
     final stats = json['stats'] as Map<String, dynamic>;
-    
+
     return Character(
       id: _getValue<String>(stats, 'id'),
       name: _getValue<String>(stats, 'name'),
-      customImagePath: _getValueNullable<String?>(stats, 'custom_image_path', defaultValue: null),
-      customImageData: _getValueNullable<String?>(stats, 'custom_image_data', defaultValue: null),
-      stats: CharacterStats.fromJson(_getValue<Map<String, dynamic>>(stats, 'stats')),
-      savingThrows: CharacterSavingThrows.fromJson(_getValue<Map<String, dynamic>>(stats, 'saving_throws')),
-      skillChecks: CharacterSkillChecks.fromJson(_getValue<Map<String, dynamic>>(stats, 'skill_checks')),
-      health: CharacterHealth.fromJson(_getValue<Map<String, dynamic>>(stats, 'health')),
+      customImagePath: _getValueNullable<String?>(
+        stats,
+        'custom_image_path',
+        defaultValue: null,
+      ),
+      customImageData: _getValueNullable<String?>(
+        stats,
+        'custom_image_data',
+        defaultValue: null,
+      ),
+      stats: CharacterStats.fromJson(
+        _getValue<Map<String, dynamic>>(stats, 'stats'),
+      ),
+      savingThrows: CharacterSavingThrows.fromJson(
+        _getValue<Map<String, dynamic>>(stats, 'saving_throws'),
+      ),
+      skillChecks: CharacterSkillChecks.fromJson(
+        _getValue<Map<String, dynamic>>(stats, 'skill_checks'),
+      ),
+      health: CharacterHealth.fromJson(
+        _getValue<Map<String, dynamic>>(stats, 'health'),
+      ),
       characterClass: _getValue<String>(stats, 'class'),
       level: _getValue<int>(stats, 'level', defaultValue: 1),
-      subclass: _getValueNullable<String?>(stats, 'subclass', defaultValue: null),
+      subclass: _getValueNullable<String?>(
+        stats,
+        'subclass',
+        defaultValue: null,
+      ),
       race: _getValueNullable<String?>(stats, 'race', defaultValue: null),
-      background: _getValueNullable<String?>(stats, 'background', defaultValue: null),
-      attacks: _getValue<List<dynamic>>(stats, 'attacks', defaultValue: const [])
-          .where((item) => item != null && item is Map)
-          .cast<Map>()
-          .map((attack) => CharacterAttack.fromJson(attack.cast<String, dynamic>()))
-          .toList(),
-      spellSlots: CharacterSpellSlots.fromJson(_getValue<Map<String, dynamic>>(stats, 'spell_slots')),
-      spells: List<String>.from(_getValue<List<dynamic>>(stats, 'spells', defaultValue: const [])),
-      feats: List<String>.from(_getValue<List<dynamic>>(stats, 'feats', defaultValue: const [])),
-      personalizedSlots: (_getValue<List<dynamic>>(stats, 'personalized_slots', defaultValue: const []))
-          .where((item) => item != null && item is Map)
-          .cast<Map>()
-          .map((slot) => CharacterPersonalizedSlot.fromJson(slot.cast<String, dynamic>()))
-          .toList(),
-      spellPreparation: CharacterSpellPreparation.fromJson(_getValue<Map<String, dynamic>>(stats, 'spell_preparation', defaultValue: const {})),
+      background: _getValueNullable<String?>(
+        stats,
+        'background',
+        defaultValue: null,
+      ),
+      attacks:
+          _getValue<List<dynamic>>(stats, 'attacks', defaultValue: const [])
+              .where((item) => item != null && item is Map)
+              .cast<Map>()
+              .map(
+                (attack) =>
+                    CharacterAttack.fromJson(attack.cast<String, dynamic>()),
+              )
+              .toList(),
+      spellSlots: CharacterSpellSlots.fromJson(
+        _getValue<Map<String, dynamic>>(stats, 'spell_slots'),
+      ),
+      spells: List<String>.from(
+        _getValue<List<dynamic>>(stats, 'spells', defaultValue: const []),
+      ),
+      feats: List<String>.from(
+        _getValue<List<dynamic>>(stats, 'feats', defaultValue: const []),
+      ),
+      personalizedSlots:
+          (_getValue<List<dynamic>>(
+                stats,
+                'personalized_slots',
+                defaultValue: const [],
+              ))
+              .where((item) => item != null && item is Map)
+              .cast<Map>()
+              .map(
+                (slot) => CharacterPersonalizedSlot.fromJson(
+                  slot.cast<String, dynamic>(),
+                ),
+              )
+              .toList(),
+      spellPreparation: CharacterSpellPreparation.fromJson(
+        _getValue<Map<String, dynamic>>(
+          stats,
+          'spell_preparation',
+          defaultValue: const {},
+        ),
+      ),
       quickGuide: _getValue<String>(stats, 'quick_guide', defaultValue: ''),
-      proficiencies: _getValue<String>(stats, 'proficiencies', defaultValue: ''),
-      featuresTraits: _getValue<String>(stats, 'features_traits', defaultValue: ''),
+      proficiencies: _getValue<String>(
+        stats,
+        'proficiencies',
+        defaultValue: '',
+      ),
+      featuresTraits: _getValue<String>(
+        stats,
+        'features_traits',
+        defaultValue: '',
+      ),
       backstory: _getValue<String>(stats, 'backstory', defaultValue: ''),
-      pillars: CharacterPillars.fromJson(_getValue<Map<String, dynamic>>(stats, 'pillars')),
-      appearance: CharacterAppearance.fromJson(_getValue<Map<String, dynamic>>(stats, 'appearance', defaultValue: const {})),
-      deathSaves: CharacterDeathSaves.fromJson(_getValue<Map<String, dynamic>>(stats, 'death_saves', defaultValue: const {})),
-      languages: CharacterLanguages.fromJson(_getValue<Map<String, dynamic>>(stats, 'languages', defaultValue: const {})),
-      moneyItems: CharacterMoneyItems.fromJson(_getValue<Map<String, dynamic>>(stats, 'money_items', defaultValue: const {})),
+      pillars: CharacterPillars.fromJson(
+        _getValue<Map<String, dynamic>>(stats, 'pillars'),
+      ),
+      appearance: CharacterAppearance.fromJson(
+        _getValue<Map<String, dynamic>>(
+          stats,
+          'appearance',
+          defaultValue: const {},
+        ),
+      ),
+      deathSaves: CharacterDeathSaves.fromJson(
+        _getValue<Map<String, dynamic>>(
+          stats,
+          'death_saves',
+          defaultValue: const {},
+        ),
+      ),
+      languages: CharacterLanguages.fromJson(
+        _getValue<Map<String, dynamic>>(
+          stats,
+          'languages',
+          defaultValue: const {},
+        ),
+      ),
+      moneyItems: CharacterMoneyItems.fromJson(
+        _getValue<Map<String, dynamic>>(
+          stats,
+          'money_items',
+          defaultValue: const {},
+        ),
+      ),
       featNotes: _getValue<String>(stats, 'feat_notes', defaultValue: ''),
       createdAt: DateTime.parse(_getValue<String>(stats, 'created_at')),
       updatedAt: DateTime.parse(_getValue<String>(stats, 'updated_at')),
     );
   }
 
-  static T? _getValueNullable<T>(Map<String, dynamic> map, String key, {T? defaultValue}) {
+  static T? _getValueNullable<T>(
+    Map<String, dynamic> map,
+    String key, {
+    T? defaultValue,
+  }) {
     try {
       // Special handling for custom_image_path field
       if (key == 'custom_image_path') {
@@ -173,24 +264,24 @@ class Character extends BaseModel with TimestampedEntity {
         }
         return value as T?;
       }
-      
+
       // For all other fields
       if (!map.containsKey(key)) {
         return defaultValue;
       }
-      
+
       final value = map[key];
-      
+
       if (value == null) {
         return defaultValue;
       }
-      
+
       if (value is Map && value.containsKey('value')) {
         final nestedValue = value['value'];
         if (nestedValue == null && defaultValue != null) return defaultValue;
         return nestedValue as T?;
       }
-      
+
       return value as T?;
     } catch (e) {
       debugPrint('Error parsing field $key: $e');
@@ -198,28 +289,32 @@ class Character extends BaseModel with TimestampedEntity {
     }
   }
 
-  static T _getValue<T>(Map<String, dynamic> map, String key, {T? defaultValue}) {
+  static T _getValue<T>(
+    Map<String, dynamic> map,
+    String key, {
+    T? defaultValue,
+  }) {
     try {
       // For all fields
       if (!map.containsKey(key)) {
         if (defaultValue != null) return defaultValue;
         throw ArgumentError('Missing required field: $key');
       }
-      
+
       final value = map[key];
-      
+
       if (value == null) {
         if (defaultValue != null) return defaultValue;
         throw ArgumentError('Field $key is null and no default value provided');
       }
-      
+
       // Special handling for fields with nested structure like custom_image_path
       if (value is Map && value.containsKey('value')) {
         final nestedValue = value['value'];
         if (nestedValue == null || nestedValue == '') return defaultValue as T;
         return nestedValue as T;
       }
-      
+
       return value as T;
     } catch (e) {
       // Handle type casting errors gracefully
@@ -302,42 +397,46 @@ class Character extends BaseModel with TimestampedEntity {
   }
 
   // Image-related getters for better image management
-  
+
   /// Check if character has a profile image
-  bool get hasProfileImage => customImagePath != null && customImagePath!.isNotEmpty;
-  
-  /// Check if character has an appearance image  
-  bool get hasAppearanceImage => appearance.appearanceImagePath != null && appearance.appearanceImagePath!.isNotEmpty;
-  
+  bool get hasProfileImage =>
+      customImagePath != null && customImagePath!.isNotEmpty;
+
+  /// Check if character has an appearance image
+  bool get hasAppearanceImage =>
+      appearance.appearanceImagePath != null &&
+      appearance.appearanceImagePath!.isNotEmpty;
+
   /// Check if character has any images
   bool get hasAnyImages => hasProfileImage || hasAppearanceImage;
-  
+
   /// Get profile image filename from path
   String? get profileImageFilename {
     if (!hasProfileImage) return null;
     return customImagePath!.split('/').last;
   }
-  
+
   /// Get appearance image filename from path
   String? get appearanceImageFilename {
     if (!hasAppearanceImage) return null;
     return appearance.appearanceImagePath!.split('/').last;
   }
-  
+
   /// Check if profile image uses character ID naming (new format)
   bool get isProfileImageNamedWithId {
     if (!hasProfileImage) return false;
     final filename = profileImageFilename!;
     return filename.startsWith('${id}_profile_') && filename.endsWith('.jpg');
   }
-  
+
   /// Check if appearance image uses character ID naming (new format)
   bool get isAppearanceImageNamedWithId {
     if (!hasAppearanceImage) return false;
     final filename = appearanceImageFilename!;
-    return filename.startsWith('${id}_appearance_') && filename.endsWith('.jpg');
+    return filename.startsWith('${id}_appearance_') &&
+        filename.endsWith('.jpg');
   }
-  
+
   /// Check if both images use the new character ID naming format
   bool get areImagesNamedWithId {
     final profileCheck = !hasProfileImage || isProfileImageNamedWithId;
@@ -434,13 +533,33 @@ class CharacterStats {
       intelligence: Character._getValue<int>(json, 'intelligence'),
       wisdom: Character._getValue<int>(json, 'wisdom'),
       charisma: Character._getValue<int>(json, 'charisma'),
-      proficiencyBonus: Character._getValue<int>(json, 'proficiency_bonus', defaultValue: 2),
-      armorClass: Character._getValue<int>(json, 'armor_class', defaultValue: 10),
+      proficiencyBonus: Character._getValue<int>(
+        json,
+        'proficiency_bonus',
+        defaultValue: 2,
+      ),
+      armorClass: Character._getValue<int>(
+        json,
+        'armor_class',
+        defaultValue: 10,
+      ),
       speed: Character._getValue<int>(json, 'speed', defaultValue: 30),
       initiative: Character._getValue<int>(json, 'initiative', defaultValue: 0),
-      inspiration: Character._getValue<bool>(json, 'inspiration', defaultValue: false),
-      hasConcentration: Character._getValue<bool>(json, 'has_concentration', defaultValue: false),
-      hasShield: Character._getValue<bool>(json, 'has_shield', defaultValue: false),
+      inspiration: Character._getValue<bool>(
+        json,
+        'inspiration',
+        defaultValue: false,
+      ),
+      hasConcentration: Character._getValue<bool>(
+        json,
+        'has_concentration',
+        defaultValue: false,
+      ),
+      hasShield: Character._getValue<bool>(
+        json,
+        'has_shield',
+        defaultValue: false,
+      ),
     );
   }
 
@@ -485,12 +604,36 @@ class CharacterSavingThrows {
 
   factory CharacterSavingThrows.fromJson(Map<String, dynamic> json) {
     return CharacterSavingThrows(
-      strengthProficiency: Character._getValue<bool>(json, 'strength_proficiency', defaultValue: false),
-      dexterityProficiency: Character._getValue<bool>(json, 'dexterity_proficiency', defaultValue: false),
-      constitutionProficiency: Character._getValue<bool>(json, 'constitution_proficiency', defaultValue: false),
-      intelligenceProficiency: Character._getValue<bool>(json, 'intelligence_proficiency', defaultValue: false),
-      wisdomProficiency: Character._getValue<bool>(json, 'wisdom_proficiency', defaultValue: false),
-      charismaProficiency: Character._getValue<bool>(json, 'charisma_proficiency', defaultValue: false),
+      strengthProficiency: Character._getValue<bool>(
+        json,
+        'strength_proficiency',
+        defaultValue: false,
+      ),
+      dexterityProficiency: Character._getValue<bool>(
+        json,
+        'dexterity_proficiency',
+        defaultValue: false,
+      ),
+      constitutionProficiency: Character._getValue<bool>(
+        json,
+        'constitution_proficiency',
+        defaultValue: false,
+      ),
+      intelligenceProficiency: Character._getValue<bool>(
+        json,
+        'intelligence_proficiency',
+        defaultValue: false,
+      ),
+      wisdomProficiency: Character._getValue<bool>(
+        json,
+        'wisdom_proficiency',
+        defaultValue: false,
+      ),
+      charismaProficiency: Character._getValue<bool>(
+        json,
+        'charisma_proficiency',
+        defaultValue: false,
+      ),
     );
   }
 }
@@ -667,76 +810,298 @@ class CharacterSkillChecks {
 
   factory CharacterSkillChecks.fromJson(Map<String, dynamic> json) {
     return CharacterSkillChecks(
-      acrobaticsProficiency: Character._getValue<bool>(json, 'acrobatics_proficiency', defaultValue: false),
-      acrobaticsExpertise: Character._getValue<bool>(json, 'acrobatics_expertise', defaultValue: false),
-      acrobaticsBonus: Character._getValue<int>(json, 'acrobatics_bonus', defaultValue: 0),
-      animalHandlingProficiency: Character._getValue<bool>(json, 'animal_handling_proficiency', defaultValue: false),
-      animalHandlingExpertise: Character._getValue<bool>(json, 'animal_handling_expertise', defaultValue: false),
-      animalHandlingBonus: Character._getValue<int>(json, 'animal_handling_bonus', defaultValue: 0),
-      arcanaProficiency: Character._getValue<bool>(json, 'arcana_proficiency', defaultValue: false),
-      arcanaExpertise: Character._getValue<bool>(json, 'arcana_expertise', defaultValue: false),
-      arcanaBonus: Character._getValue<int>(json, 'arcana_bonus', defaultValue: 0),
-      athleticsProficiency: Character._getValue<bool>(json, 'athletics_proficiency', defaultValue: false),
-      athleticsExpertise: Character._getValue<bool>(json, 'athletics_expertise', defaultValue: false),
-      athleticsBonus: Character._getValue<int>(json, 'athletics_bonus', defaultValue: 0),
-      deceptionProficiency: Character._getValue<bool>(json, 'deception_proficiency', defaultValue: false),
-      deceptionExpertise: Character._getValue<bool>(json, 'deception_expertise', defaultValue: false),
-      deceptionBonus: Character._getValue<int>(json, 'deception_bonus', defaultValue: 0),
-      historyProficiency: Character._getValue<bool>(json, 'history_proficiency', defaultValue: false),
-      historyExpertise: Character._getValue<bool>(json, 'history_expertise', defaultValue: false),
-      historyBonus: Character._getValue<int>(json, 'history_bonus', defaultValue: 0),
-      insightProficiency: Character._getValue<bool>(json, 'insight_proficiency', defaultValue: false),
-      insightExpertise: Character._getValue<bool>(json, 'insight_expertise', defaultValue: false),
-      insightBonus: Character._getValue<int>(json, 'insight_bonus', defaultValue: 0),
-      intimidationProficiency: Character._getValue<bool>(json, 'intimidation_proficiency', defaultValue: false),
-      intimidationExpertise: Character._getValue<bool>(json, 'intimidation_expertise', defaultValue: false),
-      intimidationBonus: Character._getValue<int>(json, 'intimidation_bonus', defaultValue: 0),
-      investigationProficiency: Character._getValue<bool>(json, 'investigation_proficiency', defaultValue: false),
-      investigationExpertise: Character._getValue<bool>(json, 'investigation_expertise', defaultValue: false),
-      investigationBonus: Character._getValue<int>(json, 'investigation_bonus', defaultValue: 0),
-      medicineProficiency: Character._getValue<bool>(json, 'medicine_proficiency', defaultValue: false),
-      medicineExpertise: Character._getValue<bool>(json, 'medicine_expertise', defaultValue: false),
-      medicineBonus: Character._getValue<int>(json, 'medicine_bonus', defaultValue: 0),
-      natureProficiency: Character._getValue<bool>(json, 'nature_proficiency', defaultValue: false),
-      natureExpertise: Character._getValue<bool>(json, 'nature_expertise', defaultValue: false),
-      natureBonus: Character._getValue<int>(json, 'nature_bonus', defaultValue: 0),
-      perceptionProficiency: Character._getValue<bool>(json, 'perception_proficiency', defaultValue: false),
-      perceptionExpertise: Character._getValue<bool>(json, 'perception_expertise', defaultValue: false),
-      perceptionBonus: Character._getValue<int>(json, 'perception_bonus', defaultValue: 0),
-      performanceProficiency: Character._getValue<bool>(json, 'performance_proficiency', defaultValue: false),
-      performanceExpertise: Character._getValue<bool>(json, 'performance_expertise', defaultValue: false),
-      performanceBonus: Character._getValue<int>(json, 'performance_bonus', defaultValue: 0),
-      persuasionProficiency: Character._getValue<bool>(json, 'persuasion_proficiency', defaultValue: false),
-      persuasionExpertise: Character._getValue<bool>(json, 'persuasion_expertise', defaultValue: false),
-      persuasionBonus: Character._getValue<int>(json, 'persuasion_bonus', defaultValue: 0),
-      religionProficiency: Character._getValue<bool>(json, 'religion_proficiency', defaultValue: false),
-      religionExpertise: Character._getValue<bool>(json, 'religion_expertise', defaultValue: false),
-      religionBonus: Character._getValue<int>(json, 'religion_bonus', defaultValue: 0),
-      sleightOfHandProficiency: Character._getValue<bool>(json, 'sleight_of_hand_proficiency', defaultValue: false),
-      sleightOfHandExpertise: Character._getValue<bool>(json, 'sleight_of_hand_expertise', defaultValue: false),
-      sleightOfHandBonus: Character._getValue<int>(json, 'sleight_of_hand_bonus', defaultValue: 0),
-      stealthProficiency: Character._getValue<bool>(json, 'stealth_proficiency', defaultValue: false),
-      stealthExpertise: Character._getValue<bool>(json, 'stealth_expertise', defaultValue: false),
-      stealthBonus: Character._getValue<int>(json, 'stealth_bonus', defaultValue: 0),
-      survivalProficiency: Character._getValue<bool>(json, 'survival_proficiency', defaultValue: false),
-      survivalExpertise: Character._getValue<bool>(json, 'survival_expertise', defaultValue: false),
-      survivalBonus: Character._getValue<int>(json, 'survival_bonus', defaultValue: 0),
+      acrobaticsProficiency: Character._getValue<bool>(
+        json,
+        'acrobatics_proficiency',
+        defaultValue: false,
+      ),
+      acrobaticsExpertise: Character._getValue<bool>(
+        json,
+        'acrobatics_expertise',
+        defaultValue: false,
+      ),
+      acrobaticsBonus: Character._getValue<int>(
+        json,
+        'acrobatics_bonus',
+        defaultValue: 0,
+      ),
+      animalHandlingProficiency: Character._getValue<bool>(
+        json,
+        'animal_handling_proficiency',
+        defaultValue: false,
+      ),
+      animalHandlingExpertise: Character._getValue<bool>(
+        json,
+        'animal_handling_expertise',
+        defaultValue: false,
+      ),
+      animalHandlingBonus: Character._getValue<int>(
+        json,
+        'animal_handling_bonus',
+        defaultValue: 0,
+      ),
+      arcanaProficiency: Character._getValue<bool>(
+        json,
+        'arcana_proficiency',
+        defaultValue: false,
+      ),
+      arcanaExpertise: Character._getValue<bool>(
+        json,
+        'arcana_expertise',
+        defaultValue: false,
+      ),
+      arcanaBonus: Character._getValue<int>(
+        json,
+        'arcana_bonus',
+        defaultValue: 0,
+      ),
+      athleticsProficiency: Character._getValue<bool>(
+        json,
+        'athletics_proficiency',
+        defaultValue: false,
+      ),
+      athleticsExpertise: Character._getValue<bool>(
+        json,
+        'athletics_expertise',
+        defaultValue: false,
+      ),
+      athleticsBonus: Character._getValue<int>(
+        json,
+        'athletics_bonus',
+        defaultValue: 0,
+      ),
+      deceptionProficiency: Character._getValue<bool>(
+        json,
+        'deception_proficiency',
+        defaultValue: false,
+      ),
+      deceptionExpertise: Character._getValue<bool>(
+        json,
+        'deception_expertise',
+        defaultValue: false,
+      ),
+      deceptionBonus: Character._getValue<int>(
+        json,
+        'deception_bonus',
+        defaultValue: 0,
+      ),
+      historyProficiency: Character._getValue<bool>(
+        json,
+        'history_proficiency',
+        defaultValue: false,
+      ),
+      historyExpertise: Character._getValue<bool>(
+        json,
+        'history_expertise',
+        defaultValue: false,
+      ),
+      historyBonus: Character._getValue<int>(
+        json,
+        'history_bonus',
+        defaultValue: 0,
+      ),
+      insightProficiency: Character._getValue<bool>(
+        json,
+        'insight_proficiency',
+        defaultValue: false,
+      ),
+      insightExpertise: Character._getValue<bool>(
+        json,
+        'insight_expertise',
+        defaultValue: false,
+      ),
+      insightBonus: Character._getValue<int>(
+        json,
+        'insight_bonus',
+        defaultValue: 0,
+      ),
+      intimidationProficiency: Character._getValue<bool>(
+        json,
+        'intimidation_proficiency',
+        defaultValue: false,
+      ),
+      intimidationExpertise: Character._getValue<bool>(
+        json,
+        'intimidation_expertise',
+        defaultValue: false,
+      ),
+      intimidationBonus: Character._getValue<int>(
+        json,
+        'intimidation_bonus',
+        defaultValue: 0,
+      ),
+      investigationProficiency: Character._getValue<bool>(
+        json,
+        'investigation_proficiency',
+        defaultValue: false,
+      ),
+      investigationExpertise: Character._getValue<bool>(
+        json,
+        'investigation_expertise',
+        defaultValue: false,
+      ),
+      investigationBonus: Character._getValue<int>(
+        json,
+        'investigation_bonus',
+        defaultValue: 0,
+      ),
+      medicineProficiency: Character._getValue<bool>(
+        json,
+        'medicine_proficiency',
+        defaultValue: false,
+      ),
+      medicineExpertise: Character._getValue<bool>(
+        json,
+        'medicine_expertise',
+        defaultValue: false,
+      ),
+      medicineBonus: Character._getValue<int>(
+        json,
+        'medicine_bonus',
+        defaultValue: 0,
+      ),
+      natureProficiency: Character._getValue<bool>(
+        json,
+        'nature_proficiency',
+        defaultValue: false,
+      ),
+      natureExpertise: Character._getValue<bool>(
+        json,
+        'nature_expertise',
+        defaultValue: false,
+      ),
+      natureBonus: Character._getValue<int>(
+        json,
+        'nature_bonus',
+        defaultValue: 0,
+      ),
+      perceptionProficiency: Character._getValue<bool>(
+        json,
+        'perception_proficiency',
+        defaultValue: false,
+      ),
+      perceptionExpertise: Character._getValue<bool>(
+        json,
+        'perception_expertise',
+        defaultValue: false,
+      ),
+      perceptionBonus: Character._getValue<int>(
+        json,
+        'perception_bonus',
+        defaultValue: 0,
+      ),
+      performanceProficiency: Character._getValue<bool>(
+        json,
+        'performance_proficiency',
+        defaultValue: false,
+      ),
+      performanceExpertise: Character._getValue<bool>(
+        json,
+        'performance_expertise',
+        defaultValue: false,
+      ),
+      performanceBonus: Character._getValue<int>(
+        json,
+        'performance_bonus',
+        defaultValue: 0,
+      ),
+      persuasionProficiency: Character._getValue<bool>(
+        json,
+        'persuasion_proficiency',
+        defaultValue: false,
+      ),
+      persuasionExpertise: Character._getValue<bool>(
+        json,
+        'persuasion_expertise',
+        defaultValue: false,
+      ),
+      persuasionBonus: Character._getValue<int>(
+        json,
+        'persuasion_bonus',
+        defaultValue: 0,
+      ),
+      religionProficiency: Character._getValue<bool>(
+        json,
+        'religion_proficiency',
+        defaultValue: false,
+      ),
+      religionExpertise: Character._getValue<bool>(
+        json,
+        'religion_expertise',
+        defaultValue: false,
+      ),
+      religionBonus: Character._getValue<int>(
+        json,
+        'religion_bonus',
+        defaultValue: 0,
+      ),
+      sleightOfHandProficiency: Character._getValue<bool>(
+        json,
+        'sleight_of_hand_proficiency',
+        defaultValue: false,
+      ),
+      sleightOfHandExpertise: Character._getValue<bool>(
+        json,
+        'sleight_of_hand_expertise',
+        defaultValue: false,
+      ),
+      sleightOfHandBonus: Character._getValue<int>(
+        json,
+        'sleight_of_hand_bonus',
+        defaultValue: 0,
+      ),
+      stealthProficiency: Character._getValue<bool>(
+        json,
+        'stealth_proficiency',
+        defaultValue: false,
+      ),
+      stealthExpertise: Character._getValue<bool>(
+        json,
+        'stealth_expertise',
+        defaultValue: false,
+      ),
+      stealthBonus: Character._getValue<int>(
+        json,
+        'stealth_bonus',
+        defaultValue: 0,
+      ),
+      survivalProficiency: Character._getValue<bool>(
+        json,
+        'survival_proficiency',
+        defaultValue: false,
+      ),
+      survivalExpertise: Character._getValue<bool>(
+        json,
+        'survival_expertise',
+        defaultValue: false,
+      ),
+      survivalBonus: Character._getValue<int>(
+        json,
+        'survival_bonus',
+        defaultValue: 0,
+      ),
     );
   }
 
   /// Calculate skill bonus based on ability score, proficiency, expertise, and custom bonus
-  static int calculateSkillBonus(int abilityScore, bool isProficient, bool hasExpertise, int proficiencyBonus, [int customBonus = 0]) {
+  static int calculateSkillBonus(
+    int abilityScore,
+    bool isProficient,
+    bool hasExpertise,
+    int proficiencyBonus, [
+    int customBonus = 0,
+  ]) {
     final abilityModifier = ((abilityScore - 10) / 2).floor();
     int bonus = abilityModifier;
-    
+
     if (hasExpertise) {
       bonus += proficiencyBonus * 2; // Expertise adds double proficiency bonus
     } else if (isProficient) {
       bonus += proficiencyBonus;
     }
-    
+
     bonus += customBonus; // Add custom bonus
-    
+
     return bonus;
   }
 
@@ -772,12 +1137,16 @@ class CharacterSkillChecks {
   }
 
   /// Calculate skill modifier for a specific skill
-  int calculateSkillModifier(String skill, CharacterStats stats, int proficiencyBonus) {
+  int calculateSkillModifier(
+    String skill,
+    CharacterStats stats,
+    int proficiencyBonus,
+  ) {
     final abilityScore = getSkillAbilityScore(skill, stats);
-    
+
     bool isProficient = false;
     bool hasExpertise = false;
-    
+
     switch (skill) {
       case 'acrobatics':
         isProficient = acrobaticsProficiency;
@@ -852,8 +1221,13 @@ class CharacterSkillChecks {
         hasExpertise = survivalExpertise;
         break;
     }
-    
-    return calculateSkillBonus(abilityScore, isProficient, hasExpertise, proficiencyBonus);
+
+    return calculateSkillBonus(
+      abilityScore,
+      isProficient,
+      hasExpertise,
+      proficiencyBonus,
+    );
   }
 }
 
@@ -883,10 +1257,22 @@ class CharacterHealth {
   factory CharacterHealth.fromJson(Map<String, dynamic> json) {
     return CharacterHealth(
       maxHitPoints: Character._getValue<int>(json, 'max_hit_points'),
-      currentHitPoints: Character._getValue<int>(json, 'current_hit_points', defaultValue: 0),
-      temporaryHitPoints: Character._getValue<int>(json, 'temporary_hit_points', defaultValue: 0),
+      currentHitPoints: Character._getValue<int>(
+        json,
+        'current_hit_points',
+        defaultValue: 0,
+      ),
+      temporaryHitPoints: Character._getValue<int>(
+        json,
+        'temporary_hit_points',
+        defaultValue: 0,
+      ),
       hitDice: Character._getValue<int>(json, 'hit_dice', defaultValue: 1),
-      hitDiceType: Character._getValue<String>(json, 'hit_dice_type', defaultValue: 'd8'),
+      hitDiceType: Character._getValue<String>(
+        json,
+        'hit_dice_type',
+        defaultValue: 'd8',
+      ),
     );
   }
 }
@@ -916,11 +1302,33 @@ class CharacterAttack {
 
   factory CharacterAttack.fromJson(Map<String, dynamic> json) {
     return CharacterAttack(
-      id: Character._getValueNullable<String>(json, 'id', defaultValue: '') ?? '',
-      name: Character._getValueNullable<String>(json, 'name', defaultValue: '') ?? '',
-      attackBonus: Character._getValueNullable<String>(json, 'attack_bonus', defaultValue: '') ?? '',
-      damage: Character._getValueNullable<String>(json, 'damage', defaultValue: '') ?? '',
-      damageType: Character._getValueNullable<String>(json, 'damage_type', defaultValue: '') ?? '',
+      id:
+          Character._getValueNullable<String>(json, 'id', defaultValue: '') ??
+          '',
+      name:
+          Character._getValueNullable<String>(json, 'name', defaultValue: '') ??
+          '',
+      attackBonus:
+          Character._getValueNullable<String>(
+            json,
+            'attack_bonus',
+            defaultValue: '',
+          ) ??
+          '',
+      damage:
+          Character._getValueNullable<String>(
+            json,
+            'damage',
+            defaultValue: '',
+          ) ??
+          '',
+      damageType:
+          Character._getValueNullable<String>(
+            json,
+            'damage_type',
+            defaultValue: '',
+          ) ??
+          '',
     );
   }
 }
@@ -989,24 +1397,96 @@ class CharacterSpellSlots {
 
   factory CharacterSpellSlots.fromJson(Map<String, dynamic> json) {
     return CharacterSpellSlots(
-      level1Slots: Character._getValue<int>(json, 'level1_slots', defaultValue: 0),
-      level1Used: Character._getValue<int>(json, 'level1_used', defaultValue: 0),
-      level2Slots: Character._getValue<int>(json, 'level2_slots', defaultValue: 0),
-      level2Used: Character._getValue<int>(json, 'level2_used', defaultValue: 0),
-      level3Slots: Character._getValue<int>(json, 'level3_slots', defaultValue: 0),
-      level3Used: Character._getValue<int>(json, 'level3_used', defaultValue: 0),
-      level4Slots: Character._getValue<int>(json, 'level4_slots', defaultValue: 0),
-      level4Used: Character._getValue<int>(json, 'level4_used', defaultValue: 0),
-      level5Slots: Character._getValue<int>(json, 'level5_slots', defaultValue: 0),
-      level5Used: Character._getValue<int>(json, 'level5_used', defaultValue: 0),
-      level6Slots: Character._getValue<int>(json, 'level6_slots', defaultValue: 0),
-      level6Used: Character._getValue<int>(json, 'level6_used', defaultValue: 0),
-      level7Slots: Character._getValue<int>(json, 'level7_slots', defaultValue: 0),
-      level7Used: Character._getValue<int>(json, 'level7_used', defaultValue: 0),
-      level8Slots: Character._getValue<int>(json, 'level8_slots', defaultValue: 0),
-      level8Used: Character._getValue<int>(json, 'level8_used', defaultValue: 0),
-      level9Slots: Character._getValue<int>(json, 'level9_slots', defaultValue: 0),
-      level9Used: Character._getValue<int>(json, 'level9_used', defaultValue: 0),
+      level1Slots: Character._getValue<int>(
+        json,
+        'level1_slots',
+        defaultValue: 0,
+      ),
+      level1Used: Character._getValue<int>(
+        json,
+        'level1_used',
+        defaultValue: 0,
+      ),
+      level2Slots: Character._getValue<int>(
+        json,
+        'level2_slots',
+        defaultValue: 0,
+      ),
+      level2Used: Character._getValue<int>(
+        json,
+        'level2_used',
+        defaultValue: 0,
+      ),
+      level3Slots: Character._getValue<int>(
+        json,
+        'level3_slots',
+        defaultValue: 0,
+      ),
+      level3Used: Character._getValue<int>(
+        json,
+        'level3_used',
+        defaultValue: 0,
+      ),
+      level4Slots: Character._getValue<int>(
+        json,
+        'level4_slots',
+        defaultValue: 0,
+      ),
+      level4Used: Character._getValue<int>(
+        json,
+        'level4_used',
+        defaultValue: 0,
+      ),
+      level5Slots: Character._getValue<int>(
+        json,
+        'level5_slots',
+        defaultValue: 0,
+      ),
+      level5Used: Character._getValue<int>(
+        json,
+        'level5_used',
+        defaultValue: 0,
+      ),
+      level6Slots: Character._getValue<int>(
+        json,
+        'level6_slots',
+        defaultValue: 0,
+      ),
+      level6Used: Character._getValue<int>(
+        json,
+        'level6_used',
+        defaultValue: 0,
+      ),
+      level7Slots: Character._getValue<int>(
+        json,
+        'level7_slots',
+        defaultValue: 0,
+      ),
+      level7Used: Character._getValue<int>(
+        json,
+        'level7_used',
+        defaultValue: 0,
+      ),
+      level8Slots: Character._getValue<int>(
+        json,
+        'level8_slots',
+        defaultValue: 0,
+      ),
+      level8Used: Character._getValue<int>(
+        json,
+        'level8_used',
+        defaultValue: 0,
+      ),
+      level9Slots: Character._getValue<int>(
+        json,
+        'level9_slots',
+        defaultValue: 0,
+      ),
+      level9Used: Character._getValue<int>(
+        json,
+        'level9_used',
+        defaultValue: 0,
+      ),
     );
   }
 }
@@ -1036,7 +1516,11 @@ class CharacterPersonalizedSlot {
       name: Character._getValue<String>(json, 'name', defaultValue: 'Slot'),
       maxSlots: Character._getValue<int>(json, 'max_slots', defaultValue: 0),
       usedSlots: Character._getValue<int>(json, 'used_slots', defaultValue: 0),
-      diceType: Character._getValue<String>(json, 'dice_type', defaultValue: 'd6'),
+      diceType: Character._getValue<String>(
+        json,
+        'dice_type',
+        defaultValue: 'd6',
+      ),
     );
   }
 
@@ -1112,17 +1596,37 @@ class CharacterAppearance {
     'eye_color': {'value': eyeColor},
     'additional_details': {'value': additionalDetails},
     'appearance_image_path': {'value': appearanceImagePath},
-    if (appearanceImageData != null) 'appearance_image_data': {'value': appearanceImageData},
+    // Note: appearance image binary data is intentionally not serialized
+    // to avoid exceeding Firestore document size limits. Legacy data is
+    // still read by the app via fromJson, but new saves omit the raw image
+    // data. Images should be stored locally in files and referenced via
+    // `appearance_image_path` or handled via Firebase Storage if needed.
   };
 
   factory CharacterAppearance.fromJson(Map<String, dynamic> json) {
     return CharacterAppearance(
       height: Character._getValue<String>(json, 'height', defaultValue: ''),
       age: Character._getValue<String>(json, 'age', defaultValue: ''),
-      eyeColor: Character._getValue<String>(json, 'eye_color', defaultValue: ''),
-      additionalDetails: Character._getValue<String>(json, 'additional_details', defaultValue: ''),
-      appearanceImagePath: Character._getValue<String>(json, 'appearance_image_path', defaultValue: ''),
-      appearanceImageData: Character._getValueNullable<String?>(json, 'appearance_image_data', defaultValue: null),
+      eyeColor: Character._getValue<String>(
+        json,
+        'eye_color',
+        defaultValue: '',
+      ),
+      additionalDetails: Character._getValue<String>(
+        json,
+        'additional_details',
+        defaultValue: '',
+      ),
+      appearanceImagePath: Character._getValue<String>(
+        json,
+        'appearance_image_path',
+        defaultValue: '',
+      ),
+      appearanceImageData: Character._getValueNullable<String?>(
+        json,
+        'appearance_image_data',
+        defaultValue: null,
+      ),
     );
   }
 
@@ -1170,11 +1674,37 @@ class CharacterSpellPreparation {
 
   factory CharacterSpellPreparation.fromJson(Map<String, dynamic> json) {
     return CharacterSpellPreparation(
-      preparedSpells: List<String>.from(Character._getValue<List<dynamic>>(json, 'prepared_spells', defaultValue: const [])),
-      alwaysPreparedSpells: List<String>.from(Character._getValue<List<dynamic>>(json, 'always_prepared_spells', defaultValue: const [])),
-      freeUseSpells: List<String>.from(Character._getValue<List<dynamic>>(json, 'free_use_spells', defaultValue: const [])),
-      maxPreparedSpells: Character._getValue<int>(json, 'max_prepared_spells', defaultValue: 0),
-      enablePreparation: Character._getValue<bool>(json, 'enable_preparation', defaultValue: true),
+      preparedSpells: List<String>.from(
+        Character._getValue<List<dynamic>>(
+          json,
+          'prepared_spells',
+          defaultValue: const [],
+        ),
+      ),
+      alwaysPreparedSpells: List<String>.from(
+        Character._getValue<List<dynamic>>(
+          json,
+          'always_prepared_spells',
+          defaultValue: const [],
+        ),
+      ),
+      freeUseSpells: List<String>.from(
+        Character._getValue<List<dynamic>>(
+          json,
+          'free_use_spells',
+          defaultValue: const [],
+        ),
+      ),
+      maxPreparedSpells: Character._getValue<int>(
+        json,
+        'max_prepared_spells',
+        defaultValue: 0,
+      ),
+      enablePreparation: Character._getValue<bool>(
+        json,
+        'enable_preparation',
+        defaultValue: true,
+      ),
     );
   }
 
@@ -1195,10 +1725,23 @@ class CharacterSpellPreparation {
   }
 
   /// Calculate the maximum number of prepared spells based on class, level, and modifier
-  static int calculateMaxPreparedSpells(String characterClass, int level, int modifier) {
+  static int calculateMaxPreparedSpells(
+    String characterClass,
+    int level,
+    int modifier,
+  ) {
     // Classes that don't prepare spells
-    const nonPreparingClasses = ['sorcerer', 'warlock', 'bard', 'ranger', 'fighter', 'barbarian', 'monk', 'rogue'];
-    
+    const nonPreparingClasses = [
+      'sorcerer',
+      'warlock',
+      'bard',
+      'ranger',
+      'fighter',
+      'barbarian',
+      'monk',
+      'rogue',
+    ];
+
     if (nonPreparingClasses.contains(characterClass.toLowerCase())) {
       return 0;
     }
@@ -1230,7 +1773,7 @@ class CharacterSpellPreparation {
   /// Get the appropriate ability modifier for spell preparation
   static int getSpellcastingModifier(Character character) {
     final className = character.characterClass.toLowerCase();
-    
+
     switch (className) {
       case 'wizard':
       case 'artificer':
@@ -1252,7 +1795,9 @@ class CharacterSpellPreparation {
 
   /// Get the current number of prepared spells (excluding always prepared)
   int get currentPreparedCount {
-    return preparedSpells.where((spellId) => !alwaysPreparedSpells.contains(spellId)).length;
+    return preparedSpells
+        .where((spellId) => !alwaysPreparedSpells.contains(spellId))
+        .length;
   }
 
   /// Get the total number of prepared spells (including always prepared)
@@ -1262,7 +1807,8 @@ class CharacterSpellPreparation {
 
   /// Check if a spell is prepared
   bool isSpellPrepared(String spellId) {
-    return preparedSpells.contains(spellId) || alwaysPreparedSpells.contains(spellId);
+    return preparedSpells.contains(spellId) ||
+        alwaysPreparedSpells.contains(spellId);
   }
 
   /// Check if a spell is always prepared
@@ -1284,7 +1830,10 @@ class CharacterSpellPreparation {
   /// Get remaining preparation slots
   int get remainingSlots {
     if (!enablePreparation) return 0;
-    return (maxPreparedSpells - currentPreparedCount).clamp(0, maxPreparedSpells);
+    return (maxPreparedSpells - currentPreparedCount).clamp(
+      0,
+      maxPreparedSpells,
+    );
   }
 }
 
@@ -1333,13 +1882,9 @@ class CharacterDeathSaves {
 class CharacterLanguages {
   final List<String> languages;
 
-  const CharacterLanguages({
-    this.languages = const [],
-  });
+  const CharacterLanguages({this.languages = const []});
 
-  Map<String, dynamic> toJson() => {
-    'languages': languages,
-  };
+  Map<String, dynamic> toJson() => {'languages': languages};
 
   factory CharacterLanguages.fromJson(Map<String, dynamic> json) {
     return CharacterLanguages(
@@ -1347,12 +1892,8 @@ class CharacterLanguages {
     );
   }
 
-  CharacterLanguages copyWith({
-    List<String>? languages,
-  }) {
-    return CharacterLanguages(
-      languages: languages ?? this.languages,
-    );
+  CharacterLanguages copyWith({List<String>? languages}) {
+    return CharacterLanguages(languages: languages ?? this.languages);
   }
 }
 
@@ -1360,15 +1901,9 @@ class CharacterMoneyItems {
   final String money;
   final List<String> items;
 
-  const CharacterMoneyItems({
-    this.money = '',
-    this.items = const [],
-  });
+  const CharacterMoneyItems({this.money = '', this.items = const []});
 
-  Map<String, dynamic> toJson() => {
-    'money': money,
-    'items': items,
-  };
+  Map<String, dynamic> toJson() => {'money': money, 'items': items};
 
   factory CharacterMoneyItems.fromJson(Map<String, dynamic> json) {
     return CharacterMoneyItems(
@@ -1377,10 +1912,7 @@ class CharacterMoneyItems {
     );
   }
 
-  CharacterMoneyItems copyWith({
-    String? money,
-    List<String>? items,
-  }) {
+  CharacterMoneyItems copyWith({String? money, List<String>? items}) {
     return CharacterMoneyItems(
       money: money ?? this.money,
       items: items ?? this.items,

@@ -52,6 +52,7 @@ dependencies:
   shared_preferences: ^2.3.2
   crop_your_image: ^2.0.0
   material_symbols_icons: ^4.2906.0
+  image: ^4.0.17
 
 dev_dependencies:
   flutter_test:
