@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:crop_your_image/crop_your_image.dart';
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 
 class ImageCropWidget extends StatefulWidget {
@@ -85,12 +86,10 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
       debugPrint('Error loading image: $e');
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading image: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        SnackbarHelper.showError(
+          context,
+          'Error loading image: $e',
+        );        
       }
     }
   }
@@ -219,12 +218,10 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
                 widget.onCropped(croppedImage);
               case CropFailure(:final cause):
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to crop image: $cause'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  SnackbarHelper.showError(
+                    context,
+                    'Failed to crop image: $cause',
+                  );                  
                 }
             }
             setState(() => _isCropping = false);

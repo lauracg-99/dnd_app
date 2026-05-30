@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/characters_viewmodel.dart';
@@ -55,12 +56,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
 
     final level = int.tryParse(_levelController.text.trim());
     if (level == null || level < CharacterLevelConstants.minLevel || level > CharacterLevelConstants.maxLevel) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please enter a valid level between ${CharacterLevelConstants.minLevel} and ${CharacterLevelConstants.maxLevel}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackbarHelper.showError(context, 'Please enter a valid level between ${CharacterLevelConstants.minLevel} and ${CharacterLevelConstants.maxLevel}');      
       return;
     }
 

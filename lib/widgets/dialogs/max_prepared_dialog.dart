@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 
 typedef MaxPreparedSaveCallback = void Function(int newMax);
@@ -42,13 +43,10 @@ class _MaxPreparedDialogState extends State<MaxPreparedDialog> {
   void _save() {
     final newMax = int.tryParse(_controller.text);
     if (newMax == null || newMax < 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid number'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
+      SnackbarHelper.showError(
+        context,
+        'Please enter a valid number',
+      );      
       return;
     }
 

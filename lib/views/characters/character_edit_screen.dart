@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/character_cover_tab.dart';
 import 'package:dnd_app/views/characters/QuickGuideTab/characters_quick_guide.dart';
 import 'package:dnd_app/views/characters/StatsTab/stats_tab.dart';
@@ -3279,14 +3280,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     if (hadExhaustion && _exhaustionLevel < previousLevel) {
       message += ' Exhaustion reduced by 1.';
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 3),
-      ),
-    );
+    SnackbarHelper.showSuccess(context, message);    
   }
 
   void _takeLongRest() {
@@ -3317,13 +3311,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Manual save only - no auto-save for long rest
 
     // Show confirmation message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All spell slots have been restored!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
+    SnackbarHelper.showSuccess(context, 'All spell slots have been restored!');    
   }
 
   Future<void> _pickImage() async {
@@ -3410,25 +3398,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           // Show success message
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profile image updated successfully!'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
-              ),
-            );
+            SnackbarHelper.showSuccess(context, 'Profile image updated successfully!');
           }
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error picking image: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Error picking image: $e');        
       }
     } finally {
       if (mounted) {
@@ -3463,25 +3439,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile image removed'),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        SnackbarHelper.showWarning(context, 'Profile image removed');       
       }
 
       // Manual save only - no auto-save after profile image removal
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error removing image: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Error removing image: $e');        
       }
     }
   }
@@ -3566,25 +3530,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           // Show success message
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Appearance image updated successfully!'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
-              ),
-            );
+            SnackbarHelper.showSuccess(context, 'Appearance image updated successfully!');            
           }
         }
       }
     } catch (e) {
       debugPrint('Error picking appearance image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error picking appearance image: $e'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Error picking appearance image: $e');        
       }
     } finally {
       setState(() {
@@ -3617,26 +3570,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Appearance image removed'),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        SnackbarHelper.showWarning(context, 'Appearance image removed');        
       }
 
       // Manual save only - no auto-save after appearance image removal
     } catch (e) {
       debugPrint('Error removing appearance image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error removing appearance image: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Error removing appearance image: $e');        
       }
     }
   }
@@ -4364,28 +4305,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
       // Show success message
       if (mounted && showToast) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(successMessage ?? 'Character saved successfully!'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // Navigate back to character list after successful save
-        //Navigator.pop(context);
+        SnackbarHelper.showSuccess(
+          context,
+          successMessage ?? 'Character saved successfully!',
+        );        
       }
     } catch (e) {
       debugPrint('Error saving character: $e');
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save character: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Failed to save character: $e');        
       }
     } finally {
       // Hide loading indicator
@@ -4553,12 +4482,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     // Manual save only - no auto-save
                     Navigator.pop(context);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter a valid number'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    SnackbarHelper.showError(context, 'Please enter a valid number');                        
                   }
                 },
                 child: const Text('Save'),

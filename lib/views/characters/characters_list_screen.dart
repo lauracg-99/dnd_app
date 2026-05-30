@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/characters_viewmodel.dart';
@@ -511,35 +512,15 @@ class _CharactersListScreenState extends State<CharactersListScreen>
       if (result.success) {
         // Refresh characters after sync
         context.read<CharactersViewModel>().loadCharacters();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Changes downloaded successfully!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        
+        SnackbarHelper.showSuccess(context, 'Changes downloaded successfully!');                
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Download failed: ${result.errorMessage}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+          SnackbarHelper.showError(context, 'Download failed: ${result.errorMessage}');          
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Download error: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Download error: $e');
       }
     }
   }
@@ -691,23 +672,11 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     try {
       await _authService.signOut();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Signed out successfully'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        SnackbarHelper.showSuccess(context, 'Signed out successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error signing out: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Error signing out: $e');
       }
     }
   }
@@ -827,15 +796,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
       if (!cloudDeleteResult.success) {
         if (mounted) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Failed to delete cloud data: ${cloudDeleteResult.errorMessage}',
-              ),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
-          );
+          SnackbarHelper.showError(context, 'Failed to delete cloud data: ${cloudDeleteResult.errorMessage}');          
         }
         return;
       }
@@ -847,33 +808,15 @@ class _CharactersListScreenState extends State<CharactersListScreen>
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
         if (authDeleteResult.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account deleted successfully'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
-          );
+          SnackbarHelper.showSuccess(context, 'Account deleted successfully');          
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(authDeleteResult.errorMessage!),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
-          );
+          SnackbarHelper.showError(context, 'Failed to delete account: ${authDeleteResult.errorMessage}');          
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting account: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Error deleting account: $e');        
       }
     }
   }

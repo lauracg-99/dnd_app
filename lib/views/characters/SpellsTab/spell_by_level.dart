@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/character_model.dart';
@@ -300,14 +301,10 @@ class _SpellByLevelState extends State<SpellByLevel> {
                               if (canPrepareMore || isAlwaysPrepared) {
                                 widget.onToggleSpellPreparation(spell.id, true);
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Cannot prepare more spells. Maximum: $currentMaxPrepared',
-                                    ),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
+                                SnackbarHelper.showError(
+                                  context,
+                                  'Cannot prepare more spells. Maximum: $currentMaxPrepared',
+                                );                                
                               }
                             } else {
                               widget.onToggleSpellPreparation(spell.id, false);
@@ -542,13 +539,10 @@ class _SpellByLevelState extends State<SpellByLevel> {
 
       // Show success message - use mounted check to avoid async context issues
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${spell.name} removed from spell list'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        SnackbarHelper.showSuccess(
+          context,
+          '${spell.name} removed from spell list',
+        );        
       }
     }
 

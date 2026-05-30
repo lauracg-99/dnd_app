@@ -1,5 +1,6 @@
 import 'package:dnd_app/utils/quill_toolbar_configs.dart';
 import 'package:dnd_app/utils/simple_quill_editor.dart';
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:dnd_app/utils/source_mapper.dart';
 import 'package:dnd_app/widgets/action_button.dart';
 import 'package:flutter/material.dart';
@@ -161,16 +162,7 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                                   newFeats.add(feat.name);
                                   _updateFeats(newFeats);
                                   Navigator.pop(context);
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Added ${feat.name} to ${widget.characterName}',
-                                      ),
-                                      backgroundColor: Colors.green,
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
+                                  SnackbarHelper.showSuccess(context,'Added ${feat.name} to ${widget.characterName}',);                                  
                                 },
                         );
                       },

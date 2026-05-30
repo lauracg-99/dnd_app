@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:dnd_app/widgets/action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -114,11 +115,9 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                 _updatePersonalizedSlots(newSlots);
                 Navigator.pop(context);
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Added $name to ${widget.characterName}'),
-                    backgroundColor: Colors.green,
-                  ),
+                SnackbarHelper.showSuccess(
+                  context,
+                  'Added $name to ${widget.characterName}',
                 );
               }
             },
@@ -376,13 +375,10 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
               Navigator.pop(context);
               
               // Show confirmation message
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('$slotName deleted'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              SnackbarHelper.showSuccess(
+                context,
+                '$slotName deleted',
+              );              
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,

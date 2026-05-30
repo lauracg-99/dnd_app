@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:dnd_app/models/spell_model.dart';
 import 'package:dnd_app/widgets/detail_row.dart';
@@ -135,15 +136,10 @@ class SpellDetailsModal extends StatelessWidget {
                         onPressed: () {
                           Navigator.pop(context);
                           onRemoveSpell(spell);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Removed ${spell.name} from $characterName',
-                              ),
-                              backgroundColor: Colors.orange,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
+                          SnackbarHelper.showWarning(
+                            context,
+                            'Removed ${spell.name} from $characterName',
+                          );                          
                         },
                       ),
                     ),
