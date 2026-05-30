@@ -1,5 +1,5 @@
 import 'package:dnd_app/views/characters/CharacterCoverTab/character_cover_tab.dart';
-import 'package:dnd_app/views/characters/QuickGuide/characters_quick_guide.dart';
+import 'package:dnd_app/views/characters/QuickGuideTab/characters_quick_guide.dart';
 import 'package:dnd_app/views/characters/StatsTab/stats_tab.dart';
 import 'package:dnd_app/views/characters/AppeareanceTab/characters_appereance.dart';
 import 'package:dnd_app/views/characters/NotesTab/characters_notes.dart';
