@@ -18,10 +18,10 @@ class WeaponSelectionResult {
 }
 
 class WeaponSelectionDialog extends StatefulWidget {
-  const WeaponSelectionDialog({Key? key}) : super(key: key);
+  const WeaponSelectionDialog({super.key});
 
   @override
-  _WeaponSelectionDialogState createState() => _WeaponSelectionDialogState();
+  State<WeaponSelectionDialog> createState() => _WeaponSelectionDialogState();
 }
 
 class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
@@ -713,19 +713,6 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
         );
       },
     );
-  }
-
-  IconData _getWeaponIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'simple_melee':
-      case 'martial_melee':
-        return Icons.sports_martial_arts;
-      case 'simple_ranged':
-      case 'martial_ranged':
-        return Icons.gps_fixed;
-      default:
-        return Icons.gavel;
-    }
   }
 
   void _updateSearchQuery(String query) {

@@ -395,22 +395,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
     );
   }
 
-  void _restoreAllPersonalizedSlots() {
-    final newSlots = _personalizedSlots
-        .map((slot) => slot.copyWith(usedSlots: 0))
-        .toList();
-    _updatePersonalizedSlots(newSlots);
-
-    // Show confirmation message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All class slots have been restored!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
   Widget _buildPersonalizedSlotField({required Key key, required String label, required int slotIndex}) {
     final slot = _personalizedSlots[slotIndex];
     final slots = slot.maxSlots;
