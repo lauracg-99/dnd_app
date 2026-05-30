@@ -17,7 +17,7 @@ void main() {
         isFinesse: false,
         isThrown: false,
         isLight: false,
-        damageDice: [DamageDice(diceAmount: 1, damageType: 'piercing')],
+        damageDice: [DamageDice(diceAmount: 1, damageType: 'piercing', diceType: '')],
       );
 
       expect(weapon.formattedType, 'Crossbow Hand');
@@ -37,7 +37,7 @@ void main() {
         isFinesse: false,
         isThrown: false,
         isLight: false,
-        damageDice: [DamageDice(diceAmount: 1, damageType: 'slashing')],
+        damageDice: [DamageDice(diceAmount: 1, damageType: 'slashing', diceType: '')],
       );
 
       expect(weapon.formattedType, 'Longsword');
@@ -57,7 +57,7 @@ void main() {
         isFinesse: false,
         isThrown: false,
         isLight: false,
-        damageDice: [DamageDice(diceAmount: 1, damageType: 'slashing')],
+        damageDice: [DamageDice(diceAmount: 1, damageType: 'slashing', diceType: '')],
       );
 
       expect(weapon.formattedType, 'Battleaxe Two Handed');
@@ -97,7 +97,7 @@ void main() {
         isFinesse: true,
         isThrown: true,
         isLight: true,
-        damageDice: [DamageDice(diceAmount: 1, damageType: 'piercing')],
+        damageDice: [DamageDice(diceAmount: 1, damageType: 'piercing', diceType: '')],
       );
 
       expect(weapon.formattedType, 'Dagger');

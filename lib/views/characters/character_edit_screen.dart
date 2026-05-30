@@ -1,25 +1,15 @@
-import 'package:dnd_app/views/characters/CharacterCoverTab/character_header_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/features_traits_section.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/character_cover_tab.dart';
 import 'package:dnd_app/views/characters/QuickGuide/characters_quick_guide.dart';
 import 'package:dnd_app/views/characters/StatsTab/stats_tab.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/combat_stats_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/concentration_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/death_saving_throws_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/health_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/initiative_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/languages_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/long_rest_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/money_and_items_section.dart';
-import 'package:dnd_app/views/characters/CharacterCoverTab/other_proficiencies_section.dart';
 import 'package:dnd_app/views/characters/AppeareanceTab/characters_appereance.dart';
 import 'package:dnd_app/views/characters/NotesTab/characters_notes.dart';
 import 'package:dnd_app/views/characters/PersonalizedSlotsTab/characters_personalized_tab.dart';
 import 'package:dnd_app/views/characters/FeatsTab/characters_feats_tab.dart';
 import 'package:dnd_app/views/characters/TabReorderDialog/tab_reorder_dialog.dart';
 import 'package:dnd_app/utils/source_mapper.dart';
-import 'package:dnd_app/widgets/action_button.dart';
+import 'package:dnd_app/widgets/appfilter_chip.dart';
+import 'package:dnd_app/widgets/dialogs/spell_slot_modifier_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -33,20 +23,25 @@ import '../../models/character_model.dart';
 import '../../models/spell_model.dart';
 import '../../models/race_model.dart';
 import '../../models/background_model.dart';
-import '../../models/weapon_model.dart';
 import '../../models/tab_config_model.dart';
 import '../../services/user_preferences_service.dart';
 import '../../helpers/character_ability_helper.dart';
-import '../../helpers/character_class_helper.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/races_viewmodel.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/image_crop_widget.dart';
-import 'SpellsTab/spell_by_level.dart';
+import '../../widgets/dialogs/image_options_dialog.dart';
+import '../../widgets/dialogs/max_prepared_dialog.dart';
+import '../../widgets/dialogs/spell_details_modal.dart';
+import 'SpellsTab/spells_tab.dart';
+import 'SkillsTab/skills_tab.dart';
+import 'SpellSlotsTab/spell_slots_tab.dart';
+import 'AttacksTab/attacks_tab.dart';
 import 'WeaponsTab/weapon_selection_dialog.dart';
 import 'WeaponsTab/weapon_attack_mapper.dart';
+import '../../widgets/dialogs/add_attack_dialog.dart';
 import '../diaries/diary_list_screen.dart';
 
 class CharacterEditScreen extends StatefulWidget {
@@ -69,12 +64,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   bool _hasUnsavedAbilityChanges = false;
   bool _hasUnsavedClassChanges = false;
   bool _isSaving = false;
-  String _selectedClass = 'Fighter';
-  bool _useCustomSubclass = false;
   String _selectedBackground = '';
-  bool _toolbarExpanded = false;
-  bool _isCustomAttackMode = false;
-  
+
   // Baseline character data for change detection
   late Character _baselineCharacter;
 
@@ -233,7 +224,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   void _initializeCharacterData() {
     final character = widget.character;
-    
+
     // Set baseline character for change detection
     _baselineCharacter = character;
 
@@ -251,20 +242,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _levelController.addListener(() {
       setState(() {}); // Rebuild to update proficiency bonus display
     });
-    _selectedClass = character.characterClass;
     _classController.text = character.characterClass;
     _subclassController.text = character.subclass ?? '';
     _raceController.text = character.race ?? '';
     _backgroundController.text = character.background ?? '';
     _selectedBackground = character.background ?? '';
-
-    // Check if current subclass is custom (not in preset list)
-    final availableSubclasses = CharacterClassHelper.getSubclassesForClass(
-      character.characterClass,
-    );
-    _useCustomSubclass =
-        character.subclass != null &&
-        !availableSubclasses.contains(character.subclass);
 
     // Initialize quick guide with Delta format from plain text
     if (character.quickGuide.isNotEmpty) {
@@ -420,21 +402,25 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Initialize skill bonus controllers
     _acrobaticsBonusController.text = _skillChecks.acrobaticsBonus.toString();
-    _animalHandlingBonusController.text = _skillChecks.animalHandlingBonus.toString();
+    _animalHandlingBonusController.text =
+        _skillChecks.animalHandlingBonus.toString();
     _arcanaBonusController.text = _skillChecks.arcanaBonus.toString();
     _athleticsBonusController.text = _skillChecks.athleticsBonus.toString();
     _deceptionBonusController.text = _skillChecks.deceptionBonus.toString();
     _historyBonusController.text = _skillChecks.historyBonus.toString();
     _insightBonusController.text = _skillChecks.insightBonus.toString();
-    _intimidationBonusController.text = _skillChecks.intimidationBonus.toString();
-    _investigationBonusController.text = _skillChecks.investigationBonus.toString();
+    _intimidationBonusController.text =
+        _skillChecks.intimidationBonus.toString();
+    _investigationBonusController.text =
+        _skillChecks.investigationBonus.toString();
     _medicineBonusController.text = _skillChecks.medicineBonus.toString();
     _natureBonusController.text = _skillChecks.natureBonus.toString();
     _perceptionBonusController.text = _skillChecks.perceptionBonus.toString();
     _performanceBonusController.text = _skillChecks.performanceBonus.toString();
     _persuasionBonusController.text = _skillChecks.persuasionBonus.toString();
     _religionBonusController.text = _skillChecks.religionBonus.toString();
-    _sleightOfHandBonusController.text = _skillChecks.sleightOfHandBonus.toString();
+    _sleightOfHandBonusController.text =
+        _skillChecks.sleightOfHandBonus.toString();
     _stealthBonusController.text = _skillChecks.stealthBonus.toString();
     _survivalBonusController.text = _skillChecks.survivalBonus.toString();
 
@@ -489,7 +475,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     if (character.appearance.additionalDetails.isNotEmpty) {
       try {
         // Try to parse as JSON (new format with rich text)
-        final List<dynamic> jsonDelta = jsonDecode(character.appearance.additionalDetails);
+        final List<dynamic> jsonDelta = jsonDecode(
+          character.appearance.additionalDetails,
+        );
         _additionalDetailsController.document = Document.fromJson(jsonDelta);
       } catch (e) {
         // Fallback to plain text (old format)
@@ -779,274 +767,130 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildCharacterCoverTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CharacterHeaderSection(
-            isEditing: _isEditingCharacterCover,
-            hasUnsavedClassChanges: _hasUnsavedClassChanges,
-            onEditToggle: (bool isEditing) {
-              setState(() {
-                _isEditingCharacterCover = isEditing;
-              });
-            },
-            nameController: _nameController,
-            levelController: _levelController,
-            classController: _classController,
-            subclassController: _subclassController,
-            raceController: _raceController,
-            backgroundController: _backgroundController,
-            customImagePath: _customImagePath,
-            customImageData: _customImageData,
-            onPickImage: _showImageOptionsDialog,
-            onSave: () => _saveCharacter(successMessage: 'Character updated!'),
-            getSubclassesForClass: CharacterClassHelper.getSubclassesForClass,
-            onClassChanged: (value) {
-              setState(() {
-                _selectedClass = value;
-                _hasUnsavedClassChanges = true;
-              });
-            },
-            onSubclassChanged: (value) {
-              setState(() {
-                _hasUnsavedClassChanges = true;
-              });
-            },
-            onRaceChanged: (value) {
-              // Debug: log race change
-              debugPrint('Race changed to: $value');
-              setState(() {
-                // Update controller so _saveCharacter reads the new value
-                _raceController.text = value;
-                _hasUnsavedClassChanges = true;
-              });
-            },
-            onBackgroundChanged: (value) {
-              debugPrint('Background changed to: $value');
-              setState(() {
-                _selectedBackground = value;
-                // Update controller so _saveCharacter reads the new value
-                _backgroundController.text = value;
-                _hasUnsavedClassChanges = true;
-              });
-            },
-            buildPickImageButton: _buildPickImageButton,
-            showRaceDetailsModal: _showRaceDetailsModal,
-            showBackgroundDetailsModal: _showBackgroundDetailsModal,
-            selectedBackground: _selectedBackground,
-          ),
-
-          const SizedBox(height: 16),
-
-          CombatStatsSection(
-            buildInspiration: _buildInspirationField,
-            buildArmorClass: _buildArmorClassField,
-            buildSpeed: _buildSpeedField,
-          ),
-
-          const SizedBox(height: 16),
-
-          InitiativeSection(
-            controller: _initiativeController,
-            dexterityController: _dexterityController,
-            onChanged: (value) {
-              // Manual save only - no auto-save
-            },
-            showInitiativeDialog: _showInitiativeDialog,
-          ),
-
-          if (_canCastSpells())
-            ConcentrationSection(
-              hasConcentration: _hasConcentration,
-              onToggle: () {
-                setState(() {
-                  _hasConcentration = !_hasConcentration;
-                });
-                // Manual save only - no auto-save
-              },
-            ),
-
-          HealthSection(
-            maxHpController: _maxHpController,
-            currentHpController: _currentHpController,
-            tempHpController: _tempHpController,
-            hitDiceController: _hitDiceController,
-            hitDiceTypeController: _hitDiceTypeController,
-            exhaustionLevel: _exhaustionLevel,
-            onExhaustionChanged: (level) {
-              setState(() {
-                _exhaustionLevel = level;
-              });
-              // Manual save only - no auto-save
-            },
-          ),
-
-          const SizedBox(height: 24),
-
-          DeathSavingThrowsSection(
-            deathSaveSuccesses: _deathSaveSuccesses,
-            deathSaveFailures: _deathSaveFailures,
-            onToggleSuccess: (index) {
-              setState(() {
-                _deathSaveSuccesses[index] = !_deathSaveSuccesses[index];
-              });
-              // Manual save only - no auto-save
-            },
-            onToggleFailure: (index) {
-              setState(() {
-                _deathSaveFailures[index] = !_deathSaveFailures[index];
-              });
-              // Manual save only - no auto-save
-            },
-            onClear: () {
-              setState(() {
-                _deathSaveSuccesses = [false, false, false];
-                _deathSaveFailures = [false, false, false];
-              });
-              // Manual save only - no auto-save
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          FeaturesTraitsSection(
-            controller: _featuresTraitsController,
-            onChanged: (value) {
-              // Manual save only - no auto-save
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          OtherProficienciesSection(
-            controller: _proficienciesController,
-            onChanged: () {
-              // Manual save only - no auto-save
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          LanguagesSection(
-            onChanged: (value) {
-              // Manual save only - no auto-save
-            },
-            languagesController: _languagesController,
-          ),
-
-          const SizedBox(height: 16),
-
-          MoneyItemsSection(
-            moneyController: _moneyController,
-            itemsController: _itemsController,
-            onMoneyChanged: (value) {
-              // Manual save only - no auto-save
-            },
-            onItemsChanged: () {
-              // Manual save only - no auto-save
-            },
-          ),
-
-          const SizedBox(height: 30),
-
-          LongRestSection(
-            takeComprehensiveLongRest: _takeComprehensiveLongRest,
-          ),
-
-          const SizedBox(height: 40),
-        ],
-      ),
+    return CharacterCoverTab(
+      isEditingCharacterCover: _isEditingCharacterCover,
+      hasUnsavedClassChanges: _hasUnsavedClassChanges,
+      onEditToggle: (bool isEditing) {
+        setState(() {
+          _isEditingCharacterCover = isEditing;
+        });
+      },
+      nameController: _nameController,
+      levelController: _levelController,
+      classController: _classController,
+      subclassController: _subclassController,
+      raceController: _raceController,
+      backgroundController: _backgroundController,
+      customImagePath: _customImagePath,
+      customImageData: _customImageData,
+      onPickImage: _showImageOptionsDialog,
+      onSave: () => _saveCharacter(successMessage: 'Character updated!'),
+      onClassChanged: (value) {
+        setState(() {
+          _hasUnsavedClassChanges = true;
+        });
+      },
+      onSubclassChanged: (value) {
+        setState(() {
+          _hasUnsavedClassChanges = true;
+        });
+      },
+      onRaceChanged: (value) {
+        debugPrint('Race changed to: $value');
+        setState(() {
+          _raceController.text = value;
+          _hasUnsavedClassChanges = true;
+        });
+      },
+      onBackgroundChanged: (value) {
+        debugPrint('Background changed to: $value');
+        setState(() {
+          _selectedBackground = value;
+          _backgroundController.text = value;
+          _hasUnsavedClassChanges = true;
+        });
+      },
+      buildPickImageButton: _buildPickImageButton,
+      showRaceDetailsModal: _showRaceDetailsModal,
+      showBackgroundDetailsModal: _showBackgroundDetailsModal,
+      selectedBackground: _selectedBackground,
+      buildInspiration: _buildInspirationField,
+      buildArmorClass: _buildArmorClassField,
+      buildSpeed: _buildSpeedField,
+      initiativeController: _initiativeController,
+      dexterityController: _dexterityController,
+      onInitiativeChanged: (value) {
+        // Manual save only - no auto-save
+      },
+      showInitiativeDialog: _showInitiativeDialog,
+      hasConcentration: _canCastSpells(),
+      onConcentrationToggle: () {
+        setState(() {
+          _hasConcentration = !_hasConcentration;
+        });
+      },
+      maxHpController: _maxHpController,
+      currentHpController: _currentHpController,
+      tempHpController: _tempHpController,
+      hitDiceController: _hitDiceController,
+      hitDiceTypeController: _hitDiceTypeController,
+      exhaustionLevel: _exhaustionLevel,
+      onExhaustionChanged: (level) {
+        setState(() {
+          _exhaustionLevel = level;
+        });
+      },
+      deathSaveSuccesses: _deathSaveSuccesses,
+      deathSaveFailures: _deathSaveFailures,
+      onToggleSuccess: (index) {
+        setState(() {
+          _deathSaveSuccesses[index] = !_deathSaveSuccesses[index];
+        });
+      },
+      onToggleFailure: (index) {
+        setState(() {
+          _deathSaveFailures[index] = !_deathSaveFailures[index];
+        });
+      },
+      onClearDeathSaves: () {
+        setState(() {
+          _deathSaveSuccesses = [false, false, false];
+          _deathSaveFailures = [false, false, false];
+        });
+      },
+      featuresTraitsController: _featuresTraitsController,
+      onFeaturesTraitsChanged: (value) {
+        // Manual save only - no auto-save
+      },
+      proficienciesController: _proficienciesController,
+      onProficienciesChanged: () {
+        // Manual save only - no auto-save
+      },
+      languagesController: _languagesController,
+      onLanguagesChanged: (value) {
+        // Manual save only - no auto-save
+      },
+      moneyController: _moneyController,
+      itemsController: _itemsController,
+      onMoneyChanged: (value) {
+        // Manual save only - no auto-save
+      },
+      onItemsChanged: () {
+        // Manual save only - no auto-save
+      },
+      takeComprehensiveLongRest: _takeComprehensiveLongRest,
     );
   }
 
   Widget _buildAttacksTab() {
-    final spellcastingAbility = _getSpellcastingAbility();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: ActionButton.primary(
-              context: context,
-              onPressed: _showAddAttackDialog,
-              label: 'Add Attack',
-              icon: Symbols.add_circle,
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // Attacks list
-          if (_attacks.isEmpty) ...[
-            Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24.0),
-              margin: const EdgeInsets.symmetric(vertical: 16.0),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color.fromARGB(255, 205, 205, 205)),
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 4),
-                  Text(
-                    'No weapons added yet',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Add your character\'s weapons and attacks to track combat abilities',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          ] else ...[
-            ..._attacks.asMap().entries.map((entry) {
-              final index = entry.key;
-              final attack = entry.value;
-              return Card(
-                child: ListTile(
-                  title: Text(attack.name),
-                  subtitle: Text(
-                    'Attack bonus: ${attack.attackBonus} | Damage: ${attack.damage} | Type: ${attack.damageType}',
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      setState(() {
-                        _attacks.removeAt(index);
-                      });
-                      // Remove attack without auto-save
-                    },
-                  ),
-                ),
-              );
-            }),
-          ],
-
-          const SizedBox(height: 16),
-                  
-        ],
-      ),
+    return AttacksTab(
+      attacks: _attacks,
+      onAddAttack: _showAddAttackDialog,
+      onRemoveAttack: (index) {
+        setState(() {
+          _attacks.removeAt(index);
+        });
+      },
     );
   }
 
@@ -1073,9 +917,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       onSaveAbilities: () {
         // Update saving throws to reflect new ability scores
         _updateSavingThrowsFromAbilityScores();
-        
+
         // Save the character with updated ability scores and saving throws
-        _saveCharacter(successMessage: 'Ability scores and saving throws updated!');
+        _saveCharacter(
+          successMessage: 'Ability scores and saving throws updated!',
+        );
         setState(() {
           _hasUnsavedAbilityChanges = false;
         });
@@ -1175,582 +1021,107 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildSkillsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Skills grouped by ability scores
-          _buildSkillGroup('Strength', [
-            _buildSkillRow(
-              'Athletics',
-              'STR',
-              _skillChecks.athleticsProficiency,
-              _skillChecks.athleticsExpertise,
-              'athletics',
-              _athleticsBonusController,
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Dexterity', [
-            _buildSkillRow(
-              'Acrobatics',
-              'DEX',
-              _skillChecks.acrobaticsProficiency,
-              _skillChecks.acrobaticsExpertise,
-              'acrobatics',
-              _acrobaticsBonusController,
-            ),
-            _buildSkillRow(
-              'Sleight of Hand',
-              'DEX',
-              _skillChecks.sleightOfHandProficiency,
-              _skillChecks.sleightOfHandExpertise,
-              'sleight_of_hand',
-              _sleightOfHandBonusController,
-            ),
-            _buildSkillRow(
-              'Stealth',
-              'DEX',
-              _skillChecks.stealthProficiency,
-              _skillChecks.stealthExpertise,
-              'stealth',
-              _stealthBonusController,
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Intelligence', [
-            _buildSkillRow(
-              'Arcana',
-              'INT',
-              _skillChecks.arcanaProficiency,
-              _skillChecks.arcanaExpertise,
-              'arcana',
-              _arcanaBonusController,
-            ),
-            _buildSkillRow(
-              'History',
-              'INT',
-              _skillChecks.historyProficiency,
-              _skillChecks.historyExpertise,
-              'history',
-              _historyBonusController,
-            ),
-            _buildSkillRow(
-              'Investigation',
-              'INT',
-              _skillChecks.investigationProficiency,
-              _skillChecks.investigationExpertise,
-              'investigation',
-              _investigationBonusController,
-            ),
-            _buildSkillRow(
-              'Nature',
-              'INT',
-              _skillChecks.natureProficiency,
-              _skillChecks.natureExpertise,
-              'nature',
-              _natureBonusController,
-            ),
-            _buildSkillRow(
-              'Religion',
-              'INT',
-              _skillChecks.religionProficiency,
-              _skillChecks.religionExpertise,
-              'religion',
-              _religionBonusController,
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Wisdom', [
-            _buildSkillRow(
-              'Animal Handling',
-              'WIS',
-              _skillChecks.animalHandlingProficiency,
-              _skillChecks.animalHandlingExpertise,
-              'animal_handling',
-              _animalHandlingBonusController,
-            ),
-            _buildSkillRow(
-              'Insight',
-              'WIS',
-              _skillChecks.insightProficiency,
-              _skillChecks.insightExpertise,
-              'insight',
-              _insightBonusController,
-            ),
-            _buildSkillRow(
-              'Medicine',
-              'WIS',
-              _skillChecks.medicineProficiency,
-              _skillChecks.medicineExpertise,
-              'medicine',
-              _medicineBonusController,
-            ),
-            _buildSkillRow(
-              'Perception',
-              'WIS',
-              _skillChecks.perceptionProficiency,
-              _skillChecks.perceptionExpertise,
-              'perception',
-              _perceptionBonusController,
-            ),
-            _buildSkillRow(
-              'Survival',
-              'WIS',
-              _skillChecks.survivalProficiency,
-              _skillChecks.survivalExpertise,
-              'survival',
-              _survivalBonusController,
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-          _buildSkillGroup('Charisma', [
-            _buildSkillRow(
-              'Deception',
-              'CHA',
-              _skillChecks.deceptionProficiency,
-              _skillChecks.deceptionExpertise,
-              'deception',
-              _deceptionBonusController,
-            ),
-            _buildSkillRow(
-              'Intimidation',
-              'CHA',
-              _skillChecks.intimidationProficiency,
-              _skillChecks.intimidationExpertise,
-              'intimidation',
-              _intimidationBonusController,
-            ),
-            _buildSkillRow(
-              'Performance',
-              'CHA',
-              _skillChecks.performanceProficiency,
-              _skillChecks.performanceExpertise,
-              'performance',
-              _performanceBonusController,
-            ),
-            _buildSkillRow(
-              'Persuasion',
-              'CHA',
-              _skillChecks.persuasionProficiency,
-              _skillChecks.persuasionExpertise,
-              'persuasion',
-              _persuasionBonusController,
-            ),
-          ]),
-          const SizedBox(height: 45), // Extra space at bottom of screen
-        ],
-      ),
+    return SkillsTab(
+      skillChecks: _skillChecks,
+      levelController: _levelController,
+      athleticsBonusController: _athleticsBonusController,
+      acrobaticsBonusController: _acrobaticsBonusController,
+      sleightOfHandBonusController: _sleightOfHandBonusController,
+      stealthBonusController: _stealthBonusController,
+      arcanaBonusController: _arcanaBonusController,
+      historyBonusController: _historyBonusController,
+      investigationBonusController: _investigationBonusController,
+      natureBonusController: _natureBonusController,
+      religionBonusController: _religionBonusController,
+      animalHandlingBonusController: _animalHandlingBonusController,
+      insightBonusController: _insightBonusController,
+      medicineBonusController: _medicineBonusController,
+      perceptionBonusController: _perceptionBonusController,
+      survivalBonusController: _survivalBonusController,
+      deceptionBonusController: _deceptionBonusController,
+      intimidationBonusController: _intimidationBonusController,
+      performanceBonusController: _performanceBonusController,
+      persuasionBonusController: _persuasionBonusController,
+      onUpdateSkillCheck: _updateSkillCheck,
+      onUpdateSkillExpertise: _updateSkillExpertise,
+      getAbilityScore: _getAbilityScore,
     );
   }
 
   Widget _buildSpellSlotsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Spell Slots',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              ElevatedButton.icon(
-                onPressed: _takeLongRest,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Restore all slots'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          // Summary section
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Spell Slot Summary',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Calculate total slots and used
-                  Consumer<CharactersViewModel>(
-                    builder: (context, viewModel, child) {
-                      final totalSlots =
-                          _spellSlots.level1Slots +
-                          _spellSlots.level2Slots +
-                          _spellSlots.level3Slots +
-                          _spellSlots.level4Slots +
-                          _spellSlots.level5Slots +
-                          _spellSlots.level6Slots +
-                          _spellSlots.level7Slots +
-                          _spellSlots.level8Slots +
-                          _spellSlots.level9Slots;
-
-                      final totalUsed =
-                          _spellSlots.level1Used +
-                          _spellSlots.level2Used +
-                          _spellSlots.level3Used +
-                          _spellSlots.level4Used +
-                          _spellSlots.level5Used +
-                          _spellSlots.level6Used +
-                          _spellSlots.level7Used +
-                          _spellSlots.level8Used +
-                          _spellSlots.level9Used;
-
-                      final availableSlots = totalSlots - totalUsed;
-
-                      return Column(
-                        children: [
-                          _buildSummaryRow(
-                            'Total Slots',
-                            totalSlots.toString(),
-                          ),
-                          _buildSummaryRow('Used Slots', totalUsed.toString()),
-                          _buildSummaryRow(
-                            'Available Slots',
-                            availableSlots.toString(),
-                            availableSlots > 0 ? Colors.green : Colors.red,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Spell slots grid
-          ...[
-            for (int level = 1; level <= 9; level++)
-              _buildSpellSlotField('Level $level', level),
-          ],
-
-          const SizedBox(height: 32),
-
-          const SizedBox(height: 24),
-        ],
-      ),
+    return SpellSlotsTab(
+      spellSlots: _spellSlots,
+      onRestoreSlots: _takeLongRest,
+      onShowSlotModifierDialog: _showSlotModifierDialog,
+      onToggleSpellSlot: _toggleSpellSlot,
     );
   }
 
   Widget _buildSpellsTab() {
     final spellcastingAbility = _getSpellcastingAbility();
-    
-    // Calculate maximum prepared spells using current state from controllers
     final modifier = _getCurrentSpellcastingModifier();
     final calculatedMax = CharacterSpellPreparation.calculateMaxPreparedSpells(
-      _classController.text.trim(), // Use current class from controller
-      int.tryParse(_levelController.text) ??
-          1, // Use current level from controller
+      _classController.text.trim(),
+      int.tryParse(_levelController.text) ?? 1,
       modifier,
     );
-
-    // Use the stored max if it's different from calculated (user modified it)
     final maxPrepared =
         _spellPreparation.maxPreparedSpells == 0
             ? calculatedMax
             : _spellPreparation.maxPreparedSpells;
-
-    // Check if user has modified the max (for visual indicator)
     final isModified =
         _spellPreparation.maxPreparedSpells != 0 &&
         _spellPreparation.maxPreparedSpells != calculatedMax;
-
     final canPrepare = maxPrepared > 0;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 4),          
-
-
-          // Spellcasting info section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.purple.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.purple.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      color: Colors.purple.shade700,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Spellcasting',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.purple,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Only show spellcasting details if ability is detected
-                if (spellcastingAbility != null) ...[
-                  // Spellcasting Ability
-                  _buildSpellcastingInfoRow(
-                    'Spellcasting Ability',
-                    _getAbilityName(spellcastingAbility),
-                    '+${_getAbilityModifier(spellcastingAbility)}',
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Spell Save DC
-                  _buildSpellcastingInfoRow(
-                    'Spell Save DC',
-                    '8 + Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
-                    _getSpellSaveDC().toString(),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Spell Attack Bonus
-                  _buildSpellcastingInfoRow(
-                    'Spell Attack Bonus',
-                    'Proficiency + ${_getAbilityModifier(spellcastingAbility)}',
-                    '+${_getSpellAttackBonus()}',
-                  ),
-                ] else ...[
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'No spellcasting ability detected for this class/subclass',
-                      style: TextStyle(color: Colors.grey.shade700),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          ActionButton.primary(
-            context: context,
-            onPressed: _showAddSpellDialog,
-            label: 'Add Spell',
-            icon: Symbols.add_circle,
-          ),
-          
-          const SizedBox(height: 14),
-          // Spell preparation section - only show for classes that prepare spells
-          if (canPrepare) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.indigo.shade50, Colors.indigo.shade100],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.indigo.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.auto_stories,
-                        color: Colors.indigo.shade700,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Spell Preparation',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.indigo.shade700,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder:
-                                (context) => AlertDialog(
-                                  title: const Text('Spell Preparation Info'),
-                                  content: const Text(
-                                    'You can establish if a spell is always prepared or you can cast it for free. Always prepared spells don\'t count against your maximum prepared spells limit.',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Got it'),
-                                    ),
-                                  ],
-                                ),
-                          );
-                        },
-                        icon: const Icon(Icons.info_outline, size: 16),
-                        color: Colors.indigo.shade700,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Maximum prepared spells: $maxPrepared (${_classController.text.trim()} level ${int.tryParse(_levelController.text) ?? 1} + ${_getModifierName(modifier)} $modifier modifier = $calculatedMax)${maxPrepared != calculatedMax ? ' (modified: +${(maxPrepared - calculatedMax).abs()})' : ''}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.indigo.shade600,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Currently prepared: ${_spellPreparation.currentPreparedCount}/$maxPrepared',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                _spellPreparation.currentPreparedCount <
-                                        maxPrepared
-                                    ? Colors.green.shade700
-                                    : Colors.blue.shade700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: _showMaxPreparedDialog,
-                        icon: const Icon(Icons.edit, size: 14),
-                        label: const Text(
-                          'Modify',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.indigo.shade700,
-                          elevation: 2,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                        ),
-                      ),
-                      if (isModified) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 2,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                // Calculate the new max (calculated value)
-                                final newMax = calculatedMax;
-
-                                // Get current prepared spells (excluding always prepared)
-                                final currentPrepared =
-                                    _spellPreparation.preparedSpells;
-
-                                // If we have more prepared spells than the new max, uncheck excess
-                                if (currentPrepared.length > newMax) {
-                                  final spellsToKeep =
-                                      currentPrepared.take(newMax).toList();
-                                  _spellPreparation = _spellPreparation.copyWith(
-                                    maxPreparedSpells: 0, // Reset to calculated
-                                    preparedSpells:
-                                        spellsToKeep, // Keep only up to new max
-                                  );
-                                } else {
-                                  // Just reset max, keep current prepared spells
-                                  _spellPreparation = _spellPreparation
-                                      .copyWith(maxPreparedSpells: 0);
-                                }
-                              });
-                              // Manual save only - no auto-save
-                            },
-                            icon: const Icon(Icons.refresh, size: 16),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.indigo.shade700,
-                              padding: const EdgeInsets.all(8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          // Group spells by level
-          SpellByLevel(
-            spells: _spells,
-            spellPreparation: _spellPreparation,
-            character: widget.character,
-            classController: _classController,
-            levelController: _levelController,
-            onShowSpellDetails: _showSpellDetails,
-            onToggleSpellPreparation: _toggleSpellPreparation,
-            onToggleAlwaysPrepared: _toggleAlwaysPrepared,
-            onToggleFreeUse: _toggleFreeUse,
-            onAutoSaveCharacter: () {
-              // Manual save only - no auto-save
-            },
-            onRemoveSpell: (index) {
-              setState(() {
-                _spells.removeAt(index);
-              });
-            },
-          ),
-          const SizedBox(height: 70),
-        ],
-      ),
+    return SpellsTab(
+      spells: _spells,
+      spellPreparation: _spellPreparation,
+      character: widget.character,
+      classController: _classController,
+      levelController: _levelController,
+      currentModifier: modifier,
+      calculatedMax: calculatedMax,
+      maxPreparedSpells: maxPrepared,
+      isMaxPreparedModified: isModified,
+      canPrepare: canPrepare,
+      spellcastingAbility: spellcastingAbility,
+      spellSaveDC: _getSpellSaveDC(),
+      spellAttackBonus: _getSpellAttackBonus(),
+      getAbilityName: _getAbilityName,
+      getModifierName: _getModifierName,
+      onShowAddSpellDialog: _showAddSpellDialog,
+      onShowMaxPreparedDialog: _showMaxPreparedDialog,
+      onResetMaxPrepared: () {
+        setState(() {
+          final currentCalculatedMax = calculatedMax;
+          final currentPrepared = _spellPreparation.preparedSpells;
+          if (currentPrepared.length > currentCalculatedMax) {
+            final spellsToKeep =
+                currentPrepared.take(currentCalculatedMax).toList();
+            _spellPreparation = _spellPreparation.copyWith(
+              maxPreparedSpells: 0,
+              preparedSpells: spellsToKeep,
+            );
+          } else {
+            _spellPreparation = _spellPreparation.copyWith(
+              maxPreparedSpells: 0,
+            );
+          }
+        });
+      },
+      onShowSpellDetails: _showSpellDetails,
+      onToggleSpellPreparation: _toggleSpellPreparation,
+      onToggleAlwaysPrepared: _toggleAlwaysPrepared,
+      onToggleFreeUse: _toggleFreeUse,
+      onAutoSaveCharacter: () {
+        // Manual save only - no auto-save
+      },
+      onRemoveSpell: (index) {
+        setState(() {
+          _spells.removeAt(index);
+        });
+      },
     );
   }
 
@@ -1849,18 +1220,30 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       wisdomProficiency: _savingThrows.wisdomProficiency,
       charismaProficiency: _savingThrows.charismaProficiency,
     );
-    
+
     setState(() {
       _savingThrows = updatedSavingThrows;
     });
-    
+
     debugPrint('=== Saving throws updated based on new ability scores ===');
-    debugPrint('STR modifier: ${_getAbilityModifier('strength')} (prof: ${updatedSavingThrows.strengthProficiency})');
-    debugPrint('DEX modifier: ${_getAbilityModifier('dexterity')} (prof: ${updatedSavingThrows.dexterityProficiency})');
-    debugPrint('CON modifier: ${_getAbilityModifier('constitution')} (prof: ${updatedSavingThrows.constitutionProficiency})');
-    debugPrint('INT modifier: ${_getAbilityModifier('intelligence')} (prof: ${updatedSavingThrows.intelligenceProficiency})');
-    debugPrint('WIS modifier: ${_getAbilityModifier('wisdom')} (prof: ${updatedSavingThrows.wisdomProficiency})');
-    debugPrint('CHA modifier: ${_getAbilityModifier('charisma')} (prof: ${updatedSavingThrows.charismaProficiency})');
+    debugPrint(
+      'STR modifier: ${_getAbilityModifier('strength')} (prof: ${updatedSavingThrows.strengthProficiency})',
+    );
+    debugPrint(
+      'DEX modifier: ${_getAbilityModifier('dexterity')} (prof: ${updatedSavingThrows.dexterityProficiency})',
+    );
+    debugPrint(
+      'CON modifier: ${_getAbilityModifier('constitution')} (prof: ${updatedSavingThrows.constitutionProficiency})',
+    );
+    debugPrint(
+      'INT modifier: ${_getAbilityModifier('intelligence')} (prof: ${updatedSavingThrows.intelligenceProficiency})',
+    );
+    debugPrint(
+      'WIS modifier: ${_getAbilityModifier('wisdom')} (prof: ${updatedSavingThrows.wisdomProficiency})',
+    );
+    debugPrint(
+      'CHA modifier: ${_getAbilityModifier('charisma')} (prof: ${updatedSavingThrows.charismaProficiency})',
+    );
   }
 
   int _getSpellSaveDC() {
@@ -1893,63 +1276,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     if (spellcastingAbility == null) return 0;
 
     return _getAbilityModifier(spellcastingAbility);
-  }
-
-  Widget _buildSpellcastingInfoRow(
-    String label,
-    String description,
-    String value,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.purple.shade300),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.purple,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.purple.shade600,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   String _getAbilityName(String ability) {
@@ -2191,243 +1517,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
-  Widget _buildSkillGroup(String abilityName, List<Widget> skills) {
-    // Get the ability modifier for this group
-    final abilityAbbreviation = _getAbilityAbbreviation(abilityName);
-    final abilityScore = _getAbilityScore(abilityAbbreviation);
-    final modifier = ((abilityScore - 10) / 2).floor();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.blue.shade200, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.blue.withOpacity(0.15),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                abilityName,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blue.shade700,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Text(
-                  '${modifier >= 0 ? '+' : ''}$modifier',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        ...skills,
-      ],
-    );
-  }
-
-  String _getAbilityAbbreviation(String abilityName) {
-    return CharacterAbilityHelper.getAbilityAbbreviation(abilityName);
-  }
-
-  Widget _buildSkillRow(
-    String skillName,
-    String ability,
-    bool isProficient,
-    bool hasExpertise,
-    String skillKey,
-    TextEditingController bonusController,
-  ) {
-    final abilityScore = _getAbilityScore(ability);
-    final modifier = ((abilityScore - 10) / 2).floor();
-    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
-      int.tryParse(_levelController.text) ?? 1,
-    );
-    final customBonus = int.tryParse(bonusController.text) ?? 0;
-
-    // Calculate total bonus using the updated calculateSkillBonus method
-    int total = CharacterSkillChecks.calculateSkillBonus(
-      abilityScore, 
-      isProficient, 
-      hasExpertise, 
-      proficiencyBonus, 
-      customBonus
-    );
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(6),
-        color:
-            hasExpertise
-                ? Colors.purple.shade50
-                : (isProficient ? Colors.green.shade50 : Colors.white),
-      ),
-      child: Row(
-        children: [
-          // Skill name
-          Expanded(
-            flex: 3,
-            child: Text(
-              skillName,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-          // Ability and modifier
-          SizedBox(
-            width: 50,
-            child: Text(
-              '$ability\n${modifier >= 0 ? '+' : ''}$modifier',
-              style: const TextStyle(fontSize: 11),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(width: 4),
-          // Bonus input field
-          Container(
-            width: 40,
-            height: 30,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue.shade300, width: 1.5),
-              borderRadius: BorderRadius.circular(6),
-              color: (int.tryParse(bonusController.text) ?? 0) != 0 
-                  ? Colors.blue.shade50 
-                  : (isProficient && hasExpertise) 
-                      ? Colors.purple.shade50  
-                      : (isProficient)
-                          ? Colors.green.shade50 
-                          : Colors.white,
-            ),
-            child: TextField(
-              controller: bonusController,
-              textAlign: TextAlign.center,            
-              keyboardType: TextInputType.number,
-              cursorHeight: 14,
-              style: TextStyle(
-                fontSize: 12, 
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
-                leadingDistribution: TextLeadingDistribution.even,
-              ),
-              decoration: InputDecoration(
-                isCollapsed: true,
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.only(left: 2),               
-                hintText: '0',
-                hintStyle: TextStyle(
-                  color: Colors.blue.shade400, 
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),                    
-              ),
-              onChanged: (value) {
-                String formattedValue = value;
-                if (value.isNotEmpty && value != '0' && value.startsWith('0')) {
-                  formattedValue = value.replaceFirst(RegExp(r'^0+'), '');
-                  if (formattedValue.isEmpty) formattedValue = '0';
-                  bonusController.value = TextEditingValue(
-                    text: formattedValue,
-                    selection: TextSelection.collapsed(offset: formattedValue.length),
-                  );
-                }                  
-              },                
-            ),         
-          ),
-
-          const SizedBox(width: 8),
-          // Proficiency checkbox
-          GestureDetector(
-            onTap: () => _updateSkillCheck(skillKey, !isProficient),
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isProficient ? Colors.green : Colors.grey,
-                ),
-                borderRadius: BorderRadius.circular(4),
-                color: isProficient ? Colors.green : Colors.transparent,
-              ),
-              child:
-                  isProficient
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : null,
-            ),
-          ),
-          const SizedBox(width: 4),
-          // Expertise checkbox
-          GestureDetector(
-            onTap: () => _updateSkillExpertise(skillKey, !hasExpertise),
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: hasExpertise ? Colors.purple : Colors.grey,
-                ),
-                borderRadius: BorderRadius.circular(4),
-                color: hasExpertise ? Colors.purple : Colors.transparent,
-              ),
-              child:
-                  hasExpertise
-                      ? const Icon(Icons.star, color: Colors.white, size: 16)
-                      : null,
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Total bonus
-          SizedBox(
-            width: 40,
-            child: Text(
-              '${total >= 0 ? '+' : ''}$total',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color:
-                    hasExpertise
-                        ? Colors.purple
-                        : (isProficient ? Colors.green : Colors.black),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildPickImageButton() {
     return Container(
       decoration: BoxDecoration(
@@ -2459,249 +1548,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
-  void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Remove Profile Image'),
-          content: const Text(
-            'Are you sure you want to remove this character\'s profile image?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _removeImage();
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Remove'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _showImageOptionsDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      builder:
+          (context) => ImageOptionsDialog(
+            hasImage: _customImagePath != null,
+            onPickFromGallery: _pickImage,
+            onPickFromCamera:
+                _pickImage, // same handler used for camera/gallery pick
+            onRemoveImage: _removeImage,
           ),
-          elevation: 8,
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Colors.white, Colors.grey.shade50],
-              ),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                // Header with icon
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.photo_camera,
-                    color: Colors.blue.shade700,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Title
-                Text(
-                  'Profile Image',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                Text(
-                  'Choose an option below',
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 24),
-
-                // Options
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    children: [
-                      // Choose new image option
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          _pickImage();
-                        },
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.blue.shade700,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Choose New Image',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.blue.shade700,
-                                  ),
-                                ),
-                              ),
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.blue.shade300,
-                                size: 16,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      if (_customImagePath != null) ...[
-                        // Divider
-                        Divider(height: 1, color: Colors.grey.shade200),
-
-                        // Remove image option
-                        InkWell(
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            _showDeleteConfirmation();
-                          },
-                          borderRadius: const BorderRadius.vertical(
-                            bottom: Radius.circular(12),
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: const BorderRadius.vertical(
-                                bottom: Radius.circular(12),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.shade100,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    Icons.delete_outline,
-                                    color: Colors.red.shade700,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Remove Image',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.red.shade700,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: Colors.red.shade300,
-                                  size: 16,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Cancel button
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: Colors.grey.shade300),
-                      ),
-                    ),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -2942,737 +1799,30 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     });
   }
 
-  void _autoSaveCharacter() {
-    // Update skill checks with current bonus values
-    _skillChecks = CharacterSkillChecks(
-      acrobaticsProficiency: _skillChecks.acrobaticsProficiency,
-      acrobaticsExpertise: _skillChecks.acrobaticsExpertise,
-      acrobaticsBonus: acrobaticsBonus,
-      animalHandlingProficiency: _skillChecks.animalHandlingProficiency,
-      animalHandlingExpertise: _skillChecks.animalHandlingExpertise,
-      animalHandlingBonus: animalHandlingBonus,
-      arcanaProficiency: _skillChecks.arcanaProficiency,
-      arcanaExpertise: _skillChecks.arcanaExpertise,
-      arcanaBonus: arcanaBonus,
-      athleticsProficiency: _skillChecks.athleticsProficiency,
-      athleticsExpertise: _skillChecks.athleticsExpertise,
-      athleticsBonus: athleticsBonus,
-      deceptionProficiency: _skillChecks.deceptionProficiency,
-      deceptionExpertise: _skillChecks.deceptionExpertise,
-      deceptionBonus: deceptionBonus,
-      historyProficiency: _skillChecks.historyProficiency,
-      historyExpertise: _skillChecks.historyExpertise,
-      historyBonus: historyBonus,
-      insightProficiency: _skillChecks.insightProficiency,
-      insightExpertise: _skillChecks.insightExpertise,
-      insightBonus: insightBonus,
-      intimidationProficiency: _skillChecks.intimidationProficiency,
-      intimidationExpertise: _skillChecks.intimidationExpertise,
-      intimidationBonus: intimidationBonus,
-      investigationProficiency: _skillChecks.investigationProficiency,
-      investigationExpertise: _skillChecks.investigationExpertise,
-      investigationBonus: investigationBonus,
-      medicineProficiency: _skillChecks.medicineProficiency,
-      medicineExpertise: _skillChecks.medicineExpertise,
-      medicineBonus: medicineBonus,
-      natureProficiency: _skillChecks.natureProficiency,
-      natureExpertise: _skillChecks.natureExpertise,
-      natureBonus: natureBonus,
-      perceptionProficiency: _skillChecks.perceptionProficiency,
-      perceptionExpertise: _skillChecks.perceptionExpertise,
-      perceptionBonus: perceptionBonus,
-      performanceProficiency: _skillChecks.performanceProficiency,
-      performanceExpertise: _skillChecks.performanceExpertise,
-      performanceBonus: performanceBonus,
-      persuasionProficiency: _skillChecks.persuasionProficiency,
-      persuasionExpertise: _skillChecks.persuasionExpertise,
-      persuasionBonus: persuasionBonus,
-      religionProficiency: _skillChecks.religionProficiency,
-      religionExpertise: _skillChecks.religionExpertise,
-      religionBonus: religionBonus,
-      sleightOfHandProficiency: _skillChecks.sleightOfHandProficiency,
-      sleightOfHandExpertise: _skillChecks.sleightOfHandExpertise,
-      sleightOfHandBonus: sleightOfHandBonus,
-      stealthProficiency: _skillChecks.stealthProficiency,
-      stealthExpertise: _skillChecks.stealthExpertise,
-      stealthBonus: stealthBonus,
-      survivalProficiency: _skillChecks.survivalProficiency,
-      survivalExpertise: _skillChecks.survivalExpertise,
-      survivalBonus: survivalBonus,
-    );
-    
-    // Save character with updated skill checks
-    _saveCharacter(showToast: false);
-  }
-
   // Skill bonus getter methods
   int get acrobaticsBonus => int.tryParse(_acrobaticsBonusController.text) ?? 0;
-  int get animalHandlingBonus => int.tryParse(_animalHandlingBonusController.text) ?? 0;
+  int get animalHandlingBonus =>
+      int.tryParse(_animalHandlingBonusController.text) ?? 0;
   int get arcanaBonus => int.tryParse(_arcanaBonusController.text) ?? 0;
   int get athleticsBonus => int.tryParse(_athleticsBonusController.text) ?? 0;
   int get deceptionBonus => int.tryParse(_deceptionBonusController.text) ?? 0;
   int get historyBonus => int.tryParse(_historyBonusController.text) ?? 0;
   int get insightBonus => int.tryParse(_insightBonusController.text) ?? 0;
-  int get intimidationBonus => int.tryParse(_intimidationBonusController.text) ?? 0;
-  int get investigationBonus => int.tryParse(_investigationBonusController.text) ?? 0;
+  int get intimidationBonus =>
+      int.tryParse(_intimidationBonusController.text) ?? 0;
+  int get investigationBonus =>
+      int.tryParse(_investigationBonusController.text) ?? 0;
   int get medicineBonus => int.tryParse(_medicineBonusController.text) ?? 0;
   int get natureBonus => int.tryParse(_natureBonusController.text) ?? 0;
   int get perceptionBonus => int.tryParse(_perceptionBonusController.text) ?? 0;
-  int get performanceBonus => int.tryParse(_performanceBonusController.text) ?? 0;
+  int get performanceBonus =>
+      int.tryParse(_performanceBonusController.text) ?? 0;
   int get persuasionBonus => int.tryParse(_persuasionBonusController.text) ?? 0;
   int get religionBonus => int.tryParse(_religionBonusController.text) ?? 0;
-  int get sleightOfHandBonus => int.tryParse(_sleightOfHandBonusController.text) ?? 0;
+  int get sleightOfHandBonus =>
+      int.tryParse(_sleightOfHandBonusController.text) ?? 0;
   int get stealthBonus => int.tryParse(_stealthBonusController.text) ?? 0;
   int get survivalBonus => int.tryParse(_survivalBonusController.text) ?? 0;
-
-  Widget _buildSummaryRow(String label, String value, [Color? valueColor]) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-          Text(
-            value,
-            style: TextStyle(fontWeight: FontWeight.bold, color: valueColor),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSpellSlotField(String label, int level) {
-    int slots = 0;
-    int used = 0;
-
-    switch (level) {
-      case 1:
-        slots = _spellSlots.level1Slots;
-        used = _spellSlots.level1Used;
-        break;
-      case 2:
-        slots = _spellSlots.level2Slots;
-        used = _spellSlots.level2Used;
-        break;
-      case 3:
-        slots = _spellSlots.level3Slots;
-        used = _spellSlots.level3Used;
-        break;
-      case 4:
-        slots = _spellSlots.level4Slots;
-        used = _spellSlots.level4Used;
-        break;
-      case 5:
-        slots = _spellSlots.level5Slots;
-        used = _spellSlots.level5Used;
-        break;
-      case 6:
-        slots = _spellSlots.level6Slots;
-        used = _spellSlots.level6Used;
-        break;
-      case 7:
-        slots = _spellSlots.level7Slots;
-        used = _spellSlots.level7Used;
-        break;
-      case 8:
-        slots = _spellSlots.level8Slots;
-        used = _spellSlots.level8Used;
-        break;
-      case 9:
-        slots = _spellSlots.level9Slots;
-        used = _spellSlots.level9Used;
-        break;
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text('Slots: ', style: const TextStyle(color: Colors.grey)),
-                    InkWell(
-                      onTap:
-                          () => _showSlotModifierDialog(level, 'slots', slots),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '$slots',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Visual spell slot dots
-            if (slots > 0) ...[
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    const Text('Used: ', style: TextStyle(color: Colors.grey)),
-                    ...List.generate(slots, (index) {
-                      final isUsed = index < used;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: GestureDetector(
-                          onTap: () => _toggleSpellSlot(level, index),
-                          child: Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isUsed ? Colors.red : Colors.grey.shade300,
-                              border: Border.all(
-                                color:
-                                    isUsed
-                                        ? Colors.red.shade300
-                                        : Colors.grey.shade400,
-                                width: 2,
-                              ),
-                            ),
-                            child:
-                                isUsed
-                                    ? const Icon(
-                                      Icons.check,
-                                      color: Colors.white,
-                                      size: 12,
-                                    )
-                                    : null,
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '$used of $slots slots used',
-                style: TextStyle(
-                  color: used == slots ? Colors.red : Colors.green,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              
-              // Arrow controls with slot count display (fixed position)
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Left arrow - decrease used slots
-                  IconButton(
-                    onPressed: used > 0 
-                        ? () {
-                            setState(() {
-                              switch (level) {
-                                case 1:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used - 1,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 2:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used - 1,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 3:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used - 1,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 4:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used - 1,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 5:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used - 1,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 6:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used - 1,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 7:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used - 1,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 8:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used - 1,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 9:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used - 1,
-                                  );
-                                  break;
-                              }
-                            });
-                          }
-                        : null,
-                    icon: const Icon(Icons.arrow_left),
-                    iconSize: 28,
-                    color: used > 0 ? Colors.blue : Colors.grey,
-                    tooltip: 'Decrease used slots',
-                  ),
-                  
-                  // Slot count display
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: (slots - used) == 0 ? Colors.red : Colors.blue, 
-                        width: 2
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                      color: (slots - used) == 0 
-                          ? Colors.red.withValues(alpha: 0.1)
-                          : Colors.blue.withValues(alpha: 0.1),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${slots - used}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: (slots - used) == 0 ? Colors.red : Colors.blue,
-                          ),                        
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  // Right arrow - increase used slots
-                  IconButton(
-                    onPressed: used < slots 
-                        ? () {
-                            setState(() {
-                              switch (level) {
-                                case 1:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used + 1,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 2:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used + 1,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 3:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used + 1,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 4:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used + 1,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 5:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used + 1,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 6:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used + 1,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 7:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used + 1,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 8:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used + 1,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used,
-                                  );
-                                  break;
-                                case 9:
-                                  _spellSlots = CharacterSpellSlots(
-                                    level1Slots: _spellSlots.level1Slots,
-                                    level1Used: _spellSlots.level1Used,
-                                    level2Slots: _spellSlots.level2Slots,
-                                    level2Used: _spellSlots.level2Used,
-                                    level3Slots: _spellSlots.level3Slots,
-                                    level3Used: _spellSlots.level3Used,
-                                    level4Slots: _spellSlots.level4Slots,
-                                    level4Used: _spellSlots.level4Used,
-                                    level5Slots: _spellSlots.level5Slots,
-                                    level5Used: _spellSlots.level5Used,
-                                    level6Slots: _spellSlots.level6Slots,
-                                    level6Used: _spellSlots.level6Used,
-                                    level7Slots: _spellSlots.level7Slots,
-                                    level7Used: _spellSlots.level7Used,
-                                    level8Slots: _spellSlots.level8Slots,
-                                    level8Used: _spellSlots.level8Used,
-                                    level9Slots: _spellSlots.level9Slots,
-                                    level9Used: _spellSlots.level9Used + 1,
-                                  );
-                                  break;
-                              }
-                            });
-                          }
-                        : null,
-                    icon: const Icon(Icons.arrow_right),
-                    iconSize: 28,
-                    color: used < slots ? Colors.blue : Colors.grey,
-                    tooltip: 'Increase used slots',
-                  ),
-                ],
-              ),
-            ] else ...[
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(Icons.block, color: Colors.grey.shade400, size: 32),
-                      const SizedBox(height: 8),
-                      Text(
-                        'No spell slots available',
-                        style: TextStyle(color: Colors.grey.shade600),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Increase spell slots to use this feature',
-                        style: TextStyle(
-                          color: Colors.grey.shade500,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 
   void _updateSpellSlot(int level, String type, int value) {
     setState(() {
@@ -3924,198 +2074,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   void _showSlotModifierDialog(int level, String type, int currentValue) {
-    // Create a controller that we can update
-    final textController = TextEditingController(text: currentValue.toString());
-
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
-            title: Text(
-              'Modify ${type == 'slots' ? 'Total Slots' : 'Used Slots'}',
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  type == 'slots'
-                      ? 'Enter the total number of spell slots available for Level $level'
-                      : 'Enter the number of spell slots currently used for Level $level',
-                  style: const TextStyle(fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: () {
-                        final newValue =
-                            type == 'slots'
-                                ? (currentValue - 1).clamp(0, 99)
-                                : (currentValue - 1).clamp(
-                                  0,
-                                  _getMaxSlots(level),
-                                );
-                        _updateSpellSlot(level, type, newValue);
-                        currentValue = newValue; // Update local value
-                        textController.text =
-                            newValue.toString(); // Update text field
-                        // Manual save only - no auto-save
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 80,
-                      child: TextField(
-                        controller: textController, // Use the controller
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        textInputAction:
-                            TextInputAction
-                                .done, // Show "Done" button on keyboard
-                        onChanged: (value) {
-                          final newValue = int.tryParse(value) ?? 0;
-                          if (type == 'slots') {
-                            if (currentValue >= 0 && currentValue <= 99) {
-                              _updateSpellSlot(level, type, currentValue);
-                              // Manual save only - no auto-save
-                            } else {
-                              _updateSpellSlot(
-                                level,
-                                type,
-                                newValue.clamp(0, 99),
-                              );
-                              // Manual save only - no auto-save
-                            }
-                          } else {
-                            _updateSpellSlot(
-                              level,
-                              type,
-                              newValue.clamp(0, _getMaxSlots(level)),
-                            );
-                            // Manual save only - no auto-save
-                          }
-                          currentValue = newValue; // Update local value
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () {
-                        final maxValue =
-                            type == 'slots' ? 99 : _getMaxSlots(level);
-                        final newValue = (currentValue + 1).clamp(0, maxValue);
-                        _updateSpellSlot(level, type, newValue);
-                        currentValue = newValue; // Update local value
-                        textController.text =
-                            newValue.toString(); // Update text field
-                        // Manual save only - no auto-save
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Quick action buttons
-                if (type == 'slots') ...[
-                  const Divider(),
-                  const Text(
-                    'Quick Actions:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          _updateSpellSlot(level, 'slots', 4);
-                          currentValue = 4;
-                          textController.text = '4';
-                          // Manual save only - no auto-save
-                        },
-                        child: const Text('Set 4'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          _updateSpellSlot(level, 'slots', 6);
-                          currentValue = 6;
-                          textController.text = '6';
-                          // Manual save only - no auto-save
-                        },
-                        child: const Text('Set 6'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          _updateSpellSlot(level, 'slots', 9);
-                          currentValue = 9;
-                          textController.text = '9';
-                          // Manual save only - no auto-save
-                        },
-                        child: const Text('Set 9'),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  const Divider(),
-                  const Text(
-                    'Quick Actions:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          _updateSpellSlot(level, 'used', 0);
-                          currentValue = 0;
-                          textController.text = '0';
-                          // Manual save only - no auto-save
-                        },
-                        child: const Text('Clear All'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          final maxSlots = _getMaxSlots(level);
-                          _updateSpellSlot(level, 'used', maxSlots);
-                          currentValue = maxSlots;
-                          textController.text = maxSlots.toString();
-                          // Manual save only - no auto-save
-                        },
-                        child: const Text('Use All'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          final halfSlots = _getMaxSlots(level) ~/ 2;
-                          _updateSpellSlot(level, 'used', halfSlots);
-                          currentValue = halfSlots;
-                          textController.text = halfSlots.toString();
-                          // Manual save only - no auto-save
-                        },
-                        child: const Text('Half Used'),
-                      ),
-                    ],
-                  ),
-                ],
-
-                const SizedBox(height: 8),
-                Text(
-                  type == 'slots'
-                      ? 'Range: 0-99 slots'
-                      : 'Range: 0-${_getMaxSlots(level)} slots',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Done'),
-              ),
-            ],
+          (context) => SpellSlotModifierDialog(
+            level: level,
+            type: type,
+            initialValue: currentValue,
+            onUpdate: (lvl, t, value) => _updateSpellSlot(lvl, t, value),
+            getMaxSlots: (lvl) => _getMaxSlots(lvl),
           ),
     );
   }
@@ -4174,324 +2141,33 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
-  void _showAddAttackDialog() {
-    // Reset mode when dialog opens
-    setState(() {
-      _isCustomAttackMode = false;
-    });
-    
-    showDialog(
+  void _showAddAttackDialog() async {
+    final result = await showDialog<dynamic>(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, dialogSetState) {
-            return AlertDialog(
-              title: const Text('Add Attack'),
-              content: SizedBox(
-                width: 400,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Mode selection
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              dialogSetState(() {
-                                _isCustomAttackMode = false;
-                              });
-                              // Also update main widget state
-                              setState(() {
-                                _isCustomAttackMode = false;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: !_isCustomAttackMode ? Colors.blue.shade100 : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: !_isCustomAttackMode ? Colors.blue.shade300 : Colors.grey.shade300,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Choose from existing weapons',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: !_isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              dialogSetState(() {
-                                _isCustomAttackMode = true;
-                              });
-                              // Also update main widget state
-                              setState(() {
-                                _isCustomAttackMode = true;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: _isCustomAttackMode ? Colors.blue.shade100 : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: _isCustomAttackMode ? Colors.blue.shade300 : Colors.grey.shade300,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Make a custom weapon',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: _isCustomAttackMode ? Colors.blue.shade700 : Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Content based on mode
-                    if (!_isCustomAttackMode) ...[
-                      const Text(
-                        'Browse and select from the available weapons list. Attack bonus and damage will be calculated automatically.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                        textAlign: TextAlign.center,
-                      ),
-                    ] else ...[
-                      const Text(
-                        'Enter custom attack details manually.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (!_isCustomAttackMode) {
-                      // Show weapon selection dialog
-                      final selectedResults = await showDialog<List<WeaponSelectionResult>>(
-                        context: context,
-                        builder: (context) => const WeaponSelectionDialog(),
-                      );
-                      
-                      if (selectedResults != null && selectedResults.isNotEmpty) {
-                        // Map each result to character attack with custom values
-                        final attacks = selectedResults.map((result) {
-                          return WeaponAttackMapper.mapWeaponToAttack(
-                            result.weapon, 
-                            widget.character,
-                            customAttackBonus: result.customAttackBonus,
-                            customDamage: result.customDamage,
-                          );
-                        }).toList();
-                        
-                        // Use main widget setState to update the attacks list
-                        setState(() {
-                          _attacks.addAll(attacks);
-                        });
-                        
-                        // Close the add attack dialog (weapon selection dialog already closed)
-                        Navigator.of(context).pop();
-                      }
-                    } else {
-                      // Show custom attack dialog and wait for result
-                      final customAttack = await showDialog<CharacterAttack>(
-                        context: context,
-                        builder: (context) => _showCustomAttackDialog(),
-                      );
-                      
-                      if (customAttack != null) {
-                        // Add the custom attack to the list
-                        setState(() {
-                          _attacks.add(customAttack);
-                        });
-                        
-                        // Close the add attack dialog
-                        Navigator.of(context).pop();
-                      }
-                    }
-                  },
-                  child: Text(_isCustomAttackMode ? 'Create Custom' : 'Choose Weapons'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => const AddAttackDialog(),
     );
-  }
 
-  Widget _showCustomAttackDialog() {
-    final nameController = TextEditingController();
-    final bonusController = TextEditingController();
-    final damageController = TextEditingController();
-    final typeController = TextEditingController();
-    
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.9,
-          minWidth: 300,
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-          minHeight: 300,
-        ),
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Row(
-              children: [
-                const Icon(Icons.edit),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'Custom Attack',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            // Form fields
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Attack Name',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: bonusController,
-              decoration: const InputDecoration(
-                labelText: 'Attack Bonus',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: damageController,
-                    decoration: const InputDecoration(
-                      labelText: 'Damage',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: typeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Type',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      side: BorderSide(color: Colors.grey.shade400),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (nameController.text.trim().isNotEmpty) {
-                        final attack = CharacterAttack(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          name: nameController.text.trim(),
-                          attackBonus: bonusController.text.trim(),
-                          damage: damageController.text.trim(),
-                          damageType: typeController.text.trim(),
-                        );
-                        
-                        // Return the created attack
-                        Navigator.pop(context, attack);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade600,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: const Text('Add Attack'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        ),
-      ),
-    );
+    if (result == null) return;
+
+    if (result is List<WeaponSelectionResult>) {
+      final attacks =
+          result.map((res) {
+            return WeaponAttackMapper.mapWeaponToAttack(
+              res.weapon,
+              widget.character,
+              customAttackBonus: res.customAttackBonus,
+              customDamage: res.customDamage,
+            );
+          }).toList();
+
+      setState(() {
+        _attacks.addAll(attacks);
+      });
+    } else if (result is CharacterAttack) {
+      setState(() {
+        _attacks.add(result);
+      });
+    }
   }
 
   void _showAddSpellDialog() {
@@ -4502,7 +2178,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevent automatic dismissal to ensure we handle cleanup
+      barrierDismissible:
+          false, // Prevent automatic dismissal to ensure we handle cleanup
       builder:
           (context) => StatefulBuilder(
             builder:
@@ -4514,702 +2191,715 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                       maxHeight: MediaQuery.of(context).size.height * 0.9,
                     ),
                     child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Header
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.auto_awesome),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Add Spells to ${widget.character.name}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              if (selectedSpells.isNotEmpty)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.shade100,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Header
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.auto_awesome),
+                                const SizedBox(width: 8),
+                                Expanded(
                                   child: Text(
-                                    '${selectedSpells.length} selected',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.blue.shade700,
+                                    'Add Spells to ${widget.character.name}',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                onPressed: () {
-                                  // Reset all filter states when dialog is closed
-                                  this.setState(() {
-                                    _searchQuery = '';
-                                    _selectedLevelFilter = null;
-                                    _selectedClassFilter = null;
-                                    _selectedSchoolFilter = null;
-                                  });
-                                  Navigator.pop(context);
-                                },
-                                icon: const Icon(Icons.close),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Divider(height: 1),
-
-                        // Filters section
-                        Container(
-                          padding: const EdgeInsets.all(12.0),
-                          color: Colors.grey.shade50,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Filter by character class toggle
-                              Row(
-                                children: [
-                                  Switch(
-                                    value: _filterByCharacterClass,
-                                    onChanged: (value) {
-                                      this.setState(() {
-                                        _filterByCharacterClass = value;
-                                      });
-                                      setState(() {});
-                                    },
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
+                                if (selectedSpells.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade100,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                     child: Text(
-                                      'Only show ${widget.character.characterClass} spells',
-                                      style: const TextStyle(fontSize: 14),
+                                      '${selectedSpells.length} selected',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.blue.shade700,
+                                      ),
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Filter dropdowns
-                              Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Consumer<SpellsViewModel>(
-                                          builder: (
-                                            context,
-                                            spellsViewModel,
-                                            child,
-                                          ) {
-                                            final levels = [
-                                              'All',
-                                              'Cantrips',
-                                              'Level 1',
-                                              'Level 2',
-                                              'Level 3',
-                                              'Level 4',
-                                              'Level 5',
-                                              'Level 6',
-                                              'Level 7',
-                                              'Level 8',
-                                              'Level 9',
-                                            ];
-                                            return DropdownButtonFormField<
-                                              String
-                                            >(
-                                              value:
-                                                  _selectedLevelFilter ?? 'All',
-                                              isExpanded: true,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Level',
-                                                border: OutlineInputBorder(),
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 8,
-                                                    ),
-                                              ),
-                                              items:
-                                                  levels.map((level) {
-                                                    return DropdownMenuItem(
-                                                      value: level,
-                                                      child: Text(
-                                                        level,
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                              onChanged: (value) {
-                                                this.setState(() {
-                                                  _selectedLevelFilter =
-                                                      value == 'All'
-                                                          ? null
-                                                          : value;
-                                                });
-                                                setState(() {});
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Consumer<SpellsViewModel>(
-                                          builder: (
-                                            context,
-                                            spellsViewModel,
-                                            child,
-                                          ) {
-                                            final classes = [
-                                              'All',
-                                              ...spellsViewModel.spells
-                                                  .map((s) => s.classes)
-                                                  .expand((c) => c)
-                                                  .toSet()
-                                                  .toList()
-                                                ..sort(),
-                                            ];
-                                            return DropdownButtonFormField<
-                                              String
-                                            >(
-                                              value:
-                                                  _selectedClassFilter ?? 'All',
-                                              isExpanded: true,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Class',
-                                                border: OutlineInputBorder(),
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 8,
-                                                    ),
-                                              ),
-                                              items:
-                                                  classes.map((className) {
-                                                    final displayName =
-                                                        className == 'All'
-                                                            ? 'All'
-                                                            : className
-                                                                .split('_')
-                                                                .map(
-                                                                  (word) =>
-                                                                      word.isNotEmpty
-                                                                          ? word[0].toUpperCase() +
-                                                                              word.substring(1)
-                                                                          : '',
-                                                                )
-                                                                .join(' ');
-                                                    return DropdownMenuItem(
-                                                      value: className,
-                                                      child: Text(
-                                                        displayName.length > 15
-                                                            ? '${displayName.substring(0, 15)}...'
-                                                            : displayName,
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                              onChanged: (value) {
-                                                this.setState(() {
-                                                  _selectedClassFilter =
-                                                      value == 'All'
-                                                          ? null
-                                                          : value;
-                                                });
-                                                setState(() {});
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Consumer<SpellsViewModel>(
-                                          builder: (
-                                            context,
-                                            spellsViewModel,
-                                            child,
-                                          ) {
-                                            final schools = [
-                                              'All',
-                                              ...spellsViewModel.spells
-                                                  .map((s) => s.schoolName)
-                                                  .toSet()
-                                                  .toList()
-                                                ..sort(),
-                                            ];
-                                            return DropdownButtonFormField<
-                                              String
-                                            >(
-                                              value:
-                                                  _selectedSchoolFilter ??
-                                                  'All',
-                                              isExpanded: true,
-                                              decoration: const InputDecoration(
-                                                labelText: 'School',
-                                                border: OutlineInputBorder(),
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 8,
-                                                    ),
-                                              ),
-                                              items:
-                                                  schools.map((school) {
-                                                    return DropdownMenuItem(
-                                                      value: school,
-                                                      child: Text(
-                                                        school
-                                                            .split('_')
-                                                            .map(
-                                                              (word) =>
-                                                                  word.isNotEmpty
-                                                                      ? word[0]
-                                                                              .toUpperCase() +
-                                                                          word.substring(
-                                                                            1,
-                                                                          )
-                                                                      : '',
-                                                            )
-                                                            .join(' '),
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                              onChanged: (value) {
-                                                this.setState(() {
-                                                  _selectedSchoolFilter =
-                                                      value == 'All'
-                                                          ? null
-                                                          : value;
-                                                });
-                                                setState(() {});
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  onPressed: () {
+                                    // Reset all filter states when dialog is closed
+                                    this.setState(() {
+                                      _searchQuery = '';
+                                      _selectedLevelFilter = null;
+                                      _selectedClassFilter = null;
+                                      _selectedSchoolFilter = null;
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  icon: const Icon(Icons.close),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const Divider(height: 1),
+                          const Divider(height: 1),
 
-                        // Search bar
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          labelText: 'Search spells by name...',
-                          prefixIcon: Icon(Icons.search),
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (query) {
-                          setState(() {
-                            _searchQuery = query.toLowerCase();
-                          });
-                        },
-                      ),
-                    ),
+                          // Filters section
+                          Container(
+                            padding: const EdgeInsets.all(12.0),
+                            color: Colors.grey.shade50,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Filter by character class toggle
+                                Row(
+                                  children: [
+                                    Switch(
+                                      value: _filterByCharacterClass,
+                                      onChanged: (value) {
+                                        this.setState(() {
+                                          _filterByCharacterClass = value;
+                                        });
+                                        setState(() {});
+                                      },
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Only show ${widget.character.characterClass} spells',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
 
-                        // Active filters display
-                        Consumer<SpellsViewModel>(
-                          builder: (context, spellsViewModel, child) {
-                            final hasActiveFilters = _searchQuery.isNotEmpty || 
-                                _selectedLevelFilter != null || 
-                                _selectedClassFilter != null || 
-                                _selectedSchoolFilter != null ||
-                                _filterByCharacterClass;
-                            
-                            if (!hasActiveFilters) return const SizedBox.shrink();
-                            
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                              padding: const EdgeInsets.all(8.0),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.blue.shade200),
+                                // Filter dropdowns
+                                Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Consumer<SpellsViewModel>(
+                                            builder: (
+                                              context,
+                                              spellsViewModel,
+                                              child,
+                                            ) {
+                                              final levels = [
+                                                'All',
+                                                'Cantrips',
+                                                'Level 1',
+                                                'Level 2',
+                                                'Level 3',
+                                                'Level 4',
+                                                'Level 5',
+                                                'Level 6',
+                                                'Level 7',
+                                                'Level 8',
+                                                'Level 9',
+                                              ];
+                                              return DropdownButtonFormField<
+                                                String
+                                              >(
+                                                value:
+                                                    _selectedLevelFilter ??
+                                                    'All',
+                                                isExpanded: true,
+                                                decoration:
+                                                    const InputDecoration(
+                                                      labelText: 'Level',
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 8,
+                                                          ),
+                                                    ),
+                                                items:
+                                                    levels.map((level) {
+                                                      return DropdownMenuItem(
+                                                        value: level,
+                                                        child: Text(
+                                                          level,
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 11,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                onChanged: (value) {
+                                                  this.setState(() {
+                                                    _selectedLevelFilter =
+                                                        value == 'All'
+                                                            ? null
+                                                            : value;
+                                                  });
+                                                  setState(() {});
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Consumer<SpellsViewModel>(
+                                            builder: (
+                                              context,
+                                              spellsViewModel,
+                                              child,
+                                            ) {
+                                              final classes = [
+                                                'All',
+                                                ...spellsViewModel.spells
+                                                    .map((s) => s.classes)
+                                                    .expand((c) => c)
+                                                    .toSet()
+                                                    .toList()
+                                                  ..sort(),
+                                              ];
+                                              return DropdownButtonFormField<
+                                                String
+                                              >(
+                                                value:
+                                                    _selectedClassFilter ??
+                                                    'All',
+                                                isExpanded: true,
+                                                decoration:
+                                                    const InputDecoration(
+                                                      labelText: 'Class',
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 8,
+                                                          ),
+                                                    ),
+                                                items:
+                                                    classes.map((className) {
+                                                      final displayName =
+                                                          className == 'All'
+                                                              ? 'All'
+                                                              : className
+                                                                  .split('_')
+                                                                  .map(
+                                                                    (word) =>
+                                                                        word.isNotEmpty
+                                                                            ? word[0].toUpperCase() +
+                                                                                word.substring(1)
+                                                                            : '',
+                                                                  )
+                                                                  .join(' ');
+                                                      return DropdownMenuItem(
+                                                        value: className,
+                                                        child: Text(
+                                                          displayName.length >
+                                                                  15
+                                                              ? '${displayName.substring(0, 15)}...'
+                                                              : displayName,
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 11,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                onChanged: (value) {
+                                                  this.setState(() {
+                                                    _selectedClassFilter =
+                                                        value == 'All'
+                                                            ? null
+                                                            : value;
+                                                  });
+                                                  setState(() {});
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Consumer<SpellsViewModel>(
+                                            builder: (
+                                              context,
+                                              spellsViewModel,
+                                              child,
+                                            ) {
+                                              final schools = [
+                                                'All',
+                                                ...spellsViewModel.spells
+                                                    .map((s) => s.schoolName)
+                                                    .toSet()
+                                                    .toList()
+                                                  ..sort(),
+                                              ];
+                                              return DropdownButtonFormField<
+                                                String
+                                              >(
+                                                value:
+                                                    _selectedSchoolFilter ??
+                                                    'All',
+                                                isExpanded: true,
+                                                decoration:
+                                                    const InputDecoration(
+                                                      labelText: 'School',
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 8,
+                                                          ),
+                                                    ),
+                                                items:
+                                                    schools.map((school) {
+                                                      return DropdownMenuItem(
+                                                        value: school,
+                                                        child: Text(
+                                                          school
+                                                              .split('_')
+                                                              .map(
+                                                                (word) =>
+                                                                    word.isNotEmpty
+                                                                        ? word[0]
+                                                                                .toUpperCase() +
+                                                                            word.substring(
+                                                                              1,
+                                                                            )
+                                                                        : '',
+                                                              )
+                                                              .join(' '),
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 11,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                onChanged: (value) {
+                                                  this.setState(() {
+                                                    _selectedSchoolFilter =
+                                                        value == 'All'
+                                                            ? null
+                                                            : value;
+                                                  });
+                                                  setState(() {});
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Divider(height: 1),
+
+                          // Search bar
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'Search spells by name...',
+                                prefixIcon: Icon(Icons.search),
+                                border: OutlineInputBorder(),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.filter_list, size: 16, color: Colors.blue.shade700),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Active Filters:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue.shade700,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      TextButton(
-                                        onPressed: () {
-                                          this.setState(() {
-                                            _searchQuery = '';
-                                            _selectedLevelFilter = null;
-                                            _selectedClassFilter = null;
-                                            _selectedSchoolFilter = null;
-                                            _filterByCharacterClass = false;
-                                          });
-                                          setState(() {});
-                                        },
-                                        style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          minimumSize: Size.zero,
-                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                        ),
-                                        child: const Text('Clear All', style: TextStyle(fontSize: 12)),
-                                      ),
-                                    ],
+                              onChanged: (query) {
+                                setState(() {
+                                  _searchQuery = query.toLowerCase();
+                                });
+                              },
+                            ),
+                          ),
+
+                          // Active filters display
+                          Consumer<SpellsViewModel>(
+                            builder: (context, spellsViewModel, child) {
+                              final hasActiveFilters =
+                                  _searchQuery.isNotEmpty ||
+                                  _selectedLevelFilter != null ||
+                                  _selectedClassFilter != null ||
+                                  _selectedSchoolFilter != null ||
+                                  _filterByCharacterClass;
+
+                              if (!hasActiveFilters)
+                                return const SizedBox.shrink();
+
+                              return Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                ),
+                                padding: const EdgeInsets.all(8.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.blue.shade200,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 4,
-                                    children: [
-                                      if (_searchQuery.isNotEmpty)
-                                        _buildFilterChip(
-                                          'Search: "$_searchQuery"',
-                                          () {
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.filter_list,
+                                          size: 16,
+                                          color: Colors.blue.shade700,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Active Filters:',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue.shade700,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        TextButton(
+                                          onPressed: () {
                                             this.setState(() {
                                               _searchQuery = '';
-                                            });
-                                            setState(() {});
-                                          },
-                                        ),
-                                      if (_filterByCharacterClass)
-                                        _buildFilterChip(
-                                          'Only ${widget.character.characterClass} spells',
-                                          () {
-                                            this.setState(() {
+                                              _selectedLevelFilter = null;
+                                              _selectedClassFilter = null;
+                                              _selectedSchoolFilter = null;
                                               _filterByCharacterClass = false;
                                             });
                                             setState(() {});
                                           },
-                                        ),
-                                      if (_selectedLevelFilter != null)
-                                        _buildFilterChip(
-                                          'Level: $_selectedLevelFilter',
-                                          () {
-                                            this.setState(() {
-                                              _selectedLevelFilter = null;
-                                            });
-                                            setState(() {});
-                                          },
-                                        ),
-                                      if (_selectedClassFilter != null)
-                                        _buildFilterChip(
-                                          'Class: $_selectedClassFilter',
-                                          () {
-                                            this.setState(() {
-                                              _selectedClassFilter = null;
-                                            });
-                                            setState(() {});
-                                          },
-                                        ),
-                                      if (_selectedSchoolFilter != null)
-                                        _buildFilterChip(
-                                          'School: ${_selectedSchoolFilter?.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')}',
-                                          () {
-                                            this.setState(() {
-                                              _selectedSchoolFilter = null;
-                                            });
-                                            setState(() {});
-                                          },
-                                        ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-
-                        // Spells list
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.4,
-                          ),
-                          child: Consumer<SpellsViewModel>(
-                            builder: (context, spellsViewModel, child) {
-                              if (spellsViewModel.isLoading) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-
-                              if (spellsViewModel.error != null) {
-                                return Center(
-                                  child: Text(
-                                    'Error: ${spellsViewModel.error}',
-                                  ),
-                                );
-                              }
-
-                              // Apply filters
-                              List<Spell> filteredSpells =
-                                  spellsViewModel.spells.where((spell) {
-                                    // Search by name
-                                    if (_searchQuery.isNotEmpty) {
-                                      if (!spell.name.toLowerCase().contains(_searchQuery)) {
-                                        return false;
-                                      }
-                                    }
-
-                                    // Filter by character class if enabled
-                                    if (_filterByCharacterClass) {
-                                      final characterClass =
-                                          widget.character.characterClass
-                                              .toLowerCase();
-                                      if (!spell.classes.any(
-                                        (className) =>
-                                            className.toLowerCase() ==
-                                            characterClass,
-                                      )) {
-                                        return false;
-                                      }
-                                    }
-
-                                    // Filter by level
-                                    if (_selectedLevelFilter != null) {
-                                      if (_selectedLevelFilter == 'Cantrips') {
-                                        if (spell.levelNumber != 0)
-                                          return false;
-                                      } else if (_selectedLevelFilter!
-                                          .startsWith('Level')) {
-                                        final level = int.tryParse(
-                                          _selectedLevelFilter!.split(' ')[1],
-                                        );
-                                        if (spell.levelNumber != level)
-                                          return false;
-                                      }
-                                    }
-
-                                    // Filter by class
-                                    if (_selectedClassFilter != null) {
-                                      if (!spell.classes.contains(
-                                        _selectedClassFilter,
-                                      ))
-                                        return false;
-                                    }
-
-                                    // Filter by school
-                                    if (_selectedSchoolFilter != null) {
-                                      if (spell.schoolName !=
-                                          _selectedSchoolFilter)
-                                        return false;
-                                    }
-
-                                    return true;
-                                  }).toList();
-
-                              if (filteredSpells.isEmpty) {
-                                return const Center(
-                                  child: Text(
-                                    'No spells found with current filters',
-                                  ),
-                                );
-                              }
-
-                              return ListView.builder(
-                                itemCount: filteredSpells.length,
-                                itemBuilder: (context, index) {
-                                  final spell = filteredSpells[index];
-                                  final isKnown = _spells.contains(spell.name);
-                                  final isSelected = selectedSpells.contains(
-                                    spell.name,
-                                  );
-
-                                  return CheckboxListTile(
-                                    value: isSelected,
-                                    onChanged:
-                                        isKnown
-                                            ? null
-                                            : (bool? value) {
-                                              setState(() {
-                                                if (value == true) {
-                                                  selectedSpells.add(
-                                                    spell.name,
-                                                  );
-                                                } else {
-                                                  selectedSpells.remove(
-                                                    spell.name,
-                                                  );
-                                                }
-                                              });
-                                            },
-                                    title: Text(
-                                      spell.name,
-                                      style: TextStyle(
-                                        color: isKnown ? Colors.grey : null,
-                                        decoration:
-                                            isKnown
-                                                ? TextDecoration.lineThrough
-                                                : null,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      '${spell.schoolName.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    secondary:
-                                        isKnown
-                                            ? const Icon(
-                                              Icons.check,
-                                              color: Colors.green,
-                                            )
-                                            : Icon(
-                                              isSelected
-                                                  ? Icons.check_circle
-                                                  : Icons.check_circle_outline,
-                                              color:
-                                                  isSelected
-                                                      ? Colors.blue
-                                                      : Colors.grey,
+                                          style: TextButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
                                             ),
-                                    enabled: !isKnown,
-                                  );
-                                },
+                                            minimumSize: Size.zero,
+                                            tapTargetSize:
+                                                MaterialTapTargetSize
+                                                    .shrinkWrap,
+                                          ),
+                                          child: const Text(
+                                            'Clear All',
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      children: [
+                                        if (_searchQuery.isNotEmpty)
+                                          AppFilterChip(
+                                            label: 'Search: "$_searchQuery"',
+                                            onClear: () {
+                                              this.setState(() {
+                                                _searchQuery = '';
+                                              });
+                                              setState(() {});
+                                            },
+                                          ),
+                                        if (_filterByCharacterClass)
+                                          AppFilterChip(
+                                            label:
+                                                'Only ${widget.character.characterClass} spells',
+                                            onClear: () {
+                                              this.setState(() {
+                                                _filterByCharacterClass = false;
+                                              });
+                                              setState(() {});
+                                            },
+                                          ),
+                                        if (_selectedLevelFilter != null)
+                                          AppFilterChip(
+                                            label:
+                                                'Level: $_selectedLevelFilter',
+                                            onClear: () {
+                                              this.setState(() {
+                                                _selectedLevelFilter = null;
+                                              });
+                                              setState(() {});
+                                            },
+                                          ),
+                                        if (_selectedClassFilter != null)
+                                          AppFilterChip(
+                                            label:
+                                                'Class: $_selectedClassFilter',
+                                            onClear: () {
+                                              this.setState(() {
+                                                _selectedClassFilter = null;
+                                              });
+                                              setState(() {});
+                                            },
+                                          ),
+                                        if (_selectedSchoolFilter != null)
+                                          AppFilterChip(
+                                            label:
+                                                'School: ${_selectedSchoolFilter?.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')}',
+                                            onClear: () {
+                                              this.setState(() {
+                                                _selectedSchoolFilter = null;
+                                              });
+                                              setState(() {});
+                                            },
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               );
                             },
                           ),
-                        ),
 
-                        // Footer
-                        const Divider(height: 1),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              TextButton(
-                                onPressed: () {
-                                  // Reset all filter states when dialog is closed
-                                  this.setState(() {
-                                    _searchQuery = '';
-                                    _selectedLevelFilter = null;
-                                    _selectedClassFilter = null;
-                                    _selectedSchoolFilter = null;
-                                  });
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Cancel'),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  '${_spells.length} spells known',
-                                  style: const TextStyle(color: Colors.grey),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              ElevatedButton(
-                                onPressed:
-                                    selectedSpells.isEmpty
-                                        ? null
-                                        : () {
-                                          // Update the parent state first
-                                          this.setState(() {
-                                            _spells.addAll(selectedSpells);
-                                            // Reset all filter states when dialog is closed
-                                            _searchQuery = '';
-                                            _selectedLevelFilter = null;
-                                            _selectedClassFilter = null;
-                                            _selectedSchoolFilter = null;
-                                          });
-                                          Navigator.pop(context);
+                          // Spells list
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight:
+                                  MediaQuery.of(context).size.height * 0.4,
+                            ),
+                            child: Consumer<SpellsViewModel>(
+                              builder: (context, spellsViewModel, child) {
+                                if (spellsViewModel.isLoading) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                }
 
-                                          // Manual save only - no auto-save
+                                if (spellsViewModel.error != null) {
+                                  return Center(
+                                    child: Text(
+                                      'Error: ${spellsViewModel.error}',
+                                    ),
+                                  );
+                                }
 
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Added ${selectedSpells.length} spell${selectedSpells.length == 1 ? '' : 's'} to ${widget.character.name}',
-                                              ),
-                                              backgroundColor: Colors.green,
-                                              duration: const Duration(seconds: 2),
-                                            ),
+                                // Apply filters
+                                List<Spell> filteredSpells =
+                                    spellsViewModel.spells.where((spell) {
+                                      // Search by name
+                                      if (_searchQuery.isNotEmpty) {
+                                        if (!spell.name.toLowerCase().contains(
+                                          _searchQuery,
+                                        )) {
+                                          return false;
+                                        }
+                                      }
+
+                                      // Filter by character class if enabled
+                                      if (_filterByCharacterClass) {
+                                        final characterClass =
+                                            widget.character.characterClass
+                                                .toLowerCase();
+                                        if (!spell.classes.any(
+                                          (className) =>
+                                              className.toLowerCase() ==
+                                              characterClass,
+                                        )) {
+                                          return false;
+                                        }
+                                      }
+
+                                      // Filter by level
+                                      if (_selectedLevelFilter != null) {
+                                        if (_selectedLevelFilter ==
+                                            'Cantrips') {
+                                          if (spell.levelNumber != 0)
+                                            return false;
+                                        } else if (_selectedLevelFilter!
+                                            .startsWith('Level')) {
+                                          final level = int.tryParse(
+                                            _selectedLevelFilter!.split(' ')[1],
                                           );
-                                        },
-                                child: Text(
-                                  'Add ${selectedSpells.isEmpty ? 'Spells' : '${selectedSpells.length} Spell${selectedSpells.length == 1 ? '' : 's'}'}',
-                                ),
-                              ),
-                            ],
+                                          if (spell.levelNumber != level)
+                                            return false;
+                                        }
+                                      }
+
+                                      // Filter by class
+                                      if (_selectedClassFilter != null) {
+                                        if (!spell.classes.contains(
+                                          _selectedClassFilter,
+                                        ))
+                                          return false;
+                                      }
+
+                                      // Filter by school
+                                      if (_selectedSchoolFilter != null) {
+                                        if (spell.schoolName !=
+                                            _selectedSchoolFilter)
+                                          return false;
+                                      }
+
+                                      return true;
+                                    }).toList();
+
+                                if (filteredSpells.isEmpty) {
+                                  return const Center(
+                                    child: Text(
+                                      'No spells found with current filters',
+                                    ),
+                                  );
+                                }
+
+                                return ListView.builder(
+                                  itemCount: filteredSpells.length,
+                                  itemBuilder: (context, index) {
+                                    final spell = filteredSpells[index];
+                                    final isKnown = _spells.contains(
+                                      spell.name,
+                                    );
+                                    final isSelected = selectedSpells.contains(
+                                      spell.name,
+                                    );
+
+                                    return CheckboxListTile(
+                                      value: isSelected,
+                                      onChanged:
+                                          isKnown
+                                              ? null
+                                              : (bool? value) {
+                                                setState(() {
+                                                  if (value == true) {
+                                                    selectedSpells.add(
+                                                      spell.name,
+                                                    );
+                                                  } else {
+                                                    selectedSpells.remove(
+                                                      spell.name,
+                                                    );
+                                                  }
+                                                });
+                                              },
+                                      title: Text(
+                                        spell.name,
+                                        style: TextStyle(
+                                          color: isKnown ? Colors.grey : null,
+                                          decoration:
+                                              isKnown
+                                                  ? TextDecoration.lineThrough
+                                                  : null,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        '${spell.schoolName.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      secondary:
+                                          isKnown
+                                              ? const Icon(
+                                                Icons.check,
+                                                color: Colors.green,
+                                              )
+                                              : Icon(
+                                                isSelected
+                                                    ? Icons.check_circle
+                                                    : Icons
+                                                        .check_circle_outline,
+                                                color:
+                                                    isSelected
+                                                        ? Colors.blue
+                                                        : Colors.grey,
+                                              ),
+                                      enabled: !isKnown,
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+
+                          // Footer
+                          const Divider(height: 1),
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    // Reset all filter states when dialog is closed
+                                    this.setState(() {
+                                      _searchQuery = '';
+                                      _selectedLevelFilter = null;
+                                      _selectedClassFilter = null;
+                                      _selectedSchoolFilter = null;
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Cancel'),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    '${_spells.length} spells known',
+                                    style: const TextStyle(color: Colors.grey),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed:
+                                      selectedSpells.isEmpty
+                                          ? null
+                                          : () {
+                                            // Update the parent state first
+                                            this.setState(() {
+                                              _spells.addAll(selectedSpells);
+                                              // Reset all filter states when dialog is closed
+                                              _searchQuery = '';
+                                              _selectedLevelFilter = null;
+                                              _selectedClassFilter = null;
+                                              _selectedSchoolFilter = null;
+                                            });
+                                            Navigator.pop(context);
+
+                                            // Manual save only - no auto-save
+
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Added ${selectedSpells.length} spell${selectedSpells.length == 1 ? '' : 's'} to ${widget.character.name}',
+                                                ),
+                                                backgroundColor: Colors.green,
+                                                duration: const Duration(
+                                                  seconds: 2,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                  child: Text(
+                                    'Add ${selectedSpells.isEmpty ? 'Spells' : '${selectedSpells.length} Spell${selectedSpells.length == 1 ? '' : 's'}'}',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
           ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, VoidCallback onClear) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade100,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade300),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.blue.shade800,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: onClear,
-            child: Icon(
-              Icons.close,
-              size: 14,
-              color: Colors.blue.shade600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -5434,14 +3124,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                       color: Colors.purple.shade700,
                                     ),
                                   ),
-                                  if (background.goldPieces != null)
-                                    Text(
-                                      'Starting Gold: ${background.goldPieces} gp',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.purple.shade600,
-                                      ),
+                                  Text(
+                                    'Starting Gold: ${background.goldPieces} gp',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.purple.shade600,
                                     ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -5525,214 +3214,22 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       context: context,
       isScrollControlled: true,
       builder:
-          (context) => DraggableScrollableSheet(
-            initialChildSize: 0.7,
-            minChildSize: 0.5,
-            maxChildSize: 0.9,
-            expand: false,
-            builder: (_, controller) {
-              try {
-                return SingleChildScrollView(
-                  controller: controller,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[400],
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-                        Text(
-                          spell.name,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Character info
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.person, color: Colors.blue),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Known by: ${widget.character.name}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Divider(),
-
-                        // Casting Time
-                        _buildDetailRow('Casting Time', spell.castingTime),
-
-                        // Range
-                        _buildDetailRow('Range', spell.range),
-
-                        // Components
-                        _buildDetailRow('Components', _formatComponents(spell)),
-
-                        // Duration
-                        _buildDetailRow('Duration', spell.duration),
-
-                        // Ritual
-                        if (spell.ritual) _buildDetailRow('Ritual', 'Yes'),
-
-                        // Classes
-                        _buildDetailRow(
-                          'Classes',
-                          spell.classes.isNotEmpty
-                              ? spell.classes
-                                  .map(
-                                    (c) => c
-                                        .split('_')
-                                        .map(
-                                          (word) =>
-                                              word.isNotEmpty
-                                                  ? word[0].toUpperCase() +
-                                                      word.substring(1)
-                                                  : '',
-                                        )
-                                        .join(' '),
-                                  )
-                                  .join(', ')
-                              : 'None',
-                        ),
-
-                        const Divider(),
-
-                        // Description
-                        Text(
-                          spell.description,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Action buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                icon: const Icon(Icons.edit),
-                                label: const Text('Remove Spell'),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  setState(() {
-                                    _spells.remove(spell.name);
-                                  });
-
-                                  // Manual save only - no auto-save
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Removed ${spell.name} from ${widget.character.name}',
-                                      ),
-                                      backgroundColor: Colors.orange,
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                icon: const Icon(Icons.close),
-                                label: const Text('Close'),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              } catch (e) {
-                // Fallback UI in case of any errors
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error, color: Colors.red, size: 48),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error displaying spell details',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'There was an error loading the spell details for "${spell.name}".',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  ),
-                );
-              }
+          (context) => SpellDetailsModal(
+            spell: spell,
+            characterName: widget.character.name,
+            onRemoveSpell: (removedSpell) {
+              setState(() {
+                _spells.remove(removedSpell.name);
+              });
             },
           ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
-  }
-
-  String _formatComponents(Spell spell) {
-    final components = <String>[];
-    if (spell.verbal) components.add('V');
-    if (spell.somatic) components.add('S');
-    if (spell.material && spell.components != null) {
-      components.add('M (${spell.components})');
-    }
-    return components.join(', ');
-  }
-
   void _takeComprehensiveLongRest() {
     final hadExhaustion = _exhaustionLevel > 0;
     final previousLevel = _exhaustionLevel;
-    
+
     setState(() {
       // Restore hit points to maximum
       _currentHpController.text = _maxHpController.text;
@@ -5784,11 +3281,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Manual save only - no auto-save for comprehensive long rest
 
     // Show confirmation message
-    String message = 'Long rest completed! HP, spell slots, and all class resources restored!';
+    String message =
+        'Long rest completed! HP, spell slots, and all class resources restored!';
     if (hadExhaustion && _exhaustionLevel < previousLevel) {
       message += ' Exhaustion reduced by 1.';
     }
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -5851,24 +3349,25 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
       if (image != null && mounted) {
         final File imageFile = File(image.path);
-        
+
         // Navigate to crop screen
         final result = await Navigator.of(context).push<Uint8List>(
           MaterialPageRoute(
-            builder: (context) => ImageCropWidget(
-              imageFile: imageFile,
-              title: 'Crop Profile Image',
-              isCircleCrop: true, // Profile images are typically circular
-              aspectRatio: 1.0, // Square aspect ratio for profile
-              onCropped: (croppedBytes) {
-                // Let parent handle navigation with result
-                Navigator.of(context).pop(croppedBytes);
-              },
-              onCancelled: () {
-                // Let parent handle navigation with null result
-                Navigator.of(context).pop(null);
-              },
-            ),
+            builder:
+                (context) => ImageCropWidget(
+                  imageFile: imageFile,
+                  title: 'Crop Profile Image',
+                  isCircleCrop: true, // Profile images are typically circular
+                  aspectRatio: 1.0, // Square aspect ratio for profile
+                  onCropped: (croppedBytes) {
+                    // Let parent handle navigation with result
+                    Navigator.of(context).pop(croppedBytes);
+                  },
+                  onCancelled: () {
+                    // Let parent handle navigation with null result
+                    Navigator.of(context).pop(null);
+                  },
+                ),
           ),
         );
 
@@ -6006,24 +3505,25 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
       if (image != null) {
         final File imageFile = File(image.path);
-        
+
         // Navigate to crop screen
         final result = await Navigator.of(context).push<Uint8List>(
           MaterialPageRoute(
-            builder: (context) => ImageCropWidget(
-              imageFile: imageFile,
-              title: 'Crop Appearance Image',
-              isCircleCrop: false, // Appearance images can be rectangular
-              aspectRatio: null, // Free aspect ratio for appearance images
-              onCropped: (croppedBytes) {
-                // Let parent handle navigation with result
-                Navigator.of(context).pop(croppedBytes);
-              },
-              onCancelled: () {
-                // Let parent handle navigation with null result
-                Navigator.of(context).pop(null);
-              },
-            ),
+            builder:
+                (context) => ImageCropWidget(
+                  imageFile: imageFile,
+                  title: 'Crop Appearance Image',
+                  isCircleCrop: false, // Appearance images can be rectangular
+                  aspectRatio: null, // Free aspect ratio for appearance images
+                  onCropped: (croppedBytes) {
+                    // Let parent handle navigation with result
+                    Navigator.of(context).pop(croppedBytes);
+                  },
+                  onCancelled: () {
+                    // Let parent handle navigation with null result
+                    Navigator.of(context).pop(null);
+                  },
+                ),
           ),
         );
 
@@ -6037,12 +3537,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           }
 
           final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final String fileName = '${widget.character.id}_appearance_$timestamp.jpg';
+          final String fileName =
+              '${widget.character.id}_appearance_$timestamp.jpg';
           final String savedImagePath = path.join(
             appearanceImagesDir.path,
             fileName,
           );
-          
+
           // Save cropped image
           final File savedFile = File(savedImagePath);
           await savedFile.writeAsBytes(result);
@@ -6082,7 +3583,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       debugPrint('Error picking appearance image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking appearance image: $e'), duration: const Duration(seconds: 3)),
+          SnackBar(
+            content: Text('Error picking appearance image: $e'),
+            duration: const Duration(seconds: 3),
+          ),
         );
       }
     } finally {
@@ -6143,214 +3647,391 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   /// Check if there are any unsaved changes in the character data
   bool get hasUnsavedChanges {
     final character = _baselineCharacter;
-    
+
     // Check basic info changes
     if (_nameController.text.trim() != character.name) return true;
-    if ((int.tryParse(_levelController.text) ?? 1) != character.level) return true;
+    if ((int.tryParse(_levelController.text) ?? 1) != character.level)
+      return true;
     if (_classController.text.trim() != character.characterClass) return true;
-    if ((_subclassController.text.trim().isEmpty ? null : _subclassController.text.trim()) != character.subclass) return true;
-    if ((_raceController.text.trim().isEmpty ? null : _raceController.text.trim()) != character.race) return true;
-    if ((_backgroundController.text.trim().isEmpty ? null : _backgroundController.text.trim()) != character.background) return true;
-    
+    if ((_subclassController.text.trim().isEmpty
+            ? null
+            : _subclassController.text.trim()) !=
+        character.subclass)
+      return true;
+    if ((_raceController.text.trim().isEmpty
+            ? null
+            : _raceController.text.trim()) !=
+        character.race)
+      return true;
+    if ((_backgroundController.text.trim().isEmpty
+            ? null
+            : _backgroundController.text.trim()) !=
+        character.background)
+      return true;
+
     // Check image changes
     if (_customImagePath != character.customImagePath) return true;
-    if (_appearanceImagePath != character.appearance.appearanceImagePath) return true;
-    
+    if (_appearanceImagePath != character.appearance.appearanceImagePath)
+      return true;
+
     // Check stats changes
-    if ((int.tryParse(_strengthController.text) ?? 10) != character.stats.strength) return true;
-    if ((int.tryParse(_dexterityController.text) ?? 10) != character.stats.dexterity) return true;
-    if ((int.tryParse(_constitutionController.text) ?? 10) != character.stats.constitution) return true;
-    if ((int.tryParse(_intelligenceController.text) ?? 10) != character.stats.intelligence) return true;
-    if ((int.tryParse(_wisdomController.text) ?? 10) != character.stats.wisdom) return true;
-    if ((int.tryParse(_charismaController.text) ?? 10) != character.stats.charisma) return true;
-    if ((int.tryParse(_armorClassController.text) ?? 10) != character.stats.armorClass) return true;
-    if ((int.tryParse(_speedController.text) ?? 30) != character.stats.speed) return true;
-    if ((int.tryParse(_initiativeController.text) ?? 0) != character.stats.initiative) return true;
+    if ((int.tryParse(_strengthController.text) ?? 10) !=
+        character.stats.strength)
+      return true;
+    if ((int.tryParse(_dexterityController.text) ?? 10) !=
+        character.stats.dexterity)
+      return true;
+    if ((int.tryParse(_constitutionController.text) ?? 10) !=
+        character.stats.constitution)
+      return true;
+    if ((int.tryParse(_intelligenceController.text) ?? 10) !=
+        character.stats.intelligence)
+      return true;
+    if ((int.tryParse(_wisdomController.text) ?? 10) != character.stats.wisdom)
+      return true;
+    if ((int.tryParse(_charismaController.text) ?? 10) !=
+        character.stats.charisma)
+      return true;
+    if ((int.tryParse(_armorClassController.text) ?? 10) !=
+        character.stats.armorClass)
+      return true;
+    if ((int.tryParse(_speedController.text) ?? 30) != character.stats.speed)
+      return true;
+    if ((int.tryParse(_initiativeController.text) ?? 0) !=
+        character.stats.initiative)
+      return true;
     if (_hasInspiration != character.stats.inspiration) return true;
     if (_hasConcentration != character.stats.hasConcentration) return true;
     if (_hasShield != character.stats.hasShield) return true;
-    
+
     // Check health changes
-    if ((int.tryParse(_maxHpController.text) ?? 10) != character.health.maxHitPoints) return true;
-    if ((int.tryParse(_currentHpController.text) ?? 10) != character.health.currentHitPoints) return true;
-    if ((int.tryParse(_tempHpController.text) ?? 0) != character.health.temporaryHitPoints) return true;
-    if ((int.tryParse(_hitDiceController.text) ?? 1) != character.health.hitDice) return true;
-    if ((_hitDiceTypeController.text.trim().isEmpty ? 'd8' : _hitDiceTypeController.text.trim()) != character.health.hitDiceType) return true;
-    
+    if ((int.tryParse(_maxHpController.text) ?? 10) !=
+        character.health.maxHitPoints)
+      return true;
+    if ((int.tryParse(_currentHpController.text) ?? 10) !=
+        character.health.currentHitPoints)
+      return true;
+    if ((int.tryParse(_tempHpController.text) ?? 0) !=
+        character.health.temporaryHitPoints)
+      return true;
+    if ((int.tryParse(_hitDiceController.text) ?? 1) !=
+        character.health.hitDice)
+      return true;
+    if ((_hitDiceTypeController.text.trim().isEmpty
+            ? 'd8'
+            : _hitDiceTypeController.text.trim()) !=
+        character.health.hitDiceType)
+      return true;
+
     // Check death saves changes
-    if (!_listsEqual(_deathSaveSuccesses, character.deathSaves.successes)) return true;
-    if (!_listsEqual(_deathSaveFailures, character.deathSaves.failures)) return true;
+    if (!_listsEqual(_deathSaveSuccesses, character.deathSaves.successes))
+      return true;
+    if (!_listsEqual(_deathSaveFailures, character.deathSaves.failures))
+      return true;
     if (_exhaustionLevel != character.deathSaves.exhaustionLevel) return true;
-    
+
     // Check languages changes
-    final currentLanguages = _languagesController.text
-        .split(',')
-        .map((lang) => lang.trim())
-        .where((lang) => lang.isNotEmpty)
-        .toList();
-    if (!_listsEqual(currentLanguages, character.languages.languages)) return true;
-    
+    final currentLanguages =
+        _languagesController.text
+            .split(',')
+            .map((lang) => lang.trim())
+            .where((lang) => lang.isNotEmpty)
+            .toList();
+    if (!_listsEqual(currentLanguages, character.languages.languages))
+      return true;
+
     // Check saving throws changes
-    if (_savingThrows.strengthProficiency != character.savingThrows.strengthProficiency) return true;
-    if (_savingThrows.dexterityProficiency != character.savingThrows.dexterityProficiency) return true;
-    if (_savingThrows.constitutionProficiency != character.savingThrows.constitutionProficiency) return true;
-    if (_savingThrows.intelligenceProficiency != character.savingThrows.intelligenceProficiency) return true;
-    if (_savingThrows.wisdomProficiency != character.savingThrows.wisdomProficiency) return true;
-    if (_savingThrows.charismaProficiency != character.savingThrows.charismaProficiency) return true;
-    
+    if (_savingThrows.strengthProficiency !=
+        character.savingThrows.strengthProficiency)
+      return true;
+    if (_savingThrows.dexterityProficiency !=
+        character.savingThrows.dexterityProficiency)
+      return true;
+    if (_savingThrows.constitutionProficiency !=
+        character.savingThrows.constitutionProficiency)
+      return true;
+    if (_savingThrows.intelligenceProficiency !=
+        character.savingThrows.intelligenceProficiency)
+      return true;
+    if (_savingThrows.wisdomProficiency !=
+        character.savingThrows.wisdomProficiency)
+      return true;
+    if (_savingThrows.charismaProficiency !=
+        character.savingThrows.charismaProficiency)
+      return true;
+
     // Check skill checks changes
-    if (_skillChecks.acrobaticsProficiency != character.skillChecks.acrobaticsProficiency) return true;
-    if (_skillChecks.acrobaticsExpertise != character.skillChecks.acrobaticsExpertise) return true;
+    if (_skillChecks.acrobaticsProficiency !=
+        character.skillChecks.acrobaticsProficiency)
+      return true;
+    if (_skillChecks.acrobaticsExpertise !=
+        character.skillChecks.acrobaticsExpertise)
+      return true;
     if (acrobaticsBonus != character.skillChecks.acrobaticsBonus) return true;
-    if (_skillChecks.animalHandlingProficiency != character.skillChecks.animalHandlingProficiency) return true;
-    if (_skillChecks.animalHandlingExpertise != character.skillChecks.animalHandlingExpertise) return true;
-    if (animalHandlingBonus != character.skillChecks.animalHandlingBonus) return true;
-    if (_skillChecks.arcanaProficiency != character.skillChecks.arcanaProficiency) return true;
-    if (_skillChecks.arcanaExpertise != character.skillChecks.arcanaExpertise) return true;
+    if (_skillChecks.animalHandlingProficiency !=
+        character.skillChecks.animalHandlingProficiency)
+      return true;
+    if (_skillChecks.animalHandlingExpertise !=
+        character.skillChecks.animalHandlingExpertise)
+      return true;
+    if (animalHandlingBonus != character.skillChecks.animalHandlingBonus)
+      return true;
+    if (_skillChecks.arcanaProficiency !=
+        character.skillChecks.arcanaProficiency)
+      return true;
+    if (_skillChecks.arcanaExpertise != character.skillChecks.arcanaExpertise)
+      return true;
     if (arcanaBonus != character.skillChecks.arcanaBonus) return true;
-    if (_skillChecks.athleticsProficiency != character.skillChecks.athleticsProficiency) return true;
-    if (_skillChecks.athleticsExpertise != character.skillChecks.athleticsExpertise) return true;
+    if (_skillChecks.athleticsProficiency !=
+        character.skillChecks.athleticsProficiency)
+      return true;
+    if (_skillChecks.athleticsExpertise !=
+        character.skillChecks.athleticsExpertise)
+      return true;
     if (athleticsBonus != character.skillChecks.athleticsBonus) return true;
-    if (_skillChecks.deceptionProficiency != character.skillChecks.deceptionProficiency) return true;
-    if (_skillChecks.deceptionExpertise != character.skillChecks.deceptionExpertise) return true;
+    if (_skillChecks.deceptionProficiency !=
+        character.skillChecks.deceptionProficiency)
+      return true;
+    if (_skillChecks.deceptionExpertise !=
+        character.skillChecks.deceptionExpertise)
+      return true;
     if (deceptionBonus != character.skillChecks.deceptionBonus) return true;
-    if (_skillChecks.historyProficiency != character.skillChecks.historyProficiency) return true;
-    if (_skillChecks.historyExpertise != character.skillChecks.historyExpertise) return true;
+    if (_skillChecks.historyProficiency !=
+        character.skillChecks.historyProficiency)
+      return true;
+    if (_skillChecks.historyExpertise != character.skillChecks.historyExpertise)
+      return true;
     if (historyBonus != character.skillChecks.historyBonus) return true;
-    if (_skillChecks.insightProficiency != character.skillChecks.insightProficiency) return true;
-    if (_skillChecks.insightExpertise != character.skillChecks.insightExpertise) return true;
+    if (_skillChecks.insightProficiency !=
+        character.skillChecks.insightProficiency)
+      return true;
+    if (_skillChecks.insightExpertise != character.skillChecks.insightExpertise)
+      return true;
     if (insightBonus != character.skillChecks.insightBonus) return true;
-    if (_skillChecks.intimidationProficiency != character.skillChecks.intimidationProficiency) return true;
-    if (_skillChecks.intimidationExpertise != character.skillChecks.intimidationExpertise) return true;
-    if (intimidationBonus != character.skillChecks.intimidationBonus) return true;
-    if (_skillChecks.investigationProficiency != character.skillChecks.investigationProficiency) return true;
-    if (_skillChecks.investigationExpertise != character.skillChecks.investigationExpertise) return true;
-    if (investigationBonus != character.skillChecks.investigationBonus) return true;
-    if (_skillChecks.medicineProficiency != character.skillChecks.medicineProficiency) return true;
-    if (_skillChecks.medicineExpertise != character.skillChecks.medicineExpertise) return true;
+    if (_skillChecks.intimidationProficiency !=
+        character.skillChecks.intimidationProficiency)
+      return true;
+    if (_skillChecks.intimidationExpertise !=
+        character.skillChecks.intimidationExpertise)
+      return true;
+    if (intimidationBonus != character.skillChecks.intimidationBonus)
+      return true;
+    if (_skillChecks.investigationProficiency !=
+        character.skillChecks.investigationProficiency)
+      return true;
+    if (_skillChecks.investigationExpertise !=
+        character.skillChecks.investigationExpertise)
+      return true;
+    if (investigationBonus != character.skillChecks.investigationBonus)
+      return true;
+    if (_skillChecks.medicineProficiency !=
+        character.skillChecks.medicineProficiency)
+      return true;
+    if (_skillChecks.medicineExpertise !=
+        character.skillChecks.medicineExpertise)
+      return true;
     if (medicineBonus != character.skillChecks.medicineBonus) return true;
-    if (_skillChecks.natureProficiency != character.skillChecks.natureProficiency) return true;
-    if (_skillChecks.natureExpertise != character.skillChecks.natureExpertise) return true;
+    if (_skillChecks.natureProficiency !=
+        character.skillChecks.natureProficiency)
+      return true;
+    if (_skillChecks.natureExpertise != character.skillChecks.natureExpertise)
+      return true;
     if (natureBonus != character.skillChecks.natureBonus) return true;
-    if (_skillChecks.perceptionProficiency != character.skillChecks.perceptionProficiency) return true;
-    if (_skillChecks.perceptionExpertise != character.skillChecks.perceptionExpertise) return true;
+    if (_skillChecks.perceptionProficiency !=
+        character.skillChecks.perceptionProficiency)
+      return true;
+    if (_skillChecks.perceptionExpertise !=
+        character.skillChecks.perceptionExpertise)
+      return true;
     if (perceptionBonus != character.skillChecks.perceptionBonus) return true;
-    if (_skillChecks.performanceProficiency != character.skillChecks.performanceProficiency) return true;
-    if (_skillChecks.performanceExpertise != character.skillChecks.performanceExpertise) return true;
+    if (_skillChecks.performanceProficiency !=
+        character.skillChecks.performanceProficiency)
+      return true;
+    if (_skillChecks.performanceExpertise !=
+        character.skillChecks.performanceExpertise)
+      return true;
     if (performanceBonus != character.skillChecks.performanceBonus) return true;
-    if (_skillChecks.persuasionProficiency != character.skillChecks.persuasionProficiency) return true;
-    if (_skillChecks.persuasionExpertise != character.skillChecks.persuasionExpertise) return true;
+    if (_skillChecks.persuasionProficiency !=
+        character.skillChecks.persuasionProficiency)
+      return true;
+    if (_skillChecks.persuasionExpertise !=
+        character.skillChecks.persuasionExpertise)
+      return true;
     if (persuasionBonus != character.skillChecks.persuasionBonus) return true;
-    if (_skillChecks.religionProficiency != character.skillChecks.religionProficiency) return true;
-    if (_skillChecks.religionExpertise != character.skillChecks.religionExpertise) return true;
+    if (_skillChecks.religionProficiency !=
+        character.skillChecks.religionProficiency)
+      return true;
+    if (_skillChecks.religionExpertise !=
+        character.skillChecks.religionExpertise)
+      return true;
     if (religionBonus != character.skillChecks.religionBonus) return true;
-    if (_skillChecks.sleightOfHandProficiency != character.skillChecks.sleightOfHandProficiency) return true;
-    if (_skillChecks.sleightOfHandExpertise != character.skillChecks.sleightOfHandExpertise) return true;
-    if (sleightOfHandBonus != character.skillChecks.sleightOfHandBonus) return true;
-    if (_skillChecks.stealthProficiency != character.skillChecks.stealthProficiency) return true;
-    if (_skillChecks.stealthExpertise != character.skillChecks.stealthExpertise) return true;
+    if (_skillChecks.sleightOfHandProficiency !=
+        character.skillChecks.sleightOfHandProficiency)
+      return true;
+    if (_skillChecks.sleightOfHandExpertise !=
+        character.skillChecks.sleightOfHandExpertise)
+      return true;
+    if (sleightOfHandBonus != character.skillChecks.sleightOfHandBonus)
+      return true;
+    if (_skillChecks.stealthProficiency !=
+        character.skillChecks.stealthProficiency)
+      return true;
+    if (_skillChecks.stealthExpertise != character.skillChecks.stealthExpertise)
+      return true;
     if (stealthBonus != character.skillChecks.stealthBonus) return true;
-    if (_skillChecks.survivalProficiency != character.skillChecks.survivalProficiency) return true;
-    if (_skillChecks.survivalExpertise != character.skillChecks.survivalExpertise) return true;
+    if (_skillChecks.survivalProficiency !=
+        character.skillChecks.survivalProficiency)
+      return true;
+    if (_skillChecks.survivalExpertise !=
+        character.skillChecks.survivalExpertise)
+      return true;
     if (survivalBonus != character.skillChecks.survivalBonus) return true;
-    
+
     // Check attacks changes
     if (!_attacksEqual(_attacks, character.attacks)) return true;
-    
+
     // Check spells changes
     if (!_listsEqual(_spells, character.spells)) return true;
-    
+
     // Check feats changes
     if (!_listsEqual(_feats, character.feats)) return true;
-    
+
     // Check spell slots changes
-    if (_spellSlots.level1Slots != character.spellSlots.level1Slots) return true;
+    if (_spellSlots.level1Slots != character.spellSlots.level1Slots)
+      return true;
     if (_spellSlots.level1Used != character.spellSlots.level1Used) return true;
-    if (_spellSlots.level2Slots != character.spellSlots.level2Slots) return true;
+    if (_spellSlots.level2Slots != character.spellSlots.level2Slots)
+      return true;
     if (_spellSlots.level2Used != character.spellSlots.level2Used) return true;
-    if (_spellSlots.level3Slots != character.spellSlots.level3Slots) return true;
+    if (_spellSlots.level3Slots != character.spellSlots.level3Slots)
+      return true;
     if (_spellSlots.level3Used != character.spellSlots.level3Used) return true;
-    if (_spellSlots.level4Slots != character.spellSlots.level4Slots) return true;
+    if (_spellSlots.level4Slots != character.spellSlots.level4Slots)
+      return true;
     if (_spellSlots.level4Used != character.spellSlots.level4Used) return true;
-    if (_spellSlots.level5Slots != character.spellSlots.level5Slots) return true;
+    if (_spellSlots.level5Slots != character.spellSlots.level5Slots)
+      return true;
     if (_spellSlots.level5Used != character.spellSlots.level5Used) return true;
-    if (_spellSlots.level6Slots != character.spellSlots.level6Slots) return true;
+    if (_spellSlots.level6Slots != character.spellSlots.level6Slots)
+      return true;
     if (_spellSlots.level6Used != character.spellSlots.level6Used) return true;
-    if (_spellSlots.level7Slots != character.spellSlots.level7Slots) return true;
+    if (_spellSlots.level7Slots != character.spellSlots.level7Slots)
+      return true;
     if (_spellSlots.level7Used != character.spellSlots.level7Used) return true;
-    if (_spellSlots.level8Slots != character.spellSlots.level8Slots) return true;
+    if (_spellSlots.level8Slots != character.spellSlots.level8Slots)
+      return true;
     if (_spellSlots.level8Used != character.spellSlots.level8Used) return true;
-    if (_spellSlots.level9Slots != character.spellSlots.level9Slots) return true;
+    if (_spellSlots.level9Slots != character.spellSlots.level9Slots)
+      return true;
     if (_spellSlots.level9Used != character.spellSlots.level9Used) return true;
-    
+
     // Check spell preparation changes
-    if (_spellPreparation.preparedSpells != character.spellPreparation.preparedSpells) return true;
-    if (_spellPreparation.alwaysPreparedSpells != character.spellPreparation.alwaysPreparedSpells) return true;
-    if (_spellPreparation.freeUseSpells != character.spellPreparation.freeUseSpells) return true;
-    
+    if (_spellPreparation.preparedSpells !=
+        character.spellPreparation.preparedSpells)
+      return true;
+    if (_spellPreparation.alwaysPreparedSpells !=
+        character.spellPreparation.alwaysPreparedSpells)
+      return true;
+    if (_spellPreparation.freeUseSpells !=
+        character.spellPreparation.freeUseSpells)
+      return true;
+
     // Check personalized slots changes
-    if (!_personalizedSlotsEqual(_personalizedSlots, character.personalizedSlots)) return true;
-    
+    if (!_personalizedSlotsEqual(
+      _personalizedSlots,
+      character.personalizedSlots,
+    ))
+      return true;
+
     // Check money changes
     if (_moneyController.text.trim() != character.moneyItems.money) return true;
-    
+
     // Check rich text content changes
-    if (!_areDeltasEqual(_quickGuideController.document.toDelta().toJson(), character.quickGuide)) return true;
-    if (!_areDeltasEqual(_proficienciesController.document.toDelta().toJson(), character.proficiencies)) return true;
-    if (!_areDeltasEqual(_featuresTraitsController.document.toDelta().toJson(), character.featuresTraits)) return true;
-    if (!_areDeltasEqual(_backstoryController.document.toDelta().toJson(), character.backstory)) return true;
-    if (!_areDeltasEqual(_featNotesController.document.toDelta().toJson(), character.featNotes)) return true;
-    if (!_areDeltasEqual(_itemsController.document.toDelta().toJson(), character.moneyItems.items.isNotEmpty ? character.moneyItems.items.first : '')) return true;
-    if (!_areDeltasEqual(_additionalDetailsController.document.toDelta().toJson(), character.appearance.additionalDetails)) return true;
-    
+    if (!_areDeltasEqual(
+      _quickGuideController.document.toDelta().toJson(),
+      character.quickGuide,
+    ))
+      return true;
+    if (!_areDeltasEqual(
+      _proficienciesController.document.toDelta().toJson(),
+      character.proficiencies,
+    ))
+      return true;
+    if (!_areDeltasEqual(
+      _featuresTraitsController.document.toDelta().toJson(),
+      character.featuresTraits,
+    ))
+      return true;
+    if (!_areDeltasEqual(
+      _backstoryController.document.toDelta().toJson(),
+      character.backstory,
+    ))
+      return true;
+    if (!_areDeltasEqual(
+      _featNotesController.document.toDelta().toJson(),
+      character.featNotes,
+    ))
+      return true;
+    if (!_areDeltasEqual(
+      _itemsController.document.toDelta().toJson(),
+      character.moneyItems.items.isNotEmpty
+          ? character.moneyItems.items.first
+          : '',
+    ))
+      return true;
+    if (!_areDeltasEqual(
+      _additionalDetailsController.document.toDelta().toJson(),
+      character.appearance.additionalDetails,
+    ))
+      return true;
+
     // Check pillars changes
-    if (_gimmickController.text.trim() != character.pillars.gimmick) return true;
+    if (_gimmickController.text.trim() != character.pillars.gimmick)
+      return true;
     if (_quirkController.text.trim() != character.pillars.quirk) return true;
     if (_wantsController.text.trim() != character.pillars.wants) return true;
     if (_needsController.text.trim() != character.pillars.needs) return true;
-    if (_conflictController.text.trim() != character.pillars.conflict) return true;
-    
+    if (_conflictController.text.trim() != character.pillars.conflict)
+      return true;
+
     // Check appearance changes
-    if (_heightController.text.trim() != character.appearance.height) return true;
+    if (_heightController.text.trim() != character.appearance.height)
+      return true;
     if (_ageController.text.trim() != character.appearance.age) return true;
-    if (_eyeColorController.text.trim() != character.appearance.eyeColor) return true;
-    
+    if (_eyeColorController.text.trim() != character.appearance.eyeColor)
+      return true;
+
     // Check existing flags
     if (_hasUnsavedClassChanges || _hasUnsavedAbilityChanges) return true;
-    
+
     return false;
   }
-  
+
   /// Helper method to compare deltas properly
   bool _areDeltasEqual(List<dynamic> currentDelta, String storedJson) {
     if (storedJson.isEmpty) {
       // If stored is empty, check if current is also empty (just a newline)
-      final currentText = currentDelta.isNotEmpty ? currentDelta.first['insert']?.toString() ?? '' : '';
+      final currentText =
+          currentDelta.isNotEmpty
+              ? currentDelta.first['insert']?.toString() ?? ''
+              : '';
       return currentText.trim().isEmpty;
     }
-    
+
     try {
       final storedDelta = jsonDecode(storedJson);
       // Compare the JSON strings for reliable comparison
       return jsonEncode(currentDelta) == jsonEncode(storedDelta);
     } catch (e) {
       // If stored is not valid JSON, treat it as plain text
-      final currentText = currentDelta.isNotEmpty ? currentDelta.first['insert']?.toString() ?? '' : '';
+      final currentText =
+          currentDelta.isNotEmpty
+              ? currentDelta.first['insert']?.toString() ?? ''
+              : '';
       return currentText.trim() == storedJson.trim();
     }
   }
-  
-  /// Helper method to parse JSON delta from string
-  List<dynamic> _parseJsonDelta(String jsonString) {
-    try {
-      return jsonDecode(jsonString);
-    } catch (e) {
-      // Fallback to plain text
-      final delta = Delta()..insert(jsonString.endsWith('\n') ? jsonString : '$jsonString\n');
-      return delta.toJson();
-    }
-  }
-  
+
   /// Helper method to compare lists
   bool _listsEqual<T>(List<T> a, List<T> b) {
     if (a.length != b.length) return false;
@@ -6359,7 +4040,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     }
     return true;
   }
-  
+
   /// Helper method to compare attack lists
   bool _attacksEqual(List<CharacterAttack> a, List<CharacterAttack> b) {
     if (a.length != b.length) return false;
@@ -6368,31 +4049,37 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     }
     return true;
   }
-  
+
   /// Helper method to compare individual attacks
   bool _attackEqual(CharacterAttack a, CharacterAttack b) {
     return a.id == b.id &&
-           a.name == b.name &&
-           a.attackBonus == b.attackBonus &&
-           a.damage == b.damage &&
-           a.damageType == b.damageType;
+        a.name == b.name &&
+        a.attackBonus == b.attackBonus &&
+        a.damage == b.damage &&
+        a.damageType == b.damageType;
   }
-  
+
   /// Helper method to compare personalized slots lists
-  bool _personalizedSlotsEqual(List<CharacterPersonalizedSlot> a, List<CharacterPersonalizedSlot> b) {
+  bool _personalizedSlotsEqual(
+    List<CharacterPersonalizedSlot> a,
+    List<CharacterPersonalizedSlot> b,
+  ) {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {
       if (!_personalizedSlotEqual(a[i], b[i])) return false;
     }
     return true;
   }
-  
+
   /// Helper method to compare individual personalized slots
-  bool _personalizedSlotEqual(CharacterPersonalizedSlot a, CharacterPersonalizedSlot b) {
+  bool _personalizedSlotEqual(
+    CharacterPersonalizedSlot a,
+    CharacterPersonalizedSlot b,
+  ) {
     return a.name == b.name &&
-           a.maxSlots == b.maxSlots &&
-           a.usedSlots == b.usedSlots &&
-           a.diceType == b.diceType;
+        a.maxSlots == b.maxSlots &&
+        a.usedSlots == b.usedSlots &&
+        a.diceType == b.diceType;
   }
 
   void _saveCharacter({String? successMessage, bool showToast = true}) async {
@@ -6404,7 +4091,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     try {
       // Add minimum delay to show spinner for better UX
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       // Update all character data from controllers
       debugPrint('=== SAVE CHARACTER DEBUG ===');
       debugPrint('Background controller text: "${_backgroundController.text}"');
@@ -6633,9 +4320,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       } else {
         // Remove spell from preparation
         _spellPreparation = _spellPreparation.copyWith(
-          preparedSpells: _spellPreparation.preparedSpells
-              .where((id) => id != spellId)
-              .toList(),
+          preparedSpells:
+              _spellPreparation.preparedSpells
+                  .where((id) => id != spellId)
+                  .toList(),
         );
       }
       // Manual save only - no auto-save for toggle preparation
@@ -6792,7 +4480,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   /// Show dialog to modify maximum prepared spells
   void _showMaxPreparedDialog() {
-    // Calculate current max to show in dialog using current controller values
     final currentMax =
         _spellPreparation.maxPreparedSpells == 0
             ? CharacterSpellPreparation.calculateMaxPreparedSpells(
@@ -6802,83 +4489,41 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             )
             : _spellPreparation.maxPreparedSpells;
 
-    final controller = TextEditingController(text: currentMax.toString());
-
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
-            title: const Text('Modify Maximum Prepared Spells'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Enter the maximum number of spells this character can prepare:',
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: controller,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Maximum Prepared Spells',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Calculated maximum: ${CharacterSpellPreparation.calculateMaxPreparedSpells(_classController.text.trim(), int.tryParse(_levelController.text) ?? 1, _getCurrentSpellcastingModifier())}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
+          (context) => MaxPreparedDialog(
+            initialMax: currentMax,
+            calculatedMax: CharacterSpellPreparation.calculateMaxPreparedSpells(
+              _classController.text.trim(),
+              int.tryParse(_levelController.text) ?? 1,
+              _getCurrentSpellcastingModifier(),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final newMax = int.tryParse(controller.text);
-                  if (newMax != null && newMax >= 0) {
-                    setState(() {
-                      // If reducing max, uncheck ALL regular prepared spells
-                      final alwaysPreparedOnly =
-                          _spellPreparation.preparedSpells
-                              .where(
-                                (spellId) => _spellPreparation
-                                    .alwaysPreparedSpells
-                                    .contains(spellId),
-                              )
-                              .toList();
+            currentPreparedCount: _spellPreparation.currentPreparedCount,
+            className: _classController.text.trim(),
+            level: int.tryParse(_levelController.text) ?? 1,
+            onSave: (newMax) {
+              setState(() {
+                final alwaysPreparedOnly =
+                    _spellPreparation.preparedSpells
+                        .where(
+                          (spellId) => _spellPreparation.alwaysPreparedSpells
+                              .contains(spellId),
+                        )
+                        .toList();
 
-                      if (newMax < _spellPreparation.currentPreparedCount) {
-                        // Clear all regular prepared spells, keep only always prepared
-                        _spellPreparation = _spellPreparation.copyWith(
-                          maxPreparedSpells: newMax,
-                          preparedSpells: [...alwaysPreparedOnly],
-                        );
-                      } else {
-                        // Just update max if no reduction needed
-                        _spellPreparation = _spellPreparation.copyWith(
-                          maxPreparedSpells: newMax,
-                        );
-                      }
-                    });
-                    // Manual save only - no auto-save
-                    Navigator.pop(context);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter a valid number'),
-                        backgroundColor: Colors.red,
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                child: const Text('Save'),
-              ),
-            ],
+                if (newMax < _spellPreparation.currentPreparedCount) {
+                  _spellPreparation = _spellPreparation.copyWith(
+                    maxPreparedSpells: newMax,
+                    preparedSpells: [...alwaysPreparedOnly],
+                  );
+                } else {
+                  _spellPreparation = _spellPreparation.copyWith(
+                    maxPreparedSpells: newMax,
+                  );
+                }
+              });
+            },
           ),
     );
   }

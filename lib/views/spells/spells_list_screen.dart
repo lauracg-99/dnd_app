@@ -4,6 +4,7 @@ import '../../models/spell_model.dart';
 import '../../models/character_model.dart';
 import '../../viewmodels/spells_viewmodel.dart';
 import '../../viewmodels/characters_viewmodel.dart';
+import '../../widgets/detail_row.dart';
 
 class SpellsListScreen extends StatefulWidget {
   const SpellsListScreen({super.key});
@@ -382,25 +383,25 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                 const SizedBox(height: 16),
                 
                 // Casting Time
-                _buildDetailRow('Casting Time', spell.castingTime),
+                DetailRow(label: 'Casting Time', value: spell.castingTime),
                 
                 // Range
-                _buildDetailRow('Range', spell.range),
+                DetailRow(label: 'Range', value: spell.range),
                 
                 // Components
-                _buildDetailRow('Components', _formatComponents(spell)),
+                DetailRow(label: 'Components', value: _formatComponents(spell)),
                 
                 // Duration
-                _buildDetailRow('Duration', spell.duration),
+                DetailRow(label: 'Duration', value: spell.duration),
                 
                 // Ritual
                 if (spell.ritual)
-                  _buildDetailRow('Ritual', 'Yes'),
+                  DetailRow(label: 'Ritual', value: 'Yes'),
                 
                 // Classes
-                _buildDetailRow(
-                  'Classes', 
-                  spell.classes.map((c) => c.capitalize().replaceAll('_', ' ')).join(', ')
+                DetailRow(
+                  label: 'Classes',
+                  value: spell.classes.map((c) => c.capitalize().replaceAll('_', ' ')).join(', ')
                 ),
                 
                 const Divider(),
@@ -416,22 +417,6 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Expanded(child: Text(value)),
-        ],
       ),
     );
   }

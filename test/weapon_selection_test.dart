@@ -22,8 +22,8 @@ void main() {
         isThrown: false,
         isLight: false,
         damageDice: [
-          DamageDice(diceAmount: 1, damageType: 'slashing'),
-          DamageDice(diceAmount: 1, damageType: 'fire'),
+          DamageDice(diceAmount: 1, damageType: 'slashing', diceType: ''),
+          DamageDice(diceAmount: 1, damageType: 'fire', diceType: ''),
         ],
       );
 
@@ -70,7 +70,7 @@ void main() {
         isFinesse: true,
         isThrown: true,
         isLight: true,
-        damageDice: [DamageDice(diceAmount: 1, damageType: 'piercing')],
+        damageDice: [DamageDice(diceAmount: 1, damageType: 'piercing', diceType: '')],
       );
 
       // Test attack name
@@ -93,7 +93,7 @@ void main() {
         isFinesse: false,
         isThrown: false,
         isLight: true,
-        damageDice: [DamageDice(diceAmount: 1, damageType: 'bludgeoning')],
+        damageDice: [DamageDice(diceAmount: 1, damageType: 'bludgeoning', diceType: '')],
       );
 
       // Test attack name
@@ -116,7 +116,7 @@ void main() {
         isFinesse: false,
         isThrown: false,
         isLight: false,
-        damageDice: [DamageDice(diceAmount: 1, damageType: 'slashing')],
+        damageDice: [DamageDice(diceAmount: 1, damageType: 'slashing', diceType: '')],
       );
 
       // Create a test character with basic stats
