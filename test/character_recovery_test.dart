@@ -1,7 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'dart:convert';
-import '../lib/services/character_service.dart';
-import '../lib/models/character_model.dart';
+import 'package:dnd_app/services/character_service.dart';
 
 void main() {
   group('Character Recovery Tests', () {
@@ -26,10 +25,14 @@ void main() {
         // Clean up
         await CharacterService.deleteCharacter(character.id);
         
-        print('✅ Character recovery test passed - app handles character data correctly');
+        if (kDebugMode) {
+          print('✅ Character recovery test passed - app handles character data correctly');
+        }
         
       } catch (e) {
-        print('❌ Character recovery test failed: $e');
+        if (kDebugMode) {
+          print('❌ Character recovery test failed: $e');
+        }
         rethrow;
       }
     });

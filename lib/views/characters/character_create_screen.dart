@@ -151,7 +151,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -187,7 +187,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -227,14 +227,14 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
                     child: DropdownButtonFormField<String>(
-                      value: _selectedClass,
+                      initialValue: _selectedClass,
                       decoration: InputDecoration(
                         labelText: 'Class *',
                         border: InputBorder.none,
@@ -272,7 +272,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -322,14 +322,14 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
                         ],
                       ),
                       child: DropdownButtonFormField<String>(
-                        value: _subclassController.text.isEmpty ? null : _subclassController.text,
+                        initialValue: _subclassController.text.isEmpty ? null : _subclassController.text,
                         decoration: InputDecoration(
                           labelText: 'Subclass (Optional)',
                           border: InputBorder.none,
@@ -421,7 +421,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -439,7 +439,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                         }
                         
                         return DropdownButtonFormField<String>(
-                          value: matchingRace != null ? '${matchingRace.name}_${matchingRace.source}' : null,
+                          initialValue: matchingRace != null ? '${matchingRace.name}_${matchingRace.source}' : null,
                           decoration: const InputDecoration(
                             labelText: 'Race (Optional)',
                             border: InputBorder.none,
@@ -511,7 +511,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -520,7 +520,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                     child: Consumer<BackgroundsViewModel>(
                       builder: (context, backgroundsViewModel, child) {
                         return DropdownButtonFormField<String>(
-                          value: _backgroundController.text.isEmpty ? null : _backgroundController.text,
+                          initialValue: _backgroundController.text.isEmpty ? null : _backgroundController.text,
                           decoration: const InputDecoration(
                             labelText: 'Background (Optional)',
                             border: InputBorder.none,
@@ -621,7 +621,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.blue.withOpacity(0.3),
+                                color: Colors.blue.withValues(alpha: 0.3),
                                 blurRadius: 12,
                                 offset: const Offset(0, 6),
                               ),
@@ -664,7 +664,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                             width: 20,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2.5,
-                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.9)),
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withValues(alpha: 0.9)),
                                             ),
                                           ),
                                           const SizedBox(width: 12),
@@ -673,7 +673,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w600,
-                                              color: Colors.white.withOpacity(0.9),
+                                              color: Colors.white.withValues(alpha: 0.9),
                                             ),
                                           ),
                                         ],
@@ -707,38 +707,5 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
         },
       ),
     );
-  }
-
-  Icon _getClassIcon(String className) {
-    switch (className.toLowerCase()) {
-      case 'fighter':
-        return const Icon(Icons.gavel, color: Colors.red, size: 20);
-      case 'wizard':
-        return const Icon(Icons.auto_awesome, color: Colors.purple, size: 20);
-      case 'cleric':
-        return const Icon(Icons.favorite, color: Colors.yellow, size: 20);
-      case 'rogue':
-        return const Icon(Icons.visibility, color: Colors.grey, size: 20);
-      case 'ranger':
-        return const Icon(Icons.pets, color: Colors.green, size: 20);
-      case 'paladin':
-        return const Icon(Icons.security, color: Colors.blue, size: 20);
-      case 'barbarian':
-        return const Icon(Icons.fitness_center, color: Colors.brown, size: 20);
-      case 'bard':
-        return const Icon(Icons.music_note, color: Colors.pink, size: 20);
-      case 'druid':
-        return const Icon(Icons.nature, color: Colors.green, size: 20);
-      case 'monk':
-        return const Icon(Icons.sports_martial_arts, color: Colors.orange, size: 20);
-      case 'sorcerer':
-        return const Icon(Icons.local_fire_department, color: Colors.red, size: 20);
-      case 'warlock':
-        return const Icon(Icons.nightlight, color: Colors.purple, size: 20);
-      case 'artificer':
-        return const Icon(Icons.build, color: Colors.amber, size: 20);
-      default:
-        return const Icon(Icons.person, color: Colors.blue, size: 20);
-    }
   }
 }

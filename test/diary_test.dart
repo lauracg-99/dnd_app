@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/models/diary_model.dart';
-import '../lib/services/diary_service.dart';
+import 'package:dnd_app/models/diary_model.dart';
+import 'package:dnd_app/services/diary_service.dart';
 
 void main() {
   group('DiaryEntry Model Tests', () {

@@ -12,13 +12,13 @@ class SpellSlotModifierDialog extends StatefulWidget {
   final GetMaxSlotsCallback getMaxSlots;
 
   const SpellSlotModifierDialog({
-    Key? key,
+    super.key,
     required this.level,
     required this.type,
     required this.initialValue,
     required this.onUpdate,
     required this.getMaxSlots,
-  }) : super(key: key);
+  });
 
   @override
   State<SpellSlotModifierDialog> createState() =>

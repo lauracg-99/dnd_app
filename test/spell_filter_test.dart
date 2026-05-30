@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import '../lib/views/spells/spells_list_screen.dart';
-import '../lib/viewmodels/spells_viewmodel.dart';
+import 'package:dnd_app/views/spells/spells_list_screen.dart';
+import 'package:dnd_app/viewmodels/spells_viewmodel.dart';
 
 void main() {
   group('SpellsListScreen Filter Button Tests', () {

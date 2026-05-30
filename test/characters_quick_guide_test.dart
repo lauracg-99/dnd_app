@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/views/characters/QuickGuideTab/characters_quick_guide.dart';
-import 'package:dnd_app/utils/expandable_quill_editor.dart';
 
 void main() {
   group('CharactersQuickGuide Widget Tests', () {
@@ -16,7 +15,6 @@ void main() {
         home: Scaffold(
           body: CharactersQuickGuide(
             controller: controller,
-            onSaveCharacter: () {},
           ),
         ),
       );
@@ -46,7 +44,6 @@ void main() {
         home: Scaffold(
           body: CharactersQuickGuide(
             controller: controller,
-            onSaveCharacter: () => saveCalled = true,
           ),
         ),
       );

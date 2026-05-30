@@ -122,7 +122,7 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -142,7 +142,7 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, -2),
                 ),
@@ -296,7 +296,7 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
               _isOverlayActive = value;
             });
           },
-          activeColor: Colors.blue.shade800,
+          activeThumbColor: Colors.blue.shade800,
         ),
       ],
     );

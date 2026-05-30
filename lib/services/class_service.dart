@@ -44,7 +44,7 @@ class ClassService {
 
       //  debugPrint('Successfully loaded ${classes.length} classes');
       return classes;
-    } catch (e, stackTrace) {
+    } catch (e) {
       //  debugPrint('Error in loadAllClasses: $e');
       //  debugPrint('Stack trace: $stackTrace');
       rethrow;
@@ -61,7 +61,7 @@ class ClassService {
       final dndClass = DndClass.fromJson(jsonData);
       //   debugPrint('Successfully parsed class: ${dndClass.name}');
       return dndClass;
-    } catch (e, stackTrace) {
+    } catch (e) {
       // debugPrint('Error loading class from $filePath: $e');
       //   debugPrint('Stack trace: $stackTrace');
       rethrow;

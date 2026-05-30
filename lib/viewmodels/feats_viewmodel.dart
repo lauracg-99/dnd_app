@@ -34,8 +34,7 @@ class FeatsViewModel extends ChangeNotifier {
     return _feats
         .where((feat) =>
             feat.name.toLowerCase().contains(query.toLowerCase()) ||
-            (feat.description?.toLowerCase().contains(query.toLowerCase()) ??
-                false))
+            (feat.description.toLowerCase().contains(query.toLowerCase())))
         .toList();
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/services/character_service.dart';
-import 'package:dnd_app/models/character_model.dart';
 
 void main() {
   group('Character Service Integration Tests', () {

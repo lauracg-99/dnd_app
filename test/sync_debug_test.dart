@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/foundation.dart';
-import '../lib/services/cloud_sync_service.dart';
+import 'package:dnd_app/services/cloud_sync_service.dart';
 
 void main() {
   group('Real-time Sync Debug Tests', () {

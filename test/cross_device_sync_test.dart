@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
-import '../lib/services/device_service.dart';
-import '../lib/services/cloud_sync_service.dart';
+import 'package:dnd_app/services/device_service.dart';
+import 'package:dnd_app/services/cloud_sync_service.dart';
 
 void main() {
   // Initialize Flutter bindings for tests

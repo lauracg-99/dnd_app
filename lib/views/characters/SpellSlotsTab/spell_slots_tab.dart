@@ -189,7 +189,7 @@ class SpellSlotsTab extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
+                          color: Colors.blue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -282,8 +282,8 @@ class SpellSlotsTab extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       color:
                           (slots - used) == 0
-                              ? Colors.red.withOpacity(0.1)
-                              : Colors.blue.withOpacity(0.1),
+                              ? Colors.red.withValues(alpha: 0.1)
+                              : Colors.blue.withValues(alpha: 0.1),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,

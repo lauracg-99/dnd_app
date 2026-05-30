@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/cloud_sync_service.dart';
 
@@ -19,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   
   bool _isLoading = false;
   bool _obscurePassword = true;
-  bool _isCreatingAccount = false;
+  final bool _isCreatingAccount = false;
 
   @override
   void dispose() {

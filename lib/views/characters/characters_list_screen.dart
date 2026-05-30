@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
-import '../../services/character_service.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/cloud_sync_service.dart';
 import '../../widgets/cached_profile_image.dart';
@@ -353,9 +351,6 @@ class _CharactersListScreenState extends State<CharactersListScreen>
               case 'delete':
                 _showDeleteConfirmation(character);
                 break;
-              case 'duplicate':
-                _duplicateCharacter(character);
-                break;
             }
           },
           itemBuilder:
@@ -379,17 +374,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                       Text('Diary'),
                     ],
                   ),
-                ),
-                const PopupMenuItem(
-                  value: 'duplicate',
-                  child: Row(
-                    children: [
-                      Icon(Icons.copy),
-                      SizedBox(width: 8),
-                      Text('Duplicate'),
-                    ],
-                  ),
-                ),
+                ),                
                 const PopupMenuItem(
                   value: 'delete',
                   child: Row(
@@ -463,21 +448,6 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     );
   }
 
-  void _duplicateCharacter(Character character) {
-    final duplicatedCharacter = character.copyWith(
-      id: '${character.id}_copy_${DateTime.now().millisecondsSinceEpoch}',
-      name: '${character.name} (Copy)',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    // Save the duplicated character and add it to the list
-    CharacterService.saveCharacter(duplicatedCharacter).then((_) {
-      // Reload the characters list to refresh the UI
-      context.read<CharactersViewModel>().loadCharacters();
-    });
-  }
-
   /// Handle cloud button press based on authentication state
   void _handleCloudButtonPressed(SyncStatus currentStatus) {
     if (!_authService.isAuthenticated) {
@@ -536,19 +506,20 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     try {
       final result = await _syncService.manualSyncFromCloud();
 
+      if (!mounted) return;
+
       if (result.success) {
         // Refresh characters after sync
         context.read<CharactersViewModel>().loadCharacters();
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Changes downloaded successfully!'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
           );
-        }
+        
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -791,6 +762,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     );
 
     if (firstConfirm != true) return;
+    if (!mounted) return;
 
     // Second confirmation dialog - final warning
     final secondConfirm = await showDialog<bool>(

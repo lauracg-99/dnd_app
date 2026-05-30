@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/weapon_model.dart';
 
@@ -22,7 +23,9 @@ class WeaponService {
           final jsonData = json.decode(jsonString);
           weapons.add(Weapon.fromJson(jsonData));
         } catch (e) {
-          print('Error loading weapon file $file: $e');
+          if (kDebugMode) {
+            print('Error loading weapon file $file: $e');
+          }
         }
       }
 
@@ -30,7 +33,9 @@ class WeaponService {
       weapons.sort((a, b) => a.name.compareTo(b.name));
       return weapons;
     } catch (e) {
-      print('Error loading weapons: $e');
+      if (kDebugMode) {
+        print('Error loading weapons: $e');
+      }
       return [];
     }
   }

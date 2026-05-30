@@ -4,13 +4,12 @@ import '../../../viewmodels/weapons_viewmodel.dart';
 import '../../../models/weapon_model.dart';
 import '../../../utils/source_mapper.dart';
 import '../../widgets/appfilter_chip.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 class WeaponsScreen extends StatefulWidget {
-  const WeaponsScreen({Key? key}) : super(key: key);
+  const WeaponsScreen({super.key});
 
   @override
-  _WeaponsScreenState createState() => _WeaponsScreenState();
+  State<WeaponsScreen> createState() => _WeaponsScreenState(); 
 }
 
 class _WeaponsScreenState extends State<WeaponsScreen> {
@@ -237,40 +236,6 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
         },
       ),
     );
-  }
-
-  IconData _getRarityIcon(String rarity) {
-    switch (rarity.toLowerCase()) {
-      case 'common':
-        return Icons.circle;
-      case 'uncommon':
-        return Icons.star;
-      case 'rare':
-        return Icons.diamond;
-      case 'very rare':
-        return Icons.emoji_events;
-      case 'legendary':
-        return Icons.military_tech;
-      default:
-        return Icons.circle;
-    }
-  }
-
-  Color _getRarityColor(String rarity) {
-    switch (rarity.toLowerCase()) {
-      case 'common':
-        return Colors.grey;
-      case 'uncommon':
-        return Colors.green;
-      case 'rare':
-        return Colors.blue;
-      case 'very rare':
-        return Colors.purple;
-      case 'legendary':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
   }
 
   void _showWeaponDetailSheet(Weapon weapon) {

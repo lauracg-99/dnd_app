@@ -1,8 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
-import '../lib/viewmodels/feats_viewmodel.dart';
-import '../lib/models/feat_model.dart';
+import 'package:dnd_app/viewmodels/feats_viewmodel.dart';
+import 'package:dnd_app/models/feat_model.dart';
 
 void main() {
   group('Feats Reload Fix Tests', () {

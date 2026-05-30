@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/feat_model.dart';
 
@@ -22,7 +23,9 @@ class FeatService {
           final jsonData = json.decode(jsonString);
           feats.add(Feat.fromJson(jsonData));
         } catch (e) {
-          print('Error loading feat file $file: $e');
+          if (kDebugMode) {
+            print('Error loading feat file $file: $e');
+          }
         }
       }
 
@@ -30,7 +33,9 @@ class FeatService {
       feats.sort((a, b) => a.name.compareTo(b.name));
       return feats;
     } catch (e) {
-      print('Error loading feats: $e');
+      if (kDebugMode) {
+        print('Error loading feats: $e');
+      }
       return [];
     }
   }

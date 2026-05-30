@@ -404,8 +404,7 @@ class Character extends BaseModel with TimestampedEntity {
 
   /// Check if character has an appearance image
   bool get hasAppearanceImage =>
-      appearance.appearanceImagePath != null &&
-      appearance.appearanceImagePath!.isNotEmpty;
+      appearance.appearanceImagePath.isNotEmpty;
 
   /// Check if character has any images
   bool get hasAnyImages => hasProfileImage || hasAppearanceImage;
@@ -419,7 +418,7 @@ class Character extends BaseModel with TimestampedEntity {
   /// Get appearance image filename from path
   String? get appearanceImageFilename {
     if (!hasAppearanceImage) return null;
-    return appearance.appearanceImagePath!.split('/').last;
+    return appearance.appearanceImagePath.split('/').last;
   }
 
   /// Check if profile image uses character ID naming (new format)

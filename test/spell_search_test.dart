@@ -146,15 +146,13 @@ void main() {
         }
 
         // Filter by level
-        if (selectedLevelFilter != null) {
-          if (selectedLevelFilter == 'Cantrips') {
-            if (spell.levelNumber != 0) return false;
-          } else if (selectedLevelFilter!.startsWith('Level')) {
-            final level = int.tryParse(selectedLevelFilter!.split(' ')[1]);
-            if (spell.levelNumber != level) return false;
-          }
+        if (selectedLevelFilter == 'Cantrips') {
+          if (spell.levelNumber != 0) return false;
+        } else if (selectedLevelFilter.startsWith('Level')) {
+          final level = int.tryParse(selectedLevelFilter.split(' ')[1]);
+          if (spell.levelNumber != level) return false;
         }
-
+      
         return true;
       }).toList();
 

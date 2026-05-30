@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/models/weapon_model.dart';
+import 'package:dnd_app/models/weapon_model.dart';
 
 void main() {
   group('Weapon Model Formatted Type', () {

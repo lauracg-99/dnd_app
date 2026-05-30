@@ -672,7 +672,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.character.name}'),
+        title: Text(widget.character.name),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -744,7 +744,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           // Blocking save overlay
           if (_isSaving)
             Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               child: const Center(
                 child: Card(
                   child: Padding(
@@ -897,9 +897,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   Widget _buildQuickGuideTab() {
     return CharactersQuickGuide(
       controller: _quickGuideController,
-      onSaveCharacter: () {
-        // Manual save only - no auto-save
-      },
     );
   }
 
@@ -961,7 +958,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: (_hasInspiration ? Colors.green : Colors.blue).withOpacity(
+            color: (_hasInspiration ? Colors.green : Colors.blue).withValues(alpha: 
               0.1,
             ),
             blurRadius: 4,
@@ -1133,9 +1130,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         setState(() {
           _feats = newFeats;
         });
-      },
-      onAutoSaveCharacter: () {
-        // Manual save only - no auto-save
       },
       characterName: widget.character.name,
     );
@@ -1346,7 +1340,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         border: Border.all(color: isActiveColor.shade200),
         boxShadow: [
           BoxShadow(
-            color: isActiveColor.withOpacity(0.1),
+            color: isActiveColor.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -1464,7 +1458,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         border: Border.all(color: Colors.blue.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
+            color: Colors.blue.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -1524,7 +1518,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: Colors.blue.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -2120,9 +2114,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _personalizedSlots = newSlots;
         });
       },
-      onAutoSaveCharacter: () {
-        // Manual save only - no auto-save
-      },
       characterName: widget.character.name,
     );
   }
@@ -2135,9 +2126,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       wantsController: _wantsController,
       needsController: _needsController,
       conflictController: _conflictController,
-      onSaveCharacter: () {
-        // Manual save only - no auto-save
-      },
     );
   }
 
@@ -2306,7 +2294,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                               return DropdownButtonFormField<
                                                 String
                                               >(
-                                                value:
+                                                initialValue:
                                                     _selectedLevelFilter ??
                                                     'All',
                                                 isExpanded: true,
@@ -2367,7 +2355,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                               return DropdownButtonFormField<
                                                 String
                                               >(
-                                                value:
+                                                initialValue:
                                                     _selectedClassFilter ??
                                                     'All',
                                                 isExpanded: true,
@@ -2447,7 +2435,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                               return DropdownButtonFormField<
                                                 String
                                               >(
-                                                value:
+                                                initialValue:
                                                     _selectedSchoolFilter ??
                                                     'All',
                                                 isExpanded: true,
@@ -2539,8 +2527,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                   _selectedSchoolFilter != null ||
                                   _filterByCharacterClass;
 
-                              if (!hasActiveFilters)
+                              if (!hasActiveFilters) {
                                 return const SizedBox.shrink();
+                              }
 
                               return Container(
                                 margin: const EdgeInsets.symmetric(
@@ -2721,15 +2710,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                       if (_selectedLevelFilter != null) {
                                         if (_selectedLevelFilter ==
                                             'Cantrips') {
-                                          if (spell.levelNumber != 0)
+                                          if (spell.levelNumber != 0) {
                                             return false;
+                                          }
                                         } else if (_selectedLevelFilter!
                                             .startsWith('Level')) {
                                           final level = int.tryParse(
                                             _selectedLevelFilter!.split(' ')[1],
                                           );
-                                          if (spell.levelNumber != level)
+                                          if (spell.levelNumber != level) {
                                             return false;
+                                          }
                                         }
                                       }
 
@@ -2737,15 +2728,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                                       if (_selectedClassFilter != null) {
                                         if (!spell.classes.contains(
                                           _selectedClassFilter,
-                                        ))
+                                        )) {
                                           return false;
+                                        }
                                       }
 
                                       // Filter by school
                                       if (_selectedSchoolFilter != null) {
                                         if (spell.schoolName !=
-                                            _selectedSchoolFilter)
+                                            _selectedSchoolFilter) {
                                           return false;
+                                        }
                                       }
 
                                       return true;
@@ -3654,84 +3647,105 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
     // Check basic info changes
     if (_nameController.text.trim() != character.name) return true;
-    if ((int.tryParse(_levelController.text) ?? 1) != character.level)
+    if ((int.tryParse(_levelController.text) ?? 1) != character.level) {
       return true;
+    }
     if (_classController.text.trim() != character.characterClass) return true;
     if ((_subclassController.text.trim().isEmpty
             ? null
             : _subclassController.text.trim()) !=
-        character.subclass)
+        character.subclass) {
       return true;
+    }
     if ((_raceController.text.trim().isEmpty
             ? null
             : _raceController.text.trim()) !=
-        character.race)
+        character.race) {
       return true;
+    }
     if ((_backgroundController.text.trim().isEmpty
             ? null
             : _backgroundController.text.trim()) !=
-        character.background)
+        character.background) {
       return true;
+    }
 
     // Check image changes
     if (_customImagePath != character.customImagePath) return true;
-    if (_appearanceImagePath != character.appearance.appearanceImagePath)
+    if (_appearanceImagePath != character.appearance.appearanceImagePath) {
       return true;
+    }
 
     // Check stats changes
     if ((int.tryParse(_strengthController.text) ?? 10) !=
-        character.stats.strength)
+        character.stats.strength) {
       return true;
+    }
     if ((int.tryParse(_dexterityController.text) ?? 10) !=
-        character.stats.dexterity)
+        character.stats.dexterity) {
       return true;
+    }
     if ((int.tryParse(_constitutionController.text) ?? 10) !=
-        character.stats.constitution)
+        character.stats.constitution) {
       return true;
+    }
     if ((int.tryParse(_intelligenceController.text) ?? 10) !=
-        character.stats.intelligence)
+        character.stats.intelligence) {
       return true;
-    if ((int.tryParse(_wisdomController.text) ?? 10) != character.stats.wisdom)
+    }
+    if ((int.tryParse(_wisdomController.text) ?? 10) != character.stats.wisdom) {
       return true;
+    }
     if ((int.tryParse(_charismaController.text) ?? 10) !=
-        character.stats.charisma)
+        character.stats.charisma) {
       return true;
+    }
     if ((int.tryParse(_armorClassController.text) ?? 10) !=
-        character.stats.armorClass)
+        character.stats.armorClass) {
       return true;
-    if ((int.tryParse(_speedController.text) ?? 30) != character.stats.speed)
+    }
+    if ((int.tryParse(_speedController.text) ?? 30) != character.stats.speed) {
       return true;
+    }
     if ((int.tryParse(_initiativeController.text) ?? 0) !=
-        character.stats.initiative)
+        character.stats.initiative) {
       return true;
+    }
     if (_hasInspiration != character.stats.inspiration) return true;
     if (_hasConcentration != character.stats.hasConcentration) return true;
     if (_hasShield != character.stats.hasShield) return true;
 
     // Check health changes
     if ((int.tryParse(_maxHpController.text) ?? 10) !=
-        character.health.maxHitPoints)
+        character.health.maxHitPoints) {
       return true;
+    }
     if ((int.tryParse(_currentHpController.text) ?? 10) !=
-        character.health.currentHitPoints)
+        character.health.currentHitPoints) {
       return true;
+    }
     if ((int.tryParse(_tempHpController.text) ?? 0) !=
-        character.health.temporaryHitPoints)
+        character.health.temporaryHitPoints) {
       return true;
+    }
     if ((int.tryParse(_hitDiceController.text) ?? 1) !=
-        character.health.hitDice)
+        character.health.hitDice) {
       return true;
+    }
     if ((_hitDiceTypeController.text.trim().isEmpty
             ? 'd8'
             : _hitDiceTypeController.text.trim()) !=
-        character.health.hitDiceType)
+        character.health.hitDiceType) {
       return true;
+    }
 
     // Check death saves changes
-    if (!_listsEqual(_deathSaveSuccesses, character.deathSaves.successes))
+    if (!_listsEqual(_deathSaveSuccesses, character.deathSaves.successes)) {
       return true;
-    if (!_listsEqual(_deathSaveFailures, character.deathSaves.failures))
+    }
+    if (!_listsEqual(_deathSaveFailures, character.deathSaves.failures)) {
       return true;
+    }
     if (_exhaustionLevel != character.deathSaves.exhaustionLevel) return true;
 
     // Check languages changes
@@ -3741,154 +3755,201 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             .map((lang) => lang.trim())
             .where((lang) => lang.isNotEmpty)
             .toList();
-    if (!_listsEqual(currentLanguages, character.languages.languages))
+    if (!_listsEqual(currentLanguages, character.languages.languages)) {
       return true;
+    }
 
     // Check saving throws changes
     if (_savingThrows.strengthProficiency !=
-        character.savingThrows.strengthProficiency)
+        character.savingThrows.strengthProficiency) {
       return true;
+    }
     if (_savingThrows.dexterityProficiency !=
-        character.savingThrows.dexterityProficiency)
+        character.savingThrows.dexterityProficiency) {
       return true;
+    }
     if (_savingThrows.constitutionProficiency !=
-        character.savingThrows.constitutionProficiency)
+        character.savingThrows.constitutionProficiency) {
       return true;
+    }
     if (_savingThrows.intelligenceProficiency !=
-        character.savingThrows.intelligenceProficiency)
+        character.savingThrows.intelligenceProficiency) {
       return true;
+    }
     if (_savingThrows.wisdomProficiency !=
-        character.savingThrows.wisdomProficiency)
+        character.savingThrows.wisdomProficiency) {
       return true;
+    }
     if (_savingThrows.charismaProficiency !=
-        character.savingThrows.charismaProficiency)
+        character.savingThrows.charismaProficiency) {
       return true;
+    }
 
     // Check skill checks changes
     if (_skillChecks.acrobaticsProficiency !=
-        character.skillChecks.acrobaticsProficiency)
+        character.skillChecks.acrobaticsProficiency) {
       return true;
+    }
     if (_skillChecks.acrobaticsExpertise !=
-        character.skillChecks.acrobaticsExpertise)
+        character.skillChecks.acrobaticsExpertise) {
       return true;
+    }
     if (acrobaticsBonus != character.skillChecks.acrobaticsBonus) return true;
     if (_skillChecks.animalHandlingProficiency !=
-        character.skillChecks.animalHandlingProficiency)
+        character.skillChecks.animalHandlingProficiency) {
       return true;
+    }
     if (_skillChecks.animalHandlingExpertise !=
-        character.skillChecks.animalHandlingExpertise)
+        character.skillChecks.animalHandlingExpertise) {
       return true;
-    if (animalHandlingBonus != character.skillChecks.animalHandlingBonus)
+    }
+    if (animalHandlingBonus != character.skillChecks.animalHandlingBonus) {
       return true;
+    }
     if (_skillChecks.arcanaProficiency !=
-        character.skillChecks.arcanaProficiency)
+        character.skillChecks.arcanaProficiency) {
       return true;
-    if (_skillChecks.arcanaExpertise != character.skillChecks.arcanaExpertise)
+    }
+    if (_skillChecks.arcanaExpertise != character.skillChecks.arcanaExpertise) {
       return true;
+    }
     if (arcanaBonus != character.skillChecks.arcanaBonus) return true;
     if (_skillChecks.athleticsProficiency !=
-        character.skillChecks.athleticsProficiency)
+        character.skillChecks.athleticsProficiency) {
       return true;
+    }
     if (_skillChecks.athleticsExpertise !=
-        character.skillChecks.athleticsExpertise)
+        character.skillChecks.athleticsExpertise) {
       return true;
+    }
     if (athleticsBonus != character.skillChecks.athleticsBonus) return true;
     if (_skillChecks.deceptionProficiency !=
-        character.skillChecks.deceptionProficiency)
+        character.skillChecks.deceptionProficiency) {
       return true;
+    }
     if (_skillChecks.deceptionExpertise !=
-        character.skillChecks.deceptionExpertise)
+        character.skillChecks.deceptionExpertise) {
       return true;
+    }
     if (deceptionBonus != character.skillChecks.deceptionBonus) return true;
     if (_skillChecks.historyProficiency !=
-        character.skillChecks.historyProficiency)
+        character.skillChecks.historyProficiency) {
       return true;
-    if (_skillChecks.historyExpertise != character.skillChecks.historyExpertise)
+    }
+    if (_skillChecks.historyExpertise != character.skillChecks.historyExpertise) {
       return true;
+    }
     if (historyBonus != character.skillChecks.historyBonus) return true;
     if (_skillChecks.insightProficiency !=
-        character.skillChecks.insightProficiency)
+        character.skillChecks.insightProficiency) {
       return true;
-    if (_skillChecks.insightExpertise != character.skillChecks.insightExpertise)
+    }
+    if (_skillChecks.insightExpertise != character.skillChecks.insightExpertise) {
       return true;
+    }
     if (insightBonus != character.skillChecks.insightBonus) return true;
     if (_skillChecks.intimidationProficiency !=
-        character.skillChecks.intimidationProficiency)
+        character.skillChecks.intimidationProficiency) {
       return true;
+    }
     if (_skillChecks.intimidationExpertise !=
-        character.skillChecks.intimidationExpertise)
+        character.skillChecks.intimidationExpertise) {
       return true;
-    if (intimidationBonus != character.skillChecks.intimidationBonus)
+    }
+    if (intimidationBonus != character.skillChecks.intimidationBonus) {
       return true;
+    }
     if (_skillChecks.investigationProficiency !=
-        character.skillChecks.investigationProficiency)
+        character.skillChecks.investigationProficiency) {
       return true;
+    }
     if (_skillChecks.investigationExpertise !=
-        character.skillChecks.investigationExpertise)
+        character.skillChecks.investigationExpertise) {
       return true;
-    if (investigationBonus != character.skillChecks.investigationBonus)
+    }
+    if (investigationBonus != character.skillChecks.investigationBonus) {
       return true;
+    }
     if (_skillChecks.medicineProficiency !=
-        character.skillChecks.medicineProficiency)
+        character.skillChecks.medicineProficiency) {
       return true;
+    }
     if (_skillChecks.medicineExpertise !=
-        character.skillChecks.medicineExpertise)
+        character.skillChecks.medicineExpertise) {
       return true;
+    }
     if (medicineBonus != character.skillChecks.medicineBonus) return true;
     if (_skillChecks.natureProficiency !=
-        character.skillChecks.natureProficiency)
+        character.skillChecks.natureProficiency) {
       return true;
-    if (_skillChecks.natureExpertise != character.skillChecks.natureExpertise)
+    }
+    if (_skillChecks.natureExpertise != character.skillChecks.natureExpertise) {
       return true;
+    }
     if (natureBonus != character.skillChecks.natureBonus) return true;
     if (_skillChecks.perceptionProficiency !=
-        character.skillChecks.perceptionProficiency)
+        character.skillChecks.perceptionProficiency) {
       return true;
+    }
     if (_skillChecks.perceptionExpertise !=
-        character.skillChecks.perceptionExpertise)
+        character.skillChecks.perceptionExpertise) {
       return true;
+    }
     if (perceptionBonus != character.skillChecks.perceptionBonus) return true;
     if (_skillChecks.performanceProficiency !=
-        character.skillChecks.performanceProficiency)
+        character.skillChecks.performanceProficiency) {
       return true;
+    }
     if (_skillChecks.performanceExpertise !=
-        character.skillChecks.performanceExpertise)
+        character.skillChecks.performanceExpertise) {
       return true;
+    }
     if (performanceBonus != character.skillChecks.performanceBonus) return true;
     if (_skillChecks.persuasionProficiency !=
-        character.skillChecks.persuasionProficiency)
+        character.skillChecks.persuasionProficiency) {
       return true;
+    }
     if (_skillChecks.persuasionExpertise !=
-        character.skillChecks.persuasionExpertise)
+        character.skillChecks.persuasionExpertise) {
       return true;
+    }
     if (persuasionBonus != character.skillChecks.persuasionBonus) return true;
     if (_skillChecks.religionProficiency !=
-        character.skillChecks.religionProficiency)
+        character.skillChecks.religionProficiency) {
       return true;
+    }
     if (_skillChecks.religionExpertise !=
-        character.skillChecks.religionExpertise)
+        character.skillChecks.religionExpertise) {
       return true;
+    }
     if (religionBonus != character.skillChecks.religionBonus) return true;
     if (_skillChecks.sleightOfHandProficiency !=
-        character.skillChecks.sleightOfHandProficiency)
+        character.skillChecks.sleightOfHandProficiency) {
       return true;
+    }
     if (_skillChecks.sleightOfHandExpertise !=
-        character.skillChecks.sleightOfHandExpertise)
+        character.skillChecks.sleightOfHandExpertise) {
       return true;
-    if (sleightOfHandBonus != character.skillChecks.sleightOfHandBonus)
+    }
+    if (sleightOfHandBonus != character.skillChecks.sleightOfHandBonus) {
       return true;
+    }
     if (_skillChecks.stealthProficiency !=
-        character.skillChecks.stealthProficiency)
+        character.skillChecks.stealthProficiency) {
       return true;
-    if (_skillChecks.stealthExpertise != character.skillChecks.stealthExpertise)
+    }
+    if (_skillChecks.stealthExpertise != character.skillChecks.stealthExpertise) {
       return true;
+    }
     if (stealthBonus != character.skillChecks.stealthBonus) return true;
     if (_skillChecks.survivalProficiency !=
-        character.skillChecks.survivalProficiency)
+        character.skillChecks.survivalProficiency) {
       return true;
+    }
     if (_skillChecks.survivalExpertise !=
-        character.skillChecks.survivalExpertise)
+        character.skillChecks.survivalExpertise) {
       return true;
+    }
     if (survivalBonus != character.skillChecks.survivalBonus) return true;
 
     // Check attacks changes
@@ -3901,51 +3962,64 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     if (!_listsEqual(_feats, character.feats)) return true;
 
     // Check spell slots changes
-    if (_spellSlots.level1Slots != character.spellSlots.level1Slots)
+    if (_spellSlots.level1Slots != character.spellSlots.level1Slots) {
       return true;
+    }
     if (_spellSlots.level1Used != character.spellSlots.level1Used) return true;
-    if (_spellSlots.level2Slots != character.spellSlots.level2Slots)
+    if (_spellSlots.level2Slots != character.spellSlots.level2Slots) {
       return true;
+    }
     if (_spellSlots.level2Used != character.spellSlots.level2Used) return true;
-    if (_spellSlots.level3Slots != character.spellSlots.level3Slots)
+    if (_spellSlots.level3Slots != character.spellSlots.level3Slots) {
       return true;
+    }
     if (_spellSlots.level3Used != character.spellSlots.level3Used) return true;
-    if (_spellSlots.level4Slots != character.spellSlots.level4Slots)
+    if (_spellSlots.level4Slots != character.spellSlots.level4Slots) {
       return true;
+    }
     if (_spellSlots.level4Used != character.spellSlots.level4Used) return true;
-    if (_spellSlots.level5Slots != character.spellSlots.level5Slots)
+    if (_spellSlots.level5Slots != character.spellSlots.level5Slots) {
       return true;
+    }
     if (_spellSlots.level5Used != character.spellSlots.level5Used) return true;
-    if (_spellSlots.level6Slots != character.spellSlots.level6Slots)
+    if (_spellSlots.level6Slots != character.spellSlots.level6Slots) {
       return true;
+    }
     if (_spellSlots.level6Used != character.spellSlots.level6Used) return true;
-    if (_spellSlots.level7Slots != character.spellSlots.level7Slots)
+    if (_spellSlots.level7Slots != character.spellSlots.level7Slots) {
       return true;
+    }
     if (_spellSlots.level7Used != character.spellSlots.level7Used) return true;
-    if (_spellSlots.level8Slots != character.spellSlots.level8Slots)
+    if (_spellSlots.level8Slots != character.spellSlots.level8Slots) {
       return true;
+    }
     if (_spellSlots.level8Used != character.spellSlots.level8Used) return true;
-    if (_spellSlots.level9Slots != character.spellSlots.level9Slots)
+    if (_spellSlots.level9Slots != character.spellSlots.level9Slots) {
       return true;
+    }
     if (_spellSlots.level9Used != character.spellSlots.level9Used) return true;
 
     // Check spell preparation changes
     if (_spellPreparation.preparedSpells !=
-        character.spellPreparation.preparedSpells)
+        character.spellPreparation.preparedSpells) {
       return true;
+    }
     if (_spellPreparation.alwaysPreparedSpells !=
-        character.spellPreparation.alwaysPreparedSpells)
+        character.spellPreparation.alwaysPreparedSpells) {
       return true;
+    }
     if (_spellPreparation.freeUseSpells !=
-        character.spellPreparation.freeUseSpells)
+        character.spellPreparation.freeUseSpells) {
       return true;
+    }
 
     // Check personalized slots changes
     if (!_personalizedSlotsEqual(
       _personalizedSlots,
       character.personalizedSlots,
-    ))
+    )) {
       return true;
+    }
 
     // Check money changes
     if (_moneyController.text.trim() != character.moneyItems.money) return true;
@@ -3954,56 +4028,67 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     if (!_areDeltasEqual(
       _quickGuideController.document.toDelta().toJson(),
       character.quickGuide,
-    ))
+    )) {
       return true;
+    }
     if (!_areDeltasEqual(
       _proficienciesController.document.toDelta().toJson(),
       character.proficiencies,
-    ))
+    )) {
       return true;
+    }
     if (!_areDeltasEqual(
       _featuresTraitsController.document.toDelta().toJson(),
       character.featuresTraits,
-    ))
+    )) {
       return true;
+    }
     if (!_areDeltasEqual(
       _backstoryController.document.toDelta().toJson(),
       character.backstory,
-    ))
+    )) {
       return true;
+    }
     if (!_areDeltasEqual(
       _featNotesController.document.toDelta().toJson(),
       character.featNotes,
-    ))
+    )) {
       return true;
+    }
     if (!_areDeltasEqual(
       _itemsController.document.toDelta().toJson(),
       character.moneyItems.items.isNotEmpty
           ? character.moneyItems.items.first
           : '',
-    ))
+    )) {
       return true;
+    }
     if (!_areDeltasEqual(
       _additionalDetailsController.document.toDelta().toJson(),
       character.appearance.additionalDetails,
-    ))
+    )) {
       return true;
+    }
 
     // Check pillars changes
-    if (_gimmickController.text.trim() != character.pillars.gimmick)
+    if (_gimmickController.text.trim() != character.pillars.gimmick) {
       return true;
+    }
     if (_quirkController.text.trim() != character.pillars.quirk) return true;
     if (_wantsController.text.trim() != character.pillars.wants) return true;
     if (_needsController.text.trim() != character.pillars.needs) return true;
-    if (_conflictController.text.trim() != character.pillars.conflict)
+    if (_conflictController.text.trim() != character.pillars.conflict) {
       return true;
+    }
 
     // Check appearance changes
-    if (_heightController.text.trim() != character.appearance.height)
+    if (_heightController.text.trim() != character.appearance.height) {
       return true;
+    }
     if (_ageController.text.trim() != character.appearance.age) return true;
-    if (_eyeColorController.text.trim() != character.appearance.eyeColor)
+    if (_eyeColorController.text.trim() != character.appearance.eyeColor) {
       return true;
+    }
 
     // Check existing flags
     if (_hasUnsavedClassChanges || _hasUnsavedAbilityChanges) return true;

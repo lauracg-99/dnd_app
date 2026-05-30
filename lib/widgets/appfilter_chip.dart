@@ -32,10 +32,10 @@ class AppFilterChip extends StatelessWidget {
     // Use provided colors or default to blue theme
     final bgColor = backgroundColor ?? Colors.blue.shade100;
     final txtColor = textColor ?? Colors.blue.shade800;
-    final iconColor = textColor?.withOpacity(0.75) ?? Colors.blue.shade600;
+    final iconColor = textColor?.withValues(alpha: 0.75) ?? Colors.blue.shade600;
     final borderColor =
         backgroundColor != null
-            ? bgColor.withOpacity(0.5)
+            ? bgColor.withValues(alpha: 0.5)
             : Colors.blue.shade300;
 
     return Container(

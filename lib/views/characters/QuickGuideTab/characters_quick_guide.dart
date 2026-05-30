@@ -3,60 +3,10 @@ import 'package:flutter_quill/flutter_quill.dart';
 import '../../../utils/simple_quill_editor.dart';
 import '../../../utils/quill_toolbar_configs.dart';
 
-class CharactersQuickGuide extends StatefulWidget {
+class CharactersQuickGuide extends StatelessWidget {
   final QuillController controller;
-  final VoidCallback onSaveCharacter;
 
-  const CharactersQuickGuide({
-    super.key,
-    required this.controller,
-    required this.onSaveCharacter,
-  });
-
-  @override
-  State<CharactersQuickGuide> createState() => _CharactersQuickGuideState();
-}
-
-class _CharactersQuickGuideState extends State<CharactersQuickGuide> 
-    with WidgetsBindingObserver {
-  bool _hasUnsavedChanges = false;
-  
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    
-    // Add listener to detect changes in the QuillController
-    widget.controller.addListener(_onTextChanged);
-  }
-  
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    
-    // Remove listener
-    widget.controller.removeListener(_onTextChanged);
-    
-    // Save any pending changes before disposing (without setState)
-    if (_hasUnsavedChanges) {
-      widget.onSaveCharacter();
-    }
-    
-    super.dispose();
-  }
-  
-  void _onTextChanged() {
-    if (!mounted) return;
-    
-    if (_hasUnsavedChanges) {
-        widget.onSaveCharacter();
-        if (mounted) {
-          setState(() {
-            _hasUnsavedChanges = false;
-          });
-        }
-      }
-  }
+  const CharactersQuickGuide({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -65,30 +15,6 @@ class _CharactersQuickGuideState extends State<CharactersQuickGuide>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Auto-save Status Indicator
-          if (_hasUnsavedChanges) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.schedule,
-                    size: 20,
-                    color: Colors.orange.shade700,
-                  ),                  
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-          
-          // Quick Guide Section
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -126,11 +52,12 @@ class _CharactersQuickGuideState extends State<CharactersQuickGuide>
                       color: Colors.white,
                     ),
                     child: SimpleQuillEditor(
-                      controller: widget.controller,
+                      controller: controller,
                       toolbarConfig: QuillToolbarConfigs.minimal,
-                      height: MediaQuery.of(context).size.height < 600 
-                          ? MediaQuery.of(context).size.height * 0.4
-                          : MediaQuery.of(context).size.height * 0.6,                      
+                      height:
+                          MediaQuery.of(context).size.height < 600
+                              ? MediaQuery.of(context).size.height * 0.4
+                              : MediaQuery.of(context).size.height * 0.6,
                     ),
                   ),
                 ],

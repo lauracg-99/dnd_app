@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/models/weapon_model.dart';
 import 'package:dnd_app/views/characters/WeaponsTab/weapon_attack_mapper.dart';
@@ -31,14 +32,18 @@ void main() {
       final formattedDamage = WeaponAttackMapper.getFormattedDamage(lightCrossbow);
       
       expect(formattedDamage, equals('1d8 piercing'));
-      print('✅ WeaponAttackMapper formatted damage: $formattedDamage');
+      if (kDebugMode) {
+        print('✅ WeaponAttackMapper formatted damage: $formattedDamage');
+      }
     });
 
     test('Weapon should return correct formatted damage from model', () {
       final formattedDamage = lightCrossbow.formattedDamage;
       
       expect(formattedDamage, equals('1d8 piercing'));
-      print('✅ Weapon model formatted damage: $formattedDamage');
+      if (kDebugMode) {
+        print('✅ Weapon model formatted damage: $formattedDamage');
+      }
     });
 
     test('Weapon with multiple damage dice should work correctly', () {
@@ -66,7 +71,9 @@ void main() {
       
       expect(formattedDamage, equals('1d6 slashing + 1d4 fire'));
       expect(modelFormattedDamage, equals('1d6 slashing, 1d4 fire'));
-      print('✅ Multi-dice weapon: AttackMapper=$formattedDamage | Model=$modelFormattedDamage');
+      if (kDebugMode) {
+        print('✅ Multi-dice weapon: AttackMapper=$formattedDamage | Model=$modelFormattedDamage');
+      }
     });
 
     test('Light Crossbow should show d8 not d6 in all contexts', () {
@@ -79,10 +86,12 @@ void main() {
       expect(mapperDamage, contains('1d8'));
       expect(weaponModelDamage, isNot(contains('1d6')));
       expect(mapperDamage, isNot(contains('1d6')));
-      
-      print('✅ Light Crossbow consistently shows 1d8 damage');
-      print('   Weapon Model: $weaponModelDamage');
-      print('   Attack Mapper: $mapperDamage');
+
+      if (kDebugMode) {
+        print('✅ Light Crossbow consistently shows 1d8 damage');
+        print('   Weapon Model: $weaponModelDamage');
+        print('   Attack Mapper: $mapperDamage');
+      }
     });
   });
 }

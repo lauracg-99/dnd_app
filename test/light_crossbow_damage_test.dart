@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/models/weapon_model.dart';
 
@@ -80,7 +81,9 @@ void main() {
       // Verify formatted damage output
       expect(weapon.formattedDamage, equals('1d8 piercing'));
       
-      print('✅ Light Crossbow correctly displays: ${weapon.formattedDamage}');
+      if (kDebugMode) {
+        print('✅ Light Crossbow correctly displays: ${weapon.formattedDamage}');
+      }
     });
   });
 }

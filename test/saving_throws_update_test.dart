@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/models/character_model.dart';
 import 'package:dnd_app/helpers/character_ability_helper.dart';
@@ -41,10 +40,9 @@ void main() {
     test('Saving throw total should include proficiency bonus correctly', () {
       final abilityScore = 14; // +2 modifier
       final proficiencyBonus = 3; // Level 5 character
-      final isProficient = true;
       
       final abilityModifier = CharacterAbilityHelper.getAbilityModifier(abilityScore);
-      final totalBonus = abilityModifier + (isProficient ? proficiencyBonus : 0);
+      final totalBonus = abilityModifier + (proficiencyBonus);
       
       expect(abilityModifier, equals(2));
       expect(totalBonus, equals(5)); // 2 (modifier) + 3 (proficiency)
@@ -52,11 +50,9 @@ void main() {
     
     test('Saving throw total should not include proficiency bonus when not proficient', () {
       final abilityScore = 14; // +2 modifier
-      final proficiencyBonus = 3; // Level 5 character
-      final isProficient = false;
       
       final abilityModifier = CharacterAbilityHelper.getAbilityModifier(abilityScore);
-      final totalBonus = abilityModifier + (isProficient ? proficiencyBonus : 0);
+      final totalBonus = abilityModifier + (0);
       
       expect(abilityModifier, equals(2));
       expect(totalBonus, equals(2)); // Only the modifier, no proficiency

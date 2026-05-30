@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/race_model.dart';
 
@@ -21,7 +22,9 @@ class RaceService {
           final jsonData = json.decode(jsonString);
           races.add(Race.fromJson(jsonData));
         } catch (e) {
-          print('Error loading race file $file: $e');
+          if (kDebugMode) {
+            print('Error loading race file $file: $e');
+          }
         }
       }
 
@@ -29,7 +32,9 @@ class RaceService {
       races.sort((a, b) => a.name.compareTo(b.name));
       return races;
     } catch (e) {
-      print('Error loading races: $e');
+      if (kDebugMode) {
+        print('Error loading races: $e');
+      }
       return [];
     }
   }

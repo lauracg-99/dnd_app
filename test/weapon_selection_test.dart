@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/views/characters/WeaponsTab/weapon_attack_mapper.dart';
 import 'package:dnd_app/models/weapon_model.dart';
@@ -103,21 +102,6 @@ void main() {
 
     test('WeaponAttackMapper calculates attack bonus correctly', () {
       // Create a test weapon
-      final weapon = Weapon(
-        id: 'test-weapon-5',
-        name: 'Longsword',
-        source: 'PHB',
-        isCore: true,
-        cost: 15,
-        costUnit: 'gold',
-        weight: 3.0,
-        type: 'martial_melee',
-        rarity: 'none',
-        isFinesse: false,
-        isThrown: false,
-        isLight: false,
-        damageDice: [DamageDice(diceAmount: 1, damageType: 'slashing', diceType: '')],
-      );
 
       // Create a test character with basic stats
       final stats = CharacterStats(

@@ -249,7 +249,7 @@ class SkillsTab extends StatelessWidget {
             border: Border.all(color: Colors.blue.shade200, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.blue.withOpacity(0.15),
+                color: Colors.blue.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
