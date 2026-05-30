@@ -183,6 +183,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   List<String> _tabOrder = [];
   List<CharacterTabConfig> _orderedTabs = [];
 
+  bool _isSavingOnPop = false;
+
   @override
   void initState() {
     super.initState();
@@ -671,7 +673,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop:
+          false, // Bloquea la salida inmediata para ejecutar el guardado primero
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        // Ejecuta el guardado automático
+        _saveCharacter(isAutosave: true);
+      },
+      child:(Scaffold(
       appBar: AppBar(
         title: Text(widget.character.name),
         bottom: TabBar(
@@ -764,7 +775,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             ),
         ],
       ),
-    );
+    )));
   }
 
   Widget _buildCharacterCoverTab() {
@@ -4112,10 +4123,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         a.diceType == b.diceType;
   }
 
-  void _saveCharacter({String? successMessage, bool showToast = true}) async {
+  void _saveCharacter({String? successMessage, bool showToast = true, bool isAutosave = false}) async {
+    debugPrint('=== SAVE CHARACTER isAutosave: $isAutosave === hasUnsavedChanges: $hasUnsavedChanges');
+    if (isAutosave && !hasUnsavedChanges) {
+      if (mounted) Navigator.pop(context, false);
+      return;
+    } 
     // Show loading indicator with blocking overlay
     setState(() {
       _isSaving = true;
+      if (isAutosave) _isSavingOnPop = true;
     });
 
     try {
@@ -4309,6 +4326,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           context,
           successMessage ?? 'Character saved successfully!',
         );        
+        if (isAutosave) Navigator.pop(context, false);
       }
     } catch (e) {
       debugPrint('Error saving character: $e');
@@ -4316,11 +4334,14 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       if (mounted) {
         SnackbarHelper.showError(context, 'Failed to save character: $e');        
       }
+      if (isAutosave) Navigator.pop(context, false);
+
     } finally {
       // Hide loading indicator
       if (mounted) {
         setState(() {
           _isSaving = false;
+          _isSavingOnPop = false;
         });
       }
     }
