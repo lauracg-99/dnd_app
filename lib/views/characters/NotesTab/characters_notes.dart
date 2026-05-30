@@ -3,14 +3,13 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:dnd_app/utils/quill_toolbar_configs.dart';
 import 'package:dnd_app/utils/simple_quill_editor.dart';
 
-class CharactersNotes extends StatefulWidget {
+class CharactersNotes extends StatelessWidget {
   final QuillController backstoryController;
   final TextEditingController gimmickController;
   final TextEditingController quirkController;
   final TextEditingController wantsController;
   final TextEditingController needsController;
   final TextEditingController conflictController;
-  final VoidCallback onSaveCharacter;
 
   const CharactersNotes({
     super.key,
@@ -20,62 +19,7 @@ class CharactersNotes extends StatefulWidget {
     required this.wantsController,
     required this.needsController,
     required this.conflictController,
-    required this.onSaveCharacter,
   });
-
-  @override
-  State<CharactersNotes> createState() => _CharactersNotesState();
-}
-
-class _CharactersNotesState extends State<CharactersNotes> 
-    with WidgetsBindingObserver {
-  bool _hasUnsavedChanges = false;
-  
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    
-    // Add listeners to all controllers to detect changes
-    widget.backstoryController.addListener(_onTextChanged);
-    widget.gimmickController.addListener(_onTextChanged);
-    widget.quirkController.addListener(_onTextChanged);
-    widget.wantsController.addListener(_onTextChanged);
-    widget.needsController.addListener(_onTextChanged);
-    widget.conflictController.addListener(_onTextChanged);
-  }
-  
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    
-    // Remove listeners
-    widget.backstoryController.removeListener(_onTextChanged);
-    widget.gimmickController.removeListener(_onTextChanged);
-    widget.quirkController.removeListener(_onTextChanged);
-    widget.wantsController.removeListener(_onTextChanged);
-    widget.needsController.removeListener(_onTextChanged);
-    widget.conflictController.removeListener(_onTextChanged);
-    
-    // Save any pending changes before disposing (without setState)
-    if (_hasUnsavedChanges) {
-      widget.onSaveCharacter();
-    }
-    
-    super.dispose();
-  }
-
-  
-  void _onTextChanged() {
-    if (_hasUnsavedChanges) {
-      widget.onSaveCharacter();
-      if (mounted) {
-        setState(() {
-          _hasUnsavedChanges = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +27,7 @@ class _CharactersNotesState extends State<CharactersNotes>
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [          
+        children: [
           // Backstory Section
           Card(
             child: Padding(
@@ -122,9 +66,10 @@ class _CharactersNotesState extends State<CharactersNotes>
                       color: Colors.grey.shade50,
                     ),
                     child: SimpleQuillEditor(
-                      controller: widget.backstoryController,
+                      controller: backstoryController,
                       toolbarConfig: QuillToolbarConfigs.minimal,
-                      placeholder: 'Write your character\'s backstory...\n\n'
+                      placeholder:
+                          'Write your character\'s backstory...\n\n'
                           'Consider including:\n'
                           '• Place of birth and family background\n'
                           '• Life events that shaped their personality\n'
@@ -176,35 +121,35 @@ class _CharactersNotesState extends State<CharactersNotes>
                   _buildEnhancedPillarField(
                     context,
                     'Gimmick',
-                    widget.gimmickController,
+                    gimmickController,
                     'What makes your character unique or memorable?',
                   ),
                   const SizedBox(height: 16),
                   _buildEnhancedPillarField(
                     context,
                     'Quirk',
-                    widget.quirkController,
+                    quirkController,
                     'Odd habits or mannerisms that define your character.',
                   ),
                   const SizedBox(height: 16),
                   _buildEnhancedPillarField(
                     context,
                     'Wants',
-                    widget.wantsController,
+                    wantsController,
                     'What does your character desire most in the world?',
                   ),
                   const SizedBox(height: 16),
                   _buildEnhancedPillarField(
                     context,
                     'Needs',
-                    widget.needsController,
+                    needsController,
                     'What must your character accomplish or obtain?',
                   ),
                   const SizedBox(height: 16),
                   _buildEnhancedPillarField(
                     context,
                     'Conflict',
-                    widget.conflictController,
+                    conflictController,
                     'What internal or external struggles drive your character?',
                   ),
                 ],

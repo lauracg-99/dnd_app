@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import '../../../viewmodels/weapons_viewmodel.dart';
 import '../../../models/weapon_model.dart';
 import '../../../utils/source_mapper.dart';
-import 'package:material_symbols_icons/symbols.dart';
+import '../../widgets/appfilter_chip.dart';
 
 class WeaponsScreen extends StatefulWidget {
-  const WeaponsScreen({Key? key}) : super(key: key);
+  const WeaponsScreen({super.key});
 
   @override
-  _WeaponsScreenState createState() => _WeaponsScreenState();
+  State<WeaponsScreen> createState() => _WeaponsScreenState(); 
 }
 
 class _WeaponsScreenState extends State<WeaponsScreen> {
@@ -112,9 +112,11 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
               // Active filters display
               Consumer<WeaponsViewModel>(
                 builder: (context, viewModel, child) {
-                  final hasActiveFilters = viewModel.searchQuery.isNotEmpty || viewModel.selectedType != 'All';
+                  final hasActiveFilters =
+                      viewModel.searchQuery.isNotEmpty ||
+                      viewModel.selectedType != 'All';
                   if (!hasActiveFilters) return const SizedBox.shrink();
-                  
+
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16.0),
                     padding: const EdgeInsets.all(12.0),
@@ -128,7 +130,11 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.filter_list, size: 16, color: Colors.blue.shade700),
+                            Icon(
+                              Icons.filter_list,
+                              size: 16,
+                              color: Colors.blue.shade700,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Active Filters:',
@@ -149,11 +155,17 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
                                 });
                               },
                               style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text('Clear All', style: TextStyle(fontSize: 12)),
+                              child: const Text(
+                                'Clear All',
+                                style: TextStyle(fontSize: 12),
+                              ),
                             ),
                           ],
                         ),
@@ -163,17 +175,17 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
                           runSpacing: 4,
                           children: [
                             if (viewModel.searchQuery.isNotEmpty)
-                              _buildFilterChip(
-                                'Search: "${viewModel.searchQuery}"',
-                                () {
+                              AppFilterChip(
+                                label: 'Search: "${viewModel.searchQuery}"',
+                                onClear: () {
                                   _searchController.clear();
                                   viewModel.setSearchQuery('');
                                 },
                               ),
                             if (viewModel.selectedType != 'All')
-                              _buildFilterChip(
-                                'Type: ${_getFormattedSelectedType()}',
-                                () {
+                              AppFilterChip(
+                                label: 'Type: ${_getFormattedSelectedType()}',
+                                onClear: () {
                                   setState(() {
                                     _selectedType = 'All';
                                   });
@@ -207,7 +219,7 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
   Widget _buildWeaponCard(Weapon weapon) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(        
+      child: ListTile(
         title: Text(
           weapon.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -218,46 +230,12 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
             Text('Type: ${weapon.formattedType}'),
             Text('Damage: ${weapon.formattedDamage}'),
           ],
-        ),        
+        ),
         onTap: () {
           _showWeaponDetailSheet(weapon);
         },
       ),
     );
-  }
-
-  IconData _getRarityIcon(String rarity) {
-    switch (rarity.toLowerCase()) {
-      case 'common':
-        return Icons.circle;
-      case 'uncommon':
-        return Icons.star;
-      case 'rare':
-        return Icons.diamond;
-      case 'very rare':
-        return Icons.emoji_events;
-      case 'legendary':
-        return Icons.military_tech;
-      default:
-        return Icons.circle;
-    }
-  }
-
-  Color _getRarityColor(String rarity) {
-    switch (rarity.toLowerCase()) {
-      case 'common':
-        return Colors.grey;
-      case 'uncommon':
-        return Colors.green;
-      case 'rare':
-        return Colors.blue;
-      case 'very rare':
-        return Colors.purple;
-      case 'legendary':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
   }
 
   void _showWeaponDetailSheet(Weapon weapon) {
@@ -267,94 +245,115 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.95,
-        minChildSize: 0.5,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              
-              // Header
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      weapon.name,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            maxChildSize: 0.95,
+            minChildSize: 0.5,
+            expand: false,
+            builder:
+                (context, scrollController) => Container(
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Basic Information
-                      _buildSheetSection('Type', weapon.formattedType),
-                      const SizedBox(height: 16),
-                      if (weapon.rarity != 'none')
-                        _buildSheetSection('Rarity', weapon.rarity.toUpperCase()),
-                      const SizedBox(height: 16),
-                      _buildSheetSection('Source', '${SourceMapper.getFullBookName(weapon.source)}${weapon.isCore ? ' • Core' : ''}'),
-                      const SizedBox(height: 16),
+                      // Handle bar
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
 
-                      // Damage Information
-                      if (weapon.damageDice.isNotEmpty) ...[
-                        _buildSheetSection('Damage', weapon.formattedDamage),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // Properties
-                      _buildSheetSection('Properties', weapon.formattedProperties),
-                      const SizedBox(height: 16),
-
-                      // Cost and Weight
+                      // Header
                       Row(
                         children: [
                           Expanded(
-                            child: _buildSheetSection('Weight', '${weapon.weight} lb'),
+                            child: Text(
+                              weapon.name,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
 
-                      // Thrown Range (if applicable)
-                      if (weapon.isThrown && weapon.thrownRange != null) ...[
-                        _buildSheetSection('Thrown Range', weapon.thrownRange!),
-                        const SizedBox(height: 16),
-                      ],
+                      // Content
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: scrollController,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Basic Information
+                              _buildSheetSection('Type', weapon.formattedType),
+                              const SizedBox(height: 16),
+                              if (weapon.rarity != 'none')
+                                _buildSheetSection(
+                                  'Rarity',
+                                  weapon.rarity.toUpperCase(),
+                                ),
+                              const SizedBox(height: 16),
+                              _buildSheetSection(
+                                'Source',
+                                '${SourceMapper.getFullBookName(weapon.source)}${weapon.isCore ? ' • Core' : ''}',
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Damage Information
+                              if (weapon.damageDice.isNotEmpty) ...[
+                                _buildSheetSection(
+                                  'Damage',
+                                  weapon.formattedDamage,
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+
+                              // Properties
+                              _buildSheetSection(
+                                'Properties',
+                                weapon.formattedProperties,
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Cost and Weight
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildSheetSection(
+                                      'Weight',
+                                      '${weapon.weight} lb',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Thrown Range (if applicable)
+                              if (weapon.isThrown &&
+                                  weapon.thrownRange != null) ...[
+                                _buildSheetSection(
+                                  'Thrown Range',
+                                  weapon.thrownRange!,
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ],
           ),
-        ),
-      ),
     );
   }
 
@@ -379,45 +378,9 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey.shade300),
           ),
-          child: Text(
-            content,
-            style: const TextStyle(fontSize: 16),
-          ),
+          child: Text(content, style: const TextStyle(fontSize: 16)),
         ),
       ],
-    );
-  }
-
-  Widget _buildFilterChip(String label, VoidCallback onClear) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade100,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade300),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.blue.shade800,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: onClear,
-            child: Icon(
-              Icons.close,
-              size: 14,
-              color: Colors.blue.shade600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -447,9 +410,13 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
                     groupValue: _getFormattedSelectedType(),
                     onChanged: (value) {
                       setState(() {
-                        _selectedType = viewModel.getFormattedTypeForFilter(value!);
+                        _selectedType = viewModel.getFormattedTypeForFilter(
+                          value!,
+                        );
                       });
-                      viewModel.setSelectedType(viewModel.getFormattedTypeForFilter(value!));
+                      viewModel.setSelectedType(
+                        viewModel.getFormattedTypeForFilter(value!),
+                      );
                       Navigator.pop(context);
                     },
                   ),
@@ -476,7 +443,7 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
   String _getFormattedSelectedType() {
     final viewModel = context.read<WeaponsViewModel>();
     if (_selectedType == 'All') return 'All';
-    
+
     // Find the formatted type that matches the current raw type
     for (final weapon in viewModel.weapons) {
       if (weapon.type == _selectedType) {

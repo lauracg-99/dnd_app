@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/models/character_model.dart';
 import 'dart:io';
@@ -49,8 +50,14 @@ void main() {
       expect(characterWithImages.hasProfileImage, isTrue);
       expect(characterWithImages.hasAppearanceImage, isTrue);
       expect(characterWithImages.hasAnyImages, isTrue);
-      expect(characterWithImages.profileImageFilename, equals('test_char_123_profile_1234567890.jpg'));
-      expect(characterWithImages.appearanceImageFilename, equals('test_char_123_appearance_1234567890.jpg'));
+      expect(
+        characterWithImages.profileImageFilename,
+        equals('test_char_123_profile_1234567890.jpg'),
+      );
+      expect(
+        characterWithImages.appearanceImageFilename,
+        equals('test_char_123_appearance_1234567890.jpg'),
+      );
       expect(characterWithImages.isProfileImageNamedWithId, isTrue);
       expect(characterWithImages.isAppearanceImageNamedWithId, isTrue);
       expect(characterWithImages.areImagesNamedWithId, isTrue);
@@ -65,8 +72,10 @@ void main() {
       final validFile = File(validPath);
       final invalidFile = File(invalidPath);
 
-      print('Valid file exists: ${validFile.existsSync()}');
-      print('Invalid file exists: ${invalidFile.existsSync()}');
+      if (kDebugMode) {
+        print('Valid file exists: ${validFile.existsSync()}');
+        print('Invalid file exists: ${invalidFile.existsSync()}');
+      }
 
       // The actual implementation uses File.existsSync() which should work correctly
       expect(validFile.existsSync(), isFalse); // File doesn't actually exist

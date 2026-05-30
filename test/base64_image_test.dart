@@ -1,7 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/models/character_model.dart';
-import 'dart:convert';
-import 'dart:io';
 
 void main() {
   group('Base64 Image Data Tests', () {
@@ -10,7 +9,8 @@ void main() {
         id: 'test_char_123',
         name: 'Test Character',
         customImagePath: '/path/to/image.jpg',
-        customImageData: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
+        customImageData:
+            'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
         stats: const CharacterStats(
           strength: 10,
           dexterity: 10,
@@ -28,7 +28,8 @@ void main() {
         pillars: const CharacterPillars(),
         appearance: const CharacterAppearance(
           appearanceImagePath: '/path/to/appearance.jpg',
-          appearanceImageData: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
+          appearanceImageData:
+              'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
         ),
         deathSaves: const CharacterDeathSaves(),
         languages: const CharacterLanguages(),
@@ -38,13 +39,25 @@ void main() {
       );
 
       final json = character.toJson();
-      
+
       // Check if image data is included in JSON
-      expect(json['stats']['custom_image_data']['value'], equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'));
-      expect(json['stats']['appearance']['appearance_image_data']['value'], equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'));
-      
-      print('JSON with base64 image data: ${json['stats']['custom_image_data']}');
-      print('JSON with appearance image data: ${json['stats']['appearance']['appearance_image_data']}');
+      expect(
+        json['stats']['custom_image_data']['value'],
+        equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'),
+      );
+      expect(
+        json['stats']['appearance']['appearance_image_data']['value'],
+        equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'),
+      );
+
+      if (kDebugMode) {
+        print(
+          'JSON with base64 image data: ${json['stats']['custom_image_data']}',
+        );
+        print(
+          'JSON with appearance image data: ${json['stats']['appearance']['appearance_image_data']}',
+        );
+      }
     });
 
     test('Character model loads base64 image data from JSON', () {
@@ -54,7 +67,9 @@ void main() {
           'id': {'value': 'test_char_123'},
           'name': {'value': 'Test Character'},
           'custom_image_path': {'value': '/path/to/image.jpg'},
-          'custom_image_data': {'value': 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'},
+          'custom_image_data': {
+            'value': 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
+          },
           'stats': {
             'strength': {'value': 10},
             'dexterity': {'value': 10},
@@ -168,15 +183,16 @@ void main() {
           },
           'appearance': {
             'appearance_image_path': {'value': '/path/to/appearance.jpg'},
-            'appearance_image_data': {'value': 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'},
+            'appearance_image_data': {
+              'value':
+                  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
+            },
           },
           'death_saves': {
             'successes': [false, false, false],
             'failures': [false, false, false],
           },
-          'languages': {
-            'languages': [],
-          },
+          'languages': {'languages': []},
           'money_items': {
             'money': '',
             'items': [''],
@@ -188,16 +204,33 @@ void main() {
       };
 
       final character = Character.fromJson(json);
-      
+
       expect(character.customImagePath, equals('/path/to/image.jpg'));
-      expect(character.customImageData, equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'));
-      expect(character.appearance.appearanceImagePath, equals('/path/to/appearance.jpg'));
-      expect(character.appearance.appearanceImageData, equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'));
-      
-      print('Loaded customImagePath: ${character.customImagePath}');
-      print('Loaded customImageData: ${character.customImageData?.substring(0, 50)}...');
-      print('Loaded appearanceImagePath: ${character.appearance.appearanceImagePath}');
-      print('Loaded appearanceImageData: ${character.appearance.appearanceImageData?.substring(0, 50)}...');
+      expect(
+        character.customImageData,
+        equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'),
+      );
+      expect(
+        character.appearance.appearanceImagePath,
+        equals('/path/to/appearance.jpg'),
+      );
+      expect(
+        character.appearance.appearanceImageData,
+        equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'),
+      );
+
+      if (kDebugMode) {
+        print('Loaded customImagePath: ${character.customImagePath}');
+        print(
+          'Loaded customImageData: ${character.customImageData?.substring(0, 50)}...',
+        );
+        print(
+          'Loaded appearanceImagePath: ${character.appearance.appearanceImagePath}',
+        );
+        print(
+          'Loaded appearanceImageData: ${character.appearance.appearanceImageData?.substring(0, 50)}...',
+        );
+      }
     });
 
     test('Character model handles null image data correctly', () {
@@ -228,11 +261,14 @@ void main() {
       );
 
       final json = character.toJson();
-      
+
       // Check that null image data doesn't create JSON entries
       expect(json['stats'].containsKey('custom_image_data'), isFalse);
-      expect(json['stats']['appearance'].containsKey('appearance_image_data'), isFalse);
-      
+      expect(
+        json['stats']['appearance'].containsKey('appearance_image_data'),
+        isFalse,
+      );
+
       // Test loading null values
       final jsonWithNulls = {
         'resource_id': 'character',
@@ -360,9 +396,7 @@ void main() {
             'successes': [false, false, false],
             'failures': [false, false, false],
           },
-          'languages': {
-            'languages': [],
-          },
+          'languages': {'languages': []},
           'money_items': {
             'money': '',
             'items': [''],

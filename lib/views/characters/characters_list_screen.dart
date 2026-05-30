@@ -1,9 +1,8 @@
-import 'dart:convert';
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
-import '../../services/character_service.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/cloud_sync_service.dart';
 import '../../widgets/cached_profile_image.dart';
@@ -24,7 +23,6 @@ class _CharactersListScreenState extends State<CharactersListScreen>
   final _searchController = TextEditingController();
   final _syncService = CloudSyncService();
   final _authService = FirebaseAuthService();
-  bool _isFilterExpanded = false;
 
   @override
   void initState() {
@@ -85,7 +83,9 @@ class _CharactersListScreenState extends State<CharactersListScreen>
           StreamBuilder<SyncStatus>(
             stream: _syncService.syncStatus,
             builder: (context, snapshot) {
-              final syncStatus = snapshot.data ?? SyncStatus.disconnected;
+              // Use current status from service if snapshot has no data yet
+              final syncStatus =
+                  snapshot.data ?? _syncService.currentSyncStatus;
               return IconButton(
                 icon: Stack(
                   children: [
@@ -112,20 +112,13 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                 ),
                 onPressed: () => _handleCloudButtonPressed(syncStatus),
                 tooltip: _getCloudButtonTooltip(syncStatus),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
               );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              setState(() {
-                _isFilterExpanded = !_isFilterExpanded;
-              });
             },
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(_isFilterExpanded ? 120 : 80),
+          preferredSize: const Size.fromHeight(80),
           child: _buildSearchAndFilters(),
         ),
       ),
@@ -184,48 +177,11 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                 ),
                 onChanged: viewModel.setSearchQuery,
               ),
-
-              // Expandable filter section
-              if (_isFilterExpanded) ..._buildFilterControls(viewModel),
             ],
           ),
         );
       },
     );
-  }
-
-  List<Widget> _buildFilterControls(CharactersViewModel viewModel) {
-    return [
-      const SizedBox(height: 8),
-      // Class filter
-      SizedBox(
-        height: 50,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          children: [
-            const Text(
-              'Class: ',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            FilterChip(
-              label: const Text('All'),
-              selected: viewModel.selectedClass.isEmpty,
-              onSelected: (_) => viewModel.setSelectedClass(''),
-            ),
-            ...viewModel.availableClasses.map((className) {
-              return Padding(
-                padding: const EdgeInsets.only(left: 4.0),
-                child: FilterChip(
-                  label: Text(className),
-                  selected: viewModel.selectedClass == className,
-                  onSelected: (_) => viewModel.setSelectedClass(className),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    ];
   }
 
   Widget _buildErrorView(CharactersViewModel viewModel) {
@@ -320,6 +276,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 96),
       itemCount: viewModel.characters.length,
       itemBuilder: (context, index) {
         final character = viewModel.characters[index];
@@ -353,9 +310,6 @@ class _CharactersListScreenState extends State<CharactersListScreen>
               case 'delete':
                 _showDeleteConfirmation(character);
                 break;
-              case 'duplicate':
-                _duplicateCharacter(character);
-                break;
             }
           },
           itemBuilder:
@@ -377,16 +331,6 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                       Icon(Icons.book),
                       SizedBox(width: 8),
                       Text('Diary'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'duplicate',
-                  child: Row(
-                    children: [
-                      Icon(Icons.copy),
-                      SizedBox(width: 8),
-                      Text('Duplicate'),
                     ],
                   ),
                 ),
@@ -463,21 +407,6 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     );
   }
 
-  void _duplicateCharacter(Character character) {
-    final duplicatedCharacter = character.copyWith(
-      id: '${character.id}_copy_${DateTime.now().millisecondsSinceEpoch}',
-      name: '${character.name} (Copy)',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    // Save the duplicated character and add it to the list
-    CharacterService.saveCharacter(duplicatedCharacter).then((_) {
-      // Reload the characters list to refresh the UI
-      context.read<CharactersViewModel>().loadCharacters();
-    });
-  }
-
   /// Handle cloud button press based on authentication state
   void _handleCloudButtonPressed(SyncStatus currentStatus) {
     if (!_authService.isAuthenticated) {
@@ -536,39 +465,23 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     try {
       final result = await _syncService.manualSyncFromCloud();
 
+      if (!mounted) return;
+
       if (result.success) {
         // Refresh characters after sync
         context.read<CharactersViewModel>().loadCharacters();
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Changes downloaded successfully!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+        SnackbarHelper.showSuccess(context, 'Changes downloaded successfully!');
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Download failed: ${result.errorMessage}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
+          SnackbarHelper.showError(
+            context,
+            'Download failed: ${result.errorMessage}',
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Download error: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Download error: $e');
       }
     }
   }
@@ -720,23 +633,11 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     try {
       await _authService.signOut();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Signed out successfully'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        SnackbarHelper.showSuccess(context, 'Signed out successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error signing out: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Error signing out: $e');
       }
     }
   }
@@ -791,6 +692,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     );
 
     if (firstConfirm != true) return;
+    if (!mounted) return;
 
     // Second confirmation dialog - final warning
     final secondConfirm = await showDialog<bool>(
@@ -855,14 +757,9 @@ class _CharactersListScreenState extends State<CharactersListScreen>
       if (!cloudDeleteResult.success) {
         if (mounted) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Failed to delete cloud data: ${cloudDeleteResult.errorMessage}',
-              ),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
+          SnackbarHelper.showError(
+            context,
+            'Failed to delete cloud data: ${cloudDeleteResult.errorMessage}',
           );
         }
         return;
@@ -875,33 +772,18 @@ class _CharactersListScreenState extends State<CharactersListScreen>
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
         if (authDeleteResult.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account deleted successfully'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
-          );
+          SnackbarHelper.showSuccess(context, 'Account deleted successfully');
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(authDeleteResult.errorMessage!),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
+          SnackbarHelper.showError(
+            context,
+            'Failed to delete account: ${authDeleteResult.errorMessage}',
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting account: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        SnackbarHelper.showError(context, 'Error deleting account: $e');
       }
     }
   }

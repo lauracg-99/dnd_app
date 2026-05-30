@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/models/character_model.dart';
 
@@ -9,7 +10,8 @@ void main() {
         id: 'test_char_123',
         name: 'Test Character',
         customImagePath: '/path/to/image.jpg',
-        customImageData: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
+        customImageData:
+            'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
         stats: const CharacterStats(
           strength: 10,
           dexterity: 10,
@@ -27,7 +29,8 @@ void main() {
         pillars: const CharacterPillars(),
         appearance: const CharacterAppearance(
           appearanceImagePath: '/path/to/appearance.jpg',
-          appearanceImageData: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
+          appearanceImageData:
+              'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...',
         ),
         deathSaves: const CharacterDeathSaves(),
         languages: const CharacterLanguages(),
@@ -39,15 +42,24 @@ void main() {
       // Test that the model has the new fields
       expect(character.customImageData, isNotNull);
       expect(character.appearance.appearanceImageData, isNotNull);
-      
+
       // Test JSON serialization includes image data
       final json = character.toJson();
-      expect(json['stats']['custom_image_data']['value'], equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'));
-      expect(json['stats']['appearance']['appearance_image_data']['value'], equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'));
-      
-      print('✅ Base64 image data successfully included in JSON');
-      print('Profile image data: ${json['stats']['custom_image_data']}');
-      print('Appearance image data: ${json['stats']['appearance']['appearance_image_data']}');
+      expect(
+        json['stats']['custom_image_data']['value'],
+        equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'),
+      );
+      expect(
+        json['stats']['appearance']['appearance_image_data']['value'],
+        equals('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYGBgYJCQg...'),
+      );
+      if (kDebugMode) {
+        print('✅ Base64 image data successfully included in JSON');
+        print('Profile image data: ${json['stats']['custom_image_data']}');
+        print(
+          'Appearance image data: ${json['stats']['appearance']['appearance_image_data']}',
+        );
+      }
     });
 
     test('Base64 image data can be null', () {
@@ -80,9 +92,13 @@ void main() {
       // Test JSON serialization without image data
       final json = characterWithoutImages.toJson();
       expect(json['stats'].containsKey('custom_image_data'), isFalse);
-      expect(json['stats']['appearance'].containsKey('appearance_image_data'), isFalse);
-      
-      print('✅ JSON correctly excludes image data when null');
+      expect(
+        json['stats']['appearance'].containsKey('appearance_image_data'),
+        isFalse,
+      );
+      if (kDebugMode) {
+        print('✅ JSON correctly excludes image data when null');
+      }
     });
   });
 }

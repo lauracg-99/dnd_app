@@ -4,6 +4,7 @@ import 'dart:convert';
 import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
 import '../../services/diary_service.dart';
+import '../../utils/snackbar_helper.dart';
 import 'diary_editor_screen.dart';
 import 'diary_view_screen.dart';
 
@@ -183,7 +184,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
 
   Widget _buildDiaryList() {
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 96.0),
       itemCount: _filteredEntries.length,
       itemBuilder: (context, index) {
         final entry = _filteredEntries[index];
@@ -396,18 +397,11 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                 _loadDiaryEntries();
                 
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Diary entry deleted')),
-                  );
+                  SnackbarHelper.showSuccess(context, 'Diary entry deleted');
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error deleting diary entry: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  SnackbarHelper.showError(context, 'Error deleting diary entry: $e');
                 }
               }
             },

@@ -1,9 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../lib/services/character_service.dart';
-import '../lib/services/cloud_sync_service.dart';
-import '../lib/services/firebase_auth_service.dart';
-import '../lib/models/character_model.dart';
+import 'package:dnd_app/services/character_service.dart';
 
 void main() {
   // Initialize Flutter binding for tests

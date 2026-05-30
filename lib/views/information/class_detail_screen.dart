@@ -7,7 +7,7 @@ import '../../../viewmodels/class_viewmodel.dart' show ClassesViewModel;
 class ClassDetailScreen extends StatelessWidget {
   final String className;
 
-  const ClassDetailScreen({Key? key, required this.className}) : super(key: key);
+  const ClassDetailScreen({super.key, required this.className});
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +88,7 @@ class ClassDetailScreen extends StatelessWidget {
               const Divider(),
             ],
           ),
-        )).toList(),
+        )),
       ],
     );
   }

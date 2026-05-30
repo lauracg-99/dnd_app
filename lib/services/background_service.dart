@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/background_model.dart';
 
@@ -21,7 +22,9 @@ class BackgroundService {
           final jsonData = json.decode(jsonString);
           backgrounds.add(Background.fromJson(jsonData));
         } catch (e) {
-          print('Error loading background file $file: $e');
+          if (kDebugMode) {
+            print('Error loading background file $file: $e');
+          }
         }
       }
 
@@ -29,7 +32,9 @@ class BackgroundService {
       backgrounds.sort((a, b) => a.name.compareTo(b.name));
       return backgrounds;
     } catch (e) {
-      print('Error loading backgrounds: $e');
+      if (kDebugMode) {
+        print('Error loading backgrounds: $e');
+      }
       return [];
     }
   }

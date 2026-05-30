@@ -1,5 +1,6 @@
 import 'package:dnd_app/utils/quill_toolbar_configs.dart';
 import 'package:dnd_app/utils/simple_quill_editor.dart';
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:dnd_app/utils/source_mapper.dart';
 import 'package:dnd_app/widgets/action_button.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,6 @@ class CharactersFeatsTab extends StatefulWidget {
   final List<String> feats;
   final QuillController featNotesController;
   final Function(List<String>) onFeatsChanged;
-  final Function() onAutoSaveCharacter;
   final String characterName;
 
   const CharactersFeatsTab({
@@ -21,7 +21,6 @@ class CharactersFeatsTab extends StatefulWidget {
     required this.feats,
     required this.featNotesController,
     required this.onFeatsChanged,
-    required this.onAutoSaveCharacter,
     required this.characterName,
   });
 
@@ -63,7 +62,6 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
       _feats = newFeats;
     });
     widget.onFeatsChanged(_feats);
-    widget.onAutoSaveCharacter();
   }
 
   void _showAddFeatDialog() {
@@ -164,16 +162,7 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                                   newFeats.add(feat.name);
                                   _updateFeats(newFeats);
                                   Navigator.pop(context);
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Added ${feat.name} to ${widget.characterName}',
-                                      ),
-                                      backgroundColor: Colors.green,
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
+                                  SnackbarHelper.showSuccess(context,'Added ${feat.name} to ${widget.characterName}',);                                  
                                 },
                         );
                       },

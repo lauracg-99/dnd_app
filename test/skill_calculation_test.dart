@@ -13,7 +13,6 @@ void main() {
         charisma: 8, // -1 modifier
       );
 
-      const skillChecks = CharacterSkillChecks();
       const proficiencyBonus = 2;
 
       // Test acrobatics (DEX-based, no proficiency)
@@ -45,10 +44,6 @@ void main() {
         charisma: 8, // -1 modifier
       );
 
-      const skillChecks = CharacterSkillChecks(
-        acrobaticsProficiency: true,
-        athleticsProficiency: true,
-      );
       const proficiencyBonus = 2;
 
       // Test acrobatics with proficiency
@@ -80,10 +75,6 @@ void main() {
         charisma: 8, // -1 modifier
       );
 
-      const skillChecks = CharacterSkillChecks(
-        acrobaticsExpertise: true,
-        athleticsExpertise: true,
-      );
       const proficiencyBonus = 2;
 
       // Test acrobatics with expertise
@@ -190,7 +181,6 @@ void main() {
         charisma: 1, // -4 modifier
       );
 
-      const skillChecks = CharacterSkillChecks();
       const proficiencyBonus = 2;
 
       // Test with negative modifiers and proficiency

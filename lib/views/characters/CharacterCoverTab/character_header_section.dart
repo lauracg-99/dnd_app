@@ -194,7 +194,7 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
                       child: Consumer<CharactersViewModel>(
                         builder: (context, viewModel, child) {
                           return DropdownButtonFormField<String>(
-                            value: _selectedClass,
+                            initialValue: _selectedClass,
                             decoration: const InputDecoration(
                               labelText: 'Class',
                               border: OutlineInputBorder(),
@@ -244,7 +244,7 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
                             )
                           else
                             DropdownButtonFormField<String>(
-                              value: _useCustomSubclass || widget.subclassController.text.isEmpty || !widget.getSubclassesForClass(_selectedClass).contains(widget.subclassController.text) ? null : widget.subclassController.text,
+                              initialValue: _useCustomSubclass || widget.subclassController.text.isEmpty || !widget.getSubclassesForClass(_selectedClass).contains(widget.subclassController.text) ? null : widget.subclassController.text,
                               decoration: const InputDecoration(
                                 labelText: 'Subclass (Optional)',
                                 border: OutlineInputBorder(),
@@ -325,7 +325,7 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
                         Padding(
                           padding: const EdgeInsets.only(top: 16.0),
                           child: DropdownButtonFormField<String>(
-                              value: widget.raceController.text.isEmpty ? null : widget.raceController.text,
+                              initialValue: widget.raceController.text.isEmpty ? null : widget.raceController.text,
                               decoration: InputDecoration(
                                 labelText: 'Race (Optional)',
                                 border: OutlineInputBorder(),
@@ -364,7 +364,7 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
                             }
                             
                             return DropdownButtonFormField<String>(
-                              value: widget.backgroundController.text.isEmpty ? null : widget.backgroundController.text,
+                              initialValue: widget.backgroundController.text.isEmpty ? null : widget.backgroundController.text,
                               decoration: InputDecoration(
                                 labelText: 'Background (Optional)',
                                 border: OutlineInputBorder(),

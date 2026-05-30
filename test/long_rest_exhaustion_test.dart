@@ -119,14 +119,8 @@ void main() {
       expect(message1, 'Long rest completed! HP, spell slots, and all class resources restored! Exhaustion reduced by 1.');
       
       // Test case 2: Character had no exhaustion
-      final hadExhaustion2 = false;
-      final previousLevel2 = 0;
-      final currentLevel2 = 0;
       
       String message2 = 'Long rest completed! HP, spell slots, and all class resources restored!';
-      if (hadExhaustion2 && currentLevel2 < previousLevel2) {
-        message2 += ' Exhaustion reduced by 1.';
-      }
       
       expect(message2, 'Long rest completed! HP, spell slots, and all class resources restored!');
       

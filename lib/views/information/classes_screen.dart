@@ -5,15 +5,14 @@ import '../../../models/class_model.dart';
 import 'package:dnd_app/views/information/class_detail_screen.dart';
 
 class ClassesScreen extends StatefulWidget {
-  const ClassesScreen({Key? key}) : super(key: key);
+  const ClassesScreen({super.key});
 
   @override
-  _ClassesScreenState createState() => _ClassesScreenState();
+  State<ClassesScreen> createState() => _ClassesScreenState();
 }
 
 class _ClassesScreenState extends State<ClassesScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _selectedSource = '';
   bool _isLoading = false;
 
   @override
@@ -142,58 +141,6 @@ class _ClassesScreenState extends State<ClassesScreen> {
           );
         },
       ),
-    );
-  }
-
-  void _showFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final viewModel = context.read<ClassesViewModel>();
-        final sources = viewModel.getAllAvailableSources().toList()..sort();
-
-        return AlertDialog(
-          title: const Text('Filter Classes'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Source Book',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                ...sources.map(
-                  (source) => RadioListTile<String>(
-                    title: Text(source),
-                    value: source,
-                    groupValue: _selectedSource,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedSource = value!;
-                      });
-                      viewModel.setSelectedSource(value!);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-                if (sources.isNotEmpty)
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedSource = '';
-                      });
-                      viewModel.setSelectedSource('');
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Clear Filter'),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

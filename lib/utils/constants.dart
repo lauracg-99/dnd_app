@@ -1,4 +1,5 @@
 /// D&D 5e constants and configuration values
+library;
 
 /// Character level constraints
 class CharacterLevelConstants {

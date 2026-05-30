@@ -1,24 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dnd_app/models/spell_model.dart';
 
 void main() {
   group('Spell Removal Confirmation Tests', () {
     test('Confirmation dialog content is correctly formatted', () {
       // Create a mock spell
-      final spell = Spell(
-        id: 'test_spell_id',
-        name: 'Fireball',
-        level: 'spell_level_3',
-        school: 'spell_school_evocation',
-        castingTime: '1 action',
-        range: '150 feet',
-        duration: 'Instantaneous',
-        classes: ['wizard', 'sorcerer'],
-        dice: [],
-        description: 'A bright streak flashes from your pointing finger...',
-        updatedAt: DateTime.now(),
-      );
 
       // Test that the dialog content would be correctly formatted
       final expectedTitle = 'Remove Spell';

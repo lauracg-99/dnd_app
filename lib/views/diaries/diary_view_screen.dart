@@ -102,7 +102,7 @@ class DiaryViewScreen extends StatelessWidget {
   }
 
   Widget _buildContent() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: Card(
         margin: EdgeInsets.only(top: 5.0, left: 25.0, right: 25.0),
@@ -136,24 +136,22 @@ class DiaryViewScreen extends StatelessWidget {
       final controller = QuillController.basic()
         ..document = Document.fromJson(jsonDelta);
       
-      return Container(
-        child: IgnorePointer(
-          child: QuillEditor.basic(
-            controller: controller,
-            config: QuillEditorConfig(
-              scrollable: false,
-              customStyles: DefaultStyles(
-                paragraph: DefaultTextBlockStyle(
-                  const TextStyle(
-                    fontSize: 16,
-                    height: 1.5,
-                    color: Colors.black87,
-                  ),
-                  const HorizontalSpacing(0, 0),
-                  const VerticalSpacing(0, 0),
-                  const VerticalSpacing(0, 0),
-                  const BoxDecoration(), 
+      return IgnorePointer(
+        child: QuillEditor.basic(
+          controller: controller,
+          config: QuillEditorConfig(
+            scrollable: false,
+            customStyles: DefaultStyles(
+              paragraph: DefaultTextBlockStyle(
+                const TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                  color: Colors.black87,
                 ),
+                const HorizontalSpacing(0, 0),
+                const VerticalSpacing(0, 0),
+                const VerticalSpacing(0, 0),
+                const BoxDecoration(), 
               ),
             ),
           ),
@@ -193,7 +191,7 @@ class DiaryViewScreen extends StatelessWidget {
   }
 
   void _editDiaryEntry(BuildContext context) async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DiaryEditorScreen(
@@ -202,10 +200,5 @@ class DiaryViewScreen extends StatelessWidget {
         ),
       ),
     );
-
-    if (result == true && context.mounted) {
-      // Close the view screen and let the list refresh
-      Navigator.pop(context, true);
-    }
   }
 }

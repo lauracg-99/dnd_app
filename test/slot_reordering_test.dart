@@ -25,7 +25,6 @@ void main() {
                 onPersonalizedSlotsChanged: (slots) {
                   updatedSlots = slots;
                 },
-                onAutoSaveCharacter: () {},
                 characterName: 'Test Character',
               ),
             ),
@@ -96,7 +95,6 @@ void main() {
               child: CharactersPersonalizedTab(
                 personalizedSlots: testSlots,
                 onPersonalizedSlotsChanged: (slots) {},
-                onAutoSaveCharacter: () {},
                 characterName: 'Test Character',
               ),
             ),

@@ -80,7 +80,7 @@ class DeviceService {
 
   final DeviceInfoPlugin _deviceInfoPlugin = DeviceInfoPlugin();
   DeviceInfo? _currentDeviceInfo;
-  
+
   // SharedPreferences key for storing device ID
   static const String _deviceIdKey = 'device_id';
   static const String _deviceInfoKey = 'device_info';
@@ -94,7 +94,7 @@ class DeviceService {
     try {
       final deviceId = await getOrCreateDeviceId();
       final deviceDetails = await _getDeviceDetails();
-      
+
       _currentDeviceInfo = DeviceInfo(
         deviceId: deviceId,
         deviceName: deviceDetails['name'] ?? 'Unknown Device',
@@ -106,7 +106,7 @@ class DeviceService {
 
       // Cache the device info locally
       await _cacheDeviceInfo(_currentDeviceInfo!);
-      
+
       if (kDebugMode) {
         print('Device info retrieved: $_currentDeviceInfo');
       }
@@ -136,7 +136,7 @@ class DeviceService {
         // Generate a new device ID
         deviceId = _generateDeviceId();
         await prefs.setString(_deviceIdKey, deviceId);
-        
+
         if (kDebugMode) {
           print('Generated new device ID: $deviceId');
         }
@@ -199,7 +199,7 @@ class DeviceService {
     try {
       final iosInfo = await _deviceInfoPlugin.iosInfo;
       return {
-        'name': iosInfo.name ?? 'iOS Device',
+        'name': iosInfo.name,
         'type': 'iOS',
         'systemVersion': 'iOS ${iosInfo.systemVersion}',
         'model': iosInfo.model,
@@ -217,7 +217,7 @@ class DeviceService {
     try {
       final webInfo = await _deviceInfoPlugin.webBrowserInfo;
       return {
-        'name': webInfo.browserName?.name ?? 'Web Browser',
+        'name': webInfo.browserName.name,
         'type': 'Web',
         'systemVersion': webInfo.userAgent ?? 'Unknown',
         'model': webInfo.platform ?? 'Unknown Platform',
@@ -256,7 +256,7 @@ class DeviceService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final deviceInfoJson = prefs.getString(_deviceInfoKey);
-      
+
       if (deviceInfoJson != null && deviceInfoJson.isNotEmpty) {
         final Map<String, dynamic> deviceInfoMap = {};
         // Simple JSON parsing for the cached string
@@ -264,12 +264,18 @@ class DeviceService {
         for (final part in parts) {
           final keyValue = part.split(':');
           if (keyValue.length == 2) {
-            final key = keyValue[0].trim().replaceAll('{', '').replaceAll('"', '');
-            final value = keyValue[1].trim().replaceAll('}', '').replaceAll('"', '');
+            final key = keyValue[0]
+                .trim()
+                .replaceAll('{', '')
+                .replaceAll('"', '');
+            final value = keyValue[1]
+                .trim()
+                .replaceAll('}', '')
+                .replaceAll('"', '');
             deviceInfoMap[key] = value;
           }
         }
-        
+
         if (deviceInfoMap.isNotEmpty) {
           return DeviceInfo.fromJson(deviceInfoMap);
         }
@@ -296,7 +302,7 @@ class DeviceService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_deviceInfoKey);
       _currentDeviceInfo = null;
-      
+
       if (kDebugMode) {
         print('Device info cache cleared');
       }

@@ -39,7 +39,7 @@ class InitiativeSection extends StatelessWidget {
         border: Border.all(color: Colors.blue.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
+            color: Colors.blue.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

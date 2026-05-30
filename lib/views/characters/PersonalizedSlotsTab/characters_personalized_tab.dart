@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:dnd_app/widgets/action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -6,14 +7,12 @@ import '../../../models/character_model.dart';
 class CharactersPersonalizedTab extends StatefulWidget {
   final List<CharacterPersonalizedSlot> personalizedSlots;
   final Function(List<CharacterPersonalizedSlot>) onPersonalizedSlotsChanged;
-  final Function() onAutoSaveCharacter;
   final String characterName;
 
   const CharactersPersonalizedTab({
     super.key,
     required this.personalizedSlots,
     required this.onPersonalizedSlotsChanged,
-    required this.onAutoSaveCharacter,
     required this.characterName,
   });
 
@@ -43,7 +42,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
       _personalizedSlots = newSlots;
     });
     widget.onPersonalizedSlotsChanged(_personalizedSlots);
-    widget.onAutoSaveCharacter();
   }
 
   void _reorderPersonalizedSlots(int oldIndex, int newIndex) {
@@ -117,11 +115,9 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                 _updatePersonalizedSlots(newSlots);
                 Navigator.pop(context);
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Added $name to ${widget.characterName}'),
-                    backgroundColor: Colors.green,
-                  ),
+                SnackbarHelper.showSuccess(
+                  context,
+                  'Added $name to ${widget.characterName}',
                 );
               }
             },
@@ -206,7 +202,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                   }
                 }
                 localValue = newValue; // Update local value
-                widget.onAutoSaveCharacter(); // Auto-save on text input
               },
             ),
             const SizedBox(height: 16),
@@ -222,7 +217,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                       );
                       localValue = 4;
                       textController.text = '4';
-                      widget.onAutoSaveCharacter();
                     },
                     child: const Text('Set 4'),
                   ),
@@ -234,7 +228,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                       );
                       localValue = 6;
                       textController.text = '6';
-                      widget.onAutoSaveCharacter();
                     },
                     child: const Text('Set 6'),
                   ),
@@ -246,7 +239,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                       );
                       localValue = 8;
                       textController.text = '8';
-                      widget.onAutoSaveCharacter();
                     },
                     child: const Text('Set 8'),
                   ),
@@ -259,7 +251,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                       );
                       localValue = 0;
                       textController.text = '0';
-                      widget.onAutoSaveCharacter();
                     },
                     child: const Text('Clear All'),
                   ),
@@ -271,7 +262,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                       );
                       localValue = slot.maxSlots;
                       textController.text = slot.maxSlots.toString();
-                      widget.onAutoSaveCharacter();
                     },
                     child: const Text('Use All'),
                   ),
@@ -284,7 +274,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                       );
                       localValue = halfSlots;
                       textController.text = halfSlots.toString();
-                      widget.onAutoSaveCharacter();
                     },
                     child: const Text('Half Used'),
                   ),
@@ -386,13 +375,10 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
               Navigator.pop(context);
               
               // Show confirmation message
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('$slotName deleted'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              SnackbarHelper.showSuccess(
+                context,
+                '$slotName deleted',
+              );              
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -401,22 +387,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
             child: const Text('Delete'),
           ),
         ],
-      ),
-    );
-  }
-
-  void _restoreAllPersonalizedSlots() {
-    final newSlots = _personalizedSlots
-        .map((slot) => slot.copyWith(usedSlots: 0))
-        .toList();
-    _updatePersonalizedSlots(newSlots);
-
-    // Show confirmation message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All class slots have been restored!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
       ),
     );
   }

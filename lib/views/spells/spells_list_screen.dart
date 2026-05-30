@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/spell_model.dart';
-import '../../models/character_model.dart';
 import '../../viewmodels/spells_viewmodel.dart';
-import '../../viewmodels/characters_viewmodel.dart';
+import '../../widgets/detail_row.dart';
 
 class SpellsListScreen extends StatefulWidget {
   const SpellsListScreen({super.key});
@@ -115,7 +114,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Column(
@@ -155,7 +154,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                   onSelected: (_) => viewModel.setSelectedLevel(level),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -184,7 +183,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                   onSelected: (_) => viewModel.setSelectedClass(className),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -211,7 +210,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                   onSelected: (_) => viewModel.setSelectedSchool(school),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -382,25 +381,25 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                 const SizedBox(height: 16),
                 
                 // Casting Time
-                _buildDetailRow('Casting Time', spell.castingTime),
+                DetailRow(label: 'Casting Time', value: spell.castingTime),
                 
                 // Range
-                _buildDetailRow('Range', spell.range),
+                DetailRow(label: 'Range', value: spell.range),
                 
                 // Components
-                _buildDetailRow('Components', _formatComponents(spell)),
+                DetailRow(label: 'Components', value: _formatComponents(spell)),
                 
                 // Duration
-                _buildDetailRow('Duration', spell.duration),
+                DetailRow(label: 'Duration', value: spell.duration),
                 
                 // Ritual
                 if (spell.ritual)
-                  _buildDetailRow('Ritual', 'Yes'),
+                  DetailRow(label: 'Ritual', value: 'Yes'),
                 
                 // Classes
-                _buildDetailRow(
-                  'Classes', 
-                  spell.classes.map((c) => c.capitalize().replaceAll('_', ' ')).join(', ')
+                DetailRow(
+                  label: 'Classes',
+                  value: spell.classes.map((c) => c.capitalize().replaceAll('_', ' ')).join(', ')
                 ),
                 
                 const Divider(),
@@ -420,22 +419,6 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
-  }
-
   String _formatComponents(Spell spell) {
     final components = <String>[];
     if (spell.verbal) components.add('V');
@@ -444,94 +427,6 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
       components.add('M (${spell.components})');
     }
     return components.join(', ');
-  }
-
-  void _showCharacterSelectionDialog(BuildContext context, Spell spell) {
-    final charactersViewModel = context.read<CharactersViewModel>();
-    final characters = charactersViewModel.characters;
-    
-    if (characters.isEmpty) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('No Characters'),
-          content: const Text('You need to create a character first before adding spells.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Add "${spell.name}" to Character'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: characters.map((character) {
-              return RadioListTile<Character>(
-                title: Text(character.name),
-                subtitle: Text(character.characterClass),
-                value: character,
-                groupValue: null,
-                onChanged: (selectedCharacter) {
-                  if (selectedCharacter != null) {
-                    Navigator.pop(context);
-                    _addSpellToCharacter(context, selectedCharacter, spell);
-                  }
-                },
-              );
-            }).toList(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _addSpellToCharacter(BuildContext context, Character character, Spell spell) {
-    final charactersViewModel = context.read<CharactersViewModel>();
-    
-    // Check if character already knows this spell
-    if (character.spells.contains(spell.name)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${character.name} already knows ${spell.name}'),
-          backgroundColor: Colors.orange,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-    
-    // Add spell to character
-    final updatedSpells = List<String>.from(character.spells)..add(spell.name);
-    final updatedCharacter = character.copyWith(
-      spells: updatedSpells,
-      updatedAt: DateTime.now(),
-    );
-    
-    // Save updated character
-    charactersViewModel.updateCharacter(updatedCharacter);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added ${spell.name} to ${character.name}'),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 }
 

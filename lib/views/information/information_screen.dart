@@ -43,17 +43,6 @@ class InformationScreen extends StatelessWidget {
               );
             },
           ),
-          /* _buildCategoryCard(
-            context: context,
-            title: 'Armor',
-            icon: Icons.shield,
-            onTap: () {
-              // Will be implemented later
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Armor section coming soon!')),
-              );
-            },
-          ), */
           _buildCategoryCard(
             context: context,
             title: 'Races',
@@ -75,19 +64,7 @@ class InformationScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const WeaponsScreen()),
               );
             },
-          ),
-          
-          /* _buildCategoryCard(
-            context: context,
-            title: 'Items',
-            icon: Icons.inventory,
-            onTap: () {
-              // Will be implemented later
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Items section coming soon!')),
-              );
-            },
-          ), */
+          ),          
           _buildCategoryCard(
             context: context,
             title: 'Backgrounds',
@@ -101,20 +78,6 @@ class InformationScreen extends StatelessWidget {
           ),
           
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.blueGrey,
-        ),
       ),
     );
   }

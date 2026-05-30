@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dnd_app/services/character_service.dart';
-import 'package:dnd_app/models/character_model.dart';
 
 void main() {
   group('Persistent Storage Tests', () {
@@ -57,7 +56,7 @@ void main() {
     test('Should handle character deletion permanently', () async {
       // Create characters
       final char1 = await CharacterService.createCharacter(name: 'To Delete', characterClass: 'Fighter');
-      final char2 = await CharacterService.createCharacter(name: 'To Keep', characterClass: 'Wizard');
+      await CharacterService.createCharacter(name: 'To Keep', characterClass: 'Wizard');
 
       // Verify both exist
       var characters = await CharacterService.loadAllCharacters();

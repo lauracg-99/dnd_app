@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 /// A reusable action button component with consistent styling
 /// Used throughout the app for primary action buttons
@@ -45,7 +44,7 @@ class ActionButton extends StatelessWidget {
       backgroundColor: Theme.of(context).primaryColor,
       foregroundColor: Colors.white,
       elevation: 3,
-      shadowColor: Theme.of(context).primaryColor.withOpacity(0.3),
+      shadowColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
       borderRadius: BorderRadius.circular(12),
       minimumSize: const Size(0, 45),

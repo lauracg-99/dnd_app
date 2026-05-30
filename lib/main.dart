@@ -26,14 +26,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   // Initialize storage systems
   await CharacterService.initializeStorage();
   await DiaryService.initializeStorage();
-  
+
   // Initialize Firebase services
   final authService = FirebaseAuthService();
   final syncService = CloudSyncService();
@@ -62,45 +60,47 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-        onTap: () {
-          FocusScopeNode currentFocus = FocusScope.of(context);
-
-          if (!currentFocus.hasPrimaryFocus &&
-              currentFocus.focusedChild != null) {
-            FocusManager.instance.primaryFocus?.unfocus();
-          }
-        },
-      child: MaterialApp(
-        title: 'D&D',
-        debugShowCheckedModeBanner: false,
-        localizationsDelegates: [
-          FlutterQuillLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('en'),
-        ],
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(centerTitle: true, elevation: 2),
-          cardTheme: CardThemeData(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          ),
+    return MaterialApp(
+      title: 'D&D',
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates: [
+        FlutterQuillLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en')],
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.light,
         ),
-        home: const MainNavigationScreen(),
+        useMaterial3: true,
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: ZoomPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
+        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 2),
+        cardTheme: CardThemeData(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        ),
       ),
+      builder: (context, child) {
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
+          child: child,
+        );
+      },
+      home: const MainNavigationScreen(),
     );
   }
 }
@@ -123,13 +123,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   ];
 
   static const List<NavigationDestination> _destinations = [
-    NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),    
+    NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),
     NavigationDestination(icon: Icon(Icons.book), label: 'Diaries'),
     NavigationDestination(
       icon: Icon(Icons.auto_awesome_motion),
       label: 'Spells',
-    ),  
-    NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),  
+    ),
+    NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),
   ];
 
   void _onItemTapped(int index) {

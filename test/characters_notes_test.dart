@@ -25,7 +25,6 @@ void main() {
           wantsController: wantsController,
           needsController: needsController,
           conflictController: conflictController,
-          onSaveCharacter: () {},
         ),
         returnsNormally,
       );
@@ -70,7 +69,7 @@ void main() {
 
     test('Save callback can be invoked', () {
       bool saveCalled = false;
-      final callback = () => saveCalled = true;
+      bool callback() => saveCalled = true;
       
       callback();
       

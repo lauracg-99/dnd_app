@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/firebase_auth_service.dart';
@@ -19,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   
   bool _isLoading = false;
   bool _obscurePassword = true;
-  bool _isCreatingAccount = false;
+  final bool _isCreatingAccount = false;
 
   @override
   void dispose() {
@@ -40,7 +41,8 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
-            child: Column(
+            child: AutofillGroup(
+              child:Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
@@ -80,6 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
                   decoration: InputDecoration(
                     labelText: 'Email',
                     hintText: 'Enter your email address',
@@ -107,6 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.password],
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: 'Enter your password',
@@ -254,6 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
+          )
           ),
         ),
       ),
@@ -310,19 +315,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (mounted) {
         if (result.success) {
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                _isCreatingAccount 
-                    ? 'Account created and signed in successfully!'
-                    : 'Signed in successfully!',
-              ),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+          TextInput.finishAutofillContext();
+          // Accedemos al usuario nativo de Firebase
+          final user = result.user; 
+          bool isNewUser = false;
 
+          if (user != null && user.metadata.creationTime != null && user.metadata.lastSignInTime != null) {
+            // Si el tiempo de creación y de último login difieren por menos de un par de segundos, es una cuenta nueva
+            final difference = user.metadata.lastSignInTime!.difference(user.metadata.creationTime!).inSeconds.abs();
+            isNewUser = difference < 2; 
+          }
+          // Show success message
+          SnackbarHelper.showSuccess(context, isNewUser 
+                    ? 'Account created and signed in successfully!'
+                    : 'Signed in successfully!');          
           // Check if user has existing cloud data
           final hasCloudData = await _syncService.hasExistingCloudData();
           
@@ -335,24 +341,12 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         } else {
           // Show error message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.errorMessage!),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+          SnackbarHelper.showError(context, result.errorMessage ?? 'Authentication failed');          
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('An unexpected error occurred: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        SnackbarHelper.showError(context, 'An unexpected error occurred: $e');         
       }
     } finally {
       if (mounted) {
@@ -367,13 +361,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final result = await _syncService.uploadAllLocalData();
       if (mounted && !result.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Warning: ${result.errorMessage}'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        SnackbarHelper.showWarning(context, 'Warning: ${result.errorMessage}');        
       }
       // Navigate back after upload completes (regardless of success/failure)
       if (mounted) {
@@ -393,23 +381,16 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // Show loading message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Downloading your data from cloud...'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        SnackbarHelper.showInfo(context, 'Downloading your data from cloud...', duration: const Duration(seconds: 4));
       }
 
       final result = await _syncService.downloadAllData();
       if (mounted) {
         if (result.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Data sync successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          SnackbarHelper.showSuccess(context, 'Data sync successfully!');
+        } else {
+          SnackbarHelper.showError(context, 'Could not download cloud data: ${result.errorMessage}');
+        }
           // Trigger UI refresh on characters list after successful download
           // Use a small delay to ensure data is properly saved to local storage
           Future.delayed(const Duration(milliseconds: 500), () {
@@ -421,17 +402,10 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           });
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Could not download cloud data: ${result.errorMessage}'),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 4),
-            ),
-          );
+          SnackbarHelper.showWarning(context, 'Could not download cloud data: ${result.errorMessage}');          
           // Still navigate back even on download failure
           Navigator.pop(context);
-        }
-      }
+        }      
     } catch (e) {
       if (mounted) {
         // Don't show error for sync failure, just log it
@@ -523,12 +497,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
             final email = _emailController.text.trim();
             
             if (email.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Please enter your email address'),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              SnackbarHelper.showError(context, 'Please enter your email address');              
               return;
             }
             

@@ -1,9 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../lib/views/information/weapons_screen.dart';
-import '../lib/viewmodels/weapons_viewmodel.dart';
-import '../lib/models/weapon_model.dart';
+import 'package:dnd_app/views/information/weapons_screen.dart';
+import 'package:dnd_app/viewmodels/weapons_viewmodel.dart';
 
 void main() {
   group('WeaponsScreen Filter Display', () {

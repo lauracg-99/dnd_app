@@ -3,7 +3,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../../../models/weapon_model.dart';
 import '../../../viewmodels/weapons_viewmodel.dart';
-import '../../../utils/source_mapper.dart';
+import '../../../widgets/appfilter_chip.dart';
 
 class WeaponSelectionResult {
   final Weapon weapon;
@@ -18,10 +18,10 @@ class WeaponSelectionResult {
 }
 
 class WeaponSelectionDialog extends StatefulWidget {
-  const WeaponSelectionDialog({Key? key}) : super(key: key);
+  const WeaponSelectionDialog({super.key});
 
   @override
-  _WeaponSelectionDialogState createState() => _WeaponSelectionDialogState();
+  State<WeaponSelectionDialog> createState() => _WeaponSelectionDialogState();
 }
 
 class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
@@ -31,8 +31,10 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   final Set<Weapon> _selectedWeapons = <Weapon>{};
   final Map<String, String> _customAttackBonuses = <String, String>{};
   final Map<String, String> _customDamages = <String, String>{};
-  final Map<String, TextEditingController> _attackBonusControllers = <String, TextEditingController>{};
-  final Map<String, TextEditingController> _damageModifierControllers = <String, TextEditingController>{};
+  final Map<String, TextEditingController> _attackBonusControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _damageModifierControllers =
+      <String, TextEditingController>{};
 
   @override
   void initState() {
@@ -69,15 +71,15 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   /// Calculates total damage by combining weapon base damage with user modifier
   String _calculateTotalDamage(Weapon weapon, String userModifier) {
     if (userModifier.isEmpty) return _getWeaponBaseDamage(weapon);
-    
+
     // Extract numeric value from user input (handles +4, -2, 3, etc.)
     final modifierValue = _extractNumericValue(userModifier);
-    
+
     // Get weapon's base damage (e.g., "2d6")
     final baseDamage = _getWeaponBaseDamage(weapon);
-    
+
     if (baseDamage.isEmpty) return '';
-    
+
     // Format as "2d6 + 4" or "1d8 - 2"
     if (modifierValue > 0) {
       return '$baseDamage + $modifierValue';
@@ -90,7 +92,7 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
 
   String _getWeaponBaseDamage(Weapon weapon) {
     if (weapon.damageDice.isEmpty) return '';
-    
+
     final buffer = StringBuffer();
     for (int i = 0; i < weapon.damageDice.length; i++) {
       if (i > 0) buffer.write(' + ');
@@ -103,14 +105,14 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   /// Calculates the total attack bonus by combining weapon bonus with user input
   String _calculateTotalAttackBonus(Weapon weapon, String userInput) {
     if (userInput.isEmpty) return '';
-    
+
     // Extract numeric value from user input (handles +3, -2, 5, etc.)
     final userBonus = _extractNumericValue(userInput);
-    
+
     // Get weapon's base attack bonus (this would need to be calculated based on character stats)
     // For now, we'll assume 0 since we don't have character context in this dialog
     final weaponBaseBonus = 0;
-    
+
     final total = userBonus + weaponBaseBonus;
     return total >= 0 ? '+$total' : '$total';
   }
@@ -124,9 +126,7 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.95,
@@ -179,7 +179,7 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
               ),
             ),
             const Divider(height: 1),
-            
+
             // Search and filters
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -202,12 +202,12 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                   suffixIcon:
                       _searchController.text.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                _updateSearchQuery('');
-                              },
-                            )
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              _updateSearchQuery('');
+                            },
+                          )
                           : null,
                 ),
                 onChanged: (value) {
@@ -219,9 +219,11 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
             // Active filters display
             Consumer<WeaponsViewModel>(
               builder: (context, viewModel, child) {
-                final hasActiveFilters = viewModel.searchQuery.isNotEmpty || viewModel.selectedType != 'All';
+                final hasActiveFilters =
+                    viewModel.searchQuery.isNotEmpty ||
+                    viewModel.selectedType != 'All';
                 if (!hasActiveFilters) return const SizedBox.shrink();
-                
+
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16.0),
                   padding: const EdgeInsets.all(12.0),
@@ -235,7 +237,11 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.filter_list, size: 16, color: Colors.blue.shade700),
+                          Icon(
+                            Icons.filter_list,
+                            size: 16,
+                            color: Colors.blue.shade700,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Active Filters:',
@@ -253,11 +259,17 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                               _updateSelectedType('All');
                             },
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            child: const Text('Clear All', style: TextStyle(fontSize: 12)),
+                            child: const Text(
+                              'Clear All',
+                              style: TextStyle(fontSize: 12),
+                            ),
                           ),
                         ],
                       ),
@@ -267,17 +279,17 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                         runSpacing: 4,
                         children: [
                           if (viewModel.searchQuery.isNotEmpty)
-                            _buildFilterChip(
-                              'Search: "${viewModel.searchQuery}"',
-                              () {
+                            AppFilterChip(
+                              label: 'Search: "${viewModel.searchQuery}"',
+                              onClear: () {
                                 _searchController.clear();
                                 _updateSearchQuery('');
                               },
                             ),
                           if (viewModel.selectedType != 'All')
-                            _buildFilterChip(
-                              'Type: ${_getFormattedSelectedType()}',
-                              () {
+                            AppFilterChip(
+                              label: 'Type: ${_getFormattedSelectedType()}',
+                              onClear: () {
                                 _updateSelectedType('All');
                               },
                             ),
@@ -288,7 +300,7 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                 );
               },
             ),
-            
+
             // Filter chips
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -298,15 +310,23 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                   return SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: types.map((type) => _buildTypeChip(type, viewModel.getFormattedTypeForFilter(type))).toList(),
+                      children:
+                          types
+                              .map(
+                                (type) => _buildTypeChip(
+                                  type,
+                                  viewModel.getFormattedTypeForFilter(type),
+                                ),
+                              )
+                              .toList(),
                     ),
                   );
                 },
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Weapons list
             Expanded(
               child: Consumer<WeaponsViewModel>(
@@ -346,15 +366,13 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                 },
               ),
             ),
-            
+
             // Bottom action buttons
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(
-                  top: BorderSide(color: Colors.grey.shade300),
-                ),
+                border: Border(top: BorderSide(color: Colors.grey.shade300)),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
@@ -378,29 +396,47 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: _selectedWeapons.isNotEmpty
-                          ? () {
-                              // Create result objects with calculated values
-                              final results = _selectedWeapons.map((weapon) {
-                                final attackBonusController = _attackBonusControllers[weapon.id]!;
-                                final damageModifierController = _damageModifierControllers[weapon.id]!;
-                                
-                                return WeaponSelectionResult(
-                                  weapon: weapon,
-                                  customAttackBonus: attackBonusController.text.trim().isEmpty 
-                                      ? null 
-                                      : attackBonusController.text.trim(),
-                                  customDamage: damageModifierController.text.trim().isEmpty 
-                                      ? null 
-                                      : _calculateTotalDamage(weapon, damageModifierController.text.trim()),
-                                );
-                              }).toList();
-                              Navigator.pop(context, results);
-                            }
-                          : null,
+                      onPressed:
+                          _selectedWeapons.isNotEmpty
+                              ? () {
+                                // Create result objects with calculated values
+                                final results =
+                                    _selectedWeapons.map((weapon) {
+                                      final attackBonusController =
+                                          _attackBonusControllers[weapon.id]!;
+                                      final damageModifierController =
+                                          _damageModifierControllers[weapon
+                                              .id]!;
+
+                                      return WeaponSelectionResult(
+                                        weapon: weapon,
+                                        customAttackBonus:
+                                            attackBonusController.text
+                                                    .trim()
+                                                    .isEmpty
+                                                ? null
+                                                : attackBonusController.text
+                                                    .trim(),
+                                        customDamage:
+                                            damageModifierController.text
+                                                    .trim()
+                                                    .isEmpty
+                                                ? null
+                                                : _calculateTotalDamage(
+                                                  weapon,
+                                                  damageModifierController.text
+                                                      .trim(),
+                                                ),
+                                      );
+                                    }).toList();
+                                Navigator.pop(context, results);
+                              }
+                              : null,
                       icon: const Icon(Icons.add),
                       label: Text(
-                        _selectedWeapons.isEmpty ? 'Add Weapons' : 'Add ${_selectedWeapons.length} Weapons',
+                        _selectedWeapons.isEmpty
+                            ? 'Add Weapons'
+                            : 'Add ${_selectedWeapons.length} Weapons',
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade600,
@@ -424,7 +460,7 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
 
   Widget _buildWeaponTile(Weapon weapon) {
     final isSelected = _selectedWeapons.contains(weapon);
-    
+
     // Initialize custom values and controllers if not already set
     if (!_customAttackBonuses.containsKey(weapon.id)) {
       _customAttackBonuses[weapon.id] = ''; // Empty means use calculated value
@@ -434,12 +470,18 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
       _customDamages[weapon.id] = ''; // Empty means use weapon damage
       _damageModifierControllers[weapon.id] = TextEditingController();
     }
-    
+
     final attackBonusController = _attackBonusControllers[weapon.id]!;
     final damageModifierController = _damageModifierControllers[weapon.id]!;
-    final currentAttackTotal = _calculateTotalAttackBonus(weapon, attackBonusController.text);
-    final currentDamageTotal = _calculateTotalDamage(weapon, damageModifierController.text);
-    
+    final currentAttackTotal = _calculateTotalAttackBonus(
+      weapon,
+      attackBonusController.text,
+    );
+    final currentDamageTotal = _calculateTotalDamage(
+      weapon,
+      damageModifierController.text,
+    );
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -479,7 +521,10 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                 Text('Type: ${weapon.formattedType}'),
                 Text('Base Damage: ${_getWeaponBaseDamage(weapon)}'),
                 if (weapon.formattedProperties != 'No special properties')
-                  Text('Properties: ${weapon.formattedProperties}', style: const TextStyle(fontSize: 12)),
+                  Text(
+                    'Properties: ${weapon.formattedProperties}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
               ],
             ),
             onTap: () {
@@ -492,16 +537,14 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
               });
             },
           ),
-          
+
           // Custom fields (only show when selected)
           if (isSelected) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.grey.shade50,
-                border: Border(
-                  top: BorderSide(color: Colors.grey.shade200),
-                ),
+                border: Border(top: BorderSide(color: Colors.grey.shade200)),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(8),
                   bottomRight: Radius.circular(8),
@@ -522,11 +565,15 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.blue.shade400),
+                              borderSide: BorderSide(
+                                color: Colors.blue.shade400,
+                              ),
                             ),
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
@@ -552,11 +599,15 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.blue.shade400),
+                              borderSide: BorderSide(
+                                color: Colors.blue.shade400,
+                              ),
                             ),
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
@@ -579,7 +630,10 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                       if (currentAttackTotal.isNotEmpty)
                         Expanded(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.green.shade50,
                               border: Border.all(color: Colors.green.shade200),
@@ -595,12 +649,16 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
                             ),
                           ),
                         ),
-                      if (currentAttackTotal.isNotEmpty && currentDamageTotal.isNotEmpty)
+                      if (currentAttackTotal.isNotEmpty &&
+                          currentDamageTotal.isNotEmpty)
                         const SizedBox(width: 8),
                       if (currentDamageTotal.isNotEmpty)
                         Expanded(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.orange.shade50,
                               border: Border.all(color: Colors.orange.shade200),
@@ -657,52 +715,6 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
     );
   }
 
-  Widget _buildFilterChip(String label, VoidCallback onClear) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade100,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade300),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.blue.shade800,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: onClear,
-            child: Icon(
-              Icons.close,
-              size: 14,
-              color: Colors.blue.shade600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _getWeaponIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'simple_melee':
-      case 'martial_melee':
-        return Icons.sports_martial_arts;
-      case 'simple_ranged':
-      case 'martial_ranged':
-        return Icons.gps_fixed;
-      default:
-        return Icons.gavel;
-    }
-  }
-
   void _updateSearchQuery(String query) {
     context.read<WeaponsViewModel>().setSearchQuery(query);
   }
@@ -717,7 +729,7 @@ class _WeaponSelectionDialogState extends State<WeaponSelectionDialog> {
   String _getFormattedSelectedType() {
     final viewModel = context.read<WeaponsViewModel>();
     if (_selectedType == 'All') return 'All';
-    
+
     // Find the formatted type that matches the current raw type
     for (final weapon in viewModel.weapons) {
       if (weapon.type == _selectedType) {

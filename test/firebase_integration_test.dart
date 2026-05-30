@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import '../lib/services/firebase_auth_service.dart';
-import '../lib/services/cloud_sync_service.dart';
-import '../lib/services/character_service.dart';
-import '../lib/services/diary_service.dart';
-import '../lib/models/character_model.dart';
-import '../lib/models/diary_model.dart';
+import 'package:dnd_app/services/firebase_auth_service.dart';
+import 'package:dnd_app/services/cloud_sync_service.dart';
+import 'package:dnd_app/services/character_service.dart';
+import 'package:dnd_app/services/diary_service.dart';
+import 'package:dnd_app/models/character_model.dart';
+import 'package:dnd_app/models/diary_model.dart';
 
 void main() {
   group('Firebase Integration Tests', () {
