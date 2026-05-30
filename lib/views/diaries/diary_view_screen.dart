@@ -191,7 +191,7 @@ class DiaryViewScreen extends StatelessWidget {
   }
 
   void _editDiaryEntry(BuildContext context) async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DiaryEditorScreen(
@@ -200,10 +200,5 @@ class DiaryViewScreen extends StatelessWidget {
         ),
       ),
     );
-
-    if (result == true && context.mounted) {
-      // Close the view screen and let the list refresh
-      Navigator.pop(context, true);
-    }
   }
 }
