@@ -184,7 +184,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
 
   Widget _buildDiaryList() {
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 96.0),
       itemCount: _filteredEntries.length,
       itemBuilder: (context, index) {
         final entry = _filteredEntries[index];
