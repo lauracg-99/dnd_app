@@ -16,7 +16,6 @@ class DiariesOverviewScreen extends StatefulWidget {
 
 class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
   final _searchController = TextEditingController();
-  bool _isFilterExpanded = false;
 
   @override
   void initState() {
@@ -38,18 +37,8 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Character Diaries'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              setState(() {
-                _isFilterExpanded = !_isFilterExpanded;
-              });
-            },
-          ),
-        ],
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(_isFilterExpanded ? 120 : 80),
+          preferredSize: const Size.fromHeight(70),
           child: _buildSearchAndFilters(),
         ),
       ),
@@ -102,48 +91,11 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
                 ),
                 onChanged: viewModel.setSearchQuery,
               ),
-
-              // Expandable filter section
-              if (_isFilterExpanded) ..._buildFilterControls(viewModel),
             ],
           ),
         );
       },
     );
-  }
-
-  List<Widget> _buildFilterControls(CharactersViewModel viewModel) {
-    return [
-      const SizedBox(height: 8),
-      // Class filter
-      SizedBox(
-        height: 50,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          children: [
-            const Text(
-              'Class: ',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            FilterChip(
-              label: const Text('All'),
-              selected: viewModel.selectedClass.isEmpty,
-              onSelected: (_) => viewModel.setSelectedClass(''),
-            ),
-            ...viewModel.availableClasses.map((className) {
-              return Padding(
-                padding: const EdgeInsets.only(left: 4.0),
-                child: FilterChip(
-                  label: Text(className),
-                  selected: viewModel.selectedClass == className,
-                  onSelected: (_) => viewModel.setSelectedClass(className),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    ];
   }
 
   Widget _buildErrorView(CharactersViewModel viewModel) {
@@ -176,7 +128,7 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {              
+            onPressed: () {
               _navigateToCreateCharacter();
             },
             child: const Text('Go to Characters'),
