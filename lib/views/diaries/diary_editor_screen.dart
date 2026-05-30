@@ -1,3 +1,4 @@
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
@@ -57,7 +58,9 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
       }
     } else {
       // Para una entrada nueva, el estado inicial es vacío
-      _initialContentJson = jsonEncode(_contentController.document.toDelta().toJson());
+      _initialContentJson = jsonEncode(
+        _contentController.document.toDelta().toJson(),
+      );
     }
   }
 
@@ -169,8 +172,10 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
   // Método auxiliar para verificar si el usuario modificó algo
   bool _hasChanges() {
     final currentTitle = _titleController.text.trim();
-    final currentContentJson = jsonEncode(_contentController.document.toDelta().toJson());
-    
+    final currentContentJson = jsonEncode(
+      _contentController.document.toDelta().toJson(),
+    );
+
     final titleChanged = currentTitle != _initialTitle.trim();
     // Flutter Quill añade un salto de línea por defecto; ignoramos diferencias de espacios vacíos
     final contentChanged = currentContentJson != _initialContentJson;
@@ -193,7 +198,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
       return;
     }
 
-    // Validación de título vacío obligatorio solo si el usuario intenta guardar manualmente 
+    // Validación de título vacío obligatorio solo si el usuario intenta guardar manualmente
     // o si cambió el contenido en el autoguardado.
     if (_titleController.text.trim().isEmpty) {
       if (isAutosave) {
@@ -213,8 +218,9 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
     });
 
     try {
-
-      final currentContent = jsonEncode(_contentController.document.toDelta().toJson());
+      final currentContent = jsonEncode(
+        _contentController.document.toDelta().toJson(),
+      );
 
       if (widget.diaryEntry == null) {
         // Create new diary entry
@@ -235,15 +241,11 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
       if (mounted) {
         Navigator.pop(context, true);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.diaryEntry == null
-                  ? 'Diary entry created successfully'
-                  : 'Diary entry updated successfully',
-            ),
-            backgroundColor: Colors.green,
-          ),
+        SnackbarHelper.showSuccess(
+          context,
+          widget.diaryEntry == null
+              ? 'Diary entry created successfully'
+              : 'Diary entry updated successfully',
         );
       }
     } catch (e) {
@@ -263,9 +265,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
+    SnackbarHelper.showError(context, message);
   }
 
   String _formatDate(DateTime date) {
