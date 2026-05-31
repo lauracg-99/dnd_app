@@ -5,7 +5,7 @@ import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/cloud_sync_service.dart';
-import '../../widgets/cached_profile_image.dart';
+import '../../widgets/character_card.dart';
 import 'character_edit_screen.dart';
 import 'character_create_screen.dart';
 import '../diaries/diary_list_screen.dart';
@@ -86,7 +86,9 @@ class _CharactersListScreenState extends State<CharactersListScreen>
               // Use current status from service if snapshot has no data yet
               final syncStatus =
                   snapshot.data ?? _syncService.currentSyncStatus;
-              return IconButton(
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                child: IconButton(                
                 icon: Stack(
                   children: [
                     Icon(
@@ -113,6 +115,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                 onPressed: () => _handleCloudButtonPressed(syncStatus),
                 tooltip: _getCloudButtonTooltip(syncStatus),
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              )
               );
             },
           ),
@@ -286,70 +289,48 @@ class _CharactersListScreenState extends State<CharactersListScreen>
   }
 
   Widget _buildCharacterItem(Character character, BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      child: ListTile(
-        leading: CharacterAvatar(
-          base64ImageData: character.customImageData,
-          size: 40,
+    return CharacterCard(
+      character: character,
+      onTap: () {
+        _navigateToEditCharacter(character);
+      },
+      popupMenuItems: [
+        const PopupMenuItem(
+          value: 'edit',
+          child: Row(
+            children: [Icon(Icons.edit), SizedBox(width: 8), Text('Edit')],
+          ),
         ),
-        title: Text(character.name),
-        subtitle: Text(
-          '${character.characterClass}${character.subclass != null && character.subclass!.isNotEmpty ? ' (${character.subclass})' : ''}${character.race != null && character.race!.isNotEmpty ? ' • ${character.race}' : ''}',
+        const PopupMenuItem(
+          value: 'diary',
+          child: Row(
+            children: [Icon(Icons.book), SizedBox(width: 8), Text('Diary')],
+          ),
         ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (value) {
-            switch (value) {
-              case 'edit':
-                _navigateToEditCharacter(character);
-                break;
-              case 'diary':
-                _navigateToDiary(character);
-                break;
-              case 'delete':
-                _showDeleteConfirmation(character);
-                break;
-            }
-          },
-          itemBuilder:
-              (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit),
-                      SizedBox(width: 8),
-                      Text('Edit'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'diary',
-                  child: Row(
-                    children: [
-                      Icon(Icons.book),
-                      SizedBox(width: 8),
-                      Text('Diary'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Delete', style: TextStyle(color: Colors.red)),
+            ],
+          ),
         ),
-        onTap: () {
-          _navigateToEditCharacter(character);
-        },
-      ),
+      ],
+      onPopupMenuSelected: (value) {
+        switch (value) {
+          case 'edit':
+            _navigateToEditCharacter(character);
+            break;
+          case 'diary':
+            _navigateToDiary(character);
+            break;
+          case 'delete':
+            _showDeleteConfirmation(character);
+            break;
+        }
+      },
     );
   }
 

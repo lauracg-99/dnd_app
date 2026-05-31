@@ -176,12 +176,11 @@ class CharacterCoverTab extends StatelessWidget {
             showInitiativeDialog: showInitiativeDialog,
           ),
 
-          if (hasConcentration)
-            ConcentrationSection(
-              hasConcentration: hasConcentration,
-              onToggle: onConcentrationToggle,
-            ),
-
+          ConcentrationSection(
+            hasConcentration: hasConcentration,
+            onToggle: onConcentrationToggle,
+          ),
+          
           HealthSection(
             maxHpController: maxHpController,
             currentHpController: currentHpController,

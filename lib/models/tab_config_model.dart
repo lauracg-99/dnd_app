@@ -77,7 +77,7 @@ class CharacterTabManager {
     'spells': CharacterTabConfig(
       id: 'spells',
       label: 'Spells',
-      icon: Icons.auto_awesome,
+      icon: Symbols.playing_cards,
       builder: () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'feats': CharacterTabConfig(

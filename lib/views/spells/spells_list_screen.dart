@@ -36,20 +36,24 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
       appBar: AppBar(
         title: const Text('D&D Spells'),
         actions: [
-          IconButton(
-            icon: Icon(
-              Icons.filter_list,
-              color: _isFilterExpanded ? Theme.of(context).colorScheme.primary : null,
-            ),
-            onPressed: () {
-              setState(() {
-                _isFilterExpanded = !_isFilterExpanded;
-              });
-              // Debug print to verify button is working
-              debugPrint('Filter button pressed. Expanded: $_isFilterExpanded');
-            },
-            tooltip: 'Filter spells',
-          ),
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child:
+              IconButton(                
+                icon: Icon(
+                  Icons.filter_list,
+                  color: _isFilterExpanded ? Theme.of(context).colorScheme.primary : null,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isFilterExpanded = !_isFilterExpanded;
+                  });
+                  // Debug print to verify button is working
+                  debugPrint('Filter button pressed. Expanded: $_isFilterExpanded');
+                },
+                tooltip: 'Filter spells',
+              ),
+          )
         ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(_isFilterExpanded ? 280 : 80),

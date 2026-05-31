@@ -16,12 +16,14 @@ class ConcentrationSection extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: hasConcentration ? Colors.green.shade50 : Colors.purple.shade50,
-              borderRadius: BorderRadius.circular(16),
+      child: GestureDetector(
+        onTap: onToggle,
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: hasConcentration ? Colors.green.shade50 : Colors.purple.shade50,
+                borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: hasConcentration ? Colors.green.shade200 : Colors.purple.shade200,
               ),
@@ -96,6 +98,7 @@ class ConcentrationSection extends StatelessWidget {
           const SizedBox(height: 24),
         ],
       ),
+    )
     );
   }
 }

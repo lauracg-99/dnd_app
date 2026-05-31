@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -28,7 +29,6 @@ class CachedProfileImage extends StatefulWidget {
 
 class _CachedProfileImageState extends State<CachedProfileImage> {
   Uint8List? _cachedImageBytes;
-  bool _isLoading = false;
   bool _hasError = false;
 
   @override
@@ -56,18 +56,16 @@ class _CachedProfileImageState extends State<CachedProfileImage> {
     }
 
     setState(() {
-      _isLoading = true;
       _hasError = false;
     });
 
     try {
       // Decode base64 data in background
       final bytes = await compute(_decodeBase64, widget.base64ImageData!);
-      
+
       if (mounted) {
         setState(() {
           _cachedImageBytes = bytes;
-          _isLoading = false;
           _hasError = false;
         });
       }
@@ -76,7 +74,6 @@ class _CachedProfileImageState extends State<CachedProfileImage> {
       if (mounted) {
         setState(() {
           _cachedImageBytes = null;
-          _isLoading = false;
           _hasError = true;
         });
       }
@@ -119,26 +116,46 @@ class _CachedProfileImageState extends State<CachedProfileImage> {
 /// A simpler version for character list avatars
 class CharacterAvatar extends StatelessWidget {
   final String? base64ImageData;
+  final String? imagePath;
   final double size;
 
   const CharacterAvatar({
     super.key,
     this.base64ImageData,
+    this.imagePath,
     this.size = 40,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CachedProfileImage(
-        base64ImageData: base64ImageData,
+    if (base64ImageData != null && base64ImageData!.isNotEmpty) {
+      return SizedBox(
         width: size,
         height: size,
-        isCircular: true,
-        placeholder: const Icon(Icons.person),
-      ),
-    );
+        child: CachedProfileImage(
+          base64ImageData: base64ImageData,
+          width: size,
+          height: size,
+          isCircular: true,
+          placeholder: const Icon(Icons.person),
+        ),
+      );
+    }
+
+    if (imagePath != null && imagePath!.isNotEmpty) {
+      return ClipOval(
+        child: Image.file(
+          File(imagePath!),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(Icons.person);
+          },
+        ),
+      );
+    }
+
+    return SizedBox(width: size, height: size, child: const Icon(Icons.person));
   }
 }
