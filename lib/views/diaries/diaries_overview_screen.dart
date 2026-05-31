@@ -35,27 +35,39 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 209, 161, 216),
         title: const Text('Character Diaries'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(70),
-          child: _buildSearchAndFilters(),
-        ),
+            preferredSize: const Size.fromHeight(10),
+            child: const SizedBox(),
+          ),
       ),
       body: Consumer<CharactersViewModel>(
         builder: (context, viewModel, child) {
-          if (viewModel.isLoading && viewModel.characters.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          return Column(
+            children: [
+              _buildSearchAndFilters(),
+              Expanded(
+                child: Builder(
+                  builder: (context) {
+                    if (viewModel.isLoading && viewModel.characters.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-          if (viewModel.error != null) {
-            return _buildErrorView(viewModel);
-          }
+                    if (viewModel.error != null) {
+                      return _buildErrorView(viewModel);
+                    }
 
-          if (viewModel.characters.isEmpty) {
-            return _buildEmptyView();
-          }
+                    if (viewModel.characters.isEmpty) {
+                      return _buildEmptyView();
+                    }
 
-          return _buildCharactersList(viewModel);
+                    return _buildCharactersList(viewModel);
+                  },
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
@@ -158,10 +170,7 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${character.characterClass}${character.subclass != null && character.subclass!.isNotEmpty ? ' (${character.subclass})' : ''}${character.race != null && character.race!.isNotEmpty ? ' • ${character.race}' : ''}',
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Row(
             children: [
               Icon(Icons.book, size: 16, color: Colors.grey[600]),
@@ -172,10 +181,11 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 4),
         ],
       ),
       trailing: const Icon(Icons.arrow_forward_ios),
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       onTap: () {
         Navigator.push(
           context,

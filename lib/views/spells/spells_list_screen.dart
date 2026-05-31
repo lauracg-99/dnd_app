@@ -37,23 +37,27 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         title: const Text('D&D Spells'),
         actions: [
           Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child:
-              IconButton(                
-                icon: Icon(
-                  Icons.filter_list,
-                  color: _isFilterExpanded ? Theme.of(context).colorScheme.primary : null,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isFilterExpanded = !_isFilterExpanded;
-                  });
-                  // Debug print to verify button is working
-                  debugPrint('Filter button pressed. Expanded: $_isFilterExpanded');
-                },
-                tooltip: 'Filter spells',
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: IconButton(
+              icon: Icon(
+                Icons.filter_list,
+                color:
+                    _isFilterExpanded
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
               ),
-          )
+              onPressed: () {
+                setState(() {
+                  _isFilterExpanded = !_isFilterExpanded;
+                });
+                // Debug print to verify button is working
+                debugPrint(
+                  'Filter button pressed. Expanded: $_isFilterExpanded',
+                );
+              },
+              tooltip: 'Filter spells',
+            ),
+          ),
         ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(_isFilterExpanded ? 280 : 80),
@@ -96,19 +100,20 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            viewModel.setSearchQuery('');
-                          },
-                        )
-                      : null,
+                  suffixIcon:
+                      _searchController.text.isNotEmpty
+                          ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              viewModel.setSearchQuery('');
+                            },
+                          )
+                          : null,
                 ),
                 onChanged: viewModel.setSearchQuery,
               ),
-              
+
               // Expandable filter section
               if (_isFilterExpanded) ...[
                 const SizedBox(height: 8),
@@ -118,12 +123,12 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withValues(alpha: 0.3),
                     ),
                   ),
-                  child: Column(
-                    children: _buildFilterControls(viewModel),
-                  ),
+                  child: Column(children: _buildFilterControls(viewModel)),
                 ),
               ],
             ],
@@ -142,7 +147,10 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         child: ListView(
           scrollDirection: Axis.horizontal,
           children: [
-            const Text('Level: ', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Level: ',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             FilterChip(
               label: const Text('All'),
               selected: viewModel.selectedLevel == null,
@@ -162,7 +170,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
           ],
         ),
       ),
-      
+
       // Class filter
       const SizedBox(height: 8),
       SizedBox(
@@ -170,7 +178,10 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         child: ListView(
           scrollDirection: Axis.horizontal,
           children: [
-            const Text('Class: ', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Class: ',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             FilterChip(
               label: const Text('All'),
               selected: viewModel.selectedClass.isEmpty,
@@ -181,7 +192,10 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                 padding: const EdgeInsets.only(left: 4.0),
                 child: FilterChip(
                   label: Text(
-                    className.split('_').map((s) => s[0].toUpperCase() + s.substring(1)).join(' '),
+                    className
+                        .split('_')
+                        .map((s) => s[0].toUpperCase() + s.substring(1))
+                        .join(' '),
                   ),
                   selected: viewModel.selectedClass == className,
                   onSelected: (_) => viewModel.setSelectedClass(className),
@@ -191,7 +205,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
           ],
         ),
       ),
-      
+
       // School filter
       const SizedBox(height: 8),
       SizedBox(
@@ -199,7 +213,10 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         child: ListView(
           scrollDirection: Axis.horizontal,
           children: [
-            const Text('School: ', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'School: ',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             FilterChip(
               label: const Text('All'),
               selected: viewModel.selectedSchool.isEmpty,
@@ -255,17 +272,17 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
   // Group spells by their level
   Map<int, List<Spell>> _groupSpellsByLevel(List<Spell> spells) {
     final Map<int, List<Spell>> groupedSpells = {};
-    
+
     for (final spell in spells) {
       final level = spell.levelNumber;
       groupedSpells.putIfAbsent(level, () => []).add(spell);
     }
-    
+
     // Sort each level's spells alphabetically
     for (final level in groupedSpells.keys) {
       groupedSpells[level]!.sort((a, b) => a.name.compareTo(b.name));
     }
-    
+
     return Map.fromEntries(
       groupedSpells.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
     );
@@ -292,7 +309,8 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
       child: ListTile(
         title: Text(spell.name),
         subtitle: Text(
-          '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}${spell.ritual ? ' (Ritual)' : ''}'.trim(),
+          '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}${spell.ritual ? ' (Ritual)' : ''}'
+              .trim(),
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
@@ -306,7 +324,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
   Widget _buildSpellsList(SpellsViewModel viewModel) {
     final groupedSpells = _groupSpellsByLevel(viewModel.spells);
     final levels = groupedSpells.keys.toList()..sort();
-    
+
     // If no spells after filtering
     if (viewModel.spells.isEmpty) {
       return _buildEmptyView();
@@ -315,32 +333,33 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
     // Calculate total number of items (1 header + spells for each level)
     int itemCount = 0;
     for (final level in levels) {
-      itemCount += 1 + groupedSpells[level]!.length; // 1 for header + number of spells
+      itemCount +=
+          1 + groupedSpells[level]!.length; // 1 for header + number of spells
     }
 
     return ListView.builder(
       itemCount: itemCount,
       itemBuilder: (context, index) {
         int currentPos = 0;
-        
+
         for (final level in levels) {
           final spells = groupedSpells[level]!;
-          
+
           // Check if this is the header position
           if (index == currentPos) {
             return _buildSectionHeader(level);
           }
           currentPos++;
-          
+
           // Check if this is a spell position
           final spellIndex = index - currentPos;
           if (spellIndex < spells.length) {
             return _buildSpellItem(spells[spellIndex], context);
           }
-          
+
           currentPos += spells.length;
         }
-        
+
         return const SizedBox.shrink();
       },
     );
@@ -350,76 +369,86 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (_, controller) => SingleChildScrollView(
-          controller: controller,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(2),
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            expand: false,
+            builder:
+                (_, controller) => SingleChildScrollView(
+                  controller: controller,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[400],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          spell.name,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Casting Time
+                        DetailRow(
+                          label: 'Casting Time',
+                          value: spell.castingTime,
+                        ),
+
+                        // Range
+                        DetailRow(label: 'Range', value: spell.range),
+
+                        // Components
+                        DetailRow(
+                          label: 'Components',
+                          value: _formatComponents(spell),
+                        ),
+
+                        // Duration
+                        DetailRow(label: 'Duration', value: spell.duration),
+
+                        // Ritual
+                        if (spell.ritual)
+                          DetailRow(label: 'Ritual', value: 'Yes'),
+
+                        // Classes
+                        DetailRow(
+                          label: 'Classes',
+                          value: spell.classes
+                              .map((c) => c.capitalize().replaceAll('_', ' '))
+                              .join(', '),
+                        ),
+
+                        const Divider(),
+
+                        // Description
+                        Text(
+                          spell.description,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+
+                        // Add more details here as needed
+                      ],
                     ),
                   ),
                 ),
-                Text(
-                  spell.name,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 16),
-                
-                // Casting Time
-                DetailRow(label: 'Casting Time', value: spell.castingTime),
-                
-                // Range
-                DetailRow(label: 'Range', value: spell.range),
-                
-                // Components
-                DetailRow(label: 'Components', value: _formatComponents(spell)),
-                
-                // Duration
-                DetailRow(label: 'Duration', value: spell.duration),
-                
-                // Ritual
-                if (spell.ritual)
-                  DetailRow(label: 'Ritual', value: 'Yes'),
-                
-                // Classes
-                DetailRow(
-                  label: 'Classes',
-                  value: spell.classes.map((c) => c.capitalize().replaceAll('_', ' ')).join(', ')
-                ),
-                
-                const Divider(),
-                
-                // Description
-                Text(
-                  spell.description,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                
-                // Add more details here as needed
-              ],
-            ),
           ),
-        ),
-      ),
     );
   }
 

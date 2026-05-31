@@ -77,6 +77,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.blue.shade100,
         title: const Text('D&D Characters'),
         actions: [
           // Cloud sync button
@@ -88,42 +89,42 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                   snapshot.data ?? _syncService.currentSyncStatus;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                child: IconButton(                
-                icon: Stack(
-                  children: [
-                    Icon(
-                      _authService.isAuthenticated
-                          ? Icons.cloud_done
-                          : Icons.cloud_upload,
-                      color: _getSyncStatusColor(syncStatus),
-                    ),
-                    if (syncStatus == SyncStatus.syncing)
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.blue,
-                            shape: BoxShape.circle,
+                child: IconButton(
+                  icon: Stack(
+                    children: [
+                      Icon(
+                        _authService.isAuthenticated
+                            ? Icons.cloud_done
+                            : Icons.cloud_upload,
+                        color: _getSyncStatusColor(syncStatus),
+                      ),
+                      if (syncStatus == SyncStatus.syncing)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.blue,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
+                  onPressed: () => _handleCloudButtonPressed(syncStatus),
+                  tooltip: _getCloudButtonTooltip(syncStatus),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 ),
-                onPressed: () => _handleCloudButtonPressed(syncStatus),
-                tooltip: _getCloudButtonTooltip(syncStatus),
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              )
               );
             },
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(80),
-          child: _buildSearchAndFilters(),
-        ),
+            preferredSize: const Size.fromHeight(10),
+            child: const SizedBox(),
+          ),
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'characters_fab',
@@ -133,19 +134,30 @@ class _CharactersListScreenState extends State<CharactersListScreen>
       ),
       body: Consumer<CharactersViewModel>(
         builder: (context, viewModel, child) {
-          if (viewModel.isLoading && viewModel.characters.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          return Column(
+            children: [
+              _buildSearchAndFilters(),
+              Expanded(
+                child: Builder(
+                  builder: (context) {
+                    if (viewModel.isLoading && viewModel.characters.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-          if (viewModel.error != null) {
-            return _buildErrorView(viewModel);
-          }
+                    if (viewModel.error != null) {
+                      return _buildErrorView(viewModel);
+                    }
 
-          if (viewModel.characters.isEmpty) {
-            return _buildEmptyView();
-          }
+                    if (viewModel.characters.isEmpty) {
+                      return _buildEmptyView();
+                    }
 
-          return _buildCharactersList(viewModel);
+                    return _buildCharactersList(viewModel);
+                  },
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
