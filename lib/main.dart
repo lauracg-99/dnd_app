@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -126,7 +127,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),
     NavigationDestination(icon: Icon(Icons.book), label: 'Diaries'),
     NavigationDestination(
-      icon: Icon(Icons.auto_awesome_motion),
+      icon: Icon(Symbols.playing_cards),
       label: 'Spells',
     ),
     NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),

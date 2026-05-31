@@ -682,100 +682,101 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         // Ejecuta el guardado automático
         _saveCharacter(isAutosave: true);
       },
-      child:(Scaffold(
-      appBar: AppBar(
-        title: Text(widget.character.name),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs:
-              _orderedTabs
-                  .map((tab) => Tab(text: tab.label, icon: Icon(tab.icon)))
-                  .toList(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.book),
-            onPressed: _navigateToDiaries,
-            tooltip: "Character's Diary",
+      child: (Scaffold(
+        appBar: AppBar(
+          title: Text(widget.character.name),
+          bottom: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabs:
+                _orderedTabs
+                    .map((tab) => Tab(text: tab.label, icon: Icon(tab.icon)))
+                    .toList(),
           ),
-          IconButton(
-            icon: const Icon(Icons.reorder),
-            onPressed: _showTabReorderDialog,
-            tooltip: 'Reorder Tabs',
-          ),
-          _isSaving
-              ? const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              )
-              : Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.save,
-                      color: hasUnsavedChanges ? Colors.purple : null,
-                    ),
-                    onPressed: _saveCharacter,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.book),
+              onPressed: _navigateToDiaries,
+              tooltip: "Character's Diary",
+            ),
+            IconButton(
+              icon: const Icon(Icons.reorder),
+              onPressed: _showTabReorderDialog,
+              tooltip: 'Reorder Tabs',
+            ),
+            _isSaving
+                ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  if (hasUnsavedChanges)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.purple,
-                          shape: BoxShape.circle,
+                )
+                : Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.save,
+                        color: hasUnsavedChanges ? Colors.purple : null,
+                      ),
+                      onPressed: _saveCharacter,
+                    ),
+                    if (hasUnsavedChanges)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.purple,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                // Dismiss keyboard when tapping anywhere on screen
+                FocusScope.of(context).unfocus();
+              },
+              child: TabBarView(
+                controller: _tabController,
+                children: _orderedTabs.map((tab) => tab.builder()).toList(),
               ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () {
-              // Dismiss keyboard when tapping anywhere on screen
-              FocusScope.of(context).unfocus();
-            },
-            child: TabBarView(
-              controller: _tabController,
-              children: _orderedTabs.map((tab) => tab.builder()).toList(),
             ),
-          ),
-          // Blocking save overlay
-          if (_isSaving)
-            Container(
-              color: Colors.black.withValues(alpha: 0.5),
-              child: const Center(
-                child: Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text('Saving...'),
-                      ],
+            // Blocking save overlay
+            if (_isSaving)
+              Container(
+                color: Colors.black.withValues(alpha: 0.5),
+                child: const Center(
+                  child: Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Saving...'),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
-      ),
-    )));
+          ],
+        ),
+      )),
+    );
   }
 
   Widget _buildCharacterCoverTab() {
@@ -835,7 +836,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         // Manual save only - no auto-save
       },
       showInitiativeDialog: _showInitiativeDialog,
-      hasConcentration: _canCastSpells(),
+      hasConcentration: _hasConcentration,
       onConcentrationToggle: () {
         setState(() {
           _hasConcentration = !_hasConcentration;
@@ -907,9 +908,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   }
 
   Widget _buildQuickGuideTab() {
-    return CharactersQuickGuide(
-      controller: _quickGuideController,
-    );
+    return CharactersQuickGuide(controller: _quickGuideController);
   }
 
   Widget _buildStatsTab() {
@@ -970,8 +969,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: (_hasInspiration ? Colors.green : Colors.blue).withValues(alpha: 
-              0.1,
+            color: (_hasInspiration ? Colors.green : Colors.blue).withValues(
+              alpha: 0.1,
             ),
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -3291,7 +3290,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     if (hadExhaustion && _exhaustionLevel < previousLevel) {
       message += ' Exhaustion reduced by 1.';
     }
-    SnackbarHelper.showSuccess(context, message);    
+    SnackbarHelper.showSuccess(context, message);
   }
 
   void _takeLongRest() {
@@ -3322,7 +3321,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     // Manual save only - no auto-save for long rest
 
     // Show confirmation message
-    SnackbarHelper.showSuccess(context, 'All spell slots have been restored!');    
+    SnackbarHelper.showSuccess(context, 'All spell slots have been restored!');
   }
 
   Future<void> _pickImage() async {
@@ -3409,13 +3408,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           // Show success message
           if (mounted) {
-            SnackbarHelper.showSuccess(context, 'Profile image updated successfully!');
+            SnackbarHelper.showSuccess(
+              context,
+              'Profile image updated successfully!',
+            );
           }
         }
       }
     } catch (e) {
       if (mounted) {
-        SnackbarHelper.showError(context, 'Error picking image: $e');        
+        SnackbarHelper.showError(context, 'Error picking image: $e');
       }
     } finally {
       if (mounted) {
@@ -3450,13 +3452,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       });
 
       if (mounted) {
-        SnackbarHelper.showWarning(context, 'Profile image removed');       
+        SnackbarHelper.showWarning(context, 'Profile image removed');
       }
 
       // Manual save only - no auto-save after profile image removal
     } catch (e) {
       if (mounted) {
-        SnackbarHelper.showError(context, 'Error removing image: $e');        
+        SnackbarHelper.showError(context, 'Error removing image: $e');
       }
     }
   }
@@ -3541,14 +3543,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
           // Show success message
           if (mounted) {
-            SnackbarHelper.showSuccess(context, 'Appearance image updated successfully!');            
+            SnackbarHelper.showSuccess(
+              context,
+              'Appearance image updated successfully!',
+            );
           }
         }
       }
     } catch (e) {
       debugPrint('Error picking appearance image: $e');
       if (mounted) {
-        SnackbarHelper.showError(context, 'Error picking appearance image: $e');        
+        SnackbarHelper.showError(context, 'Error picking appearance image: $e');
       }
     } finally {
       setState(() {
@@ -3581,14 +3586,17 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       });
 
       if (mounted) {
-        SnackbarHelper.showWarning(context, 'Appearance image removed');        
+        SnackbarHelper.showWarning(context, 'Appearance image removed');
       }
 
       // Manual save only - no auto-save after appearance image removal
     } catch (e) {
       debugPrint('Error removing appearance image: $e');
       if (mounted) {
-        SnackbarHelper.showError(context, 'Error removing appearance image: $e');        
+        SnackbarHelper.showError(
+          context,
+          'Error removing appearance image: $e',
+        );
       }
     }
   }
@@ -3645,7 +3653,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         character.stats.intelligence) {
       return true;
     }
-    if ((int.tryParse(_wisdomController.text) ?? 10) != character.stats.wisdom) {
+    if ((int.tryParse(_wisdomController.text) ?? 10) !=
+        character.stats.wisdom) {
       return true;
     }
     if ((int.tryParse(_charismaController.text) ?? 10) !=
@@ -3788,7 +3797,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         character.skillChecks.historyProficiency) {
       return true;
     }
-    if (_skillChecks.historyExpertise != character.skillChecks.historyExpertise) {
+    if (_skillChecks.historyExpertise !=
+        character.skillChecks.historyExpertise) {
       return true;
     }
     if (historyBonus != character.skillChecks.historyBonus) return true;
@@ -3796,7 +3806,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         character.skillChecks.insightProficiency) {
       return true;
     }
-    if (_skillChecks.insightExpertise != character.skillChecks.insightExpertise) {
+    if (_skillChecks.insightExpertise !=
+        character.skillChecks.insightExpertise) {
       return true;
     }
     if (insightBonus != character.skillChecks.insightBonus) return true;
@@ -3890,7 +3901,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         character.skillChecks.stealthProficiency) {
       return true;
     }
-    if (_skillChecks.stealthExpertise != character.skillChecks.stealthExpertise) {
+    if (_skillChecks.stealthExpertise !=
+        character.skillChecks.stealthExpertise) {
       return true;
     }
     if (stealthBonus != character.skillChecks.stealthBonus) return true;
@@ -4123,12 +4135,18 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         a.diceType == b.diceType;
   }
 
-  void _saveCharacter({String? successMessage, bool showToast = true, bool isAutosave = false}) async {
-    debugPrint('=== SAVE CHARACTER isAutosave: $isAutosave === hasUnsavedChanges: $hasUnsavedChanges');
+  void _saveCharacter({
+    String? successMessage,
+    bool showToast = true,
+    bool isAutosave = false,
+  }) async {
+    debugPrint(
+      '=== SAVE CHARACTER isAutosave: $isAutosave === hasUnsavedChanges: $hasUnsavedChanges',
+    );
     if (isAutosave && !hasUnsavedChanges) {
       if (mounted) Navigator.pop(context, false);
       return;
-    } 
+    }
     // Show loading indicator with blocking overlay
     setState(() {
       _isSaving = true;
@@ -4325,17 +4343,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         SnackbarHelper.showSuccess(
           context,
           successMessage ?? 'Character saved successfully!',
-        );        
+        );
         if (isAutosave) Navigator.pop(context, false);
       }
     } catch (e) {
       debugPrint('Error saving character: $e');
 
       if (mounted) {
-        SnackbarHelper.showError(context, 'Failed to save character: $e');        
+        SnackbarHelper.showError(context, 'Failed to save character: $e');
       }
       if (isAutosave) Navigator.pop(context, false);
-
     } finally {
       // Hide loading indicator
       if (mounted) {
@@ -4503,7 +4520,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                     // Manual save only - no auto-save
                     Navigator.pop(context);
                   } else {
-                    SnackbarHelper.showError(context, 'Please enter a valid number');                        
+                    SnackbarHelper.showError(
+                      context,
+                      'Please enter a valid number',
+                    );
                   }
                 },
                 child: const Text('Save'),

@@ -129,7 +129,7 @@ class _AddAttackDialogState extends State<AddAttackDialog> {
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Attack Name',
+                    labelText: 'Weapon Name',
                     border: OutlineInputBorder(),
                   ),
                 ),

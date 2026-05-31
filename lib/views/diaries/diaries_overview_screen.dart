@@ -1,10 +1,9 @@
 import 'package:dnd_app/views/characters/character_create_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:io';
 import '../../viewmodels/characters_viewmodel.dart';
 import '../../models/character_model.dart';
-import '../../utils/image_utils.dart';
+import '../../widgets/character_card.dart';
 import 'diary_list_screen.dart';
 
 class DiariesOverviewScreen extends StatefulWidget {
@@ -36,27 +35,39 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 209, 161, 216),
         title: const Text('Character Diaries'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(70),
-          child: _buildSearchAndFilters(),
-        ),
+            preferredSize: const Size.fromHeight(10),
+            child: const SizedBox(),
+          ),
       ),
       body: Consumer<CharactersViewModel>(
         builder: (context, viewModel, child) {
-          if (viewModel.isLoading && viewModel.characters.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          return Column(
+            children: [
+              _buildSearchAndFilters(),
+              Expanded(
+                child: Builder(
+                  builder: (context) {
+                    if (viewModel.isLoading && viewModel.characters.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-          if (viewModel.error != null) {
-            return _buildErrorView(viewModel);
-          }
+                    if (viewModel.error != null) {
+                      return _buildErrorView(viewModel);
+                    }
 
-          if (viewModel.characters.isEmpty) {
-            return _buildEmptyView();
-          }
+                    if (viewModel.characters.isEmpty) {
+                      return _buildEmptyView();
+                    }
 
-          return _buildCharactersList(viewModel);
+                    return _buildCharactersList(viewModel);
+                  },
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
@@ -154,86 +165,36 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
   }
 
   Widget _buildCharacterDiaryCard(Character character, BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: ListTile(
-        leading: CircleAvatar(child: _buildCharacterImage(character)),
-        title: Text(
-          character.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${character.characterClass}${character.subclass != null && character.subclass!.isNotEmpty ? ' (${character.subclass})' : ''}${character.race != null && character.race!.isNotEmpty ? ' • ${character.race}' : ''}',
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.book, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Text(
-                  'View diary entries',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-              ],
-            ),
-          ],
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DiaryListScreen(character: character),
-            ),
-          );
-        },
+    return CharacterCard(
+      character: character,
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              Icon(Icons.book, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 4),
+              Text(
+                'View diary entries',
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
       ),
-    );
-  }
-
-  Widget _buildCharacterImage(Character character) {
-    // Prioritize base64 data if available
-    if (character.customImageData != null &&
-        character.customImageData!.isNotEmpty) {
-      final imageBytes = ImageUtils.base64ToImageBytes(
-        character.customImageData,
-      );
-      if (imageBytes != null) {
-        return ClipOval(
-          child: Image.memory(
-            imageBytes,
-            width: 40,
-            height: 40,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(Icons.person);
-            },
+      trailing: const Icon(Icons.arrow_forward_ios),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DiaryListScreen(character: character),
           ),
         );
-      }
-    }
-
-    // Fallback to file path if base64 is not available
-    if (character.customImagePath != null &&
-        character.customImagePath!.isNotEmpty) {
-      return ClipOval(
-        child: Image.file(
-          File(character.customImagePath!),
-          width: 40,
-          height: 40,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.person);
-          },
-        ),
-      );
-    }
-
-    // Default icon if no image is available
-    return const Icon(Icons.person);
+      },
+    );
   }
 
   void _navigateToCreateCharacter() {
