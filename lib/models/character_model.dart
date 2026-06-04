@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'base_model.dart';
 import 'timestamped_entity.dart';
 
+const _unset = Object();
+
 class Character extends BaseModel with TimestampedEntity {
   final String id;
   final String name;
@@ -16,6 +18,8 @@ class Character extends BaseModel with TimestampedEntity {
   final String? subclass;
   final String? race;
   final String? background;
+  final String? grupo;
+  final String? grupoId;
   final List<CharacterAttack> attacks;
   final CharacterSpellSlots spellSlots;
   final List<String> spells;
@@ -53,6 +57,8 @@ class Character extends BaseModel with TimestampedEntity {
     this.subclass,
     this.race,
     this.background,
+    this.grupo,
+    this.grupoId,
     this.attacks = const [],
     required this.spellSlots,
     this.spells = const [],
@@ -93,6 +99,8 @@ class Character extends BaseModel with TimestampedEntity {
         if (subclass != null) 'subclass': {'value': subclass},
         if (race != null) 'race': {'value': race},
         if (background != null) 'background': {'value': background},
+        if (grupo != null) 'grupo': {'value': grupo},
+        if (grupoId != null) 'grupo_id': {'value': grupoId},
         'attacks': attacks.map((attack) => attack.toJson()).toList(),
         'spell_slots': spellSlots.toJson(),
         'spells': {'value': spells},
@@ -156,6 +164,12 @@ class Character extends BaseModel with TimestampedEntity {
       background: _getValueNullable<String?>(
         stats,
         'background',
+        defaultValue: null,
+      ),
+      grupo: _getValueNullable<String?>(stats, 'grupo', defaultValue: null),
+      grupoId: _getValueNullable<String?>(
+        stats,
+        'grupo_id',
         defaultValue: null,
       ),
       attacks:
@@ -352,6 +366,8 @@ class Character extends BaseModel with TimestampedEntity {
     String? proficiencies,
     String? featuresTraits,
     String? backstory,
+    Object? grupo = _unset,
+    Object? grupoId = _unset,
     CharacterPillars? pillars,
     CharacterAppearance? appearance,
     CharacterDeathSaves? deathSaves,
@@ -385,6 +401,8 @@ class Character extends BaseModel with TimestampedEntity {
       proficiencies: proficiencies ?? this.proficiencies,
       featuresTraits: featuresTraits ?? this.featuresTraits,
       backstory: backstory ?? this.backstory,
+      grupo: grupo == _unset ? this.grupo : grupo as String?,
+      grupoId: grupoId == _unset ? this.grupoId : grupoId as String?,
       pillars: pillars ?? this.pillars,
       appearance: appearance ?? this.appearance,
       deathSaves: deathSaves ?? this.deathSaves,
@@ -403,8 +421,7 @@ class Character extends BaseModel with TimestampedEntity {
       customImagePath != null && customImagePath!.isNotEmpty;
 
   /// Check if character has an appearance image
-  bool get hasAppearanceImage =>
-      appearance.appearanceImagePath.isNotEmpty;
+  bool get hasAppearanceImage => appearance.appearanceImagePath.isNotEmpty;
 
   /// Check if character has any images
   bool get hasAnyImages => hasProfileImage || hasAppearanceImage;

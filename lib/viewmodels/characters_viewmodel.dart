@@ -29,7 +29,7 @@ class CharactersViewModel extends ChangeNotifier {
     try {
       // Add minimum delay to show spinner for better UX
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       _allCharacters = await CharacterService.loadAllCharacters();
       _applyFilters();
     } catch (e) {
@@ -49,6 +49,8 @@ class CharactersViewModel extends ChangeNotifier {
     String? subclass,
     String? race,
     String? background,
+    String? grupo,
+    String? grupoId,
   }) async {
     _isLoading = true;
     _error = null;
@@ -62,8 +64,10 @@ class CharactersViewModel extends ChangeNotifier {
         subclass: subclass,
         race: race,
         background: background,
+        grupo: grupo,
+        grupoId: grupoId,
       );
-      
+
       _allCharacters.add(newCharacter);
       _applyFilters();
     } catch (e) {
@@ -83,7 +87,7 @@ class CharactersViewModel extends ChangeNotifier {
 
     try {
       await CharacterService.saveCharacter(character);
-      
+
       // Update character in the list
       final index = _allCharacters.indexWhere((c) => c.id == character.id);
       if (index != -1) {
@@ -99,6 +103,59 @@ class CharactersViewModel extends ChangeNotifier {
     }
   }
 
+  /// Rename an existing group for all characters in the group.
+  Future<void> renameGroup(String grupoId, String newGroupName) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final normalizedGrupoId = grupoId;
+      final charsToRename =
+          _allCharacters
+              .where(
+                (character) => _getGroupKey(character) == normalizedGrupoId,
+              )
+              .toList();
+
+      if (charsToRename.isEmpty) {
+        return;
+      }
+
+      for (var character in charsToRename) {
+        final updatedCharacter = character.copyWith(grupo: newGroupName);
+        await CharacterService.saveCharacter(updatedCharacter);
+
+        final index = _allCharacters.indexWhere(
+          (c) => c.id == updatedCharacter.id,
+        );
+        if (index != -1) {
+          _allCharacters[index] = updatedCharacter;
+        }
+      }
+
+      _applyFilters();
+    } catch (e) {
+      _error = 'Failed to rename group: $e';
+      debugPrint(_error);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  String _getGroupKey(Character character) {
+    if (character.grupoId != null && character.grupoId!.isNotEmpty) {
+      return character.grupoId!;
+    }
+
+    if (character.grupo != null && character.grupo!.isNotEmpty) {
+      return CharacterService.generateGroupId(character.grupo!);
+    }
+
+    return '';
+  }
+
   /// Delete a character
   Future<void> deleteCharacter(String characterId) async {
     _isLoading = true;
@@ -107,7 +164,7 @@ class CharactersViewModel extends ChangeNotifier {
 
     try {
       await CharacterService.deleteCharacter(characterId);
-      
+
       // Remove character from the list
       _allCharacters.removeWhere((c) => c.id == characterId);
       _applyFilters();
@@ -174,7 +231,9 @@ class CharactersViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final importedCharacter = await CharacterService.importCharacter(jsonString);
+      final importedCharacter = await CharacterService.importCharacter(
+        jsonString,
+      );
       _allCharacters.add(importedCharacter);
       _applyFilters();
     } catch (e) {

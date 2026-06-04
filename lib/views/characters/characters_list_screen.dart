@@ -1,3 +1,4 @@
+import 'package:dnd_app/services/character_service.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,8 @@ import '../../models/character_model.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/cloud_sync_service.dart';
 import '../../widgets/character_card.dart';
+import '../../widgets/group_selection_field.dart';
+import '../../widgets/custom_group_expansion_tile.dart';
 import 'character_edit_screen.dart';
 import 'character_create_screen.dart';
 import '../diaries/diary_list_screen.dart';
@@ -122,9 +125,9 @@ class _CharactersListScreenState extends State<CharactersListScreen>
           ),
         ],
         bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(10),
-            child: const SizedBox(),
-          ),
+          preferredSize: const Size.fromHeight(10),
+          child: const SizedBox(),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'characters_fab',
@@ -284,19 +287,90 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     );
   }
 
+  String _getGroupKey(Character character) {
+    final grupoId = character.grupoId?.trim();
+    if (grupoId != null && grupoId.isNotEmpty) {
+      return grupoId;
+    }
+
+    final grupo = character.grupo?.trim();
+    if (grupo != null && grupo.isNotEmpty) {
+      final normalized = _generateGroupId(grupo);
+      return normalized.isNotEmpty ? normalized : grupo.toLowerCase();
+    }
+    return '';
+  }
+
   Widget _buildCharactersList(CharactersViewModel viewModel) {
     // If no characters after filtering
     if (viewModel.characters.isEmpty) {
       return _buildEmptyView();
     }
 
-    return ListView.builder(
+    final Map<String, List<Character>> groupedCharacters = {};
+    final Map<String, String> groupNames = {};
+    final List<Character> ungroupedCharacters = [];
+
+    for (final character in viewModel.characters) {
+      if (character.grupo != null && character.grupo!.isNotEmpty) {
+        final groupId = _getGroupKey(character);
+        groupNames[groupId] = character.grupo!;
+        groupedCharacters.putIfAbsent(groupId, () => []).add(character);
+      } else {
+        ungroupedCharacters.add(character);
+      }
+    }
+
+    final groupedEntries =
+        groupedCharacters.entries.toList()
+          ..sort((a, b) => groupNames[a.key]!.compareTo(groupNames[b.key]!));
+
+    return ListView(
       padding: const EdgeInsets.only(bottom: 96),
-      itemCount: viewModel.characters.length,
-      itemBuilder: (context, index) {
-        final character = viewModel.characters[index];
-        return _buildCharacterItem(character, context);
-      },
+      children: [
+        for (final groupEntry in groupedEntries)
+          CustomGroupExpansionTile(
+            title: groupNames[groupEntry.key]!,
+            initiallyExpanded: false,
+            headerBackgroundColor: Colors.blue.shade100,
+            expandedBackgroundColor: Colors.blue.shade50,
+            textColor: Colors.black87,
+            iconColor: Colors.blue.shade700,
+            borderRadius: 12,
+            headerPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            childrenPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            titleStyle: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+            elevation: 3,
+            onRenamePressed:
+                () => _showGroupRenameDialogByGroupKey(
+                  groupEntry.key,
+                  groupNames[groupEntry.key]!,
+                ),
+            onDeletePressed:
+                () => _confirmAndDeleteGroup(
+                  groupEntry.key,
+                  groupNames[groupEntry.key]!,
+                  groupEntry.value,
+                ),
+            children:
+                groupEntry.value
+                    .map((character) => _buildCharacterItem(character, context))
+                    .toList(),
+          ),
+        ...ungroupedCharacters.map(
+          (character) => _buildCharacterItem(character, context),
+        ),
+      ],
     );
   }
 
@@ -319,6 +393,39 @@ class _CharactersListScreenState extends State<CharactersListScreen>
             children: [Icon(Icons.book), SizedBox(width: 8), Text('Diary')],
           ),
         ),
+        if (character.grupo == null || character.grupo!.isEmpty)
+          const PopupMenuItem(
+            value: 'add_group',
+            child: Row(
+              children: [
+                Icon(Icons.group_add),
+                SizedBox(width: 8),
+                Text('Add to a group'),
+              ],
+            ),
+          )
+        else ...[
+          const PopupMenuItem(
+            value: 'edit_group',
+            child: Row(
+              children: [
+                Icon(Icons.edit),
+                SizedBox(width: 8),
+                Text('Modify group'),
+              ],
+            ),
+          ),
+          const PopupMenuItem(
+            value: 'remove_group',
+            child: Row(
+              children: [
+                Icon(Icons.remove_circle_outline),
+                SizedBox(width: 8),
+                Text('Remove from group'),
+              ],
+            ),
+          ),
+        ],
         const PopupMenuItem(
           value: 'delete',
           child: Row(
@@ -337,6 +444,13 @@ class _CharactersListScreenState extends State<CharactersListScreen>
             break;
           case 'diary':
             _navigateToDiary(character);
+            break;
+          case 'add_group':
+          case 'edit_group':
+            _showGroupAssignmentDialog(character);
+            break;
+          case 'remove_group':
+            _removeCharacterFromGroup(character);
             break;
           case 'delete':
             _showDeleteConfirmation(character);
@@ -398,6 +512,219 @@ class _CharactersListScreenState extends State<CharactersListScreen>
             ],
           ),
     );
+  }
+
+  String _generateGroupId(String groupName) {
+    return CharacterService.generateGroupId(groupName);
+  }
+
+  Future<void> _showGroupAssignmentDialog(Character character) async {
+    final viewModel = context.read<CharactersViewModel>();
+    final existingGroups = <String, String>{};
+    for (final current in viewModel.characters) {
+      if (current.grupo != null && current.grupo!.isNotEmpty) {
+        final groupId = _getGroupKey(current);
+        if (groupId.isNotEmpty) {
+          existingGroups[groupId] = current.grupo!;
+        }
+      }
+    }
+
+    String? selectedGroupId = _getGroupKey(character);
+    if (selectedGroupId.isEmpty ||
+        !existingGroups.containsKey(selectedGroupId)) {
+      selectedGroupId = null;
+    }
+    final groupNameController = TextEditingController(
+      text: selectedGroupId != null ? existingGroups[selectedGroupId] : '',
+    );
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Assign Group'),
+              content: GroupSelectionField(
+                groupEntries: existingGroups,
+                selectedGroupId: selectedGroupId,
+                newGroupController: groupNameController,
+                onSelectedGroupChanged: (value) {
+                  setState(() {
+                    selectedGroupId = value;
+                    if (value != null) {
+                      groupNameController.text = existingGroups[value] ?? '';
+                    }
+                  });
+                },
+                onNewGroupChanged: (value) {
+                  setState(() {
+                    if (value.trim().isNotEmpty) {
+                      selectedGroupId = null;
+                    }
+                  });
+                },
+                onClearNewGroup: () {
+                  setState(() {
+                    groupNameController.clear();
+                  });
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != true) return;
+
+    String? grupo;
+    String? grupoId;
+    final newGroupName = groupNameController.text.trim();
+
+    if (selectedGroupId != null &&
+        existingGroups.containsKey(selectedGroupId) &&
+        newGroupName == existingGroups[selectedGroupId]) {
+      grupo = newGroupName;
+      grupoId = selectedGroupId;
+    } else if (newGroupName.isNotEmpty) {
+      grupo = newGroupName;
+      grupoId = _generateGroupId(newGroupName);
+    } else if (selectedGroupId != null) {
+      grupoId = selectedGroupId;
+      grupo = existingGroups[selectedGroupId];
+    }
+
+    if (grupo == null) return;
+
+    final updatedCharacter = character.copyWith(
+      grupo: grupo,
+      grupoId: grupoId,
+      updatedAt: DateTime.now(),
+    );
+
+    await context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
+  }
+
+  Future<void> _showGroupRenameDialogByGroupKey(
+    String groupKey,
+    String currentGroupName,
+  ) async {
+    final viewModel = context.read<CharactersViewModel>();
+    final groupNameController = TextEditingController(text: currentGroupName);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Rename Group'),
+          content: TextField(
+            controller: groupNameController,
+            decoration: const InputDecoration(
+              labelText: 'New group name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true) return;
+
+    final newGroupName = groupNameController.text.trim();
+    if (newGroupName.isEmpty || newGroupName == currentGroupName) {
+      return;
+    }
+
+    await viewModel.renameGroup(groupKey, newGroupName);
+    if (mounted) {
+      SnackbarHelper.showSuccess(context, 'Group renamed successfully.');
+    }
+  }
+
+  Future<void> _confirmAndDeleteGroup(
+    String groupKey,
+    String groupName,
+    List<Character> members,
+  ) async {
+    final viewModel = context.read<CharactersViewModel>();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Group'),
+            content: Text(
+              'Are you sure you want to delete the group "$groupName"? '
+              'This will remove the group (NOT THE CHARACTERS) from all its members and cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      for (final member in members) {
+        final updated = member.copyWith(
+          grupo: null,
+          grupoId: null,
+          updatedAt: DateTime.now(),
+        );
+        await viewModel.updateCharacter(updated);
+      }
+
+      if (mounted) {
+        SnackbarHelper.showSuccess(context, 'Group deleted successfully.');
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackbarHelper.showError(context, 'Failed to delete group: $e');
+      }
+    }
+  }
+
+  Future<void> _removeCharacterFromGroup(Character character) async {
+    final updatedCharacter = character.copyWith(
+      grupo: null,
+      grupoId: null,
+      updatedAt: DateTime.now(),
+    );
+    await context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
+    if (mounted) {
+      SnackbarHelper.showSuccess(context, 'Personaje eliminado del grupo.');
+    }
   }
 
   /// Handle cloud button press based on authentication state

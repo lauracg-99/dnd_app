@@ -126,10 +126,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   static const List<NavigationDestination> _destinations = [
     NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),
     NavigationDestination(icon: Icon(Icons.book), label: 'Diaries'),
-    NavigationDestination(
-      icon: Icon(Symbols.playing_cards),
-      label: 'Spells',
-    ),
+    NavigationDestination(icon: Icon(Symbols.playing_cards),label: 'Spells',),
     NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),
   ];
 

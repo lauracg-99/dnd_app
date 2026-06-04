@@ -1,3 +1,4 @@
+import 'package:dnd_app/services/character_service.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,7 @@ import '../../viewmodels/races_viewmodel.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
 import '../../models/race_model.dart';
 import '../../utils/constants.dart';
+import '../../widgets/group_selection_field.dart';
 
 class CharacterCreateScreen extends StatefulWidget {
   const CharacterCreateScreen({super.key});
@@ -21,6 +23,9 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
   final _subclassController = TextEditingController();
   final _raceController = TextEditingController();
   final _backgroundController = TextEditingController();
+  String? _selectedGroupId;
+  String? _selectedGroupName;
+  final _newGroupController = TextEditingController();
   bool _useCustomSubclass = false;
   final _formKey = GlobalKey<FormState>();
 
@@ -41,6 +46,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
     _subclassController.dispose();
     _raceController.dispose();
     _backgroundController.dispose();
+    _newGroupController.dispose();
     super.dispose();
   }
 
@@ -49,32 +55,57 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
     return DndSubclasses.getForClass(className);
   }
 
+  String _generateGroupId(String groupName) {
+    return CharacterService.generateGroupId(groupName);
+  }
+
   Future<void> _createCharacter() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     final level = int.tryParse(_levelController.text.trim());
-    if (level == null || level < CharacterLevelConstants.minLevel || level > CharacterLevelConstants.maxLevel) {
-      SnackbarHelper.showError(context, 'Please enter a valid level between ${CharacterLevelConstants.minLevel} and ${CharacterLevelConstants.maxLevel}');      
+    if (level == null ||
+        level < CharacterLevelConstants.minLevel ||
+        level > CharacterLevelConstants.maxLevel) {
+      SnackbarHelper.showError(
+        context,
+        'Please enter a valid level between ${CharacterLevelConstants.minLevel} and ${CharacterLevelConstants.maxLevel}',
+      );
       return;
     }
 
     final viewModel = context.read<CharactersViewModel>();
-    
+
+    String? grupo;
+    String? grupoId;
+
+    if (_newGroupController.text.trim().isNotEmpty) {
+      grupo = _newGroupController.text.trim();
+      grupoId = _generateGroupId(grupo);
+    } else if (_selectedGroupId != null && _selectedGroupName != null) {
+      grupo = _selectedGroupName;
+      grupoId = _selectedGroupId;
+    }
+
     await viewModel.createCharacter(
       name: _nameController.text.trim(),
       level: level,
       characterClass: _selectedClass,
-      subclass: _subclassController.text.trim().isEmpty
-          ? null
-          : _subclassController.text.trim(),
-      race: _raceController.text.trim().isEmpty
-          ? null
-          : _raceController.text.trim(),
-      background: _backgroundController.text.trim().isEmpty
-          ? null
-          : _backgroundController.text.trim(),
+      subclass:
+          _subclassController.text.trim().isEmpty
+              ? null
+              : _subclassController.text.trim(),
+      race:
+          _raceController.text.trim().isEmpty
+              ? null
+              : _raceController.text.trim(),
+      background:
+          _backgroundController.text.trim().isEmpty
+              ? null
+              : _backgroundController.text.trim(),
+      grupo: grupo,
+      grupoId: grupoId,
     );
 
     if (viewModel.error == null) {
@@ -85,9 +116,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create New Character'),
-      ),
+      appBar: AppBar(title: const Text('Create New Character')),
       body: Consumer<CharactersViewModel>(
         builder: (context, viewModel, child) {
           return Form(
@@ -163,7 +192,10 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       },
                       decoration: InputDecoration(
                         labelText: 'Character Name *',
-                        prefixIcon: const Icon(Icons.person, color: Colors.blue),
+                        prefixIcon: const Icon(
+                          Icons.person,
+                          color: Colors.blue,
+                        ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.all(16),
                       ),
@@ -236,21 +268,24 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.all(16),
                       ),
-                      items: viewModel.availableClasses.map((className) {
-                        return DropdownMenuItem(
-                          value: className,
-                          child: Row(
-                            children: [
-/*                               _getClassIcon(className), */
-                              const SizedBox(width: 3),
-                              Text(
-                                className,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
+                      items:
+                          viewModel.availableClasses.map((className) {
+                            return DropdownMenuItem(
+                              value: className,
+                              child: Row(
+                                children: [
+                                  /*                               _getClassIcon(className), */
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    className,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                            );
+                          }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _selectedClass = value!;
@@ -283,7 +318,10 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                             children: [
                               if (_subclassController.text.isNotEmpty)
                                 IconButton(
-                                  icon: const Icon(Icons.clear, color: Colors.grey),
+                                  icon: const Icon(
+                                    Icons.clear,
+                                    color: Colors.grey,
+                                  ),
                                   onPressed: () {
                                     setState(() {
                                       _subclassController.text = '';
@@ -325,7 +363,10 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                         ],
                       ),
                       child: DropdownButtonFormField<String>(
-                        initialValue: _subclassController.text.isEmpty ? null : _subclassController.text,
+                        initialValue:
+                            _subclassController.text.isEmpty
+                                ? null
+                                : _subclassController.text,
                         decoration: InputDecoration(
                           labelText: 'Subclass (Optional)',
                           border: InputBorder.none,
@@ -338,7 +379,11 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                               value: '__CLEAR__',
                               child: Row(
                                 children: [
-                                  Icon(Icons.clear, color: Colors.red, size: 20),
+                                  Icon(
+                                    Icons.clear,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
                                   const SizedBox(width: 12),
                                   Flexible(
                                     child: Text(
@@ -354,7 +399,9 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                 ],
                               ),
                             ),
-                          ..._getSubclassesForClass(_selectedClass).map((subclass) {
+                          ..._getSubclassesForClass(_selectedClass).map((
+                            subclass,
+                          ) {
                             return DropdownMenuItem(
                               value: subclass,
                               child: Row(
@@ -365,7 +412,9 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                       subclass,
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
-                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -433,9 +482,12 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                             orElse: () => racesViewModel.races.first,
                           );
                         }
-                        
+
                         return DropdownButtonFormField<String>(
-                          initialValue: matchingRace != null ? '${matchingRace.name}_${matchingRace.source}' : null,
+                          initialValue:
+                              matchingRace != null
+                                  ? '${matchingRace.name}_${matchingRace.source}'
+                                  : null,
                           decoration: const InputDecoration(
                             labelText: 'Race (Optional)',
                             border: InputBorder.none,
@@ -448,7 +500,11 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                 value: '__CLEAR__',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.clear, color: Colors.red, size: 20),
+                                    Icon(
+                                      Icons.clear,
+                                      color: Colors.red,
+                                      size: 20,
+                                    ),
                                     const SizedBox(width: 12),
                                     Flexible(
                                       child: Text(
@@ -466,7 +522,8 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                               ),
                             ...racesViewModel.races.map((race) {
                               return DropdownMenuItem(
-                                value: '${race.name}_${race.source}', // Make unique with source
+                                value:
+                                    '${race.name}_${race.source}', // Make unique with source
                                 child: Row(
                                   children: [
                                     const SizedBox(width: 12),
@@ -475,7 +532,9 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                         race.name,
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
-                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -489,7 +548,10 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                 _raceController.text = '';
                               } else if (value != null) {
                                 // Extract race name from unique value (remove source suffix)
-                                final raceName = value.contains('_') ? value.split('_').first : value;
+                                final raceName =
+                                    value.contains('_')
+                                        ? value.split('_').first
+                                        : value;
                                 _raceController.text = raceName;
                               }
                             });
@@ -516,7 +578,10 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                     child: Consumer<BackgroundsViewModel>(
                       builder: (context, backgroundsViewModel, child) {
                         return DropdownButtonFormField<String>(
-                          initialValue: _backgroundController.text.isEmpty ? null : _backgroundController.text,
+                          initialValue:
+                              _backgroundController.text.isEmpty
+                                  ? null
+                                  : _backgroundController.text,
                           decoration: const InputDecoration(
                             labelText: 'Background (Optional)',
                             border: InputBorder.none,
@@ -529,7 +594,11 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                 value: '__CLEAR__',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.clear, color: Colors.red, size: 20),
+                                    Icon(
+                                      Icons.clear,
+                                      color: Colors.red,
+                                      size: 20,
+                                    ),
                                     const SizedBox(width: 12),
                                     Flexible(
                                       child: Text(
@@ -545,7 +614,9 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                   ],
                                 ),
                               ),
-                            ...backgroundsViewModel.backgrounds.map((background) {
+                            ...backgroundsViewModel.backgrounds.map((
+                              background,
+                            ) {
                               return DropdownMenuItem(
                                 value: background.name,
                                 child: Row(
@@ -556,7 +627,9 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                         background.name,
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
-                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -577,6 +650,51 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       },
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  GroupSelectionField(
+                    groupEntries: {
+                      for (final character in viewModel.characters)
+                        if (character.grupo != null &&
+                            character.grupo!.isNotEmpty)
+                          (character.grupoId ?? character.grupo!):
+                              character.grupo!,
+                    },
+                    selectedGroupId: _selectedGroupId,
+                    newGroupController: _newGroupController,
+                    onSelectedGroupChanged: (value) {
+                      setState(() {
+                        _selectedGroupId = value;
+                        _selectedGroupName =
+                            value == null
+                                ? null
+                                : viewModel.characters
+                                    .firstWhere(
+                                      (character) =>
+                                          (character.grupoId ??
+                                              character.grupo ??
+                                              '') ==
+                                          value,
+                                    )
+                                    .grupo;
+                        if (_selectedGroupId != null) {
+                          _newGroupController.text = '';
+                        }
+                      });
+                    },
+                    onNewGroupChanged: (value) {
+                      setState(() {
+                        if (value.trim().isNotEmpty) {
+                          _selectedGroupId = null;
+                          _selectedGroupName = null;
+                        }
+                      });
+                    },
+                    onClearNewGroup: () {
+                      setState(() {
+                        _newGroupController.clear();
+                      });
+                    },
+                  ),
                   const SizedBox(height: 32),
 
                   // Error message
@@ -592,7 +710,11 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error, color: Colors.red.shade600, size: 20),
+                          Icon(
+                            Icons.error,
+                            color: Colors.red.shade600,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -624,7 +746,8 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                             ],
                           ),
                           child: ElevatedButton(
-                            onPressed: viewModel.isLoading ? null : _createCharacter,
+                            onPressed:
+                                viewModel.isLoading ? null : _createCharacter,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               foregroundColor: Colors.white,
@@ -636,58 +759,80 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                             ),
                             child: Container(
                               decoration: BoxDecoration(
-                                gradient: viewModel.isLoading 
-                                  ? LinearGradient(
-                                      colors: [Colors.grey.shade400, Colors.grey.shade500],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : LinearGradient(
-                                      colors: [Colors.blue.shade500, Colors.blue.shade700],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
+                                gradient:
+                                    viewModel.isLoading
+                                        ? LinearGradient(
+                                          colors: [
+                                            Colors.grey.shade400,
+                                            Colors.grey.shade500,
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        )
+                                        : LinearGradient(
+                                          colors: [
+                                            Colors.blue.shade500,
+                                            Colors.blue.shade700,
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                                child: viewModel.isLoading
-                                    ? Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.5,
-                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withValues(alpha: 0.9)),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 24,
+                                ),
+                                child:
+                                    viewModel.isLoading
+                                        ? Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.5,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(
+                                                      Colors.white.withValues(
+                                                        alpha: 0.9,
+                                                      ),
+                                                    ),
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'Creating...',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.white.withValues(alpha: 0.9),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              'Creating...',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.9,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      )
-                                    : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [                                          
-                                          const Text(
-                                            'Create Character',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.white,
-                                              letterSpacing: 0.5,
+                                          ],
+                                        )
+                                        : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Text(
+                                              'Create Character',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.white,
+                                                letterSpacing: 0.5,
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                          ],
+                                        ),
                               ),
                             ),
                           ),

@@ -37,6 +37,9 @@ class CharacterCoverTab extends StatelessWidget {
   final void Function(Race) showRaceDetailsModal;
   final void Function(Background) showBackgroundDetailsModal;
   final String selectedBackground;
+  final String? currentGroup;
+  final VoidCallback? onEditGroup;
+  final VoidCallback? onRemoveGroup;
   final Widget Function() buildInspiration;
   final Widget Function() buildArmorClass;
   final Widget Function() buildSpeed;
@@ -93,6 +96,9 @@ class CharacterCoverTab extends StatelessWidget {
     required this.showRaceDetailsModal,
     required this.showBackgroundDetailsModal,
     required this.selectedBackground,
+    this.currentGroup,
+    this.onEditGroup,
+    this.onRemoveGroup,
     required this.buildInspiration,
     required this.buildArmorClass,
     required this.buildSpeed,
@@ -157,6 +163,9 @@ class CharacterCoverTab extends StatelessWidget {
             showRaceDetailsModal: showRaceDetailsModal,
             showBackgroundDetailsModal: showBackgroundDetailsModal,
             selectedBackground: selectedBackground,
+            currentGroup: currentGroup,
+            onEditGroup: onEditGroup,
+            onRemoveGroup: onRemoveGroup,
           ),
 
           const SizedBox(height: 16),
@@ -180,7 +189,7 @@ class CharacterCoverTab extends StatelessWidget {
             hasConcentration: hasConcentration,
             onToggle: onConcentrationToggle,
           ),
-          
+
           HealthSection(
             maxHpController: maxHpController,
             currentHpController: currentHpController,

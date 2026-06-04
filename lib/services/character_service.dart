@@ -6,7 +6,7 @@ import '../utils/constants.dart';
 
 class CharacterService {
   static final _storage = CharacterStorageService();
-  
+
   /// Initialize storage system
   static Future<void> initializeStorage() async {
     await _storage.initializeStorage();
@@ -15,17 +15,17 @@ class CharacterService {
   static Future<void> ensureInitialized() async {
     await _storage.ensureInitialized();
   }
-  
+
   /// Save a character to local storage
   static Future<void> saveCharacter(Character character) async {
     await _storage.save(character);
   }
-  
+
   /// Load all characters from local storage
   static Future<List<Character>> loadAllCharacters() async {
     return await _storage.loadAll();
   }
-  
+
   /// Create a new character
   static Future<Character> createCharacter({
     required String name,
@@ -34,15 +34,21 @@ class CharacterService {
     String? subclass,
     String? race,
     String? background,
+    String? grupo,
+    String? grupoId,
   }) async {
     final now = DateTime.now();
-    final characterId = '${name.toLowerCase().replaceAll(' ', '_')}_${now.millisecondsSinceEpoch}';
-    
+    final characterId =
+        '${name.toLowerCase().replaceAll(' ', '_')}_${now.millisecondsSinceEpoch}';
+
     // Validate level is within D&D 5e bounds
-    if (level < CharacterLevelConstants.minLevel || level > CharacterLevelConstants.maxLevel) {
-      throw ArgumentError('Character level must be between ${CharacterLevelConstants.minLevel} and ${CharacterLevelConstants.maxLevel}');
+    if (level < CharacterLevelConstants.minLevel ||
+        level > CharacterLevelConstants.maxLevel) {
+      throw ArgumentError(
+        'Character level must be between ${CharacterLevelConstants.minLevel} and ${CharacterLevelConstants.maxLevel}',
+      );
     }
-    
+
     // Create default character with basic stats
     final defaultStats = CharacterStats(
       strength: 10,
@@ -52,17 +58,20 @@ class CharacterService {
       wisdom: 10,
       charisma: 10,
     );
-    
+
     final defaultSavingThrows = CharacterSavingThrows();
     final defaultSkillChecks = CharacterSkillChecks();
-    final defaultHealth = CharacterHealth(maxHitPoints: 10, currentHitPoints: 10);
+    final defaultHealth = CharacterHealth(
+      maxHitPoints: 10,
+      currentHitPoints: 10,
+    );
     final defaultSpellSlots = CharacterSpellSlots();
     final defaultPillars = CharacterPillars();
     final defaultAppearance = CharacterAppearance();
     final defaultDeathSaves = CharacterDeathSaves();
     final defaultLanguages = CharacterLanguages();
     final defaultMoneyItems = CharacterMoneyItems();
-    
+
     final character = Character(
       id: characterId,
       name: name,
@@ -75,6 +84,8 @@ class CharacterService {
       subclass: subclass,
       race: race,
       background: background,
+      grupo: grupo,
+      grupoId: grupoId,
       spellSlots: defaultSpellSlots,
       pillars: defaultPillars,
       appearance: defaultAppearance,
@@ -84,41 +95,60 @@ class CharacterService {
       createdAt: now,
       updatedAt: now,
     );
-    
+
     await saveCharacter(character);
     return character;
   }
-  
+
   /// Delete a character
   static Future<void> deleteCharacter(String characterId) async {
     await _storage.delete(characterId);
   }
-  
+
+  /// Normalize a group name into a deterministic group ID.
+  static String generateGroupId(String groupName) {
+    final normalized = groupName
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'\s+'), '_')
+        .replaceAll(RegExp(r'[^a-z0-9_]'), '');
+    return normalized.isNotEmpty ? normalized : groupName.toLowerCase().trim();
+  }
+
   /// Clear the memory cache (useful for testing or forcing refresh)
   static void clearMemoryCache() {
     _storage.clearMemoryCache();
   }
 
   /// Search characters by name or class
-  static List<Character> searchCharacters(List<Character> characters, String query) {
+  static List<Character> searchCharacters(
+    List<Character> characters,
+    String query,
+  ) {
     if (query.isEmpty) return characters;
-    
+
     final lowerQuery = query.toLowerCase();
     return characters.where((character) {
       return character.name.toLowerCase().contains(lowerQuery) ||
-             character.characterClass.toLowerCase().contains(lowerQuery) ||
-             (character.subclass?.toLowerCase().contains(lowerQuery) ?? false);
+          character.characterClass.toLowerCase().contains(lowerQuery) ||
+          (character.subclass?.toLowerCase().contains(lowerQuery) ?? false);
     }).toList();
   }
-  
+
   /// Filter characters by class
-  static List<Character> filterByClass(List<Character> characters, String className) {
+  static List<Character> filterByClass(
+    List<Character> characters,
+    String className,
+  ) {
     if (className.isEmpty) return characters;
-    return characters.where((character) => 
-      character.characterClass.toLowerCase() == className.toLowerCase()
-    ).toList();
+    return characters
+        .where(
+          (character) =>
+              character.characterClass.toLowerCase() == className.toLowerCase(),
+        )
+        .toList();
   }
-  
+
   /// Get all unique classes from all characters
   static Set<String> getAllAvailableClasses(List<Character> characters) {
     final classes = <String>{};
@@ -130,27 +160,28 @@ class CharacterService {
     }
     return classes;
   }
-  
+
   /// Export character to JSON string (for sharing/backup)
   static String exportCharacter(Character character) {
     return json.encode(character.toJson());
   }
-  
+
   /// Import character from JSON string
   static Future<Character> importCharacter(String jsonString) async {
     try {
       final jsonData = json.decode(jsonString) as Map<String, dynamic>;
       final character = Character.fromJson(jsonData);
-      
+
       // Generate a new ID to avoid conflicts
       final now = DateTime.now();
-      final newId = '${character.name.toLowerCase().replaceAll(' ', '_')}_${now.millisecondsSinceEpoch}';
+      final newId =
+          '${character.name.toLowerCase().replaceAll(' ', '_')}_${now.millisecondsSinceEpoch}';
       final importedCharacter = character.copyWith(
         id: newId,
         createdAt: now,
         updatedAt: now,
       );
-      
+
       await saveCharacter(importedCharacter);
       return importedCharacter;
     } catch (e) {
@@ -158,33 +189,34 @@ class CharacterService {
       rethrow;
     }
   }
-  
+
   /// Debug method to check character storage
   static Future<void> debugCheckCharacterStorage() async {
     try {
       final dir = await _storage.getDirectory();
       final files = await dir.list().toList();
-      
+
       debugPrint('\n=== Character Storage Debug Report ===');
       debugPrint('Characters directory: ${dir.path}');
       debugPrint('Directory exists: ${await dir.exists()}');
       debugPrint('Total files: ${files.length}');
-      
+
       for (final file in files) {
         if (file.path.endsWith('.json')) {
           debugPrint('Character file: ${file.path}');
         }
       }
-      
+
       final characters = await loadAllCharacters();
       debugPrint('Loaded characters: ${characters.length}');
-      
+
       for (final character in characters) {
-        debugPrint('Character: ${character.name} (${character.characterClass})');
+        debugPrint(
+          'Character: ${character.name} (${character.characterClass})',
+        );
       }
-      
+
       debugPrint('=====================================\n');
-      
     } catch (e) {
       debugPrint('Error checking character storage: $e');
     }

@@ -36,6 +36,7 @@ import '../../widgets/image_crop_widget.dart';
 import '../../widgets/dialogs/image_options_dialog.dart';
 import '../../widgets/dialogs/max_prepared_dialog.dart';
 import '../../widgets/dialogs/spell_details_modal.dart';
+import '../../widgets/group_selection_field.dart';
 import 'SpellsTab/spells_tab.dart';
 import 'SkillsTab/skills_tab.dart';
 import 'SpellSlotsTab/spell_slots_tab.dart';
@@ -66,6 +67,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   bool _hasUnsavedClassChanges = false;
   bool _isSaving = false;
   String _selectedBackground = '';
+  String? _characterGroup;
+  String? _characterGroupId;
 
   // Baseline character data for change detection
   late Character _baselineCharacter;
@@ -250,6 +253,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _raceController.text = character.race ?? '';
     _backgroundController.text = character.background ?? '';
     _selectedBackground = character.background ?? '';
+    _characterGroup = character.grupo;
+    _characterGroupId = character.grupoId;
 
     // Initialize quick guide with Delta format from plain text
     if (character.quickGuide.isNotEmpty) {
@@ -827,6 +832,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       showRaceDetailsModal: _showRaceDetailsModal,
       showBackgroundDetailsModal: _showBackgroundDetailsModal,
       selectedBackground: _selectedBackground,
+      currentGroup: _characterGroup,
+      onEditGroup: _showGroupAssignmentDialog,
+      onRemoveGroup: () {
+        setState(() {
+          _characterGroup = null;
+          _characterGroupId = null;
+          _hasUnsavedClassChanges = true;
+        });
+        _saveCharacter(successMessage: 'Grupo eliminado del personaje.');
+      },
       buildInspiration: _buildInspirationField,
       buildArmorClass: _buildArmorClassField,
       buildSpeed: _buildSpeedField,
@@ -893,6 +908,112 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       },
       takeComprehensiveLongRest: _takeComprehensiveLongRest,
     );
+  }
+
+  Future<void> _showGroupAssignmentDialog() async {
+    final viewModel = context.read<CharactersViewModel>();
+    final existingGroups = <String, String>{};
+    for (final character in viewModel.characters) {
+      if (character.grupo != null && character.grupo!.isNotEmpty) {
+        final groupId = character.grupoId ?? _generateGroupId(character.grupo!);
+        existingGroups[groupId] = character.grupo!;
+      }
+    }
+
+    String? selectedGroupId = _characterGroupId;
+    if (selectedGroupId == null &&
+        _characterGroup != null &&
+        _characterGroup!.isNotEmpty) {
+      selectedGroupId = _generateGroupId(_characterGroup!);
+    }
+
+    if (selectedGroupId != null &&
+        !existingGroups.containsKey(selectedGroupId)) {
+      selectedGroupId = null;
+    }
+
+    final groupNameController = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Assign Character Group'),
+          content: GroupSelectionField(
+            groupEntries: existingGroups,
+            selectedGroupId: selectedGroupId,
+            newGroupController: groupNameController,
+            onSelectedGroupChanged: (value) {
+              selectedGroupId = value;
+              if (value != null) {
+                groupNameController.text = existingGroups[value] ?? '';
+              }
+            },
+            onNewGroupChanged: (_) {},
+            onClearNewGroup: () {
+              groupNameController.clear();
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true) return;
+
+    String? grupo;
+    String? grupoId;
+    final newGroupName = groupNameController.text.trim();
+
+    if (selectedGroupId != null &&
+        existingGroups.containsKey(selectedGroupId) &&
+        newGroupName == existingGroups[selectedGroupId]) {
+      grupo = newGroupName;
+      grupoId = selectedGroupId;
+    } else if (newGroupName.isNotEmpty) {
+      if (selectedGroupId != null &&
+          existingGroups.containsKey(selectedGroupId) &&
+          existingGroups[selectedGroupId] != newGroupName) {
+        await viewModel.renameGroup(selectedGroupId!, newGroupName);
+        setState(() {
+          _characterGroup = newGroupName;
+          _characterGroupId = selectedGroupId;
+          _hasUnsavedClassChanges = true;
+        });
+        return;
+      }
+
+      grupo = newGroupName;
+      grupoId = _generateGroupId(newGroupName);
+    } else if (selectedGroupId != null) {
+      grupoId = selectedGroupId;
+      grupo = existingGroups[selectedGroupId];
+    }
+
+    setState(() {
+      _characterGroup = grupo;
+      _characterGroupId = grupoId;
+      _hasUnsavedClassChanges = true;
+    });
+  }
+
+  String _generateGroupId(String groupName) {
+    final normalized = groupName
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'\s+'), '_')
+        .replaceAll(RegExp(r'[^a-z0-9_]'), '');
+    return normalized.isNotEmpty ? normalized : groupName.toLowerCase().trim();
   }
 
   Widget _buildAttacksTab() {
@@ -4181,6 +4302,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             _backgroundController.text.trim().isEmpty
                 ? null
                 : _backgroundController.text.trim(),
+        grupo: _characterGroup,
+        grupoId: _characterGroupId,
         stats: CharacterStats(
           strength: int.tryParse(_strengthController.text) ?? 10,
           dexterity: int.tryParse(_dexterityController.text) ?? 10,

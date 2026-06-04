@@ -5,9 +5,9 @@ import 'package:dnd_app/viewmodels/characters_viewmodel.dart';
 import 'package:dnd_app/viewmodels/races_viewmodel.dart';
 import 'package:dnd_app/utils/image_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
-
 
 class CharacterHeaderSection extends StatefulWidget {
   final TextEditingController nameController;
@@ -16,6 +16,7 @@ class CharacterHeaderSection extends StatefulWidget {
   final TextEditingController subclassController;
   final TextEditingController raceController;
   final TextEditingController backgroundController;
+  final String? currentGroup;
 
   final String? customImagePath;
   final String? customImageData;
@@ -24,6 +25,8 @@ class CharacterHeaderSection extends StatefulWidget {
   final VoidCallback onPickImage;
   final VoidCallback onSave;
   final bool hasUnsavedClassChanges;
+  final VoidCallback? onEditGroup;
+  final VoidCallback? onRemoveGroup;
 
   final List<String> Function(String) getSubclassesForClass;
   final void Function(String) onClassChanged;
@@ -43,6 +46,7 @@ class CharacterHeaderSection extends StatefulWidget {
     required this.subclassController,
     required this.raceController,
     required this.backgroundController,
+    this.currentGroup,
     this.customImagePath,
     this.customImageData,
     required this.isEditing,
@@ -50,6 +54,8 @@ class CharacterHeaderSection extends StatefulWidget {
     required this.onPickImage,
     required this.onSave,
     required this.hasUnsavedClassChanges,
+    this.onEditGroup,
+    this.onRemoveGroup,
     required this.getSubclassesForClass,
     required this.onClassChanged,
     required this.onSubclassChanged,
@@ -62,8 +68,7 @@ class CharacterHeaderSection extends StatefulWidget {
   });
 
   @override
-  State<CharacterHeaderSection> createState() =>
-      _CharacterHeaderSectionState();
+  State<CharacterHeaderSection> createState() => _CharacterHeaderSectionState();
 }
 
 class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
@@ -96,7 +101,7 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SizedBox(width: 48), // Space for profile image alignment                    
+              const SizedBox(width: 48), // Space for profile image alignment
               IconButton(
                 onPressed: () {
                   widget.onEditToggle(!widget.isEditing);
@@ -126,9 +131,10 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(40),
                     border: Border.all(
-                      color: widget.isEditing
-                          ? Colors.green.shade300
-                          : Colors.blue.shade300,
+                      color:
+                          widget.isEditing
+                              ? Colors.green.shade300
+                              : Colors.blue.shade300,
                       width: 2,
                     ),
                   ),
@@ -147,162 +153,179 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
           // Character Name
           widget.isEditing
               ? TextField(
-                  controller: widget.nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Character Name',
-                    border: OutlineInputBorder(),
-                  ),
-                )
-              : Text(
-                  widget.nameController.text.isNotEmpty
-                      ? widget.nameController.text
-                      : 'Character Name',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
-                  textAlign: TextAlign.center,
+                controller: widget.nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Character Name',
+                  border: OutlineInputBorder(),
                 ),
+              )
+              : Text(
+                widget.nameController.text.isNotEmpty
+                    ? widget.nameController.text
+                    : 'Character Name',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade800,
+                ),
+                textAlign: TextAlign.center,
+              ),
           const SizedBox(height: 12),
           // Level
           widget.isEditing
               ? TextField(
-                  controller: widget.levelController,
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
-                    labelText: 'Character Level',
-                    border: OutlineInputBorder(),
-                  ),
-                )
-              : Text(
-                  'Level ${widget.levelController.text.isNotEmpty ? widget.levelController.text : '1'}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade700,
-                  ),
-                  textAlign: TextAlign.center,
+                controller: widget.levelController,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'Character Level',
+                  border: OutlineInputBorder(),
                 ),
+              )
+              : Text(
+                'Level ${widget.levelController.text.isNotEmpty ? widget.levelController.text : '1'}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
+                ),
+                textAlign: TextAlign.center,
+              ),
           const SizedBox(height: 12),
           // Class and Subclass
           widget.isEditing
               ? Row(
-                  children: [
-                    Expanded(
-                      child: Consumer<CharactersViewModel>(
-                        builder: (context, viewModel, child) {
-                          return DropdownButtonFormField<String>(
-                            initialValue: _selectedClass,
-                            decoration: const InputDecoration(
-                              labelText: 'Class',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: viewModel.availableClasses.map((className) {
-                              return DropdownMenuItem(
-                                value: className,
-                                child: Text(className),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedClass = value!;
-                                widget.classController.text = value;
-                                _useCustomSubclass = false;
-                              });
-                              widget.onClassChanged(value!);
-                            },
-                          );
-                        },
-                      ),
+                children: [
+                  Expanded(
+                    child: Consumer<CharactersViewModel>(
+                      builder: (context, viewModel, child) {
+                        return DropdownButtonFormField<String>(
+                          initialValue: _selectedClass,
+                          decoration: const InputDecoration(
+                            labelText: 'Class',
+                            border: OutlineInputBorder(),
+                          ),
+                          items:
+                              viewModel.availableClasses.map((className) {
+                                return DropdownMenuItem(
+                                  value: className,
+                                  child: Text(className),
+                                );
+                              }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedClass = value!;
+                              widget.classController.text = value;
+                              _useCustomSubclass = false;
+                            });
+                            widget.onClassChanged(value!);
+                          },
+                        );
+                      },
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_useCustomSubclass)
-                            TextField(
-                              controller: widget.subclassController,
-                              decoration: InputDecoration(
-                                labelText: 'Custom Subclass',
-                                border: const OutlineInputBorder(),
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.list),
-                                  onPressed: () {
-                                    setState(() {
-                                      _useCustomSubclass = false;
-                                    });
-                                  },
-                                  tooltip: 'Choose from preset subclasses',
-                                ),
-                              ),
-                              onChanged: (value) {
-                                widget.onSubclassChanged(value);
-                              },
-                            )
-                          else
-                            DropdownButtonFormField<String>(
-                              initialValue: _useCustomSubclass || widget.subclassController.text.isEmpty || !widget.getSubclassesForClass(_selectedClass).contains(widget.subclassController.text) ? null : widget.subclassController.text,
-                              decoration: const InputDecoration(
-                                labelText: 'Subclass (Optional)',
-                                border: OutlineInputBorder(),
-                              ),
-                              isExpanded: true,
-                              items: [
-                                ...widget.getSubclassesForClass(_selectedClass).map((subclass) {
-                                  return DropdownMenuItem(
-                                    value: subclass,
-                                    child: SizedBox(
-                                      width: 200,
-                                      child: Text(
-                                        subclass,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    ),
-                                  );
-                                }),
-                                const DropdownMenuItem(
-                                  value: 'custom',
-                                  child: Text('Custom Subclass'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                if (value == 'custom') {
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_useCustomSubclass)
+                          TextField(
+                            controller: widget.subclassController,
+                            decoration: InputDecoration(
+                              labelText: 'Custom Subclass',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.list),
+                                onPressed: () {
                                   setState(() {
-                                    _useCustomSubclass = true;
-                                  });
-                                } else {
-                                  setState(() {
-                                    widget.subclassController.text = value!;
                                     _useCustomSubclass = false;
                                   });
-                                  widget.onSubclassChanged(value!);
-                                }
-                              },
+                                },
+                                tooltip: 'Choose from preset subclasses',
+                              ),
                             ),
-                        ],
-                      ),
+                            onChanged: (value) {
+                              widget.onSubclassChanged(value);
+                            },
+                          )
+                        else
+                          DropdownButtonFormField<String>(
+                            initialValue:
+                                _useCustomSubclass ||
+                                        widget
+                                            .subclassController
+                                            .text
+                                            .isEmpty ||
+                                        !widget
+                                            .getSubclassesForClass(
+                                              _selectedClass,
+                                            )
+                                            .contains(
+                                              widget.subclassController.text,
+                                            )
+                                    ? null
+                                    : widget.subclassController.text,
+                            decoration: const InputDecoration(
+                              labelText: 'Subclass (Optional)',
+                              border: OutlineInputBorder(),
+                            ),
+                            isExpanded: true,
+                            items: [
+                              ...widget
+                                  .getSubclassesForClass(_selectedClass)
+                                  .map((subclass) {
+                                    return DropdownMenuItem(
+                                      value: subclass,
+                                      child: SizedBox(
+                                        width: 200,
+                                        child: Text(
+                                          subclass,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                              const DropdownMenuItem(
+                                value: 'custom',
+                                child: Text('Custom Subclass'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              if (value == 'custom') {
+                                setState(() {
+                                  _useCustomSubclass = true;
+                                });
+                              } else {
+                                setState(() {
+                                  widget.subclassController.text = value!;
+                                  _useCustomSubclass = false;
+                                });
+                                widget.onSubclassChanged(value!);
+                              }
+                            },
+                          ),
+                      ],
                     ),
-                  ],
-                )
-              : Text(
-                  widget.classController.text.isNotEmpty
-                      ? (widget.subclassController.text.isNotEmpty
-                          ? '${widget.classController.text} • ${widget.subclassController.text}'
-                          : widget.classController.text)
-                      : 'Class • Subclass',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue.shade600,
-                    fontStyle: FontStyle.italic,
                   ),
-                  textAlign: TextAlign.center,
+                ],
+              )
+              : Text(
+                widget.classController.text.isNotEmpty
+                    ? (widget.subclassController.text.isNotEmpty
+                        ? '${widget.classController.text} • ${widget.subclassController.text}'
+                        : widget.classController.text)
+                    : 'Class • Subclass',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.blue.shade600,
+                  fontStyle: FontStyle.italic,
                 ),
+                textAlign: TextAlign.center,
+              ),
           const SizedBox(height: 12),
-          
+
           // Race selection
           Consumer<RacesViewModel>(
             builder: (context, racesViewModel, child) {
@@ -314,171 +337,228 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
                   uniqueRaces[key] = race;
                 }
               }
-              
-              final selectedRace = widget.raceController.text.isNotEmpty 
-                  ? uniqueRaces[widget.raceController.text]
-                  : null;
-              
+
+              final selectedRace =
+                  widget.raceController.text.isNotEmpty
+                      ? uniqueRaces[widget.raceController.text]
+                      : null;
+
               return widget.isEditing
                   ? Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16.0),
-                          child: DropdownButtonFormField<String>(
-                              initialValue: widget.raceController.text.isEmpty ? null : widget.raceController.text,
-                              decoration: InputDecoration(
-                                labelText: 'Race (Optional)',
-                                border: OutlineInputBorder(),
-                                suffixIcon: selectedRace != null 
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: DropdownButtonFormField<String>(
+                          initialValue:
+                              widget.raceController.text.isEmpty
+                                  ? null
+                                  : widget.raceController.text,
+                          decoration: InputDecoration(
+                            labelText: 'Race (Optional)',
+                            border: OutlineInputBorder(),
+                            suffixIcon:
+                                selectedRace != null
                                     ? IconButton(
-                                        icon: const Icon(Icons.info_outline),
-                                        onPressed: () => widget.showRaceDetailsModal(selectedRace),
-                                        tooltip: 'View race details',
-                                      )
+                                      icon: const Icon(Icons.info_outline),
+                                      onPressed:
+                                          () => widget.showRaceDetailsModal(
+                                            selectedRace,
+                                          ),
+                                      tooltip: 'View race details',
+                                    )
                                     : null,
-                              ),
-                              items: uniqueRaces.values.map<DropdownMenuItem<String>>((race) {
+                          ),
+                          items:
+                              uniqueRaces.values.map<DropdownMenuItem<String>>((
+                                race,
+                              ) {
                                 return DropdownMenuItem<String>(
                                   value: race.name,
                                   child: Text(race.name),
                                 );
                               }).toList(),
-                              onChanged: (value) {
-                                widget.onRaceChanged(value ?? '');
-                              },
-                            ),
-                        ),
-                        const SizedBox(height: 16),
-                        Consumer<BackgroundsViewModel>(
-                          builder: (context, backgroundsViewModel, child) {
-                            Background? selectedBackground;
-                            if (widget.backgroundController.text.isNotEmpty && backgroundsViewModel.backgrounds.isNotEmpty) {
-                              try {
-                                selectedBackground = backgroundsViewModel.backgrounds.firstWhere(
-                                  (background) => background.name == widget.backgroundController.text,
-                                );
-                              } catch (e) {
-                                // Background not found, keep selectedBackground as null
-                                debugPrint('Background "${widget.backgroundController.text}" not found in list');
-                              }
-                            }
-                            
-                            return DropdownButtonFormField<String>(
-                              initialValue: widget.backgroundController.text.isEmpty ? null : widget.backgroundController.text,
-                              decoration: InputDecoration(
-                                labelText: 'Background (Optional)',
-                                border: OutlineInputBorder(),
-                                suffixIcon: selectedBackground != null 
-                                    ? IconButton(
-                                        icon: const Icon(Icons.info_outline),
-                                        onPressed: () => widget.showBackgroundDetailsModal(selectedBackground!),
-                                        tooltip: 'View background details',
-                                      )
-                                    : null,
-                              ),
-                              items: backgroundsViewModel.backgrounds.map((background) {
-                                return DropdownMenuItem(
-                                  value: background.name,
-                                  child: Text(background.name),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                debugPrint('Character cover background dropdown changed to: $value');
-                                widget.onBackgroundChanged(value ?? '');
-                              },
-                            );
+                          onChanged: (value) {
+                            widget.onRaceChanged(value ?? '');
                           },
                         ),
-                      ],
-                    )
+                      ),
+                      const SizedBox(height: 16),
+                      Consumer<BackgroundsViewModel>(
+                        builder: (context, backgroundsViewModel, child) {
+                          Background? selectedBackground;
+                          if (widget.backgroundController.text.isNotEmpty &&
+                              backgroundsViewModel.backgrounds.isNotEmpty) {
+                            try {
+                              selectedBackground = backgroundsViewModel
+                                  .backgrounds
+                                  .firstWhere(
+                                    (background) =>
+                                        background.name ==
+                                        widget.backgroundController.text,
+                                  );
+                            } catch (e) {
+                              // Background not found, keep selectedBackground as null
+                              debugPrint(
+                                'Background "${widget.backgroundController.text}" not found in list',
+                              );
+                            }
+                          }
+
+                          return DropdownButtonFormField<String>(
+                            initialValue:
+                                widget.backgroundController.text.isEmpty
+                                    ? null
+                                    : widget.backgroundController.text,
+                            decoration: InputDecoration(
+                              labelText: 'Background (Optional)',
+                              border: OutlineInputBorder(),
+                              suffixIcon:
+                                  selectedBackground != null
+                                      ? IconButton(
+                                        icon: const Icon(Icons.info_outline),
+                                        onPressed:
+                                            () => widget
+                                                .showBackgroundDetailsModal(
+                                                  selectedBackground!,
+                                                ),
+                                        tooltip: 'View background details',
+                                      )
+                                      : null,
+                            ),
+                            items:
+                                backgroundsViewModel.backgrounds.map((
+                                  background,
+                                ) {
+                                  return DropdownMenuItem(
+                                    value: background.name,
+                                    child: Text(background.name),
+                                  );
+                                }).toList(),
+                            onChanged: (value) {
+                              debugPrint(
+                                'Character cover background dropdown changed to: $value',
+                              );
+                              widget.onBackgroundChanged(value ?? '');
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  )
                   : GestureDetector(
-                      onTap: selectedRace != null 
-                          ? () => widget.showRaceDetailsModal(selectedRace)
-                          : null,
-                      child: Consumer<BackgroundsViewModel>(
+                    onTap:
+                        selectedRace != null
+                            ? () => widget.showRaceDetailsModal(selectedRace)
+                            : null,
+                    child: Consumer<BackgroundsViewModel>(
                       builder: (context, backgroundsViewModel, child) {
                         Background? selectedBackground;
-                        if (widget.backgroundController.text.isNotEmpty && backgroundsViewModel.backgrounds.isNotEmpty) {
+                        if (widget.backgroundController.text.isNotEmpty &&
+                            backgroundsViewModel.backgrounds.isNotEmpty) {
                           try {
-                            selectedBackground = backgroundsViewModel.backgrounds.firstWhere(
-                              (background) => background.name == widget.backgroundController.text,
-                            );
+                            selectedBackground = backgroundsViewModel
+                                .backgrounds
+                                .firstWhere(
+                                  (background) =>
+                                      background.name ==
+                                      widget.backgroundController.text,
+                                );
                           } catch (e) {
                             // Background not found, keep selectedBackground as null
-                            debugPrint('Background "${widget.backgroundController.text}" not found in list');
+                            debugPrint(
+                              'Background "${widget.backgroundController.text}" not found in list',
+                            );
                           }
                         }
-                        
+
                         final hasRace = widget.raceController.text.isNotEmpty;
-                        final hasBackground = widget.backgroundController.text.isNotEmpty;
-                        
+                        final hasBackground =
+                            widget.backgroundController.text.isNotEmpty;
+
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             // Race display
                             if (hasRace) ...[
-                              
-                            GestureDetector(
-                              onTap: selectedRace != null 
-                                  ? () => widget.showRaceDetailsModal(selectedRace)
-                                  : null,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Text(
-                                    widget.raceController.text.isNotEmpty 
+                              GestureDetector(
+                                onTap:
+                                    selectedRace != null
+                                        ? () => widget.showRaceDetailsModal(
+                                          selectedRace,
+                                        )
+                                        : null,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    widget.raceController.text.isNotEmpty
                                         ? widget.raceController.text
                                         : 'Race',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: selectedRace != null 
-                                          ? Colors.blue.shade600
-                                          : Colors.grey.shade600,
+                                      color:
+                                          selectedRace != null
+                                              ? Colors.blue.shade600
+                                              : Colors.grey.shade600,
                                       fontStyle: FontStyle.italic,
-                                      decoration: selectedRace != null 
-                                          ? TextDecoration.underline
-                                          : null,
+                                      decoration:
+                                          selectedRace != null
+                                              ? TextDecoration.underline
+                                              : null,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
+                                ),
                               ),
-                            ),],
-                            
+                            ],
+
                             // Background display
-                            if (hasBackground) ...[ 
+                            if (hasBackground) ...[
                               Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text(
-                                      ' • ',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: selectedBackground != null 
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  ' • ',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color:
+                                        selectedBackground != null
                                             ? Colors.blue.shade600
                                             : Colors.grey.shade600,
-                                        fontStyle: FontStyle.italic,                                            
-                                      ),
-                                      textAlign: TextAlign.center,
+                                    fontStyle: FontStyle.italic,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                                              
+                              ),
+
                               GestureDetector(
-                                onTap: selectedBackground != null
-                                    ? () => widget.showBackgroundDetailsModal(selectedBackground!)
-                                    : null,
+                                onTap:
+                                    selectedBackground != null
+                                        ? () =>
+                                            widget.showBackgroundDetailsModal(
+                                              selectedBackground!,
+                                            )
+                                        : null,
                                 child: Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
                                   child: Text(
-                                      widget.backgroundController.text,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: selectedBackground != null 
-                                            ? Colors.blue.shade600
-                                            : const Color.fromARGB(255, 117, 117, 117),
-                                        fontStyle: FontStyle.italic,
-                                        decoration: selectedBackground != null 
-                                            ? TextDecoration.underline
-                                            : null,
-                                      ),
-                                      textAlign: TextAlign.center,
+                                    widget.backgroundController.text,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color:
+                                          selectedBackground != null
+                                              ? Colors.blue.shade600
+                                              : const Color.fromARGB(
+                                                255,
+                                                117,
+                                                117,
+                                                117,
+                                              ),
+                                      fontStyle: FontStyle.italic,
+                                      decoration:
+                                          selectedBackground != null
+                                              ? TextDecoration.underline
+                                              : null,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ),
@@ -487,9 +567,59 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
                         );
                       },
                     ),
-                    );
+                  );
             },
           ),
+          const SizedBox(height: 16),
+          if (widget.currentGroup != null &&
+              widget.currentGroup!.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.shade100),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Group: ${widget.currentGroup}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.blue.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      if (widget.onEditGroup != null)
+                        IconButton(
+                          icon: Icon(Symbols.contract_edit),
+                          onPressed: widget.onEditGroup,
+                          tooltip: 'Modify group',
+                        ),                        
+                      if (widget.onRemoveGroup != null)
+                        IconButton(
+                          icon: Icon(Symbols.contract_delete, color: Colors.red.shade400),
+                          onPressed: widget.onRemoveGroup,
+                          tooltip: 'Delete group',
+                        ),                         
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ] else if (widget.isEditing && widget.onEditGroup != null) ...[
+            OutlinedButton.icon(
+              onPressed: widget.onEditGroup,
+              icon: const Icon(Icons.group_add),
+              label: const Text('Add to group'),
+            ),
+          ],
         ],
       ),
     );
@@ -507,17 +637,13 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
             height: 80,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
-              return const Icon(
-                Icons.person,
-                size: 40,
-                color: Colors.grey,
-              );
+              return const Icon(Icons.person, size: 40, color: Colors.grey);
             },
           ),
         );
       }
     }
-    
+
     // Fallback to file path if base64 is not available
     if (widget.customImagePath != null && widget.customImagePath!.isNotEmpty) {
       return ClipOval(
@@ -527,21 +653,13 @@ class _CharacterHeaderSectionState extends State<CharacterHeaderSection> {
           height: 80,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return const Icon(
-              Icons.person,
-              size: 40,
-              color: Colors.grey,
-            );
+            return const Icon(Icons.person, size: 40, color: Colors.grey);
           },
         ),
       );
     }
-    
+
     // Default icon if no image is available
-    return const Icon(
-      Icons.person,
-      size: 40,
-      color: Colors.grey,
-    );
+    return const Icon(Icons.person, size: 40, color: Colors.grey);
   }
 }
