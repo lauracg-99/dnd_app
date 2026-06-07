@@ -68,15 +68,17 @@ class CharactersNotes extends StatelessWidget {
                     child: SimpleQuillEditor(
                       controller: backstoryController,
                       toolbarConfig: QuillToolbarConfigs.minimal,
-                      placeholder:
-                          'Write your character\'s backstory...\n\n'
-                          'Consider including:\n'
-                          '• Place of birth and family background\n'
-                          '• Life events that shaped their personality\n'
-                          '• How they became an adventurer\n'
-                          '• Significant relationships and experiences\n'
-                          '• Secrets, traumas, or triumphs\n'
-                          '• Hopes for the future',
+                      placeholder:'''Write your character's backstory. 
+                      
+                      Consider including:
+                      
+                          • Place of birth and family background
+                          • Life events that shaped their personality
+                          • How they became an adventurer
+                          • Significant relationships and experiences
+                          • Secrets, traumas, or triumphs
+                          • Hopes for the future''',
+
                       height: 300,
                     ),
                   ),
