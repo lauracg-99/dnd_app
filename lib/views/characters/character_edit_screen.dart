@@ -35,7 +35,7 @@ import '../../utils/image_utils.dart';
 import '../../widgets/image_crop_widget.dart';
 import '../../widgets/dialogs/image_options_dialog.dart';
 import '../../widgets/dialogs/max_prepared_dialog.dart';
-import '../../widgets/dialogs/spell_details_modal.dart';
+import '../../widgets/spell_details_modal.dart';
 import '../../widgets/group_selection_field.dart';
 import 'SpellsTab/spells_tab.dart';
 import 'SkillsTab/skills_tab.dart';

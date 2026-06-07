@@ -127,4 +127,25 @@ class CharacterAbilityHelper {
         return abilityName.substring(0, 3).toUpperCase();
     }
   }
+
+    static String getDiceAsset(String type) {
+    switch (type.toLowerCase()) {
+      case 'd4':
+        return 'assets/icon/white-d6.png';
+      case 'd6':
+        return 'assets/icon/white-d6.png';
+      case 'd8':
+        return 'assets/icon/white-d8.png';
+      case 'd10':
+        return 'assets/icon/white-d20.png';
+      case 'd12':
+        return 'assets/icon/white-d20.png';
+      case 'd100':
+        return 'assets/icon/white-d20.png';
+      case 'd20':
+      default:
+        return 'assets/icon/white-d20.png';
+    }
+  }
+
 }

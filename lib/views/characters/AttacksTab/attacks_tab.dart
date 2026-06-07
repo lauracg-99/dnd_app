@@ -1,7 +1,12 @@
+import 'package:dnd_app/helpers/character_ability_helper.dart';
 import 'package:dnd_app/models/character_model.dart';
+import 'package:dnd_app/services/dice_service.dart';
 import 'package:dnd_app/widgets/action_button.dart';
+import 'package:dnd_app/widgets/detail_row.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+
+import 'attack_detail_sheet.dart';
 
 class AttacksTab extends StatefulWidget {
   final List<CharacterAttack> attacks;
@@ -116,98 +121,7 @@ class _AttacksTabState extends State<AttacksTab> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => DraggableScrollableSheet(
-            initialChildSize: 0.7,
-            maxChildSize: 0.95,
-            minChildSize: 0.5,
-            expand: false,
-            builder:
-                (context, scrollController) => Container(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Handle bar
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      // Header
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              attack.name,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      // Content
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildDetailSection(
-                                'Attack Bonus',
-                                attack.attackBonus,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildDetailSection('Damage', attack.damage),
-                              const SizedBox(height: 16),
-                              _buildDetailSection(
-                                'Damage Type',
-                                attack.damageType,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-          ),
-    );
-  }
-
-  Widget _buildDetailSection(String title, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Text(content, style: const TextStyle(fontSize: 16)),
-        ),
-      ],
+      builder: (context) => AttackDetailSheet(attack: attack),
     );
   }
 }

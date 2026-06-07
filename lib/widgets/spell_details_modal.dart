@@ -1,3 +1,4 @@
+import 'package:dnd_app/helpers/character_ability_helper.dart';
 import 'package:dnd_app/models/character_model.dart';
 import 'package:dnd_app/services/dice_service.dart';
 import 'package:dnd_app/services/spell_service.dart';
@@ -151,7 +152,7 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Image.asset(
-                                  _getDiceAsset('d8'),
+                                  CharacterAbilityHelper.getDiceAsset('d8'),
                                   width: 22,
                                   height: 22,
                                   color: Colors.white,
@@ -175,6 +176,7 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
                           ],
                         ],
                       ),
+                    
                     ],
                     const SizedBox(height: 16),
                     if (widget.spell.damageDice.isNotEmpty) ...[
@@ -259,7 +261,7 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Image.asset(
-                                              _getDiceAsset('d8'),
+                                              CharacterAbilityHelper.getDiceAsset('d8'),
                                               width: 22,
                                               height: 22,
                                               color: Colors.white,
@@ -335,24 +337,5 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
     );
   }
 
-  String _getDiceAsset(String type) {
-    switch (type.toLowerCase()) {
-      case 'd4':
-        return 'assets/icon/white-d6.png';
-      case 'd6':
-        return 'assets/icon/white-d6.png';
-      case 'd8':
-        return 'assets/icon/white-d8.png';
-      case 'd10':
-        return 'assets/icon/white-d20.png';
-      case 'd12':
-        return 'assets/icon/white-d20.png';
-      case 'd100':
-        return 'assets/icon/white-d20.png';
-      case 'd20':
-      default:
-        return 'assets/icon/white-d20.png';
-    }
-  }
 
 }
