@@ -62,40 +62,76 @@ class DiceService {
     }
   }
 
-  static Future<String?> lanzarDadosResult(
-    BuildContext context,
-    String expresion,
-  ) async {
-    try {
-      final formula = DiceExpression.create(expresion);
-      final resultado = formula.roll();
+static Future<String?> lanzarDadosResult(
+  BuildContext context,
+  String expresion,
+) async {
+  try {
+    final formula = DiceExpression.create(expresion);
+    final resultado = formula.roll();
+    
+    // --- CORRECCIÓN AQUÍ ---
+    // Forzamos la conversión a String usando .toString()
+    final String detalleStr = resultado.detailedResults.toString();
+    // ------------------------
+    
+    debugPrint("Lanzando dados con expresión: $expresion resultado: ${resultado.total} detalles: $detalleStr");
+    
+    if (!context.mounted) return null;
 
-      if (!context.mounted) return null;
+    scaffoldMessengerKey.currentState?.clearSnackBars();
+    await HapticFeedback.heavyImpact();
 
-      scaffoldMessengerKey.currentState?.clearSnackBars();
+    List<int> dadosLanzados = [];
+    final rolledRegex = RegExp(r'rolled:\s*\[([\d\s,]+)\]');
+    final rolledMatch = rolledRegex.firstMatch(detalleStr);
 
-      //await simulateDice();
-      await HapticFeedback.heavyImpact();
-      var bonus = 0;
-      if (resultado.results.length > 1) {
-        bonus =
-            resultado.results
-                .removeLast(); //eliminamos el ultimo que es el bonus a sumar
-      }
-
-      // Retornamos el total entero para usarlo en la UI del botón
-      if (bonus != 0) {
-        return "Total: ${resultado.total} · Rolls: ${resultado.results} · Bonus: +$bonus";
-      } else {
-        return "Total: ${resultado.total} · Rolls: ${resultado.results}";
-      }
-    } catch (e) {
-      if (context.mounted) {
-        SnackbarHelper.showInfo(context, "Error en la fórmula: $expresion");
-      }
-      return null;
+    if (rolledMatch != null && rolledMatch.group(1) != null) {
+      dadosLanzados = rolledMatch.group(1)!
+          .split(',')
+          .map((e) => int.parse(e.trim()))
+          .toList();
+    } else {
+      dadosLanzados = List<int>.from(resultado.results);
     }
+
+    int bono = 0;
+    final stringLimpio = expresion.replaceAll(' ', '');
+    final bonoRegex = RegExp(r'([\+\-])(\d+)$'); 
+    final bonoMatch = bonoRegex.firstMatch(stringLimpio);
+
+    if (bonoMatch != null) {
+      final signo = bonoMatch.group(1);
+      final valor = int.parse(bonoMatch.group(2)!);
+      bono = (signo == '+') ? valor : -valor;
+    }
+
+    List<int> dadosUI = List<int>.from(resultado.results);
+    if (bono != 0 && dadosUI.contains(bono.abs()) && dadosUI.length > 1) {
+      dadosUI.removeLast(); 
+    }
+    
+    if (dadosUI.isEmpty && dadosLanzados.isNotEmpty) {
+      dadosUI = dadosLanzados;
+    }
+
+    final String dadosTexto = "Dados: $dadosUI";
+    
+    if (bono > 0) {
+      return "Total: ${resultado.total} · $dadosTexto · Bono: +$bono";
+    } else if (bono < 0) {
+      return "Total: ${resultado.total} · $dadosTexto · Bono: $bono";
+    } else {
+      return "Total: ${resultado.total} · $dadosTexto";
+    }
+
+  } catch (e) {
+    if (context.mounted) {
+      SnackbarHelper.showInfo(context, "Error en la fórmula: $expresion");
+    }
+    return null;
   }
+}
 
   // Lanza una expresión de dados múltiples veces de forma consecutiva
   static Future<void> lanzarVariasVeces(
