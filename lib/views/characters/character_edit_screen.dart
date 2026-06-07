@@ -3338,15 +3338,18 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Theme.of(context).canvasColor,
       builder:
           (context) => SpellDetailsModal(
             spell: spell,
-            characterName: widget.character.name,
+            character: widget.character,
             onRemoveSpell: (removedSpell) {
               setState(() {
                 _spells.remove(removedSpell.name);
               });
             },
+            characterAttack: "${_getSpellAttackBonus()}",
+            characterModifier: "${_getCurrentSpellcastingModifier()}",
           ),
     );
   }

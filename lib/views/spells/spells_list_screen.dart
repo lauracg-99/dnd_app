@@ -1,3 +1,4 @@
+import 'package:dnd_app/services/dice_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/spell_model.dart';
@@ -366,9 +367,9 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
   }
 
   void _showSpellDetails(BuildContext context, Spell spell) {
-    showModalBottomSheet(
+    showBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
-      isScrollControlled: true,
       builder:
           (context) => DraggableScrollableSheet(
             initialChildSize: 0.7,
@@ -452,14 +453,32 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                         ],
-
-                        // Add more details here as needed
+                        SizedBox(height: 16),                    
+                        if (spell.damageDice.isNotEmpty) ...[
+                          ...spell.damageDice.map((dice) {
+                            final diceString = '${dice.diceAmount}${dice.diceType}';
+                            
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0), 
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  DiceService.lanzarDados(context, diceString);
+                                },
+                                child: DetailRow(
+                                  label: 'Roll Damage',
+                                  value: diceString,
+                                ),
+                              ),
+                            );
+                          }),
+                        ]
                       ],
                     ),
                   ),
                 ),
           ),
     );
+  
   }
 
   String _formatComponents(Spell spell) {

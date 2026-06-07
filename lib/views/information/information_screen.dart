@@ -1,3 +1,6 @@
+import 'package:dart_dice_parser/dart_dice_parser.dart';
+import 'package:dnd_app/services/dice_service.dart';
+import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:dnd_app/views/information/weapons_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -5,6 +8,7 @@ import 'feats_screen.dart';
 import 'classes_screen.dart';
 import 'races_screen.dart';
 import 'backgrounds_screen.dart';
+import 'package:flutter/services.dart';
 
 class InformationScreen extends StatelessWidget {
   const InformationScreen({super.key});
@@ -12,13 +16,11 @@ class InformationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Information'),
-      ),
+      appBar: AppBar(title: const Text('Information')),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-         // _buildSectionTitle('Game References'),
+          // _buildSectionTitle('Game References'),
           const SizedBox(height: 8),
           _buildCategoryCard(
             context: context,
@@ -34,24 +36,19 @@ class InformationScreen extends StatelessWidget {
           ),
           _buildCategoryCard(
             context: context,
-            title: 'Classes',
+            title: 'Dados 1',
             icon: Icons.class_,
-            onTap: () {    
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ClassesScreen()),
-              );
+            onTap: () {
+              // Prueba
+              DiceService.lanzarDados(context, "2d6+3");
             },
           ),
           _buildCategoryCard(
             context: context,
-            title: 'Races',
+            title: 'Dados 2',
             icon: Icons.people,
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const RacesScreen()),
-              );
+              DiceService.lanzarVariasVeces(context, "1d100", 5);
             },
           ),
           _buildCategoryCard(
@@ -64,7 +61,7 @@ class InformationScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const WeaponsScreen()),
               );
             },
-          ),          
+          ),
           _buildCategoryCard(
             context: context,
             title: 'Backgrounds',
@@ -72,11 +69,12 @@ class InformationScreen extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const BackgroundsScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const BackgroundsScreen(),
+                ),
               );
             },
           ),
-          
         ],
       ),
     );

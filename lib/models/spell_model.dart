@@ -144,19 +144,26 @@ class Spell extends BaseModel {
       if (levelledEntry is! Map<String, dynamic>) continue;
       final levelledStats = levelledEntry['stats'] as Map<String, dynamic>?;
       final level = levelledStats?['level']?['value'] as int?;
+      
       final damageDiceList =
           levelledStats?['damage_dice']?['value'] as List<dynamic>? ?? [];
 
       for (final damageEntry in damageDiceList) {
         if (damageEntry is! Map<String, dynamic>) continue;
         final damageStats = damageEntry['stats'] as Map<String, dynamic>?;
+        
+        // El JSON real no trae 'damage_type', manejamos un valor por defecto seguro
         final damageType =
             damageStats?['damage_type']?['value'] as String? ?? 'unknown';
+            
+        // Entramos directamente a 'dices'
         final dices = damageStats?['dices']?['value'] as List<dynamic>? ?? [];
 
         for (final diceEntry in dices) {
           if (diceEntry is! Map<String, dynamic>) continue;
           final diceStats = diceEntry['stats'] as Map<String, dynamic>?;
+          
+          // Extraemos de forma segura el amount y el type
           final amount = diceStats?['dice_amount']?['value'] as int?;
           final type = diceStats?['dice_type']?['value'] as String?;
 

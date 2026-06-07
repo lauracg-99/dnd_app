@@ -53,6 +53,7 @@ dependencies:
   crop_your_image: ^2.0.0
   material_symbols_icons: ^4.2928.1
   image: ^4.0.17
+  dart_dice_parser: ^7.1.1
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +90,7 @@ flutter:
     - assets/data/races/  
     - assets/data/backgrounds/
     - assets/data/weapons/
+    - assets/icon/
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

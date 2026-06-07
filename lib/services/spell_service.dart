@@ -157,4 +157,36 @@ class SpellService {
       debugPrint('Error checking spell schools: $e');
     }
   }
+
+    static String formatSchoolAndLevel(Spell spell) {
+    final school = spell.schoolName
+        .split('_')
+        .map(
+          (word) =>
+              word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '',
+        )
+        .join(' ');
+    final levelText =
+        spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}';
+    return '$school $levelText';
+  }
+
+  static String formatClasses(Spell spell) {
+    if (spell.classes.isEmpty) return 'None';
+    return spell.classes
+        .map(
+          (c) => c
+              .split('_')
+              .map(
+                (word) =>
+                    word.isNotEmpty
+                        ? word[0].toUpperCase() + word.substring(1)
+                        : '',
+              )
+              .join(' '),
+        )
+        .join(', ');
+  }
+
+
 }
