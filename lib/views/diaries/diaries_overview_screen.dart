@@ -1,4 +1,6 @@
+import 'package:dnd_app/utils/character_helper.dart';
 import 'package:dnd_app/views/characters/character_create_screen.dart';
+import 'package:dnd_app/widgets/custom_group_expansion_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/characters_viewmodel.dart';
@@ -38,9 +40,9 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
         backgroundColor: const Color.fromARGB(255, 209, 161, 216),
         title: const Text('Character Diaries'),
         bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(10),
-            child: const SizedBox(),
-          ),
+          preferredSize: const Size.fromHeight(10),
+          child: const SizedBox(),
+        ),
       ),
       body: Consumer<CharactersViewModel>(
         builder: (context, viewModel, child) {
@@ -155,12 +157,75 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
       return _buildEmptyView();
     }
 
-    return ListView.builder(
-      itemCount: viewModel.characters.length,
-      itemBuilder: (context, index) {
-        final character = viewModel.characters[index];
-        return _buildCharacterDiaryCard(character, context);
-      },
+    final Map<String, List<Character>> groupedCharacters = {};
+    final Map<String, String> groupNames = {};
+    final List<Character> ungroupedCharacters = [];
+
+    for (final character in viewModel.characters) {
+      if (character.grupo != null && character.grupo!.isNotEmpty) {
+        final groupId = CharacterHelper.getGroupKey(character);
+        groupNames[groupId] = character.grupo!;
+        groupedCharacters.putIfAbsent(groupId, () => []).add(character);
+      } else {
+        ungroupedCharacters.add(character);
+      }
+    }
+
+    final groupedEntries =
+        groupedCharacters.entries.toList()
+          ..sort((a, b) => groupNames[a.key]!.compareTo(groupNames[b.key]!));
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 96),
+      children: [
+        for (final groupEntry in groupedEntries)
+          CustomGroupExpansionTile(
+            title: groupNames[groupEntry.key]!,
+            initiallyExpanded: false,
+            headerBackgroundColor: Colors.purple.shade100,
+            expandedBackgroundColor: Colors.purple.shade50,
+            textColor: Colors.black87,
+            iconColor: Colors.purple.shade700,
+            borderRadius: 12,
+            headerPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            childrenPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            titleStyle: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+            elevation: 3,
+            onRenamePressed:
+                () => CharacterHelper.showGroupRenameDialogByGroupKey(
+                  context,
+                  groupEntry.key,
+                  groupNames[groupEntry.key]!,
+                ),
+            onDeletePressed:
+                () => CharacterHelper.confirmAndDeleteGroup(
+                  context,
+                  groupEntry.key,
+                  groupNames[groupEntry.key]!,
+                  groupEntry.value,
+                ),
+            children:
+                groupEntry.value
+                    .map(
+                      (character) =>
+                          _buildCharacterDiaryCard(character, context),
+                    )
+                    .toList(),
+          ),
+        ...ungroupedCharacters.map(
+          (character) => _buildCharacterDiaryCard(character, context),
+        ),
+      ],
     );
   }
 

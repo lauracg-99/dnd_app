@@ -16,8 +16,9 @@ class Spell extends BaseModel {
   final bool material;
   final String? components;
   final String description;
+  final String? higherLevelDescription;
   final List<String> classes;
-  final List<dynamic> dice; // We'll parse this as dynamic for now
+  final List<dynamic> dice; // Raw nested dice JSON from the spell resource
   final DateTime updatedAt;
 
   const Spell({
@@ -35,6 +36,7 @@ class Spell extends BaseModel {
     this.material = false,
     this.components,
     required this.description,
+    this.higherLevelDescription,
     required this.classes,
     required this.dice,
     required this.updatedAt,
@@ -48,6 +50,34 @@ class Spell extends BaseModel {
 
   /// Get the school name without the prefix
   String get schoolName => school.replaceAll('spell_school_', '');
+
+  /// Extract damage dice from the raw nested dice JSON.
+  List<SpellDamageDice> get damageDice => _parseSpellDamageDice();
+
+  /// Get unique damage types from the spell's damage dice
+  List<String> get damageTypes {
+    final damageTypesList = <String>[];
+
+    for (final levelledDice in dice) {
+      if (levelledDice is! Map<String, dynamic>) continue;
+
+      final damageDiceList =
+          levelledDice['stats']?['damage_dice']?['value'] as List<dynamic>? ??
+          [];
+
+      for (final damageDice in damageDiceList) {
+        if (damageDice is! Map<String, dynamic>) continue;
+
+        final damageType =
+            damageDice['stats']?['damage_type']?['value'] as String?;
+        if (damageType != null && damageType.isNotEmpty) {
+          damageTypesList.add(damageType);
+        }
+      }
+    }
+
+    return damageTypesList.toSet().toList();
+  }
 
   @override
   Map<String, dynamic> toJson() {
@@ -68,6 +98,8 @@ class Spell extends BaseModel {
         'material': {'value': material},
         if (components != null) 'components': {'value': components},
         'description': {'value': description},
+        if (higherLevelDescription != null)
+          'higher_level_description': {'value': higherLevelDescription},
         'classes': {'value': classes},
         'dice': {'value': dice},
         'updated_at': {'value': updatedAt.toIso8601String()},
@@ -77,7 +109,7 @@ class Spell extends BaseModel {
 
   factory Spell.fromJson(Map<String, dynamic> json) {
     final stats = json['stats'] as Map<String, dynamic>;
-    
+
     return Spell(
       id: _getValue<String>(stats, 'id'),
       name: _getValue<String>(stats, 'name'),
@@ -93,50 +125,118 @@ class Spell extends BaseModel {
       material: _getValue<bool>(stats, 'material', defaultValue: false),
       components: _getValue<String?>(stats, 'components', defaultValue: null),
       description: _getValue<String>(stats, 'description'),
+      higherLevelDescription: _getValue<String?>(
+        stats,
+        'higher_level_description',
+        defaultValue: '',
+      ),
       classes: List<String>.from(_getValue<List<dynamic>>(stats, 'classes')),
       dice: _getValue<List<dynamic>>(stats, 'dice', defaultValue: const []),
       updatedAt: DateTime.parse(_getValue<String>(stats, 'updated_at')),
     );
   }
 
-  static T _getValue<T>(Map<String, dynamic> map, String key, {T? defaultValue}) {
+  List<SpellDamageDice> _parseSpellDamageDice() {
+    final List<SpellDamageDice> parsed = [];
+    final uniqueDamageTypes = damageTypes;
+
+    for (final levelledEntry in dice) {
+      if (levelledEntry is! Map<String, dynamic>) continue;
+      final levelledStats = levelledEntry['stats'] as Map<String, dynamic>?;
+      final level = levelledStats?['level']?['value'] as int?;
+      final damageDiceList =
+          levelledStats?['damage_dice']?['value'] as List<dynamic>? ?? [];
+
+      for (final damageEntry in damageDiceList) {
+        if (damageEntry is! Map<String, dynamic>) continue;
+        final damageStats = damageEntry['stats'] as Map<String, dynamic>?;
+        final damageType =
+            damageStats?['damage_type']?['value'] as String? ?? 'unknown';
+        final dices = damageStats?['dices']?['value'] as List<dynamic>? ?? [];
+
+        for (final diceEntry in dices) {
+          if (diceEntry is! Map<String, dynamic>) continue;
+          final diceStats = diceEntry['stats'] as Map<String, dynamic>?;
+          final amount = diceStats?['dice_amount']?['value'] as int?;
+          final type = diceStats?['dice_type']?['value'] as String?;
+
+          if (amount != null && type != null) {
+            parsed.add(
+              SpellDamageDice(
+                diceAmount: amount,
+                diceType: type,
+                damageType: damageType,
+                level: level,
+                damageTypes: uniqueDamageTypes,
+              ),
+            );
+          }
+        }
+      }
+    }
+
+    return parsed;
+  }
+
+  static T _getValue<T>(
+    Map<String, dynamic> map,
+    String key, {
+    T? defaultValue,
+  }) {
     try {
       // Special handling for components field
       if (key == 'components') {
         if (!map.containsKey(key)) return defaultValue as T;
         final value = map[key];
         if (value == null) return defaultValue as T;
-        if (value is Map && value.containsKey('value')) return value['value'] as T;
+        if (value is Map && value.containsKey('value'))
+          return value['value'] as T;
         return value as T;
       }
-      
+
       // For all other fields
       if (!map.containsKey(key)) {
         if (defaultValue != null) return defaultValue;
         throw ArgumentError('Missing required field: $key');
       }
-      
+
       final value = map[key];
-      
+
       if (value == null) {
         if (defaultValue != null) return defaultValue;
         throw ArgumentError('Field $key is null and no default value provided');
       }
-      
+
       if (value is Map && value.containsKey('value')) {
         final nestedValue = value['value'];
         if (nestedValue == null && defaultValue != null) return defaultValue;
         return nestedValue as T;
       }
-      
+
       return value as T;
     } catch (e) {
       // For components, return null instead of throwing
       if (key == 'components') return defaultValue as T;
-      
+
       if (defaultValue != null) return defaultValue;
       debugPrint('Error parsing field $key: $e');
       rethrow;
     }
   }
+}
+
+class SpellDamageDice {
+  final int diceAmount;
+  final String diceType;
+  final String damageType;
+  final int? level;
+  final List<String> damageTypes;
+
+  SpellDamageDice({
+    required this.diceAmount,
+    required this.diceType,
+    required this.damageType,
+    this.level,
+    required this.damageTypes,
+  });
 }

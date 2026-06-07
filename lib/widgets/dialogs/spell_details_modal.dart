@@ -1,3 +1,4 @@
+import 'package:dnd_app/services/spell_service.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:dnd_app/models/spell_model.dart';
@@ -121,11 +122,22 @@ class SpellDetailsModal extends StatelessWidget {
                 DetailRow(label: 'Duration', value: spell.duration),
                 if (spell.ritual) DetailRow(label: 'Ritual', value: 'Yes'),
                 DetailRow(label: 'Classes', value: _formatClasses(spell)),
-                const Divider(),
+                const Divider(),  
+                const SizedBox(height: 5),   
+                DetailRow(label: 'Description', value: ''),
                 Text(
                   spell.description,
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
+                if (spell.higherLevelDescription != null &&
+                    spell.higherLevelDescription!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  DetailRow(label: 'At Higher Levels', value: ''),
+                  Text(
+                    spell.higherLevelDescription ?? '',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -139,7 +151,7 @@ class SpellDetailsModal extends StatelessWidget {
                           SnackbarHelper.showWarning(
                             context,
                             'Removed ${spell.name} from $characterName',
-                          );                          
+                          );
                         },
                       ),
                     ),

@@ -11,10 +11,7 @@ import 'diary_view_screen.dart';
 class DiaryListScreen extends StatefulWidget {
   final Character character;
 
-  const DiaryListScreen({
-    super.key,
-    required this.character,
-  });
+  const DiaryListScreen({super.key, required this.character});
 
   @override
   State<DiaryListScreen> createState() => _DiaryListScreenState();
@@ -47,8 +44,10 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
         _error = null;
       });
 
-      final entries = await DiaryService.loadDiaryEntriesForCharacter(widget.character.id);
-      
+      final entries = await DiaryService.loadDiaryEntriesForCharacter(
+        widget.character.id,
+      );
+
       setState(() {
         _diaryEntries = entries;
         _isLoading = false;
@@ -66,7 +65,10 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
     if (_searchController.text.isEmpty) {
       return _diaryEntries;
     }
-    return DiaryService.searchDiaryEntries(_diaryEntries, _searchController.text);
+    return DiaryService.searchDiaryEntries(
+      _diaryEntries,
+      _searchController.text,
+    );
   }
 
   @override
@@ -89,24 +91,23 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                      )
-                    : null,
+                suffixIcon:
+                    _searchController.text.isNotEmpty
+                        ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {});
+                          },
+                        )
+                        : null,
               ),
               onChanged: (value) => setState(() {}),
             ),
           ),
-          
+
           // Diary entries list
-          Expanded(
-            child: _buildBody(),
-          ),
+          Expanded(child: _buildBody()),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -154,7 +155,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
 
   Widget _buildEmptyView() {
     final isSearchResult = _searchController.text.isNotEmpty;
-    
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -166,7 +167,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            isSearchResult 
+            isSearchResult
                 ? 'No diary entries found matching your search.'
                 : 'No diary entries yet. Create your first entry!',
           ),
@@ -217,10 +218,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
             const SizedBox(height: 4),
             Text(
               'Updated: ${_formatDate(entry.updatedAt)}',
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.grey[500], fontSize: 12),
             ),
           ],
         ),
@@ -236,28 +234,29 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                 break;
             }
           },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [
-                  Icon(Icons.edit),
-                  SizedBox(width: 8),
-                  Text('Edit'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
-                ],
-              ),
-            ),
-          ],
+          itemBuilder:
+              (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit),
+                      SizedBox(width: 8),
+                      Text('Edit'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
         ),
         onTap: () => _viewDiaryEntry(entry),
       ),
@@ -266,37 +265,42 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
 
   String _getPreviewText(String content) {
     if (content.isEmpty) return 'No content';
-    
+
     try {
       // Try to parse as JSON (new format with rich text)
       final List<dynamic> jsonDelta = jsonDecode(content);
-      final controller = QuillController.basic()
-        ..document = Document.fromJson(jsonDelta);
-      
+      final controller =
+          QuillController.basic()..document = Document.fromJson(jsonDelta);
+
       // Get plain text from rich text
       String plainText = controller.document.toPlainText();
-      
+
       // Clean up the plain text for preview
-      String cleanContent = plainText
-          .replaceAll(RegExp(r'\n'), ' ') // Newlines to spaces
-          .replaceAll(RegExp(r'\s+'), ' ') // Multiple spaces to single space
-          .trim();
-      
+      String cleanContent =
+          plainText
+              .replaceAll(RegExp(r'\n'), ' ') // Newlines to spaces
+              .replaceAll(
+                RegExp(r'\s+'),
+                ' ',
+              ) // Multiple spaces to single space
+              .trim();
+
       if (cleanContent.length > 100) {
         return '${cleanContent.substring(0, 100)}...';
       }
       return cleanContent;
     } catch (e) {
       // Fallback to plain text (old format)
-      String cleanContent = content
-          .replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1') // Bold
-          .replaceAll(RegExp(r'\*(.*?)\*'), r'$1') // Italic
-          .replaceAll(RegExp(r'_(.*?)_'), r'$1') // Italic
-          .replaceAll(RegExp(r'`(.*?)`'), r'$1') // Code
-          .replaceAll(RegExp(r'#{1,6}\s*'), '') // Headers
-          .replaceAll(RegExp(r'\n'), ' ') // Newlines to spaces
-          .trim();
-      
+      String cleanContent =
+          content
+              .replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1') // Bold
+              .replaceAll(RegExp(r'\*(.*?)\*'), r'$1') // Italic
+              .replaceAll(RegExp(r'_(.*?)_'), r'$1') // Italic
+              .replaceAll(RegExp(r'`(.*?)`'), r'$1') // Code
+              .replaceAll(RegExp(r'#{1,6}\s*'), '') // Headers
+              .replaceAll(RegExp(r'\n'), ' ') // Newlines to spaces
+              .trim();
+
       if (cleanContent.length > 100) {
         return '${cleanContent.substring(0, 100)}...';
       }
@@ -329,9 +333,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DiaryEditorScreen(
-          character: widget.character,
-        ),
+        builder: (context) => DiaryEditorScreen(character: widget.character),
       ),
     );
 
@@ -345,10 +347,9 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DiaryViewScreen(
-          character: widget.character,
-          diaryEntry: entry,
-        ),
+        builder:
+            (context) =>
+                DiaryViewScreen(character: widget.character, diaryEntry: entry),
       ),
     );
 
@@ -362,10 +363,11 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DiaryEditorScreen(
-          character: widget.character,
-          diaryEntry: entry,
-        ),
+        builder:
+            (context) => DiaryEditorScreen(
+              character: widget.character,
+              diaryEntry: entry,
+            ),
       ),
     );
 
@@ -378,38 +380,50 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
   void _deleteDiaryEntry(DiaryEntry entry) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Diary Entry'),
-        content: Text(
-          'Are you sure you want to delete "${entry.title}"? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Diary Entry'),
+            content: Text(
+              'Are you sure you want to delete "${entry.title}"? This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+
+                  try {
+                    await DiaryService.deleteDiaryEntry(
+                      widget.character.id,
+                      entry.id,
+                    );
+                    _loadDiaryEntries();
+
+                    if (mounted) {
+                      SnackbarHelper.showSuccess(
+                        context,
+                        'Diary entry deleted',
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      SnackbarHelper.showError(
+                        context,
+                        'Error deleting diary entry: $e',
+                      );
+                    }
+                  }
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              
-              try {
-                await DiaryService.deleteDiaryEntry(widget.character.id, entry.id);
-                _loadDiaryEntries();
-                
-                if (mounted) {
-                  SnackbarHelper.showSuccess(context, 'Diary entry deleted');
-                }
-              } catch (e) {
-                if (mounted) {
-                  SnackbarHelper.showError(context, 'Error deleting diary entry: $e');
-                }
-              }
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
+
+  // groups
 }

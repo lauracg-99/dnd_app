@@ -1,4 +1,5 @@
 import 'package:dnd_app/services/character_service.dart';
+import 'package:dnd_app/utils/character_helper.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -287,20 +288,6 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     );
   }
 
-  String _getGroupKey(Character character) {
-    final grupoId = character.grupoId?.trim();
-    if (grupoId != null && grupoId.isNotEmpty) {
-      return grupoId;
-    }
-
-    final grupo = character.grupo?.trim();
-    if (grupo != null && grupo.isNotEmpty) {
-      final normalized = _generateGroupId(grupo);
-      return normalized.isNotEmpty ? normalized : grupo.toLowerCase();
-    }
-    return '';
-  }
-
   Widget _buildCharactersList(CharactersViewModel viewModel) {
     // If no characters after filtering
     if (viewModel.characters.isEmpty) {
@@ -313,7 +300,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
 
     for (final character in viewModel.characters) {
       if (character.grupo != null && character.grupo!.isNotEmpty) {
-        final groupId = _getGroupKey(character);
+        final groupId = CharacterHelper.getGroupKey(character);
         groupNames[groupId] = character.grupo!;
         groupedCharacters.putIfAbsent(groupId, () => []).add(character);
       } else {
@@ -352,12 +339,14 @@ class _CharactersListScreenState extends State<CharactersListScreen>
             ),
             elevation: 3,
             onRenamePressed:
-                () => _showGroupRenameDialogByGroupKey(
+                () => CharacterHelper.showGroupRenameDialogByGroupKey(
+                  context,
                   groupEntry.key,
                   groupNames[groupEntry.key]!,
                 ),
             onDeletePressed:
-                () => _confirmAndDeleteGroup(
+                () => CharacterHelper.confirmAndDeleteGroup(
+                  context,
                   groupEntry.key,
                   groupNames[groupEntry.key]!,
                   groupEntry.value,
@@ -447,284 +436,17 @@ class _CharactersListScreenState extends State<CharactersListScreen>
             break;
           case 'add_group':
           case 'edit_group':
-            _showGroupAssignmentDialog(character);
+            CharacterHelper.showGroupAssignmentDialog(context, character);
             break;
           case 'remove_group':
-            _removeCharacterFromGroup(character);
+            CharacterHelper.removeCharacterFromGroup(context, character);
             break;
           case 'delete':
-            _showDeleteConfirmation(character);
+            CharacterHelper.showDeleteConfirmation(context, character);
             break;
         }
       },
     );
-  }
-
-  void _navigateToEditCharacter(Character character) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CharacterEditScreen(character: character),
-      ),
-    );
-  }
-
-  void _navigateToDiary(Character character) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => DiaryListScreen(character: character),
-      ),
-    );
-  }
-
-  void _navigateToCreateCharacter() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CharacterCreateScreen()),
-    );
-  }
-
-  void _showDeleteConfirmation(Character character) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Character'),
-            content: Text(
-              'Are you sure you want to delete ${character.name}? This action cannot be undone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.read<CharactersViewModel>().deleteCharacter(
-                    character.id,
-                  );
-                },
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  String _generateGroupId(String groupName) {
-    return CharacterService.generateGroupId(groupName);
-  }
-
-  Future<void> _showGroupAssignmentDialog(Character character) async {
-    final viewModel = context.read<CharactersViewModel>();
-    final existingGroups = <String, String>{};
-    for (final current in viewModel.characters) {
-      if (current.grupo != null && current.grupo!.isNotEmpty) {
-        final groupId = _getGroupKey(current);
-        if (groupId.isNotEmpty) {
-          existingGroups[groupId] = current.grupo!;
-        }
-      }
-    }
-
-    String? selectedGroupId = _getGroupKey(character);
-    if (selectedGroupId.isEmpty ||
-        !existingGroups.containsKey(selectedGroupId)) {
-      selectedGroupId = null;
-    }
-    final groupNameController = TextEditingController(
-      text: selectedGroupId != null ? existingGroups[selectedGroupId] : '',
-    );
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Assign Group'),
-              content: GroupSelectionField(
-                groupEntries: existingGroups,
-                selectedGroupId: selectedGroupId,
-                newGroupController: groupNameController,
-                onSelectedGroupChanged: (value) {
-                  setState(() {
-                    selectedGroupId = value;
-                    if (value != null) {
-                      groupNameController.text = existingGroups[value] ?? '';
-                    }
-                  });
-                },
-                onNewGroupChanged: (value) {
-                  setState(() {
-                    if (value.trim().isNotEmpty) {
-                      selectedGroupId = null;
-                    }
-                  });
-                },
-                onClearNewGroup: () {
-                  setState(() {
-                    groupNameController.clear();
-                  });
-                },
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (result != true) return;
-
-    String? grupo;
-    String? grupoId;
-    final newGroupName = groupNameController.text.trim();
-
-    if (selectedGroupId != null &&
-        existingGroups.containsKey(selectedGroupId) &&
-        newGroupName == existingGroups[selectedGroupId]) {
-      grupo = newGroupName;
-      grupoId = selectedGroupId;
-    } else if (newGroupName.isNotEmpty) {
-      grupo = newGroupName;
-      grupoId = _generateGroupId(newGroupName);
-    } else if (selectedGroupId != null) {
-      grupoId = selectedGroupId;
-      grupo = existingGroups[selectedGroupId];
-    }
-
-    if (grupo == null) return;
-
-    final updatedCharacter = character.copyWith(
-      grupo: grupo,
-      grupoId: grupoId,
-      updatedAt: DateTime.now(),
-    );
-
-    await context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
-  }
-
-  Future<void> _showGroupRenameDialogByGroupKey(
-    String groupKey,
-    String currentGroupName,
-  ) async {
-    final viewModel = context.read<CharactersViewModel>();
-    final groupNameController = TextEditingController(text: currentGroupName);
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Rename Group'),
-          content: TextField(
-            controller: groupNameController,
-            decoration: const InputDecoration(
-              labelText: 'New group name',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (result != true) return;
-
-    final newGroupName = groupNameController.text.trim();
-    if (newGroupName.isEmpty || newGroupName == currentGroupName) {
-      return;
-    }
-
-    await viewModel.renameGroup(groupKey, newGroupName);
-    if (mounted) {
-      SnackbarHelper.showSuccess(context, 'Group renamed successfully.');
-    }
-  }
-
-  Future<void> _confirmAndDeleteGroup(
-    String groupKey,
-    String groupName,
-    List<Character> members,
-  ) async {
-    final viewModel = context.read<CharactersViewModel>();
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Group'),
-            content: Text(
-              'Are you sure you want to delete the group "$groupName"? '
-              'This will remove the group (NOT THE CHARACTERS) from all its members and cannot be undone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-    );
-
-    if (confirmed != true) return;
-
-    try {
-      for (final member in members) {
-        final updated = member.copyWith(
-          grupo: null,
-          grupoId: null,
-          updatedAt: DateTime.now(),
-        );
-        await viewModel.updateCharacter(updated);
-      }
-
-      if (mounted) {
-        SnackbarHelper.showSuccess(context, 'Group deleted successfully.');
-      }
-    } catch (e) {
-      if (mounted) {
-        SnackbarHelper.showError(context, 'Failed to delete group: $e');
-      }
-    }
-  }
-
-  Future<void> _removeCharacterFromGroup(Character character) async {
-    final updatedCharacter = character.copyWith(
-      grupo: null,
-      grupoId: null,
-      updatedAt: DateTime.now(),
-    );
-    await context.read<CharactersViewModel>().updateCharacter(updatedCharacter);
-    if (mounted) {
-      SnackbarHelper.showSuccess(context, 'Personaje eliminado del grupo.');
-    }
   }
 
   /// Handle cloud button press based on authentication state
@@ -742,14 +464,6 @@ class _CharactersListScreenState extends State<CharactersListScreen>
       // Otherwise, show full sync options
       _showCloudSyncOptions();
     }
-  }
-
-  /// Navigate to login screen
-  void _navigateToLogin() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
   }
 
   /// Manual sync when changes are available
@@ -948,6 +662,75 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     }
   }
 
+  /// Get color based on sync status
+  Color _getSyncStatusColor(SyncStatus status) {
+    switch (status) {
+      case SyncStatus.connected:
+        return Colors.green;
+      case SyncStatus.syncing:
+        return Colors.blue;
+      case SyncStatus.changesAvailable:
+        return Colors.purple; // Violet color for changes available
+      case SyncStatus.error:
+        return Colors.red;
+      case SyncStatus.disconnected:
+        return Colors.grey;
+    }
+  }
+
+  /// Get tooltip text based on sync status
+  String _getCloudButtonTooltip(SyncStatus status) {
+    if (!_authService.isAuthenticated) {
+      return 'Sign In & Sync';
+    }
+
+    switch (status) {
+      case SyncStatus.changesAvailable:
+        return 'Tap to download changes from other devices';
+      case SyncStatus.connected:
+        return 'Cloud Sync Options';
+      case SyncStatus.syncing:
+        return 'Syncing...';
+      case SyncStatus.error:
+        return 'Sync Error - Tap to retry';
+      case SyncStatus.disconnected:
+        return 'Cloud Sync Options';
+    }
+  }
+
+  void _navigateToEditCharacter(Character character) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CharacterEditScreen(character: character),
+      ),
+    );
+  }
+
+  void _navigateToDiary(Character character) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DiaryListScreen(character: character),
+      ),
+    );
+  }
+
+  void _navigateToCreateCharacter() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CharacterCreateScreen()),
+    );
+  }
+
+  /// Navigate to login screen
+  void _navigateToLogin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
+
   /// Sign out from Firebase
   void _signOut() async {
     try {
@@ -1108,39 +891,5 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     }
   }
 
-  /// Get color based on sync status
-  Color _getSyncStatusColor(SyncStatus status) {
-    switch (status) {
-      case SyncStatus.connected:
-        return Colors.green;
-      case SyncStatus.syncing:
-        return Colors.blue;
-      case SyncStatus.changesAvailable:
-        return Colors.purple; // Violet color for changes available
-      case SyncStatus.error:
-        return Colors.red;
-      case SyncStatus.disconnected:
-        return Colors.grey;
-    }
-  }
 
-  /// Get tooltip text based on sync status
-  String _getCloudButtonTooltip(SyncStatus status) {
-    if (!_authService.isAuthenticated) {
-      return 'Sign In & Sync';
-    }
-
-    switch (status) {
-      case SyncStatus.changesAvailable:
-        return 'Tap to download changes from other devices';
-      case SyncStatus.connected:
-        return 'Cloud Sync Options';
-      case SyncStatus.syncing:
-        return 'Syncing...';
-      case SyncStatus.error:
-        return 'Sync Error - Tap to retry';
-      case SyncStatus.disconnected:
-        return 'Cloud Sync Options';
-    }
-  }
 }

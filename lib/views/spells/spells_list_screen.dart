@@ -436,12 +436,22 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                         ),
 
                         const Divider(),
-
+                        const SizedBox(height: 5),
+                        DetailRow(label: 'Description', value: ''),
                         // Description
                         Text(
                           spell.description,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
+                        if (spell.higherLevelDescription != null &&
+                            spell.higherLevelDescription!.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          DetailRow(label: 'At Higher Levels', value: ''),
+                          Text(
+                            spell.higherLevelDescription ?? '',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ],
 
                         // Add more details here as needed
                       ],

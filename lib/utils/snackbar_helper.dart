@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 
 /// Helper class for showing SnackBar messages with custom text and colors
