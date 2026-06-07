@@ -367,7 +367,8 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
   }
 
   void _showSpellDetails(BuildContext context, Spell spell) {
-    showBottomSheet(
+    showModalBottomSheet(
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       context: context,
       builder:
@@ -453,25 +454,6 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                         ],
-                        SizedBox(height: 16),                    
-                        if (spell.damageDice.isNotEmpty) ...[
-                          ...spell.damageDice.map((dice) {
-                            final diceString = '${dice.diceAmount}${dice.diceType}';
-                            
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0), 
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  DiceService.lanzarDados(context, diceString);
-                                },
-                                child: DetailRow(
-                                  label: 'Roll Damage',
-                                  value: diceString,
-                                ),
-                              ),
-                            );
-                          }),
-                        ]
                       ],
                     ),
                   ),

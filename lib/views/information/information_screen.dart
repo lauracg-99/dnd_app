@@ -20,7 +20,6 @@ class InformationScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // _buildSectionTitle('Game References'),
           const SizedBox(height: 8),
           _buildCategoryCard(
             context: context,
@@ -36,19 +35,26 @@ class InformationScreen extends StatelessWidget {
           ),
           _buildCategoryCard(
             context: context,
-            title: 'Dados 1',
+            title: 'Classes',
             icon: Icons.class_,
             onTap: () {
-              // Prueba
-              DiceService.lanzarDados(context, "2d6+3");
+              // Navigate to Classes screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ClassesScreen()),
+              );
             },
           ),
           _buildCategoryCard(
             context: context,
-            title: 'Dados 2',
+            title: 'Races',
             icon: Icons.people,
             onTap: () {
-              DiceService.lanzarVariasVeces(context, "1d100", 5);
+              // Navigate to Races screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const RacesScreen()),
+              );
             },
           ),
           _buildCategoryCard(
