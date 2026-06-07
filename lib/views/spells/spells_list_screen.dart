@@ -471,6 +471,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
     }
     return components.join(', ');
   }
+
 }
 
 extension StringExtension on String {

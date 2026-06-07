@@ -92,30 +92,6 @@ class SpellDetailsModal extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.person, color: Colors.blue),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Known by: $characterName',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
                 DetailRow(label: 'Casting Time', value: spell.castingTime),
                 DetailRow(label: 'Range', value: spell.range),
                 DetailRow(label: 'Components', value: _formatComponents(spell)),
@@ -139,32 +115,6 @@ class SpellDetailsModal extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text('Remove Spell'),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          onRemoveSpell(spell);
-                          SnackbarHelper.showWarning(
-                            context,
-                            'Removed ${spell.name} from $characterName',
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.close),
-                        label: const Text('Close'),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
