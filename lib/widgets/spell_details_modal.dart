@@ -124,6 +124,8 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
                     const SizedBox(height: 16),
                     if (widget.spell.description.toLowerCase().contains(
                       'ranged spell attack',
+                    )|| widget.spell.description.toLowerCase().contains(
+                      'melee spell attack',
                     )) ...[
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,7 +270,7 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
                                             ),
                                             const SizedBox(width: 10),
                                             Text(
-                                              'Roll Damage: $diceString',
+                                              'Roll dice: $diceString',
                                               style: const TextStyle(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
