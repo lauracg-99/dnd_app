@@ -337,7 +337,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
       ),
     );
 
-    if (result == true) {
+    if (result != null) {
       // Refresh the list when returning from editor
       _loadDiaryEntries();
     }
@@ -353,7 +353,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
       ),
     );
 
-    if (result == true) {
+    if (result != null) {
       // Refresh the list when returning from editor (via view screen)
       _loadDiaryEntries();
     }
@@ -371,7 +371,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
       ),
     );
 
-    if (result == true) {
+    if (result != null) {
       // Refresh the list when returning from editor
       _loadDiaryEntries();
     }

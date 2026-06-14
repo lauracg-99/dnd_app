@@ -222,31 +222,33 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
         _contentController.document.toDelta().toJson(),
       );
 
+      final DiaryEntry savedEntry;
+
       if (widget.diaryEntry == null) {
         // Create new diary entry
-        await DiaryService.createDiaryEntry(
+        savedEntry = await DiaryService.createDiaryEntry(
           characterId: widget.character.id,
           title: _titleController.text.trim(),
           content: currentContent,
         );
       } else {
         // Update existing diary entry
-        final updatedEntry = widget.diaryEntry!.copyWith(
+        savedEntry = widget.diaryEntry!.copyWith(
           title: _titleController.text.trim(),
           content: currentContent,
         );
-        await DiaryService.saveDiaryEntry(updatedEntry);
+        await DiaryService.saveDiaryEntry(savedEntry);
       }
 
       if (mounted) {
-        Navigator.pop(context, true);
-
         SnackbarHelper.showSuccess(
           context,
           widget.diaryEntry == null
               ? 'Diary entry created successfully'
               : 'Diary entry updated successfully',
         );
+
+        Navigator.pop(context, savedEntry);
       }
     } catch (e) {
       debugPrint('Error saving diary entry: $e');

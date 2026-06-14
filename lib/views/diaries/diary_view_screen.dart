@@ -5,7 +5,7 @@ import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
 import 'diary_editor_screen.dart';
 
-class DiaryViewScreen extends StatelessWidget {
+class DiaryViewScreen extends StatefulWidget {
   final Character character;
   final DiaryEntry diaryEntry;
 
@@ -16,33 +16,53 @@ class DiaryViewScreen extends StatelessWidget {
   });
 
   @override
+  State<DiaryViewScreen> createState() => _DiaryViewScreenState();
+}
+
+class _DiaryViewScreenState extends State<DiaryViewScreen> {
+  late DiaryEntry _diaryEntry;
+  bool _hasUpdated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _diaryEntry = widget.diaryEntry;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(diaryEntry.title),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => _editDiaryEntry(context),
-            tooltip: 'Edit Entry',
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Entry metadata
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: _buildMetadata(context),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, _hasUpdated ? true : null);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_diaryEntry.title),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () => _editDiaryEntry(context),
+              tooltip: 'Edit Entry',
             ),
-            
-            // Entry content - natural height with full width
-            _buildContent(),
-            SizedBox(height: 50,)
           ],
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Entry metadata
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: _buildMetadata(context),
+              ),
+              
+              // Entry content - natural height with full width
+              _buildContent(),
+              SizedBox(height: 50,)
+            ],
+          ),
         ),
       ),
     );
@@ -60,7 +80,7 @@ class DiaryViewScreen extends StatelessWidget {
                 Icon(Icons.person, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 8),
                 Text(
-                  character.name,
+                  widget.character.name,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.grey[700],
@@ -70,7 +90,7 @@ class DiaryViewScreen extends StatelessWidget {
                 Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 8),
                 Text(
-                  _formatDate(diaryEntry.createdAt),
+                  _formatDate(_diaryEntry.createdAt),
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -78,14 +98,14 @@ class DiaryViewScreen extends StatelessWidget {
                 ),
               ],
             ),
-            if (diaryEntry.updatedAt.isAfter(diaryEntry.createdAt.add(const Duration(minutes: 1)))) ...[
+            if (_diaryEntry.updatedAt.isAfter(_diaryEntry.createdAt.add(const Duration(minutes: 1)))) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
                   Icon(Icons.update, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 8),
                   Text(
-                    'Updated: ${_formatDate(diaryEntry.updatedAt)}',
+                    'Updated: ${_formatDate(_diaryEntry.updatedAt)}',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 12,
@@ -112,7 +132,7 @@ class DiaryViewScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              diaryEntry.content.isNotEmpty
+              _diaryEntry.content.isNotEmpty
                   ? _buildRichContent()
                   : Text(
                       'No content',
@@ -132,7 +152,7 @@ class DiaryViewScreen extends StatelessWidget {
   Widget _buildRichContent() {
     try {
       // Try to parse as JSON (new format with rich text)
-      final List<dynamic> jsonDelta = jsonDecode(diaryEntry.content);
+      final List<dynamic> jsonDelta = jsonDecode(_diaryEntry.content);
       final controller = QuillController.basic()
         ..document = Document.fromJson(jsonDelta);
       
@@ -160,7 +180,7 @@ class DiaryViewScreen extends StatelessWidget {
     } catch (e) {
       // Fallback to plain text (old format)
       return Text(
-        diaryEntry.content,
+        _diaryEntry.content,
         style: const TextStyle(
           fontSize: 16,
           height: 1.5,
@@ -191,14 +211,23 @@ class DiaryViewScreen extends StatelessWidget {
   }
 
   void _editDiaryEntry(BuildContext context) async {
-    await Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DiaryEditorScreen(
-          character: character,
-          diaryEntry: diaryEntry,
+          character: widget.character,
+          diaryEntry: _diaryEntry,
         ),
       ),
     );
+
+    if (result is DiaryEntry) {
+      setState(() {
+        _diaryEntry = result;
+        _hasUpdated = true;
+      });
+    } else if (result == true) {
+      _hasUpdated = true;
+    }
   }
 }
