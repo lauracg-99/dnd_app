@@ -26,6 +26,8 @@ class SkillsTab extends StatelessWidget {
   final void Function(String skillKey, bool isProficient) onUpdateSkillCheck;
   final void Function(String skillKey, bool hasExpertise)
   onUpdateSkillExpertise;
+  final void Function(String skillKey, bool hasDisadvantage)
+  onUpdateSkillDisadvantage;
   final int Function(String ability) getAbilityScore;
 
   const SkillsTab({
@@ -52,6 +54,7 @@ class SkillsTab extends StatelessWidget {
     required this.persuasionBonusController,
     required this.onUpdateSkillCheck,
     required this.onUpdateSkillExpertise,
+    required this.onUpdateSkillDisadvantage,
     required this.getAbilityScore,
   });
 
@@ -72,6 +75,7 @@ class SkillsTab extends StatelessWidget {
               'STR',
               skillChecks.athleticsProficiency,
               skillChecks.athleticsExpertise,
+              skillChecks.athleticsDisadvantage,
               'athletics',
               athleticsBonusController,
             ),
@@ -83,6 +87,7 @@ class SkillsTab extends StatelessWidget {
               'DEX',
               skillChecks.acrobaticsProficiency,
               skillChecks.acrobaticsExpertise,
+              skillChecks.acrobaticsDisadvantage,
               'acrobatics',
               acrobaticsBonusController,
             ),
@@ -91,6 +96,7 @@ class SkillsTab extends StatelessWidget {
               'DEX',
               skillChecks.sleightOfHandProficiency,
               skillChecks.sleightOfHandExpertise,
+              skillChecks.sleightOfHandDisadvantage,
               'sleight_of_hand',
               sleightOfHandBonusController,
             ),
@@ -99,6 +105,7 @@ class SkillsTab extends StatelessWidget {
               'DEX',
               skillChecks.stealthProficiency,
               skillChecks.stealthExpertise,
+              skillChecks.stealthDisadvantage,
               'stealth',
               stealthBonusController,
             ),
@@ -110,6 +117,7 @@ class SkillsTab extends StatelessWidget {
               'INT',
               skillChecks.arcanaProficiency,
               skillChecks.arcanaExpertise,
+              skillChecks.arcanaDisadvantage,
               'arcana',
               arcanaBonusController,
             ),
@@ -118,6 +126,7 @@ class SkillsTab extends StatelessWidget {
               'INT',
               skillChecks.historyProficiency,
               skillChecks.historyExpertise,
+              skillChecks.historyDisadvantage,
               'history',
               historyBonusController,
             ),
@@ -126,6 +135,7 @@ class SkillsTab extends StatelessWidget {
               'INT',
               skillChecks.investigationProficiency,
               skillChecks.investigationExpertise,
+              skillChecks.investigationDisadvantage,
               'investigation',
               investigationBonusController,
             ),
@@ -134,6 +144,7 @@ class SkillsTab extends StatelessWidget {
               'INT',
               skillChecks.natureProficiency,
               skillChecks.natureExpertise,
+              skillChecks.natureDisadvantage,
               'nature',
               natureBonusController,
             ),
@@ -142,6 +153,7 @@ class SkillsTab extends StatelessWidget {
               'INT',
               skillChecks.religionProficiency,
               skillChecks.religionExpertise,
+              skillChecks.religionDisadvantage,
               'religion',
               religionBonusController,
             ),
@@ -153,6 +165,7 @@ class SkillsTab extends StatelessWidget {
               'WIS',
               skillChecks.animalHandlingProficiency,
               skillChecks.animalHandlingExpertise,
+              skillChecks.animalHandlingDisadvantage,
               'animal_handling',
               animalHandlingBonusController,
             ),
@@ -161,6 +174,7 @@ class SkillsTab extends StatelessWidget {
               'WIS',
               skillChecks.insightProficiency,
               skillChecks.insightExpertise,
+              skillChecks.insightDisadvantage,
               'insight',
               insightBonusController,
             ),
@@ -169,6 +183,7 @@ class SkillsTab extends StatelessWidget {
               'WIS',
               skillChecks.medicineProficiency,
               skillChecks.medicineExpertise,
+              skillChecks.medicineDisadvantage,
               'medicine',
               medicineBonusController,
             ),
@@ -177,6 +192,7 @@ class SkillsTab extends StatelessWidget {
               'WIS',
               skillChecks.perceptionProficiency,
               skillChecks.perceptionExpertise,
+              skillChecks.perceptionDisadvantage,
               'perception',
               perceptionBonusController,
             ),
@@ -185,6 +201,7 @@ class SkillsTab extends StatelessWidget {
               'WIS',
               skillChecks.survivalProficiency,
               skillChecks.survivalExpertise,
+              skillChecks.survivalDisadvantage,
               'survival',
               survivalBonusController,
             ),
@@ -196,6 +213,7 @@ class SkillsTab extends StatelessWidget {
               'CHA',
               skillChecks.deceptionProficiency,
               skillChecks.deceptionExpertise,
+              skillChecks.deceptionDisadvantage,
               'deception',
               deceptionBonusController,
             ),
@@ -204,6 +222,7 @@ class SkillsTab extends StatelessWidget {
               'CHA',
               skillChecks.intimidationProficiency,
               skillChecks.intimidationExpertise,
+              skillChecks.intimidationDisadvantage,
               'intimidation',
               intimidationBonusController,
             ),
@@ -212,6 +231,7 @@ class SkillsTab extends StatelessWidget {
               'CHA',
               skillChecks.performanceProficiency,
               skillChecks.performanceExpertise,
+              skillChecks.performanceDisadvantage,
               'performance',
               performanceBonusController,
             ),
@@ -220,6 +240,7 @@ class SkillsTab extends StatelessWidget {
               'CHA',
               skillChecks.persuasionProficiency,
               skillChecks.persuasionExpertise,
+              skillChecks.persuasionDisadvantage,
               'persuasion',
               persuasionBonusController,
             ),
@@ -299,6 +320,7 @@ class SkillsTab extends StatelessWidget {
     String ability,
     bool isProficient,
     bool hasExpertise,
+    bool hasDisadvantage,
     String skillKey,
     TextEditingController bonusController,
   ) {
@@ -323,9 +345,11 @@ class SkillsTab extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(6),
         color:
-            hasExpertise
-                ? Colors.purple.shade50
-                : (isProficient ? Colors.green.shade50 : Colors.white),
+            hasDisadvantage
+                ? Colors.red.shade50
+                : (hasExpertise
+                    ? Colors.purple.shade50
+                    : (isProficient ? Colors.green.shade50 : Colors.white)),
       ),
       child: Row(
         children: [
@@ -336,6 +360,30 @@ class SkillsTab extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
+          const SizedBox(width: 2),
+          GestureDetector(
+            onTap: () => onUpdateSkillDisadvantage(skillKey, !hasDisadvantage),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: hasDisadvantage ? Colors.red : Colors.grey,
+                ),
+                borderRadius: BorderRadius.circular(4),
+                color: hasDisadvantage ? Colors.red : Colors.transparent,
+              ),
+              child:
+                  hasDisadvantage
+                      ? const Icon(
+                        Icons.arrow_downward,
+                        color: Colors.white,
+                        size: 16,
+                      )
+                      : null,
+            ),
+          ),
+          const SizedBox(width: 4),
           SizedBox(
             width: 50,
             child: Text(
@@ -344,6 +392,7 @@ class SkillsTab extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
+          
           const SizedBox(width: 4),
           Container(
             width: 40,
@@ -436,7 +485,8 @@ class SkillsTab extends StatelessWidget {
                       : null,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
+
           SizedBox(
             width: 40,
             child: Text(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/cloud_sync_service.dart';
+import '../../services/remote_config_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +22,22 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   final bool _isCreatingAccount = false;
+  bool _allowSignIn = true;
+  bool _allowRegister = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Read remote config flags (RemoteConfig initialized in main)
+    try {
+      _allowSignIn = RemoteConfigService.instance.allowSignIn;
+      _allowRegister = RemoteConfigService.instance.allowRegister;
+    } catch (_) {
+      // Keep defaults true on error
+      _allowSignIn = true;
+      _allowRegister = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -155,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 const SizedBox(height: 16),
                 
-                // Info text about account creation
+                // Info text about account creation / feature flags
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -172,7 +189,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'If you don\'t have an account yet, we\'ll create one for you automatically when you sign in.',
+                        !_allowRegister
+                            ? 'Account creation is temporarily disabled. Please sign in with an existing account or try again later.'
+                            : 'If you don\'t have an account yet, we\'ll create one for you automatically when you sign in.',
                         style: TextStyle(
                           color: Colors.blue.shade700,
                           fontSize: 14,
@@ -187,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 // Submit button
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _handleSubmit,
+                  onPressed: (_isLoading || !_allowSignIn) ? null : _handleSubmit,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -298,6 +317,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    // Check remote flags before attempting auth
+    if (!RemoteConfigService.instance.allowSignIn) {
+      SnackbarHelper.showInfo(context, 'Sign in is temporarily disabled. Please try again later or contact support.');
+      return;
+    }
     if (!_formKey.currentState!.validate()) {
       return;
     }

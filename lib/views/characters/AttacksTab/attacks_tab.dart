@@ -1,8 +1,5 @@
-import 'package:dnd_app/helpers/character_ability_helper.dart';
 import 'package:dnd_app/models/character_model.dart';
-import 'package:dnd_app/services/dice_service.dart';
 import 'package:dnd_app/widgets/action_button.dart';
-import 'package:dnd_app/widgets/detail_row.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -12,12 +9,14 @@ class AttacksTab extends StatefulWidget {
   final List<CharacterAttack> attacks;
   final VoidCallback onAddAttack;
   final void Function(int index) onRemoveAttack;
+  final void Function(int oldIndex, int newIndex) onReorderAttack;
 
   const AttacksTab({
     super.key,
     required this.attacks,
     required this.onAddAttack,
     required this.onRemoveAttack,
+    required this.onReorderAttack,
   });
 
   @override
@@ -38,7 +37,7 @@ class _AttacksTabState extends State<AttacksTab> {
             child: ActionButton.primary(
               context: context,
               onPressed: widget.onAddAttack,
-              label: 'Add Attack',
+              label: 'Add Weapon',
               icon: Symbols.add_circle,
             ),
           ),
@@ -82,13 +81,18 @@ class _AttacksTabState extends State<AttacksTab> {
               ),
             ),
           ] else ...[
-            ...widget.attacks.asMap().entries.map((entry) {
-              final index = entry.key;
-              final attack = entry.value;
-              return _buildAttackCard(context, index, attack);
-            }),
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: widget.attacks.length,
+              onReorder: widget.onReorderAttack,
+              itemBuilder: (context, index) {
+                final attack = widget.attacks[index];
+                return _buildAttackCard(context, index, attack);
+              },
+            ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 36),
         ],
       ),
     );
@@ -100,7 +104,15 @@ class _AttacksTabState extends State<AttacksTab> {
     CharacterAttack attack,
   ) {
     return Card(
+      key: ValueKey(attack.id),
       child: ListTile(
+        leading: ReorderableDragStartListener(
+          index: index,
+          child: const Padding(
+            padding: EdgeInsets.only(right: 8.0),
+            child: Icon(Icons.drag_handle),
+          ),
+        ),
         title: Text(attack.name),
         subtitle: Text(
           'Attack bonus: ${attack.attackBonus} | Damage: ${attack.damage} | Type: ${attack.damageType}',

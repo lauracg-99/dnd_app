@@ -243,6 +243,8 @@ class CharacterCoverTab extends StatelessWidget {
           const SizedBox(height: 30),
 
           LongRestSection(takeComprehensiveLongRest: takeComprehensiveLongRest),
+
+          const SizedBox(height: 30),
         ],
       ),
     );

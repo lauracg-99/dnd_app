@@ -706,6 +706,24 @@ class CharacterSkillChecks {
   final bool stealthProficiency;
   final bool stealthExpertise;
   final int stealthBonus;
+  final bool acrobaticsDisadvantage;
+  final bool animalHandlingDisadvantage;
+  final bool arcanaDisadvantage;
+  final bool athleticsDisadvantage;
+  final bool deceptionDisadvantage;
+  final bool historyDisadvantage;
+  final bool insightDisadvantage;
+  final bool intimidationDisadvantage;
+  final bool investigationDisadvantage;
+  final bool medicineDisadvantage;
+  final bool natureDisadvantage;
+  final bool perceptionDisadvantage;
+  final bool performanceDisadvantage;
+  final bool persuasionDisadvantage;
+  final bool religionDisadvantage;
+  final bool sleightOfHandDisadvantage;
+  final bool stealthDisadvantage;
+  final bool survivalDisadvantage;
   final bool survivalProficiency;
   final bool survivalExpertise;
   final int survivalBonus;
@@ -762,6 +780,24 @@ class CharacterSkillChecks {
     this.stealthProficiency = false,
     this.stealthExpertise = false,
     this.stealthBonus = 0,
+    this.acrobaticsDisadvantage = false,
+    this.animalHandlingDisadvantage = false,
+    this.arcanaDisadvantage = false,
+    this.athleticsDisadvantage = false,
+    this.deceptionDisadvantage = false,
+    this.historyDisadvantage = false,
+    this.insightDisadvantage = false,
+    this.intimidationDisadvantage = false,
+    this.investigationDisadvantage = false,
+    this.medicineDisadvantage = false,
+    this.natureDisadvantage = false,
+    this.perceptionDisadvantage = false,
+    this.performanceDisadvantage = false,
+    this.persuasionDisadvantage = false,
+    this.religionDisadvantage = false,
+    this.sleightOfHandDisadvantage = false,
+    this.stealthDisadvantage = false,
+    this.survivalDisadvantage = false,
     this.survivalProficiency = false,
     this.survivalExpertise = false,
     this.survivalBonus = 0,
@@ -819,6 +855,24 @@ class CharacterSkillChecks {
     'stealth_proficiency': {'value': stealthProficiency},
     'stealth_expertise': {'value': stealthExpertise},
     'stealth_bonus': {'value': stealthBonus},
+    'acrobatics_disadvantage': {'value': acrobaticsDisadvantage},
+    'animal_handling_disadvantage': {'value': animalHandlingDisadvantage},
+    'arcana_disadvantage': {'value': arcanaDisadvantage},
+    'athletics_disadvantage': {'value': athleticsDisadvantage},
+    'deception_disadvantage': {'value': deceptionDisadvantage},
+    'history_disadvantage': {'value': historyDisadvantage},
+    'insight_disadvantage': {'value': insightDisadvantage},
+    'intimidation_disadvantage': {'value': intimidationDisadvantage},
+    'investigation_disadvantage': {'value': investigationDisadvantage},
+    'medicine_disadvantage': {'value': medicineDisadvantage},
+    'nature_disadvantage': {'value': natureDisadvantage},
+    'perception_disadvantage': {'value': perceptionDisadvantage},
+    'performance_disadvantage': {'value': performanceDisadvantage},
+    'persuasion_disadvantage': {'value': persuasionDisadvantage},
+    'religion_disadvantage': {'value': religionDisadvantage},
+    'sleight_of_hand_disadvantage': {'value': sleightOfHandDisadvantage},
+    'stealth_disadvantage': {'value': stealthDisadvantage},
+    'survival_disadvantage': {'value': survivalDisadvantage},
     'survival_proficiency': {'value': survivalProficiency},
     'survival_expertise': {'value': survivalExpertise},
     'survival_bonus': {'value': survivalBonus},
@@ -1080,6 +1134,96 @@ class CharacterSkillChecks {
         json,
         'stealth_bonus',
         defaultValue: 0,
+      ),
+      acrobaticsDisadvantage: Character._getValue<bool>(
+        json,
+        'acrobatics_disadvantage',
+        defaultValue: false,
+      ),
+      animalHandlingDisadvantage: Character._getValue<bool>(
+        json,
+        'animal_handling_disadvantage',
+        defaultValue: false,
+      ),
+      arcanaDisadvantage: Character._getValue<bool>(
+        json,
+        'arcana_disadvantage',
+        defaultValue: false,
+      ),
+      athleticsDisadvantage: Character._getValue<bool>(
+        json,
+        'athletics_disadvantage',
+        defaultValue: false,
+      ),
+      deceptionDisadvantage: Character._getValue<bool>(
+        json,
+        'deception_disadvantage',
+        defaultValue: false,
+      ),
+      historyDisadvantage: Character._getValue<bool>(
+        json,
+        'history_disadvantage',
+        defaultValue: false,
+      ),
+      insightDisadvantage: Character._getValue<bool>(
+        json,
+        'insight_disadvantage',
+        defaultValue: false,
+      ),
+      intimidationDisadvantage: Character._getValue<bool>(
+        json,
+        'intimidation_disadvantage',
+        defaultValue: false,
+      ),
+      investigationDisadvantage: Character._getValue<bool>(
+        json,
+        'investigation_disadvantage',
+        defaultValue: false,
+      ),
+      medicineDisadvantage: Character._getValue<bool>(
+        json,
+        'medicine_disadvantage',
+        defaultValue: false,
+      ),
+      natureDisadvantage: Character._getValue<bool>(
+        json,
+        'nature_disadvantage',
+        defaultValue: false,
+      ),
+      perceptionDisadvantage: Character._getValue<bool>(
+        json,
+        'perception_disadvantage',
+        defaultValue: false,
+      ),
+      performanceDisadvantage: Character._getValue<bool>(
+        json,
+        'performance_disadvantage',
+        defaultValue: false,
+      ),
+      persuasionDisadvantage: Character._getValue<bool>(
+        json,
+        'persuasion_disadvantage',
+        defaultValue: false,
+      ),
+      religionDisadvantage: Character._getValue<bool>(
+        json,
+        'religion_disadvantage',
+        defaultValue: false,
+      ),
+      sleightOfHandDisadvantage: Character._getValue<bool>(
+        json,
+        'sleight_of_hand_disadvantage',
+        defaultValue: false,
+      ),
+      stealthDisadvantage: Character._getValue<bool>(
+        json,
+        'stealth_disadvantage',
+        defaultValue: false,
+      ),
+      survivalDisadvantage: Character._getValue<bool>(
+        json,
+        'survival_disadvantage',
+        defaultValue: false,
       ),
       survivalProficiency: Character._getValue<bool>(
         json,

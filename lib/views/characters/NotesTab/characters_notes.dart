@@ -68,7 +68,7 @@ class CharactersNotes extends StatelessWidget {
                     child: SimpleQuillEditor(
                       controller: backstoryController,
                       toolbarConfig: QuillToolbarConfigs.minimal,
-                      placeholder:'''Write your character's backstory. 
+                      placeholder: '''Write your character's backstory. 
                       
                       Consider including:
                       
@@ -195,6 +195,7 @@ class CharactersNotes extends StatelessWidget {
             controller: controller,
             decoration: InputDecoration(
               hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade600),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
             ),

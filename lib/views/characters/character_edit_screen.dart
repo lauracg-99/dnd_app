@@ -1025,6 +1025,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _attacks.removeAt(index);
         });
       },
+      onReorderAttack: (oldIndex, newIndex) {
+        setState(() {
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+          final movedAttack = _attacks.removeAt(oldIndex);
+          _attacks.insert(newIndex, movedAttack);
+        });
+      },
     );
   }
 
@@ -1173,6 +1182,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       persuasionBonusController: _persuasionBonusController,
       onUpdateSkillCheck: _updateSkillCheck,
       onUpdateSkillExpertise: _updateSkillExpertise,
+      onUpdateSkillDisadvantage: _updateSkillDisadvantage,
       getAbilityScore: _getAbilityScore,
     );
   }
@@ -1698,6 +1708,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.acrobaticsExpertise : false)
                 : _skillChecks.acrobaticsExpertise,
         acrobaticsBonus: acrobaticsBonus,
+        acrobaticsDisadvantage: _skillChecks.acrobaticsDisadvantage,
         animalHandlingProficiency:
             skill == 'animal_handling'
                 ? value
@@ -1707,6 +1718,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.animalHandlingExpertise : false)
                 : _skillChecks.animalHandlingExpertise,
         animalHandlingBonus: animalHandlingBonus,
+        animalHandlingDisadvantage: _skillChecks.animalHandlingDisadvantage,
         arcanaProficiency:
             skill == 'arcana' ? value : _skillChecks.arcanaProficiency,
         arcanaExpertise:
@@ -1714,6 +1726,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.arcanaExpertise : false)
                 : _skillChecks.arcanaExpertise,
         arcanaBonus: arcanaBonus,
+        arcanaDisadvantage: _skillChecks.arcanaDisadvantage,
         athleticsProficiency:
             skill == 'athletics' ? value : _skillChecks.athleticsProficiency,
         athleticsExpertise:
@@ -1721,6 +1734,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.athleticsExpertise : false)
                 : _skillChecks.athleticsExpertise,
         athleticsBonus: athleticsBonus,
+        athleticsDisadvantage: _skillChecks.athleticsDisadvantage,
         deceptionProficiency:
             skill == 'deception' ? value : _skillChecks.deceptionProficiency,
         deceptionExpertise:
@@ -1728,6 +1742,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.deceptionExpertise : false)
                 : _skillChecks.deceptionExpertise,
         deceptionBonus: deceptionBonus,
+        deceptionDisadvantage: _skillChecks.deceptionDisadvantage,
         historyProficiency:
             skill == 'history' ? value : _skillChecks.historyProficiency,
         historyExpertise:
@@ -1735,6 +1750,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.historyExpertise : false)
                 : _skillChecks.historyExpertise,
         historyBonus: historyBonus,
+        historyDisadvantage: _skillChecks.historyDisadvantage,
         insightProficiency:
             skill == 'insight' ? value : _skillChecks.insightProficiency,
         insightExpertise:
@@ -1742,6 +1758,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.insightExpertise : false)
                 : _skillChecks.insightExpertise,
         insightBonus: insightBonus,
+        insightDisadvantage: _skillChecks.insightDisadvantage,
         intimidationProficiency:
             skill == 'intimidation'
                 ? value
@@ -1751,6 +1768,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.intimidationExpertise : false)
                 : _skillChecks.intimidationExpertise,
         intimidationBonus: intimidationBonus,
+        intimidationDisadvantage: _skillChecks.intimidationDisadvantage,
         investigationProficiency:
             skill == 'investigation'
                 ? value
@@ -1760,6 +1778,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.investigationExpertise : false)
                 : _skillChecks.investigationExpertise,
         investigationBonus: investigationBonus,
+        investigationDisadvantage: _skillChecks.investigationDisadvantage,
         medicineProficiency:
             skill == 'medicine' ? value : _skillChecks.medicineProficiency,
         medicineExpertise:
@@ -1767,6 +1786,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.medicineExpertise : false)
                 : _skillChecks.medicineExpertise,
         medicineBonus: medicineBonus,
+        medicineDisadvantage: _skillChecks.medicineDisadvantage,
         natureProficiency:
             skill == 'nature' ? value : _skillChecks.natureProficiency,
         natureExpertise:
@@ -1774,6 +1794,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.natureExpertise : false)
                 : _skillChecks.natureExpertise,
         natureBonus: natureBonus,
+        natureDisadvantage: _skillChecks.natureDisadvantage,
         perceptionProficiency:
             skill == 'perception' ? value : _skillChecks.perceptionProficiency,
         perceptionExpertise:
@@ -1781,6 +1802,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.perceptionExpertise : false)
                 : _skillChecks.perceptionExpertise,
         perceptionBonus: perceptionBonus,
+        perceptionDisadvantage: _skillChecks.perceptionDisadvantage,
         performanceProficiency:
             skill == 'performance'
                 ? value
@@ -1790,6 +1812,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.performanceExpertise : false)
                 : _skillChecks.performanceExpertise,
         performanceBonus: performanceBonus,
+        performanceDisadvantage: _skillChecks.performanceDisadvantage,
         persuasionProficiency:
             skill == 'persuasion' ? value : _skillChecks.persuasionProficiency,
         persuasionExpertise:
@@ -1797,6 +1820,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.persuasionExpertise : false)
                 : _skillChecks.persuasionExpertise,
         persuasionBonus: persuasionBonus,
+        persuasionDisadvantage: _skillChecks.persuasionDisadvantage,
         religionProficiency:
             skill == 'religion' ? value : _skillChecks.religionProficiency,
         religionExpertise:
@@ -1804,6 +1828,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.religionExpertise : false)
                 : _skillChecks.religionExpertise,
         religionBonus: religionBonus,
+        religionDisadvantage: _skillChecks.religionDisadvantage,
         sleightOfHandProficiency:
             skill == 'sleight_of_hand'
                 ? value
@@ -1813,6 +1838,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.sleightOfHandExpertise : false)
                 : _skillChecks.sleightOfHandExpertise,
         sleightOfHandBonus: sleightOfHandBonus,
+        sleightOfHandDisadvantage: _skillChecks.sleightOfHandDisadvantage,
         stealthProficiency:
             skill == 'stealth' ? value : _skillChecks.stealthProficiency,
         stealthExpertise:
@@ -1820,6 +1846,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.stealthExpertise : false)
                 : _skillChecks.stealthExpertise,
         stealthBonus: stealthBonus,
+        stealthDisadvantage: _skillChecks.stealthDisadvantage,
         survivalProficiency:
             skill == 'survival' ? value : _skillChecks.survivalProficiency,
         survivalExpertise:
@@ -1827,6 +1854,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
                 ? (value ? _skillChecks.survivalExpertise : false)
                 : _skillChecks.survivalExpertise,
         survivalBonus: survivalBonus,
+        survivalDisadvantage: _skillChecks.survivalDisadvantage,
       );
       // Manual save only - no auto-save for skill changes
     });
@@ -1844,84 +1872,209 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         acrobaticsExpertise:
             skill == 'acrobatics' ? value : _skillChecks.acrobaticsExpertise,
         acrobaticsBonus: acrobaticsBonus,
+        acrobaticsDisadvantage: _skillChecks.acrobaticsDisadvantage,
         animalHandlingProficiency: _skillChecks.animalHandlingProficiency,
         animalHandlingExpertise:
             skill == 'animal_handling'
                 ? value
                 : _skillChecks.animalHandlingExpertise,
         animalHandlingBonus: animalHandlingBonus,
+        animalHandlingDisadvantage: _skillChecks.animalHandlingDisadvantage,
         arcanaProficiency: _skillChecks.arcanaProficiency,
         arcanaExpertise:
             skill == 'arcana' ? value : _skillChecks.arcanaExpertise,
         arcanaBonus: arcanaBonus,
+        arcanaDisadvantage: _skillChecks.arcanaDisadvantage,
         athleticsProficiency: _skillChecks.athleticsProficiency,
         athleticsExpertise:
             skill == 'athletics' ? value : _skillChecks.athleticsExpertise,
         athleticsBonus: athleticsBonus,
+        athleticsDisadvantage: _skillChecks.athleticsDisadvantage,
         deceptionProficiency: _skillChecks.deceptionProficiency,
         deceptionExpertise:
             skill == 'deception' ? value : _skillChecks.deceptionExpertise,
         deceptionBonus: deceptionBonus,
+        deceptionDisadvantage: _skillChecks.deceptionDisadvantage,
         historyProficiency: _skillChecks.historyProficiency,
         historyExpertise:
             skill == 'history' ? value : _skillChecks.historyExpertise,
         historyBonus: historyBonus,
+        historyDisadvantage: _skillChecks.historyDisadvantage,
         insightProficiency: _skillChecks.insightProficiency,
         insightExpertise:
             skill == 'insight' ? value : _skillChecks.insightExpertise,
         insightBonus: insightBonus,
+        insightDisadvantage: _skillChecks.insightDisadvantage,
         intimidationProficiency: _skillChecks.intimidationProficiency,
         intimidationExpertise:
             skill == 'intimidation'
                 ? value
                 : _skillChecks.intimidationExpertise,
         intimidationBonus: intimidationBonus,
+        intimidationDisadvantage: _skillChecks.intimidationDisadvantage,
         investigationProficiency: _skillChecks.investigationProficiency,
         investigationExpertise:
             skill == 'investigation'
                 ? value
                 : _skillChecks.investigationExpertise,
         investigationBonus: investigationBonus,
+        investigationDisadvantage: _skillChecks.investigationDisadvantage,
         medicineProficiency: _skillChecks.medicineProficiency,
         medicineExpertise:
             skill == 'medicine' ? value : _skillChecks.medicineExpertise,
         medicineBonus: medicineBonus,
+        medicineDisadvantage: _skillChecks.medicineDisadvantage,
         natureProficiency: _skillChecks.natureProficiency,
         natureExpertise:
             skill == 'nature' ? value : _skillChecks.natureExpertise,
         natureBonus: natureBonus,
+        natureDisadvantage: _skillChecks.natureDisadvantage,
         perceptionProficiency: _skillChecks.perceptionProficiency,
         perceptionExpertise:
             skill == 'perception' ? value : _skillChecks.perceptionExpertise,
         perceptionBonus: perceptionBonus,
+        perceptionDisadvantage: _skillChecks.perceptionDisadvantage,
         performanceProficiency: _skillChecks.performanceProficiency,
         performanceExpertise:
             skill == 'performance' ? value : _skillChecks.performanceExpertise,
         performanceBonus: performanceBonus,
+        performanceDisadvantage: _skillChecks.performanceDisadvantage,
         persuasionProficiency: _skillChecks.persuasionProficiency,
         persuasionExpertise:
             skill == 'persuasion' ? value : _skillChecks.persuasionExpertise,
         persuasionBonus: persuasionBonus,
+        persuasionDisadvantage: _skillChecks.persuasionDisadvantage,
         religionProficiency: _skillChecks.religionProficiency,
         religionExpertise:
             skill == 'religion' ? value : _skillChecks.religionExpertise,
         religionBonus: religionBonus,
+        religionDisadvantage: _skillChecks.religionDisadvantage,
         sleightOfHandProficiency: _skillChecks.sleightOfHandProficiency,
         sleightOfHandExpertise:
             skill == 'sleight_of_hand'
                 ? value
                 : _skillChecks.sleightOfHandExpertise,
         sleightOfHandBonus: sleightOfHandBonus,
+        sleightOfHandDisadvantage: _skillChecks.sleightOfHandDisadvantage,
         stealthProficiency: _skillChecks.stealthProficiency,
         stealthExpertise:
             skill == 'stealth' ? value : _skillChecks.stealthExpertise,
         stealthBonus: stealthBonus,
+        stealthDisadvantage: _skillChecks.stealthDisadvantage,
         survivalProficiency: _skillChecks.survivalProficiency,
         survivalExpertise:
             skill == 'survival' ? value : _skillChecks.survivalExpertise,
         survivalBonus: survivalBonus,
+        survivalDisadvantage: _skillChecks.survivalDisadvantage,
       );
       // Manual save only - no auto-save for skill expertise changes
+    });
+  }
+
+  void _updateSkillDisadvantage(String skill, bool value) {
+    setState(() {
+      _skillChecks = CharacterSkillChecks(
+        acrobaticsProficiency: _skillChecks.acrobaticsProficiency,
+        acrobaticsExpertise: _skillChecks.acrobaticsExpertise,
+        acrobaticsBonus: acrobaticsBonus,
+        acrobaticsDisadvantage:
+            skill == 'acrobatics' ? value : _skillChecks.acrobaticsDisadvantage,
+        animalHandlingProficiency: _skillChecks.animalHandlingProficiency,
+        animalHandlingExpertise: _skillChecks.animalHandlingExpertise,
+        animalHandlingBonus: animalHandlingBonus,
+        animalHandlingDisadvantage:
+            skill == 'animal_handling'
+                ? value
+                : _skillChecks.animalHandlingDisadvantage,
+        arcanaProficiency: _skillChecks.arcanaProficiency,
+        arcanaExpertise: _skillChecks.arcanaExpertise,
+        arcanaBonus: arcanaBonus,
+        arcanaDisadvantage:
+            skill == 'arcana' ? value : _skillChecks.arcanaDisadvantage,
+        athleticsProficiency: _skillChecks.athleticsProficiency,
+        athleticsExpertise: _skillChecks.athleticsExpertise,
+        athleticsBonus: athleticsBonus,
+        athleticsDisadvantage:
+            skill == 'athletics' ? value : _skillChecks.athleticsDisadvantage,
+        deceptionProficiency: _skillChecks.deceptionProficiency,
+        deceptionExpertise: _skillChecks.deceptionExpertise,
+        deceptionBonus: deceptionBonus,
+        deceptionDisadvantage:
+            skill == 'deception' ? value : _skillChecks.deceptionDisadvantage,
+        historyProficiency: _skillChecks.historyProficiency,
+        historyExpertise: _skillChecks.historyExpertise,
+        historyBonus: historyBonus,
+        historyDisadvantage:
+            skill == 'history' ? value : _skillChecks.historyDisadvantage,
+        insightProficiency: _skillChecks.insightProficiency,
+        insightExpertise: _skillChecks.insightExpertise,
+        insightBonus: insightBonus,
+        insightDisadvantage:
+            skill == 'insight' ? value : _skillChecks.insightDisadvantage,
+        intimidationProficiency: _skillChecks.intimidationProficiency,
+        intimidationExpertise: _skillChecks.intimidationExpertise,
+        intimidationBonus: intimidationBonus,
+        intimidationDisadvantage:
+            skill == 'intimidation'
+                ? value
+                : _skillChecks.intimidationDisadvantage,
+        investigationProficiency: _skillChecks.investigationProficiency,
+        investigationExpertise: _skillChecks.investigationExpertise,
+        investigationBonus: investigationBonus,
+        investigationDisadvantage:
+            skill == 'investigation'
+                ? value
+                : _skillChecks.investigationDisadvantage,
+        medicineProficiency: _skillChecks.medicineProficiency,
+        medicineExpertise: _skillChecks.medicineExpertise,
+        medicineBonus: medicineBonus,
+        medicineDisadvantage:
+            skill == 'medicine' ? value : _skillChecks.medicineDisadvantage,
+        natureProficiency: _skillChecks.natureProficiency,
+        natureExpertise: _skillChecks.natureExpertise,
+        natureBonus: natureBonus,
+        natureDisadvantage:
+            skill == 'nature' ? value : _skillChecks.natureDisadvantage,
+        perceptionProficiency: _skillChecks.perceptionProficiency,
+        perceptionExpertise: _skillChecks.perceptionExpertise,
+        perceptionBonus: perceptionBonus,
+        perceptionDisadvantage:
+            skill == 'perception' ? value : _skillChecks.perceptionDisadvantage,
+        performanceProficiency: _skillChecks.performanceProficiency,
+        performanceExpertise: _skillChecks.performanceExpertise,
+        performanceBonus: performanceBonus,
+        performanceDisadvantage:
+            skill == 'performance'
+                ? value
+                : _skillChecks.performanceDisadvantage,
+        persuasionProficiency: _skillChecks.persuasionProficiency,
+        persuasionExpertise: _skillChecks.persuasionExpertise,
+        persuasionBonus: persuasionBonus,
+        persuasionDisadvantage:
+            skill == 'persuasion' ? value : _skillChecks.persuasionDisadvantage,
+        religionProficiency: _skillChecks.religionProficiency,
+        religionExpertise: _skillChecks.religionExpertise,
+        religionBonus: religionBonus,
+        religionDisadvantage:
+            skill == 'religion' ? value : _skillChecks.religionDisadvantage,
+        sleightOfHandProficiency: _skillChecks.sleightOfHandProficiency,
+        sleightOfHandExpertise: _skillChecks.sleightOfHandExpertise,
+        sleightOfHandBonus: sleightOfHandBonus,
+        sleightOfHandDisadvantage:
+            skill == 'sleight_of_hand'
+                ? value
+                : _skillChecks.sleightOfHandDisadvantage,
+        stealthProficiency: _skillChecks.stealthProficiency,
+        stealthExpertise: _skillChecks.stealthExpertise,
+        stealthBonus: stealthBonus,
+        stealthDisadvantage:
+            skill == 'stealth' ? value : _skillChecks.stealthDisadvantage,
+        survivalProficiency: _skillChecks.survivalProficiency,
+        survivalExpertise: _skillChecks.survivalExpertise,
+        survivalBonus: survivalBonus,
+        survivalDisadvantage:
+            skill == 'survival' ? value : _skillChecks.survivalDisadvantage,
+      );
     });
   }
 
@@ -4377,6 +4530,24 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           stealthProficiency: _skillChecks.stealthProficiency,
           stealthExpertise: _skillChecks.stealthExpertise,
           stealthBonus: stealthBonus,
+          acrobaticsDisadvantage: _skillChecks.acrobaticsDisadvantage,
+          animalHandlingDisadvantage: _skillChecks.animalHandlingDisadvantage,
+          arcanaDisadvantage: _skillChecks.arcanaDisadvantage,
+          athleticsDisadvantage: _skillChecks.athleticsDisadvantage,
+          deceptionDisadvantage: _skillChecks.deceptionDisadvantage,
+          historyDisadvantage: _skillChecks.historyDisadvantage,
+          insightDisadvantage: _skillChecks.insightDisadvantage,
+          intimidationDisadvantage: _skillChecks.intimidationDisadvantage,
+          investigationDisadvantage: _skillChecks.investigationDisadvantage,
+          medicineDisadvantage: _skillChecks.medicineDisadvantage,
+          natureDisadvantage: _skillChecks.natureDisadvantage,
+          perceptionDisadvantage: _skillChecks.perceptionDisadvantage,
+          performanceDisadvantage: _skillChecks.performanceDisadvantage,
+          persuasionDisadvantage: _skillChecks.persuasionDisadvantage,
+          religionDisadvantage: _skillChecks.religionDisadvantage,
+          sleightOfHandDisadvantage: _skillChecks.sleightOfHandDisadvantage,
+          stealthDisadvantage: _skillChecks.stealthDisadvantage,
+          survivalDisadvantage: _skillChecks.survivalDisadvantage,
           survivalProficiency: _skillChecks.survivalProficiency,
           survivalExpertise: _skillChecks.survivalExpertise,
           survivalBonus: survivalBonus,

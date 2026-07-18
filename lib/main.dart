@@ -20,6 +20,7 @@ import 'services/character_service.dart';
 import 'services/diary_service.dart';
 import 'services/firebase_auth_service.dart';
 import 'services/cloud_sync_service.dart';
+import 'services/remote_config_service.dart';
 import 'firebase_options.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -38,6 +39,8 @@ Future<void> main() async {
   // Initialize Firebase services
   final authService = FirebaseAuthService();
   final syncService = CloudSyncService();
+  // Initialize Remote Config so feature flags are available early
+  await RemoteConfigService.instance.initialize();
   await authService.initialize();
   await syncService.initialize();
 

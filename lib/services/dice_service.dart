@@ -115,7 +115,7 @@ static Future<String?> lanzarDadosResult(
       dadosUI = dadosLanzados;
     }
 
-    final String dadosTexto = "Dados: $dadosUI";
+    final String dadosTexto = "Dices: $dadosUI";
     
     if (bono > 0) {
       return "Total: ${resultado.total} · $dadosTexto · Bono: +$bono";
@@ -151,7 +151,7 @@ static Future<String?> lanzarDadosResult(
 
         SnackbarHelper.showInfo(
           context,
-          "Total tirada: ${tirada.total} ${tirada.detailedResults} ${tirada.expression}",
+          "Total: ${tirada.total} ${tirada.detailedResults} ${tirada.expression}",
           duration: const Duration(seconds: 20),
         );
 

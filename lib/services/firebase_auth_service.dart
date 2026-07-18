@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:dnd_app/services/remote_config_service.dart';
 
 /// Service for handling Firebase authentication
 class FirebaseAuthService {
@@ -36,6 +37,10 @@ class FirebaseAuthService {
   /// Sign in with email and password
   /// If user doesn't exist, creates a new account
   Future<AuthResult> signInWithEmail(String email, String password) async {
+    // Check remote config: allow sign in
+    if (!RemoteConfigService.instance.allowSignIn) {
+      return AuthResult.failure('Sign in is temporarily disabled.');
+    }
     try {
       // Try to sign in first
       final credential = await _auth.signInWithEmailAndPassword(
@@ -51,6 +56,10 @@ class FirebaseAuthService {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found' || e.code == 'wrong-password') {
         // User doesn't exist or wrong password, try to create account
+        // If user not found, check remote config for registration
+        if (!RemoteConfigService.instance.allowRegister) {
+          return AuthResult.failure('Registration is disabled.');
+        }
         try {
           final credential = await _auth.createUserWithEmailAndPassword(
             email: email,
