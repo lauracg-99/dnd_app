@@ -23,7 +23,8 @@ import 'services/cloud_sync_service.dart';
 import 'services/remote_config_service.dart';
 import 'firebase_options.dart';
 
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 Future<void> main() async {
   // Ensure Flutter binding is initialized
@@ -41,7 +42,9 @@ Future<void> main() async {
   final syncService = CloudSyncService();
   // Initialize Remote Config so feature flags are available early
   await RemoteConfigService.instance.initialize();
+  // Initialize auth and wait for Firebase Auth to restore the current session
   await authService.initialize();
+  await authService.initialAuthState;
   await syncService.initialize();
 
   runApp(
@@ -132,7 +135,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   static const List<NavigationDestination> _destinations = [
     NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),
     NavigationDestination(icon: Icon(Icons.book), label: 'Diaries'),
-    NavigationDestination(icon: Icon(Symbols.playing_cards),label: 'Spells',),
+    NavigationDestination(icon: Icon(Symbols.playing_cards), label: 'Spells'),
     NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),
   ];
 

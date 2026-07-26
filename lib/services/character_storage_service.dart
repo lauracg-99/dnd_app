@@ -4,10 +4,11 @@ import 'base_storage_service.dart';
 import 'cloud_sync_service.dart';
 
 class CharacterStorageService extends BaseStorageService<Character> {
-  static final CharacterStorageService _instance = CharacterStorageService._internal();
-  
+  static final CharacterStorageService _instance =
+      CharacterStorageService._internal();
+
   factory CharacterStorageService() => _instance;
-  
+
   CharacterStorageService._internal() : super('characters');
 
   @override
@@ -30,7 +31,9 @@ class CharacterStorageService extends BaseStorageService<Character> {
 
   @override
   void sortEntities(List<Character> entities) {
-    entities.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    entities.sort(
+      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    );
   }
 
   @override
@@ -44,7 +47,12 @@ class CharacterStorageService extends BaseStorageService<Character> {
       return;
     }
 
-    final userId = syncService.authService.currentUser!.uid;
+    final currentUser = syncService.authService.currentUser;
+    if (currentUser == null) {
+      return;
+    }
+
+    final userId = currentUser.uid;
     final firestore = FirebaseFirestore.instance;
 
     final characterRef = firestore

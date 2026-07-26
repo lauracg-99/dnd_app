@@ -116,7 +116,12 @@ class CloudSyncService {
     try {
       _updateSyncStatus(SyncStatus.syncing);
 
-      final userId = _authService.currentUser!.uid;
+      final currentUser = _authService.currentUser;
+      if (currentUser == null) {
+        _updateSyncStatus(SyncStatus.error);
+        return SyncResult.failure('User not authenticated');
+      }
+      final userId = currentUser.uid;
 
       // Upload characters
       final characters = await CharacterService.loadAllCharacters();
@@ -158,7 +163,12 @@ class CloudSyncService {
     try {
       _updateSyncStatus(SyncStatus.syncing);
 
-      final userId = _authService.currentUser!.uid;
+      final currentUser = _authService.currentUser;
+      if (currentUser == null) {
+        _updateSyncStatus(SyncStatus.error);
+        return SyncResult.failure('User not authenticated');
+      }
+      final userId = currentUser.uid;
 
       // Download characters
       final characterMaps = await _downloadCharacters(userId);
@@ -240,7 +250,12 @@ class CloudSyncService {
     try {
       _updateSyncStatus(SyncStatus.syncing);
 
-      final userId = _authService.currentUser!.uid;
+      final currentUser = _authService.currentUser;
+      if (currentUser == null) {
+        _updateSyncStatus(SyncStatus.error);
+        return SyncResult.failure('User not authenticated');
+      }
+      final userId = currentUser.uid;
       if (kDebugMode) {
         print('=== Starting $entityName sync for user: $userId ===');
       }
@@ -309,7 +324,11 @@ class CloudSyncService {
     }
 
     try {
-      final userId = _authService.currentUser!.uid;
+      final currentUser = _authService.currentUser;
+      if (currentUser == null) {
+        return false;
+      }
+      final userId = currentUser.uid;
       final localCharacters = await CharacterService.loadAllCharacters();
       final localCharacterIds = localCharacters.map((c) => c.id).toSet();
 
@@ -527,7 +546,11 @@ class CloudSyncService {
     }
 
     try {
-      final userId = _authService.currentUser!.uid;
+      final currentUser = _authService.currentUser;
+      if (currentUser == null) {
+        return false;
+      }
+      final userId = currentUser.uid;
 
       // Check if user has any characters
       final charactersRef = _firestore
@@ -564,7 +587,12 @@ class CloudSyncService {
     try {
       _updateSyncStatus(SyncStatus.syncing);
 
-      final userId = _authService.currentUser!.uid;
+      final currentUser = _authService.currentUser;
+      if (currentUser == null) {
+        _updateSyncStatus(SyncStatus.error);
+        return SyncResult.failure('User not authenticated');
+      }
+      final userId = currentUser.uid;
 
       // Delete all characters
       final charactersRef = _firestore
@@ -625,7 +653,11 @@ class CloudSyncService {
     }
 
     try {
-      final userId = _authService.currentUser!.uid;
+      final currentUser = _authService.currentUser;
+      if (currentUser == null) {
+        return SyncResult.failure('User not authenticated');
+      }
+      final userId = currentUser.uid;
 
       // Remove device from Firestore
       await _firestore
@@ -662,7 +694,14 @@ class CloudSyncService {
       return;
     }
 
-    final userId = _authService.currentUser!.uid;
+    final currentUser = _authService.currentUser;
+    if (currentUser == null) {
+      if (kDebugMode) {
+        print('Cannot start listeners: currentUser became null');
+      }
+      return;
+    }
+    final userId = currentUser.uid;
 
     if (kDebugMode) {
       print('Starting real-time listeners for user: $userId');
@@ -812,7 +851,9 @@ class CloudSyncService {
             _lastKnownCharacters[docId] = characterData;
           } else {
             if (kDebugMode) {
-              print('Character $docId metadata changed but data is the same, ignoring');
+              print(
+                'Character $docId metadata changed but data is the same, ignoring',
+              );
             }
           }
         }
@@ -912,7 +953,9 @@ class CloudSyncService {
             _lastKnownDiaries[docId] = diaryData;
           } else {
             if (kDebugMode) {
-              print('Diary $docId metadata changed but data is the same, ignoring');
+              print(
+                'Diary $docId metadata changed but data is the same, ignoring',
+              );
             }
           }
         }
