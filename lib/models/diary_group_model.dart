@@ -1,12 +1,12 @@
 import 'base_model.dart';
 import 'timestamped_entity.dart';
 
-class DiaryEntry extends BaseModel with TimestampedEntity {
+/// Model representing a diary group for organizing diary entries
+/// Groups allow users to categorize entries (e.g., by session, campaign arc, etc.)
+class DiaryGroup extends BaseModel with TimestampedEntity {
   final String id;
   final String characterId;
-  final String title;
-  final String content;
-  final String? groupId; // Optional group ID for grouping entries
+  final String name;
   
   @override
   final DateTime createdAt;
@@ -14,12 +14,10 @@ class DiaryEntry extends BaseModel with TimestampedEntity {
   @override
   final DateTime updatedAt;
 
-  const DiaryEntry({
+  const DiaryGroup({
     required this.id,
     required this.characterId,
-    required this.title,
-    required this.content,
-    this.groupId, // Optional group ID
+    required this.name,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -27,53 +25,45 @@ class DiaryEntry extends BaseModel with TimestampedEntity {
   @override
   Map<String, dynamic> toJson() {
     return {
-      'resource_id': 'diary_entry',
+      'resource_id': 'diary_group',
       'data': {
         'id': {'value': id},
         'character_id': {'value': characterId},
-        'title': {'value': title},
-        'content': {'value': content},
-        'group_id': {'value': groupId ?? ''}, // Empty string for null
+        'name': {'value': name},
         'created_at': {'value': createdAt.toIso8601String()},
         'updated_at': {'value': updatedAt.toIso8601String()},
       },
     };
   }
 
-  factory DiaryEntry.fromJson(Map<String, dynamic> json) {
+  factory DiaryGroup.fromJson(Map<String, dynamic> json) {
     final data = json['data'] as Map<String, dynamic>;
     
-    return DiaryEntry(
+    return DiaryGroup(
       id: _getValue<String>(data, 'id'),
       characterId: _getValue<String>(data, 'character_id'),
-      title: _getValue<String>(data, 'title'),
-      content: _getValue<String>(data, 'content'),
-      groupId: _parseNullableString(data, 'group_id'), // Parse nullable group ID
+      name: _getValue<String>(data, 'name'),
       createdAt: DateTime.parse(_getValue<String>(data, 'created_at')),
       updatedAt: DateTime.parse(_getValue<String>(data, 'updated_at')),
     );
   }
 
   @override
-  DiaryEntry withUpdatedTimestamp() {
+  DiaryGroup withUpdatedTimestamp() {
     return copyWith(updatedAt: DateTime.now());
   }
 
-  DiaryEntry copyWith({
+  DiaryGroup copyWith({
     String? id,
     String? characterId,
-    String? title,
-    String? content,
-    String? groupId,
+    String? name,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return DiaryEntry(
+    return DiaryGroup(
       id: id ?? this.id,
       characterId: characterId ?? this.characterId,
-      title: title ?? this.title,
-      content: content ?? this.content,
-      groupId: groupId ?? this.groupId,
+      name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -105,21 +95,4 @@ class DiaryEntry extends BaseModel with TimestampedEntity {
       rethrow;
     }
   }
-
-  /// Helper method to parse nullable string fields from JSON
-  /// Returns null if field doesn't exist, is null, or is empty string
-  static String? _parseNullableString(Map<String, dynamic> data, String key) {
-    if (!data.containsKey(key)) return null;
-    
-    final v = data[key];
-    if (v is Map && v.containsKey('value')) {
-      final val = v['value'];
-      if (val == null || val == '') return null;
-      return val as String;
-    }
-    
-    if (v == null || v == '') return null;
-    return v as String;
-  }
-
 }

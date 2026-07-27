@@ -17,10 +17,19 @@ class DiaryService {
   }
 
   /// Load all diary entries for a specific character
+  /// Optionally filter by groupId to get entries for a specific group
   static Future<List<DiaryEntry>> loadDiaryEntriesForCharacter(
-    String characterId,
-  ) async {
-    return await _storage.loadAll(filter: characterId);
+    String characterId, {
+    String? groupId, // Optional group filter
+  }) async {
+    final entries = await _storage.loadAll(filter: characterId);
+    
+    // Filter by groupId if provided
+    if (groupId != null) {
+      return entries.where((entry) => entry.groupId == groupId).toList();
+    }
+    
+    return entries;
   }
 
   /// Load all diary entries (no filter)
@@ -33,6 +42,7 @@ class DiaryService {
     required String characterId,
     required String title,
     String content = '',
+    String? groupId, // Optional group ID for organizing entries
   }) async {
     final now = DateTime.now();
     final diaryId =
@@ -43,12 +53,20 @@ class DiaryService {
       characterId: characterId,
       title: title,
       content: content,
+      groupId: groupId, // Set group ID if provided
       createdAt: now,
       updatedAt: now,
     );
 
     await saveDiaryEntry(diaryEntry);
     return diaryEntry;
+  }
+
+  /// Update an existing diary entry
+  static Future<DiaryEntry> updateDiaryEntry(DiaryEntry diaryEntry) async {
+    final updatedEntry = diaryEntry.withUpdatedTimestamp();
+    await saveDiaryEntry(updatedEntry);
+    return updatedEntry;
   }
 
   /// Delete a diary entry

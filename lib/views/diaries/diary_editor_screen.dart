@@ -5,7 +5,9 @@ import 'package:flutter_quill/quill_delta.dart';
 import 'dart:convert';
 import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
+import '../../models/diary_group_model.dart';
 import '../../services/diary_service.dart';
+import '../../services/diary_group_service.dart';
 import '../../utils/quill_toolbar_configs.dart';
 import '../../utils/simple_quill_editor_no_card.dart';
 
@@ -28,6 +30,8 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
   final _contentController = QuillController.basic();
   bool _isLoading = false;
   bool _isSavingOnPop = false;
+  List<DiaryGroup> _diaryGroups = [];
+  String? _selectedGroupId;
 
   // Variables para almacenar el estado inicial y detectar cambios
   String _initialTitle = '';
@@ -39,6 +43,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
     if (widget.diaryEntry != null) {
       _titleController.text = widget.diaryEntry!.title;
       _initialTitle = widget.diaryEntry!.title;
+      _selectedGroupId = widget.diaryEntry!.groupId; // Load existing group
 
       // Initialize content with rich text support
       try {
@@ -62,6 +67,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
         _contentController.document.toDelta().toJson(),
       );
     }
+    _loadDiaryGroups();
   }
 
   @override
@@ -89,6 +95,12 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
           ),
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           actions: [
+            // Group assignment button (left of save)
+            IconButton(
+              icon: const Icon(Icons.folder),
+              onPressed: _showGroupAssignmentDialog,
+              tooltip: 'Assign to Group',
+            ),
             if (_isLoading)
               const Padding(
                 padding: EdgeInsets.all(16.0),
@@ -230,12 +242,14 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
           characterId: widget.character.id,
           title: _titleController.text.trim(),
           content: currentContent,
+          groupId: _selectedGroupId, // Include group ID
         );
       } else {
         // Update existing diary entry
         savedEntry = widget.diaryEntry!.copyWith(
           title: _titleController.text.trim(),
           content: currentContent,
+          groupId: _selectedGroupId, // Include group ID
         );
         await DiaryService.saveDiaryEntry(savedEntry);
       }
@@ -272,5 +286,144 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Future<void> _loadDiaryGroups() async {
+    try {
+      final groups = await DiaryGroupService.loadDiaryGroupsForCharacter(
+        widget.character.id,
+      );
+      if (mounted) {
+        setState(() {
+          _diaryGroups = groups;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading diary groups: $e');
+    }
+  }
+
+  void _showGroupAssignmentDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Assign to Group'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: _diaryGroups.isEmpty
+              ? const Text('No groups available. Create a group first.')
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Select a group for this entry:'),
+                    const SizedBox(height: 16),
+                    ..._diaryGroups.map((group) {
+                      return RadioListTile<String>(
+                        title: Text(group.name),
+                        value: group.id,
+                        groupValue: _selectedGroupId,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedGroupId = value;
+                          });
+                          Navigator.pop(context);
+                        },
+                      );
+                    }),
+                    RadioListTile<String>(
+                      title: const Text('No Group'),
+                      value: '',
+                      groupValue: _selectedGroupId ?? '',
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedGroupId = null;
+                        });
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: _showCreateGroupDialog,
+            child: const Text('Create New Group'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCreateGroupDialog() {
+    Navigator.pop(context); // Close the assignment dialog first
+    
+    final TextEditingController nameController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create New Group'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Group Name',
+            hintText: 'e.g., Session 1, Campaign Arc, etc.',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final groupName = nameController.text.trim();
+              if (groupName.isEmpty) {
+                if (mounted) {
+                  SnackbarHelper.showError(
+                    context,
+                    'Please enter a group name',
+                  );
+                }
+                return;
+              }
+              
+              Navigator.pop(context);
+              
+              try {
+                final newGroup = await DiaryGroupService.createDiaryGroup(
+                  characterId: widget.character.id,
+                  name: groupName,
+                );
+                await _loadDiaryGroups();
+                
+                if (mounted) {
+                  setState(() {
+                    _selectedGroupId = newGroup.id;
+                  });
+                  SnackbarHelper.showSuccess(
+                    context,
+                    'Group created and assigned successfully',
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  SnackbarHelper.showError(
+                    context,
+                    'Error creating group: $e',
+                  );
+                }
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
   }
 }
