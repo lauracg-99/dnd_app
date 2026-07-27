@@ -18,6 +18,7 @@ import 'viewmodels/backgrounds_viewmodel.dart';
 import 'viewmodels/weapons_viewmodel.dart';
 import 'services/character_service.dart';
 import 'services/diary_service.dart';
+import 'services/diary_group_service.dart';
 import 'services/firebase_auth_service.dart';
 import 'services/cloud_sync_service.dart';
 import 'services/remote_config_service.dart';
@@ -36,6 +37,7 @@ Future<void> main() async {
   // Initialize storage systems
   await CharacterService.initializeStorage();
   await DiaryService.initializeStorage();
+  await DiaryGroupService.initializeStorage();
 
   // Initialize Firebase services
   final authService = FirebaseAuthService();
@@ -44,7 +46,6 @@ Future<void> main() async {
   await RemoteConfigService.instance.initialize();
   // Initialize auth and wait for Firebase Auth to restore the current session
   await authService.initialize();
-  await authService.initialAuthState;
   await syncService.initialize();
 
   runApp(

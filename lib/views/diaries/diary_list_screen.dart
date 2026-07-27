@@ -342,7 +342,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
               style: TextStyle(color: Colors.grey[500], fontSize: 12),
             ),
             const SizedBox(height: 4),
-            if (entryGroup != null)
+            if (entryGroup != null && entryGroup.name != 'Unknown')
               Text(
                   'Group: ${entryGroup.name}',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
@@ -581,6 +581,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
   }
 
   Widget _buildActiveGroupFilter() {
+    // Only show filter if the selected group actually exists in _diaryGroups
     final selectedGroup = _diaryGroups.firstWhere(
       (g) => g.id == _selectedGroupId,
       orElse: () => DiaryGroup(
@@ -591,6 +592,15 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
         updatedAt: DateTime.now(),
       ),
     );
+    
+    // Don't show filter if group doesn't exist (Unknown)
+    if (selectedGroup.name == 'Unknown') {
+      // Clear the invalid selection
+      setState(() {
+        _selectedGroupId = null;
+      });
+      return const SizedBox.shrink();
+    }
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
@@ -1052,7 +1062,9 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
       // Update all selected entries
       for (final entryId in _selectedEntryIds) {
         final entry = _diaryEntries.firstWhere((e) => e.id == entryId);
-        final updatedEntry = entry.copyWith(groupId: groupId);
+        final updatedEntry = groupId == null
+            ? entry.copyWith(clearGroupId: true)
+            : entry.copyWith(groupId: groupId);
         await DiaryService.updateDiaryEntry(updatedEntry);
       }
       
