@@ -542,12 +542,10 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                 ..._diaryGroups.map((group) {
                   return DropdownMenuItem(
                     value: group.id,
-                    child: Flexible(
-                      child: Text(
-                        group.name,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
+                    child: Text(
+                      group.name,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   );
                 }),
