@@ -73,7 +73,7 @@ class DiaryEntry extends BaseModel with TimestampedEntity {
       characterId: characterId ?? this.characterId,
       title: title ?? this.title,
       content: content ?? this.content,
-      groupId: groupId ?? this.groupId,
+      groupId: groupId, // Allow explicit null to clear group assignment
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

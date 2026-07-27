@@ -26,6 +26,9 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
   String? _error;
   final _searchController = TextEditingController();
   String? _selectedGroupId; // Currently selected group filter
+  String _sortBy = 'date'; // Sort option: 'date' or 'name'
+  bool _isSelectionMode = false; // Selection mode for bulk operations
+  final Set<String> _selectedEntryIds = <String>{}; // IDs of selected entries
 
   @override
   void initState() {
@@ -82,13 +85,26 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
   }
 
   List<DiaryEntry> get _filteredEntries {
-    if (_searchController.text.isEmpty) {
-      return _diaryEntries;
+    List<DiaryEntry> entries = _diaryEntries;
+    
+    // Apply search filter
+    if (_searchController.text.isNotEmpty) {
+      entries = DiaryService.searchDiaryEntries(
+        entries,
+        _searchController.text,
+      );
     }
-    return DiaryService.searchDiaryEntries(
-      _diaryEntries,
-      _searchController.text,
-    );
+    
+    // Apply sorting
+    if (_sortBy == 'name') {
+      entries = List<DiaryEntry>.from(entries)
+        ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    } else if (_sortBy == 'date') {
+      entries = List<DiaryEntry>.from(entries)
+        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)); // Newest first
+    }
+    
+    return entries;
   }
 
   @override
@@ -97,6 +113,50 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
       appBar: AppBar(
         title: Text('${widget.character.name}\'s Diary'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          if (_isSelectionMode) ...[
+            // Selection count
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Center(
+                child: Text(
+                  '${_selectedEntryIds.length} selected',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ),
+            // Assign to group button
+            if (_selectedEntryIds.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.folder),
+                onPressed: _showBulkAssignGroupDialog,
+                tooltip: 'Assign to Group',
+              ),
+            // Cancel selection mode
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                setState(() {
+                  _isSelectionMode = false;
+                  _selectedEntryIds.clear();
+                });
+              },
+              tooltip: 'Cancel Selection',
+            ),
+          ] else ...[
+            // Selection mode toggle
+            IconButton(
+              icon: const Icon(Icons.checklist),
+              onPressed: () {
+                setState(() {
+                  _isSelectionMode = true;
+                });
+              },
+              tooltip: 'Select Multiple',
+            ),
+            _buildSortSelector(),
+          ],
+        ],
       ),
       body: Column(
         children: [
@@ -226,9 +286,39 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
   }
 
   Widget _buildDiaryEntryCard(DiaryEntry entry) {
+    // Find the entry's group if it has one
+    final entryGroup = entry.groupId != null
+        ? _diaryGroups.firstWhere(
+            (g) => g.id == entry.groupId,
+            orElse: () => DiaryGroup(
+              id: '',
+              characterId: widget.character.id,
+              name: 'Unknown',
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          )
+        : null;
+    
+    final isSelected = _selectedEntryIds.contains(entry.id);
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 12.0),
       child: ListTile(
+        leading: _isSelectionMode
+            ? Checkbox(
+                value: isSelected,
+                onChanged: (value) {
+                  setState(() {
+                    if (value == true) {
+                      _selectedEntryIds.add(entry.id);
+                    } else {
+                      _selectedEntryIds.remove(entry.id);
+                    }
+                  });
+                },
+              )
+            : null,
         title: Text(
           entry.title,
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -251,58 +341,76 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
               'Updated: ${_formatDate(entry.updatedAt)}',
               style: TextStyle(color: Colors.grey[500], fontSize: 12),
             ),
+            const SizedBox(height: 4),
+            if (entryGroup != null)
+              Text(
+                  'Group: ${entryGroup.name}',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                )
           ],
         ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (value) {
-            switch (value) {
-              case 'edit':
-                _editDiaryEntry(entry);
-                break;
-              case 'assign_group':
-                _showAssignGroupDialog(entry);
-                break;
-              case 'delete':
-                _deleteDiaryEntry(entry);
-                break;
-            }
-          },
-          itemBuilder:
-              (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit),
-                      SizedBox(width: 8),
-                      Text('Edit'),
+        trailing: _isSelectionMode
+            ? null
+            : PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'edit':
+                      _editDiaryEntry(entry);
+                      break;
+                    case 'assign_group':
+                      _showAssignGroupDialog(entry);
+                      break;
+                    case 'delete':
+                      _deleteDiaryEntry(entry);
+                      break;
+                  }
+                },
+                itemBuilder:
+                    (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit),
+                            SizedBox(width: 8),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'assign_group',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.folder),
+                            const SizedBox(width: 8),
+                            Text('Assign to Group'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'assign_group',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.folder),
-                      const SizedBox(width: 8),
-                      Text('Assign to Group'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
-        ),
-        onTap: () => _viewDiaryEntry(entry),
+              ),
+        onTap: _isSelectionMode
+            ? () {
+                setState(() {
+                  if (isSelected) {
+                    _selectedEntryIds.remove(entry.id);
+                  } else {
+                    _selectedEntryIds.add(entry.id);
+                  }
+                });
+              }
+            : () => _viewDiaryEntry(entry),
       ),
     );
   }
@@ -577,6 +685,37 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildSortSelector() {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: DropdownButton<String>(
+        value: _sortBy,
+        underline: const SizedBox(),
+        icon: const Icon(Icons.sort),
+        borderRadius: BorderRadius.circular(10),
+        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+        dropdownColor: Theme.of(context).colorScheme.inversePrimary,
+        items: const [
+          DropdownMenuItem(
+            value: 'date',
+            child: Text('Date'),
+          ),
+          DropdownMenuItem(
+            value: 'name',
+            child: Text('Name'),
+          ),
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            setState(() {
+              _sortBy = value;
+            });
+          }
+        },
       ),
     );
   }
@@ -860,6 +999,84 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
         SnackbarHelper.showError(
           context,
           'Error assigning to group: $e',
+        );
+      }
+    }
+  }
+
+  void _showBulkAssignGroupDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Assign ${_selectedEntryIds.length} Entries to Group'),
+        content: _diaryGroups.isEmpty
+            ? const Text('No groups available. Create a group first.')
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Select a group for these entries:'),
+                  const SizedBox(height: 16),
+                  ..._diaryGroups.map((group) {
+                    return ListTile(
+                      title: Text(group.name),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await _bulkAssignEntriesToGroup(group.id);
+                      },
+                    );
+                  }),
+                  ListTile(
+                    title: const Text('No Group'),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _bulkAssignEntriesToGroup(null);
+                    },
+                  ),
+                ],
+              ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _bulkAssignEntriesToGroup(String? groupId) async {
+    try {
+      // Save count before clearing
+      final assignedCount = _selectedEntryIds.length;
+      
+      // Update all selected entries
+      for (final entryId in _selectedEntryIds) {
+        final entry = _diaryEntries.firstWhere((e) => e.id == entryId);
+        final updatedEntry = entry.copyWith(groupId: groupId);
+        await DiaryService.updateDiaryEntry(updatedEntry);
+      }
+      
+      // Reload entries and exit selection mode
+      await _loadDiaryEntries();
+      setState(() {
+        _isSelectionMode = false;
+        _selectedEntryIds.clear();
+      });
+      
+      if (mounted) {
+        final groupName = groupId != null 
+            ? _diaryGroups.firstWhere((g) => g.id == groupId).name 
+            : 'No Group';
+        SnackbarHelper.showSuccess(
+          context,
+          '$assignedCount entries assigned to "$groupName"',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackbarHelper.showError(
+          context,
+          'Error assigning entries to group: $e',
         );
       }
     }
