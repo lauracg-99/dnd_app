@@ -173,6 +173,17 @@ void main() {
         expect(serialized['current_hit_points']['value'], '18');
         expect(serialized['temporary_hit_points']['value'], '3');
         expect(serialized['hit_dice']['value'], '2');
+
+        final customValue = CharacterHealth(
+          maxHitPoints: '10// 34',
+          currentHitPoints: '10// 34',
+          temporaryHitPoints: '10// 34',
+        );
+        final customJson = customValue.toJson();
+        final restoredCustomValue = CharacterHealth.fromJson(customJson);
+        expect(restoredCustomValue.maxHitPoints, '10// 34');
+        expect(restoredCustomValue.currentHitPoints, '10// 34');
+        expect(restoredCustomValue.temporaryHitPoints, '10// 34');
       },
     );
 

@@ -679,7 +679,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   @override
   Widget build(BuildContext context) {
     final activeTabColor =
-        _hasConcentration ? Colors.white : Theme.of(context).colorScheme.primary;
+        _hasConcentration
+            ? Colors.white
+            : Theme.of(context).colorScheme.primary;
 
     return PopScope(
       canPop:
@@ -3541,8 +3543,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
       // Update health object
       _health = CharacterHealth(
-        maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
-        currentHitPoints: int.tryParse(_maxHpController.text) ?? 10,
+        maxHitPoints: _maxHpController.text,
+        currentHitPoints: _maxHpController.text,
         temporaryHitPoints: 0,
         hitDice: _health.hitDice,
         hitDiceType: _health.hitDiceType,
@@ -3977,16 +3979,15 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     if (_hasShield != character.stats.hasShield) return true;
 
     // Check health changes
-    if ((int.tryParse(_maxHpController.text) ?? 10) !=
-        character.health.maxHitPoints) {
+    if (_maxHpController.text != character.health.maxHitPoints.toString()) {
       return true;
     }
-    if ((int.tryParse(_currentHpController.text) ?? 10) !=
-        character.health.currentHitPoints) {
+    if (_currentHpController.text !=
+        character.health.currentHitPoints.toString()) {
       return true;
     }
-    if ((int.tryParse(_tempHpController.text) ?? 0) !=
-        character.health.temporaryHitPoints) {
+    if (_tempHpController.text !=
+        character.health.temporaryHitPoints.toString()) {
       return true;
     }
     if ((int.tryParse(_hitDiceController.text) ?? 1) !=
@@ -4576,9 +4577,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           survivalBonus: survivalBonus,
         ),
         health: CharacterHealth(
-          maxHitPoints: int.tryParse(_maxHpController.text) ?? 10,
-          currentHitPoints: int.tryParse(_currentHpController.text) ?? 10,
-          temporaryHitPoints: int.tryParse(_tempHpController.text) ?? 0,
+          maxHitPoints: _maxHpController.text,
+          currentHitPoints: _currentHpController.text,
+          temporaryHitPoints: _tempHpController.text,
           hitDice: int.tryParse(_hitDiceController.text) ?? 1,
           hitDiceType:
               _hitDiceTypeController.text.trim().isEmpty

@@ -1392,9 +1392,9 @@ class CharacterSkillChecks {
 }
 
 class CharacterHealth {
-  final int maxHitPoints;
-  final int currentHitPoints;
-  final int temporaryHitPoints;
+  final Object maxHitPoints;
+  final Object currentHitPoints;
+  final Object temporaryHitPoints;
   final int hitDice;
   final String hitDiceType;
 
@@ -1406,7 +1406,7 @@ class CharacterHealth {
     this.hitDiceType = 'd8',
   });
 
-  static int _parseIntValue(
+  static Object _parseValue(
     Map<String, dynamic> json,
     String key, {
     int defaultValue = 0,
@@ -1416,9 +1416,19 @@ class CharacterHealth {
       key,
       defaultValue: defaultValue,
     );
+    if (value is int || value is String) return value;
+    if (value is num) return value.toInt();
+    return defaultValue;
+  }
+
+  static int _parseIntValue(
+    Map<String, dynamic> json,
+    String key, {
+    int defaultValue = 0,
+  }) {
+    final value = _parseValue(json, key, defaultValue: defaultValue);
     if (value is int) return value;
     if (value is String) return int.tryParse(value) ?? defaultValue;
-    if (value is num) return value.toInt();
     return defaultValue;
   }
 
@@ -1432,13 +1442,13 @@ class CharacterHealth {
 
   factory CharacterHealth.fromJson(Map<String, dynamic> json) {
     return CharacterHealth(
-      maxHitPoints: CharacterHealth._parseIntValue(json, 'max_hit_points'),
-      currentHitPoints: CharacterHealth._parseIntValue(
+      maxHitPoints: CharacterHealth._parseValue(json, 'max_hit_points'),
+      currentHitPoints: CharacterHealth._parseValue(
         json,
         'current_hit_points',
         defaultValue: 0,
       ),
-      temporaryHitPoints: CharacterHealth._parseIntValue(
+      temporaryHitPoints: CharacterHealth._parseValue(
         json,
         'temporary_hit_points',
         defaultValue: 0,
