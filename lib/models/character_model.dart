@@ -1406,28 +1406,48 @@ class CharacterHealth {
     this.hitDiceType = 'd8',
   });
 
+  static int _parseIntValue(
+    Map<String, dynamic> json,
+    String key, {
+    int defaultValue = 0,
+  }) {
+    final value = Character._getValue<dynamic>(
+      json,
+      key,
+      defaultValue: defaultValue,
+    );
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? defaultValue;
+    if (value is num) return value.toInt();
+    return defaultValue;
+  }
+
   Map<String, dynamic> toJson() => {
-    'max_hit_points': {'value': maxHitPoints},
-    'current_hit_points': {'value': currentHitPoints},
-    'temporary_hit_points': {'value': temporaryHitPoints},
-    'hit_dice': {'value': hitDice},
+    'max_hit_points': {'value': maxHitPoints.toString()},
+    'current_hit_points': {'value': currentHitPoints.toString()},
+    'temporary_hit_points': {'value': temporaryHitPoints.toString()},
+    'hit_dice': {'value': hitDice.toString()},
     'hit_dice_type': {'value': hitDiceType},
   };
 
   factory CharacterHealth.fromJson(Map<String, dynamic> json) {
     return CharacterHealth(
-      maxHitPoints: Character._getValue<int>(json, 'max_hit_points'),
-      currentHitPoints: Character._getValue<int>(
+      maxHitPoints: CharacterHealth._parseIntValue(json, 'max_hit_points'),
+      currentHitPoints: CharacterHealth._parseIntValue(
         json,
         'current_hit_points',
         defaultValue: 0,
       ),
-      temporaryHitPoints: Character._getValue<int>(
+      temporaryHitPoints: CharacterHealth._parseIntValue(
         json,
         'temporary_hit_points',
         defaultValue: 0,
       ),
-      hitDice: Character._getValue<int>(json, 'hit_dice', defaultValue: 1),
+      hitDice: CharacterHealth._parseIntValue(
+        json,
+        'hit_dice',
+        defaultValue: 1,
+      ),
       hitDiceType: Character._getValue<String>(
         json,
         'hit_dice_type',

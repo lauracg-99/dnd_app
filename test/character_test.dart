@@ -4,11 +4,11 @@ import 'package:dnd_app/models/character_model.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  
+
   group('Character System Tests', () {
     test('CharactersViewModel should initialize correctly', () {
       final viewModel = CharactersViewModel();
-      
+
       expect(viewModel.characters.isEmpty, true);
       expect(viewModel.isLoading, false);
       expect(viewModel.error, null);
@@ -18,7 +18,7 @@ void main() {
 
     test('CharactersViewModel should filter correctly', () {
       final viewModel = CharactersViewModel();
-      
+
       // Test available classes
       expect(viewModel.availableClasses.contains('Fighter'), true);
       expect(viewModel.availableClasses.contains('Wizard'), true);
@@ -35,7 +35,7 @@ void main() {
         wisdom: 13,
         charisma: 10,
       );
-      
+
       final character = Character(
         id: 'test-character-1',
         name: 'Test Character',
@@ -54,7 +54,7 @@ void main() {
         createdAt: now,
         updatedAt: now,
       );
-      
+
       expect(character.name, 'Test Character');
       expect(character.characterClass, 'Fighter');
       expect(character.stats.strength, 16);
@@ -117,21 +117,31 @@ void main() {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      
+
       // Test serialization
       final json = original.toJson();
       expect(json, isA<Map<String, dynamic>>());
       expect(json['resource_id'], 'character');
       expect(json['stats']['name']['value'], 'Test Hero');
-      
+      expect(json['stats']['health']['max_hit_points']['value'], '25');
+      expect(json['stats']['health']['current_hit_points']['value'], '25');
+      expect(json['stats']['health']['temporary_hit_points']['value'], '0');
+      expect(json['stats']['health']['hit_dice']['value'], '2');
+
       // Test deserialization
       final deserialized = Character.fromJson(json);
       expect(deserialized.id, original.id);
       expect(deserialized.name, original.name);
       expect(deserialized.characterClass, original.characterClass);
       expect(deserialized.stats.strength, original.stats.strength);
-      expect(deserialized.savingThrows.strengthProficiency, original.savingThrows.strengthProficiency);
-      expect(deserialized.skillChecks.athleticsProficiency, original.skillChecks.athleticsProficiency);
+      expect(
+        deserialized.savingThrows.strengthProficiency,
+        original.savingThrows.strengthProficiency,
+      );
+      expect(
+        deserialized.skillChecks.athleticsProficiency,
+        original.skillChecks.athleticsProficiency,
+      );
       expect(deserialized.health.maxHitPoints, original.health.maxHitPoints);
       expect(deserialized.attacks.length, original.attacks.length);
       expect(deserialized.attacks.first.name, original.attacks.first.name);
@@ -140,6 +150,31 @@ void main() {
       expect(deserialized.backstory, original.backstory);
       expect(deserialized.pillars.gimmick, original.pillars.gimmick);
     });
+
+    test(
+      'CharacterHealth should accept legacy integer values and serialize as strings',
+      () {
+        final legacyJson = {
+          'max_hit_points': {'value': 25},
+          'current_hit_points': {'value': 18},
+          'temporary_hit_points': {'value': 3},
+          'hit_dice': {'value': 2},
+          'hit_dice_type': {'value': 'd10'},
+        };
+
+        final fromLegacy = CharacterHealth.fromJson(legacyJson);
+        expect(fromLegacy.maxHitPoints, 25);
+        expect(fromLegacy.currentHitPoints, 18);
+        expect(fromLegacy.temporaryHitPoints, 3);
+        expect(fromLegacy.hitDice, 2);
+
+        final serialized = fromLegacy.toJson();
+        expect(serialized['max_hit_points']['value'], '25');
+        expect(serialized['current_hit_points']['value'], '18');
+        expect(serialized['temporary_hit_points']['value'], '3');
+        expect(serialized['hit_dice']['value'], '2');
+      },
+    );
 
     test('Character stats should calculate modifiers correctly', () {
       final stats = CharacterStats(
@@ -150,7 +185,7 @@ void main() {
         wisdom: 16, // +3 modifier
         charisma: 12, // +1 modifier
       );
-      
+
       expect(stats.getModifier(20), 5);
       expect(stats.getModifier(10), 0);
       expect(stats.getModifier(8), -1);

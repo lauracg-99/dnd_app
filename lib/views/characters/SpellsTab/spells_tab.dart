@@ -1,6 +1,7 @@
 import 'package:dnd_app/models/character_model.dart';
 import 'package:dnd_app/views/characters/SpellsTab/spell_by_level.dart';
 import 'package:dnd_app/widgets/action_button.dart';
+import 'package:dnd_app/views/characters/CharacterCoverTab/concentration_section.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -21,6 +22,8 @@ class SpellsTab extends StatelessWidget {
   final String Function(String ability) getAbilityName;
   final String Function(int modifier) getModifierName;
   final VoidCallback onShowAddSpellDialog;
+  final bool hasConcentration;
+  final VoidCallback onConcentrationToggle;
   final VoidCallback onShowMaxPreparedDialog;
   final VoidCallback onResetMaxPrepared;
   final void Function(String spellName) onShowSpellDetails;
@@ -48,6 +51,8 @@ class SpellsTab extends StatelessWidget {
     required this.getAbilityName,
     required this.getModifierName,
     required this.onShowAddSpellDialog,
+    required this.hasConcentration,
+    required this.onConcentrationToggle,
     required this.onShowMaxPreparedDialog,
     required this.onResetMaxPrepared,
     required this.onShowSpellDetails,
@@ -66,6 +71,12 @@ class SpellsTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 4),
+          ConcentrationSection(
+            hasConcentration: hasConcentration,
+            onToggle: onConcentrationToggle,
+            hideDescription: true,
+          ),
+          const SizedBox(height: 8),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16.0),

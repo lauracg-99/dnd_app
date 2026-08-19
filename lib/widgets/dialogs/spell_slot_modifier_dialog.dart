@@ -28,17 +28,22 @@ class SpellSlotModifierDialog extends StatefulWidget {
 class _SpellSlotModifierDialogState extends State<SpellSlotModifierDialog> {
   late int currentValue;
   late TextEditingController textController;
+  late TextEditingController maxController;
 
   @override
   void initState() {
     super.initState();
     currentValue = widget.initialValue;
     textController = TextEditingController(text: currentValue.toString());
+    maxController = TextEditingController(
+      text: widget.getMaxSlots(widget.level).toString(),
+    );
   }
 
   @override
   void dispose() {
     textController.dispose();
+    maxController.dispose();
     super.dispose();
   }
 
@@ -64,6 +69,34 @@ class _SpellSlotModifierDialogState extends State<SpellSlotModifierDialog> {
                 : 'Enter the number of spell slots currently used for Level ${widget.level}',
             style: const TextStyle(fontSize: 14),
           ),
+          if (!isSlots) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Total slots for this level (editable):',
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 120,
+              child: TextField(
+                controller: maxController,
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+                onChanged: (value) {
+                  final newMax =
+                      int.tryParse(value) ?? widget.getMaxSlots(widget.level);
+                  final clampedMax = newMax.clamp(0, 99);
+                  // Update total slots via callback
+                  widget.onUpdate(widget.level, 'slots', clampedMax);
+                  // Ensure used value does not exceed new max
+                  if (currentValue > clampedMax) {
+                    _applyNewValue(clampedMax);
+                  }
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Row(
             mainAxisSize: MainAxisSize.min,

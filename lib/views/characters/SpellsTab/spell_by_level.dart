@@ -41,9 +41,7 @@ class SpellByLevel extends StatefulWidget {
 class _SpellByLevelState extends State<SpellByLevel> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: _buildSpellsByLevel(),
-    );
+    return Column(children: _buildSpellsByLevel());
   }
 
   /// Build widgets for spells grouped by their level
@@ -68,17 +66,18 @@ class _SpellByLevelState extends State<SpellByLevel> {
       final spellName = widget.spells[i];
       final spell = spellsViewModel.spells.firstWhere(
         (s) => s.name.toLowerCase() == spellName.toLowerCase(),
-        orElse: () => Spell(
-          id: 'unknown',
-          name: spellName,
-          castingTime: 'Unknown',
-          range: 'Unknown',
-          duration: 'Unknown',
-          description: 'Custom spell',
-          classes: [],
-          dice: [],
-          updatedAt: DateTime.now(),
-        ),
+        orElse:
+            () => Spell(
+              id: 'unknown',
+              name: spellName,
+              castingTime: 'Unknown',
+              range: 'Unknown',
+              duration: 'Unknown',
+              description: 'Custom spell',
+              classes: [],
+              dice: [],
+              updatedAt: DateTime.now(),
+            ),
       );
 
       final level = spell.levelNumber;
@@ -99,11 +98,12 @@ class _SpellByLevelState extends State<SpellByLevel> {
       // Calculate max prepared spells for this class (used for header and individual spells)
       final currentCalculatedMax =
           CharacterSpellPreparation.calculateMaxPreparedSpells(
-        widget.classController.text.trim(), // Use current class from controller
-        int.tryParse(widget.levelController.text) ??
-            1, // Use current level from controller
-        CharacterSpellPreparation.getSpellcastingModifier(widget.character),
-      );
+            widget.classController.text
+                .trim(), // Use current class from controller
+            int.tryParse(widget.levelController.text) ??
+                1, // Use current level from controller
+            CharacterSpellPreparation.getSpellcastingModifier(widget.character),
+          );
 
       // Add level header
       widgets.add(
@@ -115,26 +115,27 @@ class _SpellByLevelState extends State<SpellByLevel> {
               margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: level == 0
-                      ? [Colors.green.shade50, Colors.green.shade100]
-                      : [Colors.blue.shade50, Colors.blue.shade100],
+                  colors:
+                      level == 0
+                          ? [Colors.green.shade50, Colors.green.shade100]
+                          : [Colors.blue.shade50, Colors.blue.shade100],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: level == 0
-                      ? Colors.green.shade200
-                      : Colors.blue.shade200,
+                  color:
+                      level == 0 ? Colors.green.shade200 : Colors.blue.shade200,
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     _getSpellLevelIcon(level),
-                    color: level == 0
-                        ? Colors.green.shade700
-                        : Colors.blue.shade700,
+                    color:
+                        level == 0
+                            ? Colors.green.shade700
+                            : Colors.blue.shade700,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -143,9 +144,10 @@ class _SpellByLevelState extends State<SpellByLevel> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: level == 0
-                          ? Colors.green.shade700
-                          : Colors.blue.shade700,
+                      color:
+                          level == 0
+                              ? Colors.green.shade700
+                              : Colors.blue.shade700,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -164,9 +166,10 @@ class _SpellByLevelState extends State<SpellByLevel> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: level == 0
-                            ? Colors.green.shade700
-                            : Colors.blue.shade700,
+                        color:
+                            level == 0
+                                ? Colors.green.shade700
+                                : Colors.blue.shade700,
                       ),
                     ),
                   ),
@@ -211,8 +214,12 @@ class _SpellByLevelState extends State<SpellByLevel> {
         final spellA = a['spell'] as Spell;
         final spellB = b['spell'] as Spell;
 
-        final isAlwaysPreparedA = widget.spellPreparation.isSpellAlwaysPrepared(spellA.id);
-        final isAlwaysPreparedB = widget.spellPreparation.isSpellAlwaysPrepared(spellB.id);
+        final isAlwaysPreparedA = widget.spellPreparation.isSpellAlwaysPrepared(
+          spellA.id,
+        );
+        final isAlwaysPreparedB = widget.spellPreparation.isSpellAlwaysPrepared(
+          spellB.id,
+        );
 
         // Always prepared spells come first
         if (isAlwaysPreparedA && !isAlwaysPreparedB) return -1;
@@ -235,20 +242,25 @@ class _SpellByLevelState extends State<SpellByLevel> {
         final spell = spellData['spell'] as Spell;
 
         // Check if spell can be prepared (only for classes that prepare spells and non-cantrips)
-        final currentMaxPrepared = widget.spellPreparation.maxPreparedSpells == 0
-            ? currentCalculatedMax
-            : widget.spellPreparation.maxPreparedSpells;
+        final currentMaxPrepared =
+            widget.spellPreparation.maxPreparedSpells == 0
+                ? currentCalculatedMax
+                : widget.spellPreparation.maxPreparedSpells;
 
-        final canPrepare = spell.levelNumber > 0 && // Cantrips (level 0) cannot be prepared
+        final canPrepare =
+            spell.levelNumber > 0 && // Cantrips (level 0) cannot be prepared
             currentMaxPrepared > 0;
 
         // Check spell status
         final isPrepared = widget.spellPreparation.isSpellPrepared(spell.id);
-        final isAlwaysPrepared = widget.spellPreparation.isSpellAlwaysPrepared(spell.id);
+        final isAlwaysPrepared = widget.spellPreparation.isSpellAlwaysPrepared(
+          spell.id,
+        );
         final isFreeUse = widget.spellPreparation.isSpellFreeUse(spell.id);
 
         // Check if we can prepare more spells
-        final canPrepareMore = widget.spellPreparation.currentPreparedCount < currentMaxPrepared ||
+        final canPrepareMore =
+            widget.spellPreparation.currentPreparedCount < currentMaxPrepared ||
             isAlwaysPrepared;
 
         widgets.add(
@@ -259,15 +271,17 @@ class _SpellByLevelState extends State<SpellByLevel> {
               color: Colors.red,
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.only(right: 20),
-              child: const Icon(
-                Icons.delete,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: const Icon(Icons.delete, color: Colors.white, size: 24),
             ),
             confirmDismiss: (direction) async {
               // Show confirmation dialog and wait for user response
-              final shouldRemove = await _showRemoveSpellConfirmation(spell, index, isPrepared, isAlwaysPrepared, isFreeUse);
+              final shouldRemove = await _showRemoveSpellConfirmation(
+                spell,
+                index,
+                isPrepared,
+                isAlwaysPrepared,
+                isFreeUse,
+              );
               return shouldRemove;
             },
             onDismissed: (direction) {
@@ -287,32 +301,60 @@ class _SpellByLevelState extends State<SpellByLevel> {
               // Auto-save the character when a spell is removed
               widget.onAutoSaveCharacter();
             },
-            child: Card(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
               margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      isPrepared ? Colors.blue.shade200 : Colors.grey.shade300,
+                  width: isPrepared ? 1.3 : 1,
+                ),
+                color: isPrepared ? Colors.blue.shade50 : Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: (isPrepared ? Colors.blue : Colors.black)
+                        .withValues(alpha: isPrepared ? 0.08 : 0.03),
+                    blurRadius: isPrepared ? 6 : 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: ListTile(
-                leading: canPrepare
-                    ? Transform.scale(
-                        scale: 1.2,
-                        child: Checkbox(
-                          shape: const CircleBorder(),
-                          value: isPrepared,
-                          onChanged: (bool? value) {
-                            if (value == true) {
-                              if (canPrepareMore || isAlwaysPrepared) {
-                                widget.onToggleSpellPreparation(spell.id, true);
+                leading:
+                    canPrepare
+                        ? AnimatedScale(
+                          scale: isPrepared ? 1.12 : 0.96,
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutBack,
+                          child: Checkbox(
+                            shape: const CircleBorder(),
+                            value: isPrepared,
+                            onChanged: (bool? value) {
+                              if (value == true) {
+                                if (canPrepareMore || isAlwaysPrepared) {
+                                  widget.onToggleSpellPreparation(
+                                    spell.id,
+                                    true,
+                                  );
+                                } else {
+                                  SnackbarHelper.showError(
+                                    context,
+                                    'Cannot prepare more spells. Maximum: $currentMaxPrepared',
+                                  );
+                                }
                               } else {
-                                SnackbarHelper.showError(
-                                  context,
-                                  'Cannot prepare more spells. Maximum: $currentMaxPrepared',
-                                );                                
+                                widget.onToggleSpellPreparation(
+                                  spell.id,
+                                  false,
+                                );
                               }
-                            } else {
-                              widget.onToggleSpellPreparation(spell.id, false);
-                            }
-                          },
-                        ),
-                      )
-                    : null,
+                            },
+                          ),
+                        )
+                        : null,
                 title: InkWell(
                   child: Text(
                     spell.name,
@@ -327,13 +369,17 @@ class _SpellByLevelState extends State<SpellByLevel> {
                       '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}${spell.ritual ? ' • (ritual)' : ''}',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
-                    if (isAlwaysPrepared || isFreeUse || canPrepare || spell.levelNumber > 0) ...[
+                    if (isAlwaysPrepared ||
+                        isFreeUse ||
+                        canPrepare ||
+                        spell.levelNumber > 0) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           if (isAlwaysPrepared) ...[
                             GestureDetector(
-                              onTap: () => widget.onToggleAlwaysPrepared(spell.id),
+                              onTap:
+                                  () => widget.onToggleAlwaysPrepared(spell.id),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 6,
@@ -367,7 +413,8 @@ class _SpellByLevelState extends State<SpellByLevel> {
                             const SizedBox(width: 4),
                           ] else if (canPrepare) ...[
                             GestureDetector(
-                              onTap: () => widget.onToggleAlwaysPrepared(spell.id),
+                              onTap:
+                                  () => widget.onToggleAlwaysPrepared(spell.id),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 6,
@@ -376,7 +423,9 @@ class _SpellByLevelState extends State<SpellByLevel> {
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -446,7 +495,9 @@ class _SpellByLevelState extends State<SpellByLevel> {
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -475,7 +526,8 @@ class _SpellByLevelState extends State<SpellByLevel> {
                     ],
                   ],
                 ),
-                trailing: const SizedBox.shrink(), // No trailing buttons needed anymore
+                trailing:
+                    const SizedBox.shrink(), // No trailing buttons needed anymore
               ),
             ),
           ),
@@ -492,13 +544,21 @@ class _SpellByLevelState extends State<SpellByLevel> {
   }
 
   /// Show confirmation dialog before removing a spell
-  Future<bool> _showRemoveSpellConfirmation(Spell spell, int index, bool isPrepared, bool isAlwaysPrepared, bool isFreeUse) async {
+  Future<bool> _showRemoveSpellConfirmation(
+    Spell spell,
+    int index,
+    bool isPrepared,
+    bool isAlwaysPrepared,
+    bool isFreeUse,
+  ) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Remove Spell'),
-          content: Text('Are you sure you want to remove "${spell.name}" from your character\'s spell list?'),
+          content: Text(
+            'Are you sure you want to remove "${spell.name}" from your character\'s spell list?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -508,10 +568,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
               onPressed: () {
                 Navigator.of(context).pop(true);
               },
-              child: Text(
-                'Remove',
-                style: TextStyle(color: Colors.red),
-              ),
+              child: Text('Remove', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -522,7 +579,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
     if (result == true) {
       // Remove the spell
       widget.onRemoveSpell(index);
-      
+
       // Remove from preparation lists if it was prepared
       if (isPrepared) {
         widget.onToggleSpellPreparation(spell.id, false);
@@ -542,7 +599,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
         SnackbarHelper.showSuccess(
           context,
           '${spell.name} removed from spell list',
-        );        
+        );
       }
     }
 

@@ -5,19 +5,66 @@ import 'package:flutter/material.dart';
 
 class AttackDetailSheet extends StatefulWidget {
   final CharacterAttack attack;
+  final void Function(CharacterAttack)? onSave;
 
-  const AttackDetailSheet({super.key, required this.attack});
+  const AttackDetailSheet({super.key, required this.attack, this.onSave});
 
   @override
   State<AttackDetailSheet> createState() => _AttackDetailSheetState();
 }
 
 class _AttackDetailSheetState extends State<AttackDetailSheet> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _attackBonusController;
+  late final TextEditingController _damageController;
+  late final TextEditingController _damageTypeController;
+
   String? _attackResult;
   String? _damageResult;
 
   @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.attack.name);
+    _attackBonusController = TextEditingController(
+      text: widget.attack.attackBonus,
+    );
+    _damageController = TextEditingController(text: widget.attack.damage);
+    _damageTypeController = TextEditingController(
+      text: widget.attack.damageType,
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _attackBonusController.dispose();
+    _damageController.dispose();
+    _damageTypeController.dispose();
+    super.dispose();
+  }
+
+  void _saveChanges() {
+    final updatedAttack = CharacterAttack(
+      id: widget.attack.id,
+      name:
+          _nameController.text.trim().isEmpty
+              ? widget.attack.name
+              : _nameController.text.trim(),
+      attackBonus: _attackBonusController.text.trim(),
+      damage: _damageController.text.trim(),
+      damageType: _damageTypeController.text.trim(),
+    );
+
+    widget.onSave?.call(updatedAttack);
+    Navigator.of(context).pop(updatedAttack);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final currentAttackBonus = _attackBonusController.text.trim();
+    final currentDamage = _damageController.text.trim();
+
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       maxChildSize: 0.95,
@@ -29,7 +76,6 @@ class _AttackDetailSheetState extends State<AttackDetailSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Barra superior
                 Center(
                   child: Container(
                     width: 40,
@@ -41,16 +87,14 @@ class _AttackDetailSheetState extends State<AttackDetailSheet> {
                     ),
                   ),
                 ),
-                // Cabecera
                 Text(
-                  widget.attack.name,
+                  'Edit Attack',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Contenido
                 Expanded(
                   child: SingleChildScrollView(
                     controller: scrollController,
@@ -59,23 +103,29 @@ class _AttackDetailSheetState extends State<AttackDetailSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildDetailSection(
+                          _buildEditableField('Name', _nameController),
+                          const SizedBox(height: 16),
+                          _buildEditableField(
                             'Attack Bonus',
-                            widget.attack.attackBonus,
+                            _attackBonusController,
                           ),
                           const SizedBox(height: 16),
-                          _buildDetailSection('Damage', widget.attack.damage),
+                          _buildEditableField('Damage', _damageController),
                           const SizedBox(height: 16),
-                          _buildDetailSection(
+                          _buildEditableField(
                             'Damage Type',
-                            widget.attack.damageType,
+                            _damageTypeController,
                           ),
                           const SizedBox(height: 32),
                           ElevatedButton(
                             onPressed: () async {
+                              final diceExpression =
+                                  currentAttackBonus.isEmpty
+                                      ? '1d20'
+                                      : '1d20$currentAttackBonus';
                               final res = await DiceService.lanzarDadosResult(
                                 context,
-                                "1d20+${widget.attack.attackBonus}",
+                                diceExpression,
                               );
                               if (res != null) {
                                 setState(() {
@@ -97,7 +147,7 @@ class _AttackDetailSheetState extends State<AttackDetailSheet> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Roll Attack: 1d20${widget.attack.attackBonus}',
+                                  'Roll Attack: 1d20${currentAttackBonus.isEmpty ? '' : currentAttackBonus}',
                                   style: const TextStyle(color: Colors.white),
                                 ),
                               ],
@@ -110,9 +160,13 @@ class _AttackDetailSheetState extends State<AttackDetailSheet> {
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: () async {
+                              final diceExpression = currentDamage.replaceAll(
+                                ' ',
+                                '',
+                              );
                               final res = await DiceService.lanzarDadosResult(
                                 context,
-                                widget.attack.damage.replaceAll(' ', ''),
+                                diceExpression.isEmpty ? '1d8' : diceExpression,
                               );
                               if (res != null) {
                                 setState(() {
@@ -134,7 +188,7 @@ class _AttackDetailSheetState extends State<AttackDetailSheet> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Roll Damage: ${widget.attack.damage.replaceAll(' ', '')}',
+                                  'Roll Damage: ${currentDamage.isEmpty ? '1d8' : currentDamage.replaceAll(' ', '')}',
                                   style: const TextStyle(color: Colors.white),
                                 ),
                               ],
@@ -142,8 +196,30 @@ class _AttackDetailSheetState extends State<AttackDetailSheet> {
                           ),
                           if (_damageResult != null) ...[
                             const SizedBox(height: 8),
-                            _buildResultSquare(_damageResult, Colors.purple[700],),
+                            _buildResultSquare(
+                              _damageResult,
+                              Colors.purple[700],
+                            ),
                           ],
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _saveChanges,
+                              icon: const Icon(Icons.save),
+                              label: const Text('Save Changes'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue.shade700,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -155,27 +231,34 @@ class _AttackDetailSheetState extends State<AttackDetailSheet> {
     );
   }
 
-  Widget _buildDetailSection(String title, String content) {
+  Widget _buildEditableField(String title, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
+        TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.blue.shade400),
+            ),
           ),
-          child: Text(content, style: const TextStyle(fontSize: 16)),
+          style: const TextStyle(fontSize: 16),
         ),
       ],
     );

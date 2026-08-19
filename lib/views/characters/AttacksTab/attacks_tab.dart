@@ -10,6 +10,7 @@ class AttacksTab extends StatefulWidget {
   final VoidCallback onAddAttack;
   final void Function(int index) onRemoveAttack;
   final void Function(int oldIndex, int newIndex) onReorderAttack;
+  final void Function(int index, CharacterAttack updatedAttack)? onEditAttack;
 
   const AttacksTab({
     super.key,
@@ -17,6 +18,7 @@ class AttacksTab extends StatefulWidget {
     required this.onAddAttack,
     required this.onRemoveAttack,
     required this.onReorderAttack,
+    this.onEditAttack,
   });
 
   @override
@@ -121,19 +123,29 @@ class _AttacksTabState extends State<AttacksTab> {
           icon: const Icon(Icons.delete),
           onPressed: () => widget.onRemoveAttack(index),
         ),
-        onTap: () => _showAttackDetailSheet(context, attack),
+        onTap: () => _showAttackDetailSheet(context, index, attack),
       ),
     );
   }
 
-  void _showAttackDetailSheet(BuildContext context, CharacterAttack attack) {
+  void _showAttackDetailSheet(
+    BuildContext context,
+    int index,
+    CharacterAttack attack,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => AttackDetailSheet(attack: attack),
+      builder:
+          (context) => AttackDetailSheet(
+            attack: attack,
+            onSave: (updatedAttack) {
+              widget.onEditAttack?.call(index, updatedAttack);
+            },
+          ),
     );
   }
 }

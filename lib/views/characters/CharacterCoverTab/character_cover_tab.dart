@@ -188,6 +188,7 @@ class CharacterCoverTab extends StatelessWidget {
           ConcentrationSection(
             hasConcentration: hasConcentration,
             onToggle: onConcentrationToggle,
+            hideDescription: false,
           ),
 
           HealthSection(

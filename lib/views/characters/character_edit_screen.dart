@@ -678,6 +678,9 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   @override
   Widget build(BuildContext context) {
+    final activeTabColor =
+        _hasConcentration ? Colors.white : Theme.of(context).colorScheme.primary;
+
     return PopScope(
       canPop:
           false, // Bloquea la salida inmediata para ejecutar el guardado primero
@@ -689,10 +692,19 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       },
       child: (Scaffold(
         appBar: AppBar(
+          backgroundColor:
+              _hasConcentration
+                  ? Colors.red.shade700
+                  : Theme.of(context).appBarTheme.backgroundColor,
+          foregroundColor: _hasConcentration ? Colors.white : null,
           title: Text(widget.character.name),
           bottom: TabBar(
             controller: _tabController,
             isScrollable: true,
+            indicatorColor: activeTabColor,
+            labelColor: _hasConcentration ? Colors.white : activeTabColor,
+            unselectedLabelColor:
+                _hasConcentration ? Colors.white70 : Colors.grey,
             tabs:
                 _orderedTabs
                     .map((tab) => Tab(text: tab.label, icon: Icon(tab.icon)))
@@ -1034,6 +1046,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           _attacks.insert(newIndex, movedAttack);
         });
       },
+      onEditAttack: (index, updatedAttack) {
+        setState(() {
+          _attacks[index] = updatedAttack;
+        });
+      },
     );
   }
 
@@ -1229,6 +1246,12 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       spellAttackBonus: _getSpellAttackBonus(),
       getAbilityName: _getAbilityName,
       getModifierName: _getModifierName,
+      hasConcentration: _hasConcentration,
+      onConcentrationToggle: () {
+        setState(() {
+          _hasConcentration = !_hasConcentration;
+        });
+      },
       onShowAddSpellDialog: _showAddSpellDialog,
       onShowMaxPreparedDialog: _showMaxPreparedDialog,
       onResetMaxPrepared: () {

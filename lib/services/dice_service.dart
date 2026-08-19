@@ -118,9 +118,9 @@ static Future<String?> lanzarDadosResult(
     final String dadosTexto = "Dices: $dadosUI";
     
     if (bono > 0) {
-      return "Total: ${resultado.total} · $dadosTexto · Bono: +$bono";
+      return "Total: ${resultado.total} · $dadosTexto · Bonus: +$bono";
     } else if (bono < 0) {
-      return "Total: ${resultado.total} · $dadosTexto · Bono: $bono";
+      return "Total: ${resultado.total} · $dadosTexto · Bonus: $bono";
     } else {
       return "Total: ${resultado.total} · $dadosTexto";
     }

@@ -17,7 +17,8 @@ class CharactersPersonalizedTab extends StatefulWidget {
   });
 
   @override
-  State<CharactersPersonalizedTab> createState() => _CharactersPersonalizedTabState();
+  State<CharactersPersonalizedTab> createState() =>
+      _CharactersPersonalizedTabState();
 }
 
 class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
@@ -54,7 +55,10 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
     _updatePersonalizedSlots(newSlots);
   }
 
-  void _updatePersonalizedSlot(int index, CharacterPersonalizedSlot updatedSlot) {
+  void _updatePersonalizedSlot(
+    int index,
+    CharacterPersonalizedSlot updatedSlot,
+  ) {
     final newSlots = List<CharacterPersonalizedSlot>.from(_personalizedSlots);
     newSlots[index] = updatedSlot;
     _updatePersonalizedSlots(newSlots);
@@ -66,65 +70,69 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Class Slot'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Slot Name',
-                hintText: 'e.g., Superiority Dice, Ki Points',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: maxSlotsController,
-              decoration: const InputDecoration(
-                labelText: 'Max Slots',
-                hintText: 'e.g., 4',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = nameController.text.trim();
-              final maxSlots = int.tryParse(maxSlotsController.text) ?? 4;
-
-              if (name.isNotEmpty) {
-                final newSlots = List<CharacterPersonalizedSlot>.from(_personalizedSlots);
-                newSlots.add(
-                  CharacterPersonalizedSlot(
-                    name: name,
-                    maxSlots: maxSlots,
-                    usedSlots: 0,
-                    diceType: 'd6', // Default value, not shown in UI
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Add Class Slot'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Slot Name',
+                    hintText: 'e.g., Superiority Dice, Ki Points',
+                    border: OutlineInputBorder(),
                   ),
-                );
-                _updatePersonalizedSlots(newSlots);
-                Navigator.pop(context);
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: maxSlotsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Max Slots',
+                    hintText: 'e.g., 4',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  textInputAction:
+                      TextInputAction.done, // Show "Done" button on keyboard
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final name = nameController.text.trim();
+                  final maxSlots = int.tryParse(maxSlotsController.text) ?? 4;
 
-                SnackbarHelper.showSuccess(
-                  context,
-                  'Added $name to ${widget.characterName}',
-                );
-              }
-            },
-            child: const Text('Add'),
+                  if (name.isNotEmpty) {
+                    final newSlots = List<CharacterPersonalizedSlot>.from(
+                      _personalizedSlots,
+                    );
+                    newSlots.add(
+                      CharacterPersonalizedSlot(
+                        name: name,
+                        maxSlots: maxSlots,
+                        usedSlots: 0,
+                        diceType: 'd6', // Default value, not shown in UI
+                      ),
+                    );
+                    _updatePersonalizedSlots(newSlots);
+                    Navigator.pop(context);
+
+                    SnackbarHelper.showSuccess(
+                      context,
+                      'Added $name to ${widget.characterName}',
+                    );
+                  }
+                },
+                child: const Text('Add'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -156,139 +164,141 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Modify ${slot.name}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              type == 'slots' ? 'Maximum slots:' : 'Used slots:',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: textController,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done, // Show "Done" button on keyboard
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: type == 'slots' ? 'Max Slots' : 'Used Slots',
-              ),
-              onChanged: (value) {
-                final newValue = int.tryParse(value) ?? localValue;
-                if (type == 'slots') {
-                  // Ensure used slots don't exceed new max
-                  final newUsedSlots =
-                      slot.usedSlots > newValue ? newValue : slot.usedSlots;
-                  _updatePersonalizedSlot(
-                    slotIndex,
-                    slot.copyWith(
-                      maxSlots: newValue,
-                      usedSlots: newUsedSlots,
-                    ),
-                  );
-                } else {
-                  // Ensure used slots don't exceed max slots
-                  final clampedValue = newValue.clamp(0, slot.maxSlots);
-                  _updatePersonalizedSlot(
-                    slotIndex,
-                    slot.copyWith(usedSlots: clampedValue),
-                  );
-                  // Only update localValue if it was actually clamped
-                  if (clampedValue != newValue) {
-                    localValue = clampedValue;
-                    textController.text = clampedValue.toString();
-                    return;
-                  }
-                }
-                localValue = newValue; // Update local value
-              },
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Modify ${slot.name}'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (type == 'slots') ...[
-                  ElevatedButton(
-                    onPressed: () {
+                Text(
+                  type == 'slots' ? 'Maximum slots:' : 'Used slots:',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: textController,
+                  keyboardType: TextInputType.number,
+                  textInputAction:
+                      TextInputAction.done, // Show "Done" button on keyboard
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: type == 'slots' ? 'Max Slots' : 'Used Slots',
+                  ),
+                  onChanged: (value) {
+                    final newValue = int.tryParse(value) ?? localValue;
+                    if (type == 'slots') {
+                      // Ensure used slots don't exceed new max
+                      final newUsedSlots =
+                          slot.usedSlots > newValue ? newValue : slot.usedSlots;
                       _updatePersonalizedSlot(
                         slotIndex,
-                        slot.copyWith(maxSlots: 4),
+                        slot.copyWith(
+                          maxSlots: newValue,
+                          usedSlots: newUsedSlots,
+                        ),
                       );
-                      localValue = 4;
-                      textController.text = '4';
-                    },
-                    child: const Text('Set 4'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
+                    } else {
+                      // Ensure used slots don't exceed max slots
+                      final clampedValue = newValue.clamp(0, slot.maxSlots);
                       _updatePersonalizedSlot(
                         slotIndex,
-                        slot.copyWith(maxSlots: 6),
+                        slot.copyWith(usedSlots: clampedValue),
                       );
-                      localValue = 6;
-                      textController.text = '6';
-                    },
-                    child: const Text('Set 6'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _updatePersonalizedSlot(
-                        slotIndex,
-                        slot.copyWith(maxSlots: 8),
-                      );
-                      localValue = 8;
-                      textController.text = '8';
-                    },
-                    child: const Text('Set 8'),
-                  ),
-                ] else ...[
-                  ElevatedButton(
-                    onPressed: () {
-                      _updatePersonalizedSlot(
-                        slotIndex,
-                        slot.copyWith(usedSlots: 0),
-                      );
-                      localValue = 0;
-                      textController.text = '0';
-                    },
-                    child: const Text('Clear All'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _updatePersonalizedSlot(
-                        slotIndex,
-                        slot.copyWith(usedSlots: slot.maxSlots),
-                      );
-                      localValue = slot.maxSlots;
-                      textController.text = slot.maxSlots.toString();
-                    },
-                    child: const Text('Use All'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      final halfSlots = (slot.maxSlots / 2).floor();
-                      _updatePersonalizedSlot(
-                        slotIndex,
-                        slot.copyWith(usedSlots: halfSlots),
-                      );
-                      localValue = halfSlots;
-                      textController.text = halfSlots.toString();
-                    },
-                    child: const Text('Half Used'),
-                  ),
-                ],
+                      // Only update localValue if it was actually clamped
+                      if (clampedValue != newValue) {
+                        localValue = clampedValue;
+                        textController.text = clampedValue.toString();
+                        return;
+                      }
+                    }
+                    localValue = newValue; // Update local value
+                  },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    if (type == 'slots') ...[
+                      ElevatedButton(
+                        onPressed: () {
+                          _updatePersonalizedSlot(
+                            slotIndex,
+                            slot.copyWith(maxSlots: 4),
+                          );
+                          localValue = 4;
+                          textController.text = '4';
+                        },
+                        child: const Text('Set 4'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          _updatePersonalizedSlot(
+                            slotIndex,
+                            slot.copyWith(maxSlots: 6),
+                          );
+                          localValue = 6;
+                          textController.text = '6';
+                        },
+                        child: const Text('Set 6'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          _updatePersonalizedSlot(
+                            slotIndex,
+                            slot.copyWith(maxSlots: 8),
+                          );
+                          localValue = 8;
+                          textController.text = '8';
+                        },
+                        child: const Text('Set 8'),
+                      ),
+                    ] else ...[
+                      ElevatedButton(
+                        onPressed: () {
+                          _updatePersonalizedSlot(
+                            slotIndex,
+                            slot.copyWith(usedSlots: 0),
+                          );
+                          localValue = 0;
+                          textController.text = '0';
+                        },
+                        child: const Text('Clear All'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          _updatePersonalizedSlot(
+                            slotIndex,
+                            slot.copyWith(usedSlots: slot.maxSlots),
+                          );
+                          localValue = slot.maxSlots;
+                          textController.text = slot.maxSlots.toString();
+                        },
+                        child: const Text('Use All'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          final halfSlots = (slot.maxSlots / 2).floor();
+                          _updatePersonalizedSlot(
+                            slotIndex,
+                            slot.copyWith(usedSlots: halfSlots),
+                          );
+                          localValue = halfSlots;
+                          textController.text = halfSlots.toString();
+                        },
+                        child: const Text('Half Used'),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Accept'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Accept'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -297,101 +307,106 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Slot Name'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Enter a new name for this slot:',
-              style: TextStyle(fontSize: 16),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Edit Slot Name'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Enter a new name for this slot:',
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: textController,
+                  textInputAction: TextInputAction.done,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Slot Name',
+                    hintText: 'e.g., Superiority Dice, Ki Points',
+                  ),
+                  autofocus: true,
+                  onSubmitted: (value) {
+                    if (value.trim().isNotEmpty) {
+                      final slot = _personalizedSlots[slotIndex];
+                      _updatePersonalizedSlot(
+                        slotIndex,
+                        slot.copyWith(name: value.trim()),
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: textController,
-              textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Slot Name',
-                hintText: 'e.g., Superiority Dice, Ki Points',
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
               ),
-              autofocus: true,
-              onSubmitted: (value) {
-                if (value.trim().isNotEmpty) {
-                  final slot = _personalizedSlots[slotIndex];
-                  _updatePersonalizedSlot(
-                    slotIndex,
-                    slot.copyWith(name: value.trim()),
-                  );
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+              ElevatedButton(
+                onPressed: () {
+                  final newName = textController.text.trim();
+                  if (newName.isNotEmpty) {
+                    final slot = _personalizedSlots[slotIndex];
+                    _updatePersonalizedSlot(
+                      slotIndex,
+                      slot.copyWith(name: newName),
+                    );
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              final newName = textController.text.trim();
-              if (newName.isNotEmpty) {
-                final slot = _personalizedSlots[slotIndex];
-                _updatePersonalizedSlot(
-                  slotIndex,
-                  slot.copyWith(name: newName),
-                );
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showDeleteSlotConfirmation(int slotIndex, String slotName) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Slot'),
-        content: Text(
-          'Are you sure you want to delete "$slotName"?\n\nThis action cannot be undone.',
-          style: const TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final newSlots = List<CharacterPersonalizedSlot>.from(_personalizedSlots);
-              newSlots.removeAt(slotIndex);
-              _updatePersonalizedSlots(newSlots);
-              Navigator.pop(context);
-              
-              // Show confirmation message
-              SnackbarHelper.showSuccess(
-                context,
-                '$slotName deleted',
-              );              
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Slot'),
+            content: Text(
+              'Are you sure you want to delete "$slotName"?\n\nThis action cannot be undone.',
+              style: const TextStyle(fontSize: 16),
             ),
-            child: const Text('Delete'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final newSlots = List<CharacterPersonalizedSlot>.from(
+                    _personalizedSlots,
+                  );
+                  newSlots.removeAt(slotIndex);
+                  _updatePersonalizedSlots(newSlots);
+                  Navigator.pop(context);
+
+                  // Show confirmation message
+                  SnackbarHelper.showSuccess(context, '$slotName deleted');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
-  Widget _buildPersonalizedSlotField({required Key key, required String label, required int slotIndex}) {
+  Widget _buildPersonalizedSlotField({
+    required Key key,
+    required String label,
+    required int slotIndex,
+  }) {
     final slot = _personalizedSlots[slotIndex];
     final slots = slot.maxSlots;
     final used = slot.usedSlots;
@@ -434,7 +449,8 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                           color: Colors.blue,
                           size: 18,
                         ),
-                        onPressed: () => _showEditSlotNameDialog(slotIndex, label),
+                        onPressed:
+                            () => _showEditSlotNameDialog(slotIndex, label),
                         tooltip: 'Edit slot name',
                       ),
                     ],
@@ -445,11 +461,12 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                   children: [
                     Text('Slots: ', style: const TextStyle(color: Colors.grey)),
                     InkWell(
-                      onTap: () => _showPersonalizedSlotModifierDialog(
-                        slotIndex,
-                        'slots',
-                        slots,
-                      ),
+                      onTap:
+                          () => _showPersonalizedSlotModifierDialog(
+                            slotIndex,
+                            'slots',
+                            slots,
+                          ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -475,7 +492,8 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                         color: Colors.red,
                         size: 20,
                       ),
-                      onPressed: () => _showDeleteSlotConfirmation(slotIndex, label),
+                      onPressed:
+                          () => _showDeleteSlotConfirmation(slotIndex, label),
                     ),
                   ],
                 ),
@@ -483,12 +501,12 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
             ),
 
             Text(
-                '$used of $slots slots used',
-                style: TextStyle(
-                  color: used == slots ? Colors.red : Colors.green,
-                  fontWeight: FontWeight.w500,
-                ),
+              '$used of $slots slots used',
+              style: TextStyle(
+                color: used == slots ? Colors.red : Colors.green,
+                fontWeight: FontWeight.w500,
               ),
+            ),
 
             const SizedBox(height: 12),
 
@@ -505,7 +523,8 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 4),
                         child: GestureDetector(
-                          onTap: () => _togglePersonalizedSlot(slotIndex, index),
+                          onTap:
+                              () => _togglePersonalizedSlot(slotIndex, index),
                           child: Container(
                             width: 24,
                             height: 24,
@@ -513,19 +532,21 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                               shape: BoxShape.circle,
                               color: isUsed ? Colors.red : Colors.grey.shade300,
                               border: Border.all(
-                                color: isUsed
-                                    ? Colors.red.shade300
-                                    : Colors.grey.shade400,
+                                color:
+                                    isUsed
+                                        ? Colors.red.shade300
+                                        : Colors.grey.shade400,
                                 width: 2,
                               ),
                             ),
-                            child: isUsed
-                                ? const Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 12,
-                                  )
-                                : null,
+                            child:
+                                isUsed
+                                    ? const Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 12,
+                                    )
+                                    : null,
                           ),
                         ),
                       );
@@ -533,63 +554,117 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Arrow controls with slot count display (fixed position)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Left arrow - decrease used slots
                   IconButton(
-                    onPressed: used > 0 
-                        ? () => _updatePersonalizedSlot(
+                    onPressed:
+                        used > 0
+                            ? () => _updatePersonalizedSlot(
                               slotIndex,
                               slot.copyWith(usedSlots: used - 1),
                             )
-                        : null,
+                            : null,
                     icon: const Icon(Symbols.chevron_left),
                     iconSize: 28,
                     color: used > 0 ? Colors.blue : Colors.grey,
                     tooltip: 'Decrease used slots',
                   ),
-                  
-                  // Slot count display
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: (slots - used) == 0 ? Colors.red : Colors.blue, 
-                        width: 2
+
+                  // Slot count display: abrir directamente diálogo personalizado
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () {
+                      final textController = TextEditingController(
+                        text: used.toString(),
+                      );
+                      showDialog(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: Text(
+                                'Establecer usados para ${slot.name}',
+                              ),
+                              content: TextField(
+                                controller: textController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'Número de usados',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Cancelar'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    final entered =
+                                        int.tryParse(textController.text) ??
+                                        used;
+                                    final clamped = entered.clamp(0, slots);
+                                    Navigator.pop(context);
+                                    _updatePersonalizedSlot(
+                                      slotIndex,
+                                      slot.copyWith(usedSlots: clamped),
+                                    );
+                                  },
+                                  child: const Text('Aceptar'),
+                                ),
+                              ],
+                            ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
-                      borderRadius: BorderRadius.circular(8),
-                      color: (slots - used) == 0 
-                          ? Colors.red.withValues(alpha: 0.1)
-                          : Colors.blue.withValues(alpha: 0.1),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${slots - used}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: (slots - used) == 0 ? Colors.red : Colors.blue,
-                          ),                        
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: (slots - used) == 0 ? Colors.red : Colors.blue,
+                          width: 2,
                         ),
-                      ],
+                        borderRadius: BorderRadius.circular(8),
+                        color:
+                            (slots - used) == 0
+                                ? Colors.red.withValues(alpha: 0.1)
+                                : Colors.blue.withValues(alpha: 0.1),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${slots - used}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  (slots - used) == 0
+                                      ? Colors.red
+                                      : Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  
+
                   // Right arrow - increase used slots
                   IconButton(
-                    onPressed: used < slots 
-                        ? () => _updatePersonalizedSlot(
+                    onPressed:
+                        used < slots
+                            ? () => _updatePersonalizedSlot(
                               slotIndex,
                               slot.copyWith(usedSlots: used + 1),
                             )
-                        : null,
+                            : null,
                     icon: const Icon(Symbols.chevron_right),
                     iconSize: 28,
                     color: used < slots ? Colors.blue : Colors.grey,
@@ -598,7 +673,42 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                 ],
               ),
               const SizedBox(height: 4),
-              
+
+              // Button to mark/unmark all used slots (más visible)
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: 160,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final newUsed = used == slots ? 0 : slots;
+                      _updatePersonalizedSlot(
+                        slotIndex,
+                        slot.copyWith(usedSlots: newUsed),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: used == slots ? Colors.red : Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    icon: Icon(
+                      used == slots ? Icons.remove_circle : Icons.check_circle,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      used == slots ? 'Desmarcar todo' : 'Marcar todo',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
             ] else ...[
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -637,7 +747,6 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           const SizedBox(height: 4),
 
           Padding(
@@ -696,12 +805,9 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
               },
             ),
 
-          const SizedBox(height: 16),          
-
-          
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 }
-
