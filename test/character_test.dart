@@ -152,6 +152,55 @@ void main() {
     });
 
     test(
+      'Character familiar data should serialize and deserialize correctly',
+      () {
+        final now = DateTime.now();
+        final original = Character(
+          id: 'test-familiar-1',
+          name: 'Test Hero',
+          stats: CharacterStats(
+            strength: 10,
+            dexterity: 12,
+            constitution: 14,
+            intelligence: 10,
+            wisdom: 12,
+            charisma: 16,
+          ),
+          savingThrows: CharacterSavingThrows(),
+          skillChecks: CharacterSkillChecks(),
+          health: CharacterHealth(maxHitPoints: 12, currentHitPoints: 12),
+          characterClass: 'Wizard',
+          level: 3,
+          spellSlots: CharacterSpellSlots(),
+          familiars: [
+            CharacterFamiliar(
+              name: 'Mochi',
+              armorClass: '12',
+              maxHitPoints: '5',
+              notes: 'Very loyal and curious.',
+            ),
+          ],
+          pillars: CharacterPillars(),
+          appearance: CharacterAppearance(),
+          deathSaves: CharacterDeathSaves(),
+          languages: CharacterLanguages(),
+          moneyItems: CharacterMoneyItems(),
+          createdAt: now,
+          updatedAt: now,
+        );
+
+        final json = original.toJson();
+        final deserialized = Character.fromJson(json);
+
+        expect(deserialized.familiars, isNotEmpty);
+        expect(deserialized.familiars.first.name, 'Mochi');
+        expect(deserialized.familiars.first.armorClass, '12');
+        expect(deserialized.familiars.first.maxHitPoints, '5');
+        expect(deserialized.familiars.first.notes, 'Very loyal and curious.');
+      },
+    );
+
+    test(
       'CharacterHealth should accept legacy integer values and serialize as strings',
       () {
         final legacyJson = {

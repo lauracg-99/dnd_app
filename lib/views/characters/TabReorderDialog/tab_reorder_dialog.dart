@@ -22,7 +22,29 @@ class _TabReorderDialogState extends State<TabReorderDialog> {
   @override
   void initState() {
     super.initState();
-    _tabOrder = List.from(widget.currentOrder);
+    final visibleTabIds =
+        CharacterTabManager.getAllTabs().entries
+            .where((entry) => entry.value.isVisible)
+            .map((entry) => entry.key)
+            .toList();
+
+    final normalizedOrder = <String>[];
+    for (final tabId in widget.currentOrder) {
+      final normalized = CharacterTabManager.normalizeTabId(tabId);
+      if (!normalizedOrder.contains(normalized) &&
+          CharacterTabManager.getTabConfig(normalized) != null &&
+          CharacterTabManager.getTabConfig(normalized)!.isVisible) {
+        normalizedOrder.add(normalized);
+      }
+    }
+
+    for (final tabId in visibleTabIds) {
+      if (!normalizedOrder.contains(tabId)) {
+        normalizedOrder.add(tabId);
+      }
+    }
+
+    _tabOrder = normalizedOrder;
   }
 
   void _reorderTabs(int oldIndex, int newIndex) {
@@ -63,7 +85,7 @@ class _TabReorderDialogState extends State<TabReorderDialog> {
                 itemBuilder: (context, index) {
                   final tabId = _tabOrder[index];
                   final tabConfig = CharacterTabManager.getTabConfig(tabId);
-                  
+
                   return Card(
                     key: ValueKey(tabId),
                     margin: const EdgeInsets.symmetric(vertical: 4),
@@ -96,12 +118,13 @@ class _TabReorderDialogState extends State<TabReorderDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: _hasChanges
-              ? () {
-                  widget.onOrderChanged(_tabOrder);
-                  Navigator.of(context).pop();
-                }
-              : null,
+          onPressed:
+              _hasChanges
+                  ? () {
+                    widget.onOrderChanged(_tabOrder);
+                    Navigator.of(context).pop();
+                  }
+                  : null,
           child: const Text('Save'),
         ),
       ],

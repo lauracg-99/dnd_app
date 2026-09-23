@@ -8,7 +8,7 @@ class CharacterTabConfig {
   final IconData icon;
   final Widget Function() builder;
   final bool isVisible;
-  
+
   const CharacterTabConfig({
     required this.id,
     required this.label,
@@ -16,7 +16,7 @@ class CharacterTabConfig {
     required this.builder,
     this.isVisible = true,
   });
-  
+
   /// Create copy with updated values
   CharacterTabConfig copyWith({
     String? id,
@@ -42,90 +42,126 @@ class CharacterTabManager {
       id: 'character',
       label: 'Character',
       icon: Icons.shield,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'quick_guide': CharacterTabConfig(
       id: 'quick_guide',
       label: 'Quick Guide',
       icon: Icons.description,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'stats': CharacterTabConfig(
       id: 'stats',
       label: 'Stats',
       icon: Icons.bar_chart,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'skills': CharacterTabConfig(
       id: 'skills',
       label: 'Skills',
       icon: Icons.psychology,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'attacks': CharacterTabConfig(
       id: 'attacks',
       label: 'Weapons',
       icon: Symbols.swords,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'spell_slots': CharacterTabConfig(
       id: 'spell_slots',
       label: 'Spell Slots',
       icon: Icons.grid_view,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'spells': CharacterTabConfig(
       id: 'spells',
       label: 'Spells',
       icon: Symbols.playing_cards,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'feats': CharacterTabConfig(
       id: 'feats',
       label: 'Feats',
       icon: Icons.military_tech,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
+    ),
+    'companion': CharacterTabConfig(
+      id: 'companion',
+      label: 'Companions',
+      icon: Icons.workspaces,
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
+    ),
+    'familiar': CharacterTabConfig(
+      id: 'familiar',
+      label: 'Companions',
+      icon: Icons.workspaces,
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
+      isVisible: false,
     ),
     'class_slots': CharacterTabConfig(
       id: 'class_slots',
       label: 'Class Slots',
       icon: Icons.casino,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'appearance': CharacterTabConfig(
       id: 'appearance',
       label: 'Appearance',
       icon: Icons.face,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
     'notes': CharacterTabConfig(
       id: 'notes',
       label: 'Notes',
       icon: Icons.note,
-      builder: () => throw UnimplementedError('Builder must be provided by screen'),
+      builder:
+          () => throw UnimplementedError('Builder must be provided by screen'),
     ),
   };
-  
+
+  static String normalizeTabId(String tabId) {
+    if (tabId == 'familiar') return 'companion';
+    return tabId;
+  }
+
   /// Get all available tab configurations
   static Map<String, CharacterTabConfig> getAllTabs() {
     return Map.from(_allTabs);
   }
-  
+
   /// Get tab configuration by ID
   static CharacterTabConfig? getTabConfig(String id) {
-    return _allTabs[id];
+    final normalizedId = normalizeTabId(id);
+    return _allTabs[normalizedId] ?? _allTabs[id];
   }
-  
+
   /// Update tab configuration
   static void updateTabConfig(String id, CharacterTabConfig config) {
     _allTabs[id] = config;
   }
-  
+
   /// Get ordered tabs based on tab order list
-  static List<CharacterTabConfig> getOrderedTabs(List<String> tabOrder, Map<String, Widget Function()> builders) {
+  static List<CharacterTabConfig> getOrderedTabs(
+    List<String> tabOrder,
+    Map<String, Widget Function()> builders,
+  ) {
     final List<CharacterTabConfig> orderedTabs = [];
-    
-    for (String tabId in tabOrder) {
+    final normalizedOrder = tabOrder.map(normalizeTabId).toList();
+
+    for (String tabId in normalizedOrder) {
       final config = _allTabs[tabId];
       if (config != null && config.isVisible) {
         final builder = builders[tabId];
@@ -134,21 +170,21 @@ class CharacterTabManager {
         }
       }
     }
-    
+
     // Add any visible tabs that aren't in the order list
     for (String tabId in _allTabs.keys) {
       final config = _allTabs[tabId]!;
-      if (config.isVisible && !tabOrder.contains(tabId)) {
+      if (config.isVisible && !normalizedOrder.contains(tabId)) {
         final builder = builders[tabId];
         if (builder != null) {
           orderedTabs.add(config.copyWith(builder: builder));
         }
       }
     }
-    
+
     return orderedTabs;
   }
-  
+
   /// Get default tab order
   static List<String> getDefaultTabOrder() {
     return [
@@ -160,6 +196,7 @@ class CharacterTabManager {
       'spell_slots',
       'spells',
       'feats',
+      'companion',
       'class_slots',
       'appearance',
       'notes',

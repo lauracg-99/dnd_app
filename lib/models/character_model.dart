@@ -32,6 +32,7 @@ class Character extends BaseModel with TimestampedEntity {
   final String backstory;
   final String featNotes;
   final CharacterPillars pillars;
+  final List<CharacterFamiliar> familiars;
   final CharacterAppearance appearance;
   final CharacterDeathSaves deathSaves;
   final CharacterLanguages languages;
@@ -70,6 +71,7 @@ class Character extends BaseModel with TimestampedEntity {
     this.featuresTraits = '',
     this.backstory = '',
     required this.pillars,
+    this.familiars = const [],
     required this.appearance,
     required this.deathSaves,
     required this.languages,
@@ -114,6 +116,9 @@ class Character extends BaseModel with TimestampedEntity {
         'features_traits': {'value': featuresTraits},
         'backstory': {'value': backstory},
         'pillars': pillars.toJson(),
+        'familiars': {
+          'value': familiars.map((familiar) => familiar.toJson()).toList(),
+        },
         'appearance': appearance.toJson(),
         'death_saves': deathSaves.toJson(),
         'languages': languages.toJson(),
@@ -226,6 +231,7 @@ class Character extends BaseModel with TimestampedEntity {
       pillars: CharacterPillars.fromJson(
         _getValue<Map<String, dynamic>>(stats, 'pillars'),
       ),
+      familiars: _parseFamiliars(stats),
       appearance: CharacterAppearance.fromJson(
         _getValue<Map<String, dynamic>>(
           stats,
@@ -258,6 +264,49 @@ class Character extends BaseModel with TimestampedEntity {
       createdAt: DateTime.parse(_getValue<String>(stats, 'created_at')),
       updatedAt: DateTime.parse(_getValue<String>(stats, 'updated_at')),
     );
+  }
+
+  static List<CharacterFamiliar> _parseFamiliars(Map<String, dynamic> stats) {
+    final legacySingle = stats['familiar'];
+    final rawList = stats['familiars'];
+
+    if (rawList is List) {
+      return rawList
+          .whereType<Map>()
+          .map(
+            (entry) =>
+                CharacterFamiliar.fromJson(entry.cast<String, dynamic>()),
+          )
+          .toList();
+    }
+
+    if (rawList is Map && rawList.containsKey('value')) {
+      final listValue = rawList['value'];
+      if (listValue is List) {
+        return listValue
+            .whereType<Map>()
+            .map(
+              (entry) =>
+                  CharacterFamiliar.fromJson(entry.cast<String, dynamic>()),
+            )
+            .toList();
+      }
+    }
+
+    if (legacySingle is Map) {
+      return [CharacterFamiliar.fromJson(legacySingle.cast<String, dynamic>())];
+    }
+
+    if (legacySingle is Map && legacySingle.containsKey('value')) {
+      final singleValue = legacySingle['value'];
+      if (singleValue is Map) {
+        return [
+          CharacterFamiliar.fromJson(singleValue.cast<String, dynamic>()),
+        ];
+      }
+    }
+
+    return const [];
   }
 
   static T? _getValueNullable<T>(
@@ -369,6 +418,7 @@ class Character extends BaseModel with TimestampedEntity {
     Object? grupo = _unset,
     Object? grupoId = _unset,
     CharacterPillars? pillars,
+    List<CharacterFamiliar>? familiars,
     CharacterAppearance? appearance,
     CharacterDeathSaves? deathSaves,
     CharacterLanguages? languages,
@@ -404,6 +454,7 @@ class Character extends BaseModel with TimestampedEntity {
       grupo: grupo == _unset ? this.grupo : grupo as String?,
       grupoId: grupoId == _unset ? this.grupoId : grupoId as String?,
       pillars: pillars ?? this.pillars,
+      familiars: familiars ?? this.familiars,
       appearance: appearance ?? this.appearance,
       deathSaves: deathSaves ?? this.deathSaves,
       languages: languages ?? this.languages,
@@ -1725,6 +1776,60 @@ class CharacterPersonalizedSlot {
       maxSlots: maxSlots ?? this.maxSlots,
       usedSlots: usedSlots ?? this.usedSlots,
       diceType: diceType ?? this.diceType,
+    );
+  }
+}
+
+class CharacterFamiliar {
+  final String name;
+  final String armorClass;
+  final String maxHitPoints;
+  final String notes;
+
+  const CharacterFamiliar({
+    this.name = '',
+    this.armorClass = '',
+    this.maxHitPoints = '',
+    this.notes = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'name': {'value': name},
+    'armor_class': {'value': armorClass},
+    'max_hit_points': {'value': maxHitPoints},
+    'notes': {'value': notes},
+  };
+
+  factory CharacterFamiliar.fromJson(Map<String, dynamic> json) {
+    return CharacterFamiliar(
+      name: Character._getValue<String>(json, 'name', defaultValue: ''),
+      armorClass:
+          Character._getValue<dynamic>(
+            json,
+            'armor_class',
+            defaultValue: '',
+          ).toString(),
+      maxHitPoints:
+          Character._getValue<dynamic>(
+            json,
+            'max_hit_points',
+            defaultValue: '',
+          ).toString(),
+      notes: Character._getValue<String>(json, 'notes', defaultValue: ''),
+    );
+  }
+
+  CharacterFamiliar copyWith({
+    String? name,
+    String? armorClass,
+    String? maxHitPoints,
+    String? notes,
+  }) {
+    return CharacterFamiliar(
+      name: name ?? this.name,
+      armorClass: armorClass ?? this.armorClass,
+      maxHitPoints: maxHitPoints ?? this.maxHitPoints,
+      notes: notes ?? this.notes,
     );
   }
 }
