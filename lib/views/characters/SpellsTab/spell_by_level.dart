@@ -318,18 +318,20 @@ class _SpellByLevelState extends State<SpellByLevel> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isPrepared
-                      ? Colors.blue.shade200
-                      : isRitual && !isPrepared
-                      ? Colors.amber.shade300
-                      : Colors.grey.shade300,
+                  color:
+                      isPrepared
+                          ? Colors.blue.shade200
+                          : isRitual && !isPrepared
+                          ? Colors.amber.shade300
+                          : Colors.grey.shade300,
                   width: isPrepared || (isRitual && !isPrepared) ? 1.3 : 1,
                 ),
-                color: isPrepared
-                    ? Colors.blue.shade50
-                    : isRitual && !isPrepared
-                    ? Colors.amber.shade50
-                    : Colors.white,
+                color:
+                    isPrepared
+                        ? Colors.blue.shade50
+                        : isRitual && !isPrepared
+                        ? Colors.amber.shade50
+                        : Colors.white,
                 boxShadow: [
                   BoxShadow(
                     color: (isPrepared
@@ -337,7 +339,12 @@ class _SpellByLevelState extends State<SpellByLevel> {
                             : isRitual && !isPrepared
                             ? Colors.amber
                             : Colors.black)
-                        .withValues(alpha: isPrepared || (isRitual && !isPrepared) ? 0.08 : 0.03),
+                        .withValues(
+                          alpha:
+                              isPrepared || (isRitual && !isPrepared)
+                                  ? 0.08
+                                  : 0.03,
+                        ),
                     blurRadius: isPrepared || (isRitual && !isPrepared) ? 6 : 4,
                     offset: const Offset(0, 2),
                   ),

@@ -23,12 +23,12 @@ class DiaryService {
     String? groupId, // Optional group filter
   }) async {
     final entries = await _storage.loadAll(filter: characterId);
-    
+
     // Filter by groupId if provided
     if (groupId != null) {
       return entries.where((entry) => entry.groupId == groupId).toList();
     }
-    
+
     return entries;
   }
 
@@ -100,9 +100,19 @@ class DiaryService {
     }).toList();
   }
 
-  /// Export diary entry to JSON string (for sharing/backup)
+  /// Export one diary entry to JSON string (for sharing/backup)
   static String exportDiaryEntry(DiaryEntry diaryEntry) {
     return json.encode(diaryEntry.toJson());
+  }
+
+  /// Export multiple diary entries to JSON string.
+  /// Group associations are intentionally omitted when the entries are imported elsewhere.
+  static String exportDiaryEntries(List<DiaryEntry> diaryEntries) {
+    final payload =
+        diaryEntries
+            .map((entry) => entry.copyWith(clearGroupId: true).toJson())
+            .toList();
+    return json.encode(payload);
   }
 
   /// Import diary entry from JSON string
@@ -111,16 +121,19 @@ class DiaryService {
     String characterId,
   ) async {
     try {
-      final jsonData = json.decode(jsonString) as Map<String, dynamic>;
-      final diaryEntry = DiaryEntry.fromJson(jsonData);
+      final decoded = json.decode(jsonString);
+      final jsonData =
+          decoded is List ? decoded.first : decoded as Map<String, dynamic>;
+      final diaryEntry = DiaryEntry.fromJson(jsonData as Map<String, dynamic>);
 
       // Generate a new ID to avoid conflicts and set the character ID
       final now = DateTime.now();
       final newId =
-          '${characterId}_${diaryEntry.title.toLowerCase().replaceAll(' ', '_')}_${now.millisecondsSinceEpoch}';
+          '${characterId}_${diaryEntry.title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_')}_${now.millisecondsSinceEpoch}';
       final importedEntry = diaryEntry.copyWith(
         id: newId,
         characterId: characterId,
+        groupId: null,
         createdAt: now,
         updatedAt: now,
       );
@@ -129,6 +142,52 @@ class DiaryService {
       return importedEntry;
     } catch (e) {
       debugPrint('Error importing diary entry: $e');
+      rethrow;
+    }
+  }
+
+  /// Import several diary entries to a specific character.
+  /// This intentionally clears any stored group assignment to avoid taking
+  /// the source character's group structure into the target one.
+  static Future<List<DiaryEntry>> importDiaryEntries(
+    String jsonString,
+    String characterId,
+  ) async {
+    try {
+      final decoded = json.decode(jsonString);
+      final payload = decoded is List ? decoded : [decoded];
+
+      final importedEntries = <DiaryEntry>[];
+      for (var i = 0; i < payload.length; i++) {
+        final item = payload[i];
+        if (item is! Map<String, dynamic>) {
+          continue;
+        }
+
+        final sourceEntry = DiaryEntry.fromJson(item);
+        final now = DateTime.now();
+        final safeTitle = sourceEntry.title.toLowerCase().replaceAll(
+          RegExp(r'[^a-z0-9]+'),
+          '_',
+        );
+        final newId =
+            '${characterId}_${safeTitle}_${now.millisecondsSinceEpoch}_$i';
+
+        final importedEntry = sourceEntry.copyWith(
+          id: newId,
+          characterId: characterId,
+          groupId: null,
+          createdAt: now,
+          updatedAt: now,
+        );
+
+        await saveDiaryEntry(importedEntry);
+        importedEntries.add(importedEntry);
+      }
+
+      return importedEntries;
+    } catch (e) {
+      debugPrint('Error importing diary entries: $e');
       rethrow;
     }
   }

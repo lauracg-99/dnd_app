@@ -147,7 +147,9 @@ void main() {
       await DiaryService.saveDiaryEntry(updatedEntry);
 
       // Load and verify the update
-      final entries = await DiaryService.loadDiaryEntriesForCharacter(testCharacterId);
+      final entries = await DiaryService.loadDiaryEntriesForCharacter(
+        testCharacterId,
+      );
       final loadedEntry = entries.firstWhere((e) => e.id == originalEntry.id);
 
       expect(loadedEntry.title, 'Updated Title');
@@ -155,42 +157,47 @@ void main() {
       expect(loadedEntry.updatedAt.isAfter(originalEntry.updatedAt), isTrue);
     });
 
-    test('loadDiaryEntriesForCharacter should return entries for specific character', () async {
-      // Create entries for two different characters
-      final entry1 = await DiaryService.createDiaryEntry(
-        characterId: 'character_1',
-        title: 'Entry 1',
-        content: 'Content 1',
-      );
+    test(
+      'loadDiaryEntriesForCharacter should return entries for specific character',
+      () async {
+        // Create entries for two different characters
+        final entry1 = await DiaryService.createDiaryEntry(
+          characterId: 'character_1',
+          title: 'Entry 1',
+          content: 'Content 1',
+        );
 
-      final entry2 = await DiaryService.createDiaryEntry(
-        characterId: 'character_2',
-        title: 'Entry 2',
-        content: 'Content 2',
-      );
+        final entry2 = await DiaryService.createDiaryEntry(
+          characterId: 'character_2',
+          title: 'Entry 2',
+          content: 'Content 2',
+        );
 
-      final entry3 = await DiaryService.createDiaryEntry(
-        characterId: 'character_1',
-        title: 'Entry 3',
-        content: 'Content 3',
-      );
+        final entry3 = await DiaryService.createDiaryEntry(
+          characterId: 'character_1',
+          title: 'Entry 3',
+          content: 'Content 3',
+        );
 
-      // Load entries for character_1
-      final character1Entries = await DiaryService.loadDiaryEntriesForCharacter('character_1');
-      
-      // Should contain entry1 and entry3, but not entry2
-      expect(character1Entries.length, 2);
-      expect(character1Entries.any((e) => e.id == entry1.id), isTrue);
-      expect(character1Entries.any((e) => e.id == entry3.id), isTrue);
-      expect(character1Entries.any((e) => e.id == entry2.id), isFalse);
+        // Load entries for character_1
+        final character1Entries =
+            await DiaryService.loadDiaryEntriesForCharacter('character_1');
 
-      // Load entries for character_2
-      final character2Entries = await DiaryService.loadDiaryEntriesForCharacter('character_2');
-      
-      // Should contain only entry2
-      expect(character2Entries.length, 1);
-      expect(character2Entries.first.id, entry2.id);
-    });
+        // Should contain entry1 and entry3, but not entry2
+        expect(character1Entries.length, 2);
+        expect(character1Entries.any((e) => e.id == entry1.id), isTrue);
+        expect(character1Entries.any((e) => e.id == entry3.id), isTrue);
+        expect(character1Entries.any((e) => e.id == entry2.id), isFalse);
+
+        // Load entries for character_2
+        final character2Entries =
+            await DiaryService.loadDiaryEntriesForCharacter('character_2');
+
+        // Should contain only entry2
+        expect(character2Entries.length, 1);
+        expect(character2Entries.first.id, entry2.id);
+      },
+    );
 
     test('deleteDiaryEntry should remove entry', () async {
       // Create an entry
@@ -201,14 +208,18 @@ void main() {
       );
 
       // Verify it exists
-      var entries = await DiaryService.loadDiaryEntriesForCharacter(testCharacterId);
+      var entries = await DiaryService.loadDiaryEntriesForCharacter(
+        testCharacterId,
+      );
       expect(entries.any((e) => e.id == entry.id), isTrue);
 
       // Delete it
       await DiaryService.deleteDiaryEntry(testCharacterId, entry.id);
 
       // Verify it's gone
-      entries = await DiaryService.loadDiaryEntriesForCharacter(testCharacterId);
+      entries = await DiaryService.loadDiaryEntriesForCharacter(
+        testCharacterId,
+      );
       expect(entries.any((e) => e.id == entry.id), isFalse);
     });
 
@@ -268,7 +279,7 @@ void main() {
       );
 
       final jsonString = DiaryService.exportDiaryEntry(entry);
-      
+
       expect(jsonString, isA<String>());
       expect(jsonString.contains('Export Test'), isTrue);
       expect(jsonString.contains('Content to export'), isTrue);
@@ -282,21 +293,80 @@ void main() {
       );
 
       final jsonString = DiaryService.exportDiaryEntry(originalEntry);
-      
-      final importedEntry = await DiaryService.importDiaryEntry(jsonString, testCharacterId);
+
+      final importedEntry = await DiaryService.importDiaryEntry(
+        jsonString,
+        testCharacterId,
+      );
 
       expect(importedEntry.title, originalEntry.title);
       expect(importedEntry.content, originalEntry.content);
       expect(importedEntry.characterId, testCharacterId);
-      expect(importedEntry.id, isNot(equals(originalEntry.id))); // Should have new ID
-      expect(importedEntry.createdAt, isNot(equals(originalEntry.createdAt))); // Should have new timestamp
+      expect(
+        importedEntry.id,
+        isNot(equals(originalEntry.id)),
+      ); // Should have new ID
+      expect(
+        importedEntry.createdAt,
+        isNot(equals(originalEntry.createdAt)),
+      ); // Should have new timestamp
     });
+
+    test(
+      'importDiaryEntries should transfer selected entries to another character without groups',
+      () async {
+        final sourceCharacterId = 'source_character_export';
+        final targetCharacterId = 'target_character_export';
+
+        final entry1 = await DiaryService.createDiaryEntry(
+          characterId: sourceCharacterId,
+          title: 'First exported diary',
+          content: 'This should move to the target character.',
+          groupId: 'group_a',
+        );
+
+        final entry2 = await DiaryService.createDiaryEntry(
+          characterId: sourceCharacterId,
+          title: 'Second exported diary',
+          content: 'This should also move without group assignment.',
+          groupId: 'group_b',
+        );
+
+        final exportedEntries = DiaryService.exportDiaryEntries([
+          entry1,
+          entry2,
+        ]);
+        final importedEntries = await DiaryService.importDiaryEntries(
+          exportedEntries,
+          targetCharacterId,
+        );
+
+        expect(importedEntries.length, 2);
+        expect(
+          importedEntries.every(
+            (entry) => entry.characterId == targetCharacterId,
+          ),
+          isTrue,
+        );
+        expect(importedEntries.every((entry) => entry.groupId == null), isTrue);
+        expect(
+          importedEntries.every(
+            (entry) => entry.id != entry1.id && entry.id != entry2.id,
+          ),
+          isTrue,
+        );
+        expect(
+          importedEntries.map((entry) => entry.title).toSet(),
+          containsAll({entry1.title, entry2.title}),
+        );
+      },
+    );
   });
 
   group('Diary Integration Tests', () {
     test('Complete diary workflow should work end-to-end', () async {
       const characterId = 'integration_test_character';
-      
+
       // Clean up any existing data
       DiaryService.clearMemoryCache();
       await DiaryService.initializeStorage();
@@ -316,7 +386,9 @@ void main() {
         );
 
         // 2. Load all entries for the character
-        final entries = await DiaryService.loadDiaryEntriesForCharacter(characterId);
+        final entries = await DiaryService.loadDiaryEntriesForCharacter(
+          characterId,
+        );
         expect(entries.length, 2);
 
         // 3. Verify entries are sorted by updatedAt (most recent first)
@@ -324,17 +396,25 @@ void main() {
 
         // 4. Update an entry
         final updatedEntry1 = entry1.copyWith(
-          content: 'Our party set out from the village at dawn. The weather was perfect.',
+          content:
+              'Our party set out from the village at dawn. The weather was perfect.',
         );
         await DiaryService.saveDiaryEntry(updatedEntry1);
 
         // 5. Verify the update
-        final updatedEntries = await DiaryService.loadDiaryEntriesForCharacter(characterId);
-        final loadedEntry1 = updatedEntries.firstWhere((e) => e.id == entry1.id);
+        final updatedEntries = await DiaryService.loadDiaryEntriesForCharacter(
+          characterId,
+        );
+        final loadedEntry1 = updatedEntries.firstWhere(
+          (e) => e.id == entry1.id,
+        );
         expect(loadedEntry1.content, contains('weather was perfect'));
 
         // 6. Search functionality
-        final searchResults = DiaryService.searchDiaryEntries(updatedEntries, 'dragon');
+        final searchResults = DiaryService.searchDiaryEntries(
+          updatedEntries,
+          'dragon',
+        );
         expect(searchResults.length, 1);
         expect(searchResults.first.title, 'The Dragon\'s Lair');
 
@@ -342,22 +422,28 @@ void main() {
         await DiaryService.deleteDiaryEntry(characterId, entry2.id);
 
         // 8. Verify deletion
-        final finalEntries = await DiaryService.loadDiaryEntriesForCharacter(characterId);
+        final finalEntries = await DiaryService.loadDiaryEntriesForCharacter(
+          characterId,
+        );
         expect(finalEntries.length, 1);
         expect(finalEntries.first.id, entry1.id);
 
         // 9. Export and import test
         final exportString = DiaryService.exportDiaryEntry(finalEntries.first);
-        final importedEntry = await DiaryService.importDiaryEntry(exportString, characterId);
-        
+        final importedEntry = await DiaryService.importDiaryEntry(
+          exportString,
+          characterId,
+        );
+
         expect(importedEntry.title, finalEntries.first.title);
         expect(importedEntry.content, finalEntries.first.content);
         expect(importedEntry.id, isNot(equals(finalEntries.first.id)));
-
       } finally {
         // Clean up test data
         try {
-          final entries = await DiaryService.loadDiaryEntriesForCharacter(characterId);
+          final entries = await DiaryService.loadDiaryEntriesForCharacter(
+            characterId,
+          );
           for (final entry in entries) {
             await DiaryService.deleteDiaryEntry(characterId, entry.id);
           }
