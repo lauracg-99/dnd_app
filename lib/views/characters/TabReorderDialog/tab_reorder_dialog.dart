@@ -82,13 +82,24 @@ class _TabReorderDialogState extends State<TabReorderDialog> {
               child: ReorderableListView.builder(
                 itemCount: _tabOrder.length,
                 onReorder: _reorderTabs,
+                proxyDecorator: (child, index, animation) {
+                  return Material(
+                    color: Colors.transparent,
+                    elevation: 0,
+                    child: child,
+                  );
+                },
                 itemBuilder: (context, index) {
                   final tabId = _tabOrder[index];
                   final tabConfig = CharacterTabManager.getTabConfig(tabId);
 
-                  return Card(
+                  return Container(
                     key: ValueKey(tabId),
                     margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: ListTile(
                       leading: Icon(
                         tabConfig?.icon ?? Icons.help,
@@ -111,22 +122,27 @@ class _TabReorderDialogState extends State<TabReorderDialog> {
           },
           child: const Text('Reset to Default'),
         ),
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed:
-              _hasChanges
-                  ? () {
-                    widget.onOrderChanged(_tabOrder);
-                    Navigator.of(context).pop();
-                  }
-                  : null,
-          child: const Text('Save'),
-        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end, 
+          children: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          SizedBox(width: 8),
+          ElevatedButton(
+            onPressed:
+                _hasChanges
+                    ? () {
+                      widget.onOrderChanged(_tabOrder);
+                      Navigator.of(context).pop();
+                    }
+                    : null,
+            child: const Text('Save'),
+          ),
+        ])
       ],
     );
   }
