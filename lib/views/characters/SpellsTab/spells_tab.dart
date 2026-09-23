@@ -30,6 +30,7 @@ class SpellsTab extends StatelessWidget {
   final void Function(String spellId, bool prepare) onToggleSpellPreparation;
   final void Function(String spellId) onToggleAlwaysPrepared;
   final void Function(String spellId) onToggleFreeUse;
+  final void Function(String spellId) onToggleRitual;
   final VoidCallback onAutoSaveCharacter;
   final void Function(int index) onRemoveSpell;
 
@@ -59,6 +60,7 @@ class SpellsTab extends StatelessWidget {
     required this.onToggleSpellPreparation,
     required this.onToggleAlwaysPrepared,
     required this.onToggleFreeUse,
+    required this.onToggleRitual,
     required this.onAutoSaveCharacter,
     required this.onRemoveSpell,
   });
@@ -291,6 +293,7 @@ class SpellsTab extends StatelessWidget {
             onToggleSpellPreparation: onToggleSpellPreparation,
             onToggleAlwaysPrepared: onToggleAlwaysPrepared,
             onToggleFreeUse: onToggleFreeUse,
+            onToggleRitual: onToggleRitual,
             onAutoSaveCharacter: onAutoSaveCharacter,
             onRemoveSpell: onRemoveSpell,
           ),

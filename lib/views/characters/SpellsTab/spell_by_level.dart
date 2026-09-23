@@ -16,6 +16,7 @@ class SpellByLevel extends StatefulWidget {
   final Function(String, bool) onToggleSpellPreparation;
   final Function(String) onToggleAlwaysPrepared;
   final Function(String) onToggleFreeUse;
+  final Function(String) onToggleRitual;
   final Function() onAutoSaveCharacter;
   final Function(int) onRemoveSpell;
 
@@ -30,6 +31,7 @@ class SpellByLevel extends StatefulWidget {
     required this.onToggleSpellPreparation,
     required this.onToggleAlwaysPrepared,
     required this.onToggleFreeUse,
+    required this.onToggleRitual,
     required this.onAutoSaveCharacter,
     required this.onRemoveSpell,
   });
@@ -214,6 +216,12 @@ class _SpellByLevelState extends State<SpellByLevel> {
         final spellA = a['spell'] as Spell;
         final spellB = b['spell'] as Spell;
 
+        final isRitualA = widget.spellPreparation.isSpellRitual(spellA.id);
+        final isRitualB = widget.spellPreparation.isSpellRitual(spellB.id);
+
+        if (isRitualA && !isRitualB) return -1;
+        if (!isRitualA && isRitualB) return 1;
+
         final isAlwaysPreparedA = widget.spellPreparation.isSpellAlwaysPrepared(
           spellA.id,
         );
@@ -221,18 +229,15 @@ class _SpellByLevelState extends State<SpellByLevel> {
           spellB.id,
         );
 
-        // Always prepared spells come first
         if (isAlwaysPreparedA && !isAlwaysPreparedB) return -1;
         if (!isAlwaysPreparedA && isAlwaysPreparedB) return 1;
 
-        // If both are always prepared or both are not, sort by prepared status
         final isPreparedA = widget.spellPreparation.isSpellPrepared(spellA.id);
         final isPreparedB = widget.spellPreparation.isSpellPrepared(spellB.id);
 
         if (isPreparedA && !isPreparedB) return -1;
         if (!isPreparedA && isPreparedB) return 1;
 
-        // If both have same preparation status, sort alphabetically
         return spellA.name.compareTo(spellB.name);
       });
 
@@ -257,6 +262,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
           spell.id,
         );
         final isFreeUse = widget.spellPreparation.isSpellFreeUse(spell.id);
+        final isRitual = widget.spellPreparation.isSpellRitual(spell.id);
 
         // Check if we can prepare more spells
         final canPrepareMore =
@@ -281,6 +287,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
                 isPrepared,
                 isAlwaysPrepared,
                 isFreeUse,
+                isRitual,
               );
               return shouldRemove;
             },
@@ -297,6 +304,9 @@ class _SpellByLevelState extends State<SpellByLevel> {
               if (isFreeUse) {
                 widget.onToggleFreeUse(spell.id);
               }
+              if (isRitual) {
+                widget.onToggleRitual(spell.id);
+              }
 
               // Auto-save the character when a spell is removed
               widget.onAutoSaveCharacter();
@@ -308,16 +318,27 @@ class _SpellByLevelState extends State<SpellByLevel> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color:
-                      isPrepared ? Colors.blue.shade200 : Colors.grey.shade300,
-                  width: isPrepared ? 1.3 : 1,
+                  color: isPrepared
+                      ? Colors.blue.shade200
+                      : isRitual && !isPrepared
+                      ? Colors.amber.shade300
+                      : Colors.grey.shade300,
+                  width: isPrepared || (isRitual && !isPrepared) ? 1.3 : 1,
                 ),
-                color: isPrepared ? Colors.blue.shade50 : Colors.white,
+                color: isPrepared
+                    ? Colors.blue.shade50
+                    : isRitual && !isPrepared
+                    ? Colors.amber.shade50
+                    : Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: (isPrepared ? Colors.blue : Colors.black)
-                        .withValues(alpha: isPrepared ? 0.08 : 0.03),
-                    blurRadius: isPrepared ? 6 : 4,
+                    color: (isPrepared
+                            ? Colors.blue
+                            : isRitual && !isPrepared
+                            ? Colors.amber
+                            : Colors.black)
+                        .withValues(alpha: isPrepared || (isRitual && !isPrepared) ? 0.08 : 0.03),
+                    blurRadius: isPrepared || (isRitual && !isPrepared) ? 6 : 4,
                     offset: const Offset(0, 2),
                   ),
                 ],
@@ -371,10 +392,14 @@ class _SpellByLevelState extends State<SpellByLevel> {
                     ),
                     if (isAlwaysPrepared ||
                         isFreeUse ||
+                        isRitual ||
                         canPrepare ||
                         spell.levelNumber > 0) ...[
                       const SizedBox(height: 4),
-                      Row(
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           if (isAlwaysPrepared) ...[
                             GestureDetector(
@@ -410,7 +435,6 @@ class _SpellByLevelState extends State<SpellByLevel> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 4),
                           ] else if (canPrepare) ...[
                             GestureDetector(
                               onTap:
@@ -448,7 +472,6 @@ class _SpellByLevelState extends State<SpellByLevel> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 4),
                           ],
                           if (isFreeUse) ...[
                             GestureDetector(
@@ -484,7 +507,6 @@ class _SpellByLevelState extends State<SpellByLevel> {
                               ),
                             ),
                           ] else ...[
-                            // Free use is available for all classes, regardless of preparation ability
                             GestureDetector(
                               onTap: () => widget.onToggleFreeUse(spell.id),
                               child: Container(
@@ -510,6 +532,76 @@ class _SpellByLevelState extends State<SpellByLevel> {
                                     const SizedBox(width: 2),
                                     Text(
                                       'Free use',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (isRitual) ...[
+                            GestureDetector(
+                              onTap: () => widget.onToggleRitual(spell.id),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.auto_awesome,
+                                      size: 12,
+                                      color: Colors.amber.shade800,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Ritual',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.amber.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ] else ...[
+                            GestureDetector(
+                              onTap: () => widget.onToggleRitual(spell.id),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.auto_awesome_outlined,
+                                      size: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Ritual',
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
@@ -550,6 +642,7 @@ class _SpellByLevelState extends State<SpellByLevel> {
     bool isPrepared,
     bool isAlwaysPrepared,
     bool isFreeUse,
+    bool isRitual,
   ) async {
     final result = await showDialog<bool>(
       context: context,
@@ -589,6 +682,9 @@ class _SpellByLevelState extends State<SpellByLevel> {
       }
       if (isFreeUse) {
         widget.onToggleFreeUse(spell.id);
+      }
+      if (isRitual) {
+        widget.onToggleRitual(spell.id);
       }
 
       // Auto-save the character when a spell is removed

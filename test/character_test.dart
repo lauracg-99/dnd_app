@@ -187,6 +187,24 @@ void main() {
       },
     );
 
+    test('CharacterSpellPreparation ritual status is serialized and does not count as prepared', () {
+      final preparation = CharacterSpellPreparation(
+        preparedSpells: ['fireball'],
+        ritualSpells: ['detect-magic'],
+      );
+
+      expect(preparation.isSpellRitual('detect-magic'), isTrue);
+      expect(preparation.isSpellPrepared('detect-magic'), isFalse);
+      expect(preparation.currentPreparedCount, 1);
+
+      final json = preparation.toJson();
+      expect(json['ritual_spells']['value'], ['detect-magic']);
+      expect(
+        CharacterSpellPreparation.fromJson(json).isSpellRitual('detect-magic'),
+        isTrue,
+      );
+    });
+
     test('Character stats should calculate modifiers correctly', () {
       final stats = CharacterStats(
         strength: 20, // +5 modifier

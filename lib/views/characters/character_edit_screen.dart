@@ -1278,6 +1278,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       onToggleSpellPreparation: _toggleSpellPreparation,
       onToggleAlwaysPrepared: _toggleAlwaysPrepared,
       onToggleFreeUse: _toggleFreeUse,
+      onToggleRitual: _toggleRitual,
       onAutoSaveCharacter: () {
         // Manual save only - no auto-save
       },
@@ -4277,6 +4278,10 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
         character.spellPreparation.freeUseSpells) {
       return true;
     }
+    if (_spellPreparation.ritualSpells !=
+        character.spellPreparation.ritualSpells) {
+      return true;
+    }
 
     // Check personalized slots changes
     if (!_personalizedSlotsEqual(
@@ -4768,6 +4773,25 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
       }
     });
     // Manual save only - no auto-save for toggle free use
+  }
+
+  /// Toggle ritual status
+  void _toggleRitual(String spellId) {
+    setState(() {
+      if (_spellPreparation.isSpellRitual(spellId)) {
+        _spellPreparation = _spellPreparation.copyWith(
+          ritualSpells:
+              _spellPreparation.ritualSpells
+                  .where((id) => id != spellId)
+                  .toList(),
+        );
+      } else {
+        _spellPreparation = _spellPreparation.copyWith(
+          ritualSpells: [..._spellPreparation.ritualSpells, spellId],
+        );
+      }
+    });
+    // Manual save only - no auto-save for toggle ritual
   }
 
   /// Get the name of the modifier based on character class

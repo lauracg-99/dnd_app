@@ -1843,6 +1843,7 @@ class CharacterSpellPreparation {
   final List<String> preparedSpells;
   final List<String> alwaysPreparedSpells;
   final List<String> freeUseSpells;
+  final List<String> ritualSpells;
   final int maxPreparedSpells;
   final bool enablePreparation;
 
@@ -1850,6 +1851,7 @@ class CharacterSpellPreparation {
     this.preparedSpells = const [],
     this.alwaysPreparedSpells = const [],
     this.freeUseSpells = const [],
+    this.ritualSpells = const [],
     this.maxPreparedSpells = 0,
     this.enablePreparation = true,
   });
@@ -1858,6 +1860,7 @@ class CharacterSpellPreparation {
     'prepared_spells': {'value': preparedSpells},
     'always_prepared_spells': {'value': alwaysPreparedSpells},
     'free_use_spells': {'value': freeUseSpells},
+    'ritual_spells': {'value': ritualSpells},
     'max_prepared_spells': {'value': maxPreparedSpells},
     'enable_preparation': {'value': enablePreparation},
   };
@@ -1885,6 +1888,13 @@ class CharacterSpellPreparation {
           defaultValue: const [],
         ),
       ),
+      ritualSpells: List<String>.from(
+        Character._getValue<List<dynamic>>(
+          json,
+          'ritual_spells',
+          defaultValue: const [],
+        ),
+      ),
       maxPreparedSpells: Character._getValue<int>(
         json,
         'max_prepared_spells',
@@ -1902,6 +1912,7 @@ class CharacterSpellPreparation {
     List<String>? preparedSpells,
     List<String>? alwaysPreparedSpells,
     List<String>? freeUseSpells,
+    List<String>? ritualSpells,
     int? maxPreparedSpells,
     bool? enablePreparation,
   }) {
@@ -1909,6 +1920,7 @@ class CharacterSpellPreparation {
       preparedSpells: preparedSpells ?? this.preparedSpells,
       alwaysPreparedSpells: alwaysPreparedSpells ?? this.alwaysPreparedSpells,
       freeUseSpells: freeUseSpells ?? this.freeUseSpells,
+      ritualSpells: ritualSpells ?? this.ritualSpells,
       maxPreparedSpells: maxPreparedSpells ?? this.maxPreparedSpells,
       enablePreparation: enablePreparation ?? this.enablePreparation,
     );
@@ -2004,6 +2016,11 @@ class CharacterSpellPreparation {
   /// Check if a spell is always prepared
   bool isSpellAlwaysPrepared(String spellId) {
     return alwaysPreparedSpells.contains(spellId);
+  }
+
+  /// Check if a spell is marked as a ritual
+  bool isSpellRitual(String spellId) {
+    return ritualSpells.contains(spellId);
   }
 
   /// Check if a spell can be used for free
