@@ -3512,10 +3512,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     Spell? spell;
 
     try {
-      final spells = spellsViewModel.spells;
+      final spells = spellsViewModel.allSpells;
       if (spells.isNotEmpty) {
         spell = spells.firstWhere(
           (s) => s.name.toLowerCase() == spellName.toLowerCase(),
+          orElse: () => _createFallbackSpell(spellName),
         );
       } else {
         // Create fallback spell if no spells are loaded

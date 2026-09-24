@@ -12,6 +12,7 @@ class SpellsViewModel extends ChangeNotifier {
   String _selectedClass = '';
   String _selectedSchool = '';
 
+  List<Spell> get allSpells => _allSpells;
   List<Spell> get spells => _filteredSpells;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -65,6 +66,26 @@ class SpellsViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Replace the full spell catalog used for lookups and filtering.
+  void setAllSpells(List<Spell> spells) {
+    _allSpells = List<Spell>.from(spells);
+    _applyFilters();
+  }
+
+  /// Lookup a spell by name in the unfiltered catalog.
+  Spell? getSpellByName(String spellName) {
+    final query = spellName.trim();
+    if (query.isEmpty) return null;
+
+    for (final spell in _allSpells) {
+      if (spell.name.toLowerCase() == query.toLowerCase()) {
+        return spell;
+      }
+    }
+
+    return null;
   }
 
   /// Set search query and update filtered spells

@@ -66,21 +66,19 @@ class _SpellByLevelState extends State<SpellByLevel> {
     // Group spells by level
     for (int i = 0; i < widget.spells.length; i++) {
       final spellName = widget.spells[i];
-      final spell = spellsViewModel.spells.firstWhere(
-        (s) => s.name.toLowerCase() == spellName.toLowerCase(),
-        orElse:
-            () => Spell(
-              id: 'unknown',
-              name: spellName,
-              castingTime: 'Unknown',
-              range: 'Unknown',
-              duration: 'Unknown',
-              description: 'Custom spell',
-              classes: [],
-              dice: [],
-              updatedAt: DateTime.now(),
-            ),
-      );
+      final spell =
+          spellsViewModel.getSpellByName(spellName) ??
+          Spell(
+            id: 'unknown',
+            name: spellName,
+            castingTime: 'Unknown',
+            range: 'Unknown',
+            duration: 'Unknown',
+            description: 'Custom spell',
+            classes: [],
+            dice: [],
+            updatedAt: DateTime.now(),
+          );
 
       final level = spell.levelNumber;
       if (!spellsByLevel.containsKey(level)) {
