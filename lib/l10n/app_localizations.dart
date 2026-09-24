@@ -974,6 +974,78 @@ abstract class AppLocalizations {
   /// **'Character Level'**
   String get characterLevel;
 
+  /// Validation requirement for character level
+  ///
+  /// In en, this message translates to:
+  /// **'Character level is required'**
+  String get characterLevelRequired;
+
+  /// Label for character class field
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get classLabel;
+
+  /// Label for custom subclass input
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Subclass'**
+  String get customSubclass;
+
+  /// Label for optional subclass selector
+  ///
+  /// In en, this message translates to:
+  /// **'Subclass (Optional)'**
+  String get subclassOptional;
+
+  /// Action to clear a selected subclass
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Subclass'**
+  String get clearSubclass;
+
+  /// Tooltip to switch from custom subclass to preset list
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from preset subclasses'**
+  String get chooseSubclass;
+
+  /// Placeholder text for the custom subclass option
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Subclass...'**
+  String get customSubclassPlaceholder;
+
+  /// Label for optional race selector
+  ///
+  /// In en, this message translates to:
+  /// **'Race (Optional)'**
+  String get raceOptional;
+
+  /// Action to clear a selected race
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Race'**
+  String get clearRace;
+
+  /// Label for optional background selector
+  ///
+  /// In en, this message translates to:
+  /// **'Background (Optional)'**
+  String get backgroundOptional;
+
+  /// Action to clear a selected background
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Background'**
+  String get clearBackground;
+
+  /// Loading text while creating a character
+  ///
+  /// In en, this message translates to:
+  /// **'Creating...'**
+  String get creatingCharacter;
+
   /// Validation message for character level bounds
   ///
   /// In en, this message translates to:

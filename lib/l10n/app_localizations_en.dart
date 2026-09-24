@@ -489,6 +489,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterLevel => 'Character Level';
 
   @override
+  String get characterLevelRequired => 'Character level is required';
+
+  @override
+  String get classLabel => 'Class';
+
+  @override
+  String get customSubclass => 'Custom Subclass';
+
+  @override
+  String get subclassOptional => 'Subclass (Optional)';
+
+  @override
+  String get clearSubclass => 'Clear Subclass';
+
+  @override
+  String get chooseSubclass => 'Choose from preset subclasses';
+
+  @override
+  String get customSubclassPlaceholder => 'Custom Subclass...';
+
+  @override
+  String get raceOptional => 'Race (Optional)';
+
+  @override
+  String get clearRace => 'Clear Race';
+
+  @override
+  String get backgroundOptional => 'Background (Optional)';
+
+  @override
+  String get clearBackground => 'Clear Background';
+
+  @override
+  String get creatingCharacter => 'Creating...';
+
+  @override
   String validLevelRange(Object min, Object max) {
     return 'Please enter a valid level between $min and $max';
   }

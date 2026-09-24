@@ -499,6 +499,42 @@ class AppLocalizationsEs extends AppLocalizations {
   String get characterLevel => 'Nivel del personaje';
 
   @override
+  String get characterLevelRequired => 'El nivel del personaje es obligatorio';
+
+  @override
+  String get classLabel => 'Clase';
+
+  @override
+  String get customSubclass => 'Subclase personalizada';
+
+  @override
+  String get subclassOptional => 'Subclase (opcional)';
+
+  @override
+  String get clearSubclass => 'Borrar subclase';
+
+  @override
+  String get chooseSubclass => 'Elegir entre subclases predefinidas';
+
+  @override
+  String get customSubclassPlaceholder => 'Subclase personalizada...';
+
+  @override
+  String get raceOptional => 'Raza (opcional)';
+
+  @override
+  String get clearRace => 'Borrar raza';
+
+  @override
+  String get backgroundOptional => 'Trasfondo (opcional)';
+
+  @override
+  String get clearBackground => 'Borrar trasfondo';
+
+  @override
+  String get creatingCharacter => 'Creando...';
+
+  @override
   String validLevelRange(Object min, Object max) {
     return 'Introduce un nivel válido entre $min y $max';
   }

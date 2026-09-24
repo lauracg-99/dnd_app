@@ -232,16 +232,16 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       controller: _levelController,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Character level is required';
+                          return l10n.characterLevelRequired;
                         }
                         final level = int.tryParse(value.trim());
                         if (level == null || level < 1 || level > 20) {
-                          return 'Level must be between 1 and 20';
+                          return l10n.validLevelRange(1, 20);
                         }
                         return null;
                       },
                       decoration: InputDecoration(
-                        labelText: 'Character Level *',
+                        labelText: '${l10n.characterLevel} *',
                         //prefixIcon: const Icon(Icons.format_list_numbered, color: Colors.green),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.all(18),
@@ -271,7 +271,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedClass,
                       decoration: InputDecoration(
-                        labelText: 'Class *',
+                        labelText: '${l10n.classLabel} *',
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.all(16),
                       ),
@@ -319,7 +319,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       child: TextFormField(
                         controller: _subclassController,
                         decoration: InputDecoration(
-                          labelText: 'Custom Subclass',
+                          labelText: l10n.customSubclass,
                           suffixIcon: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -334,7 +334,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                       _subclassController.text = '';
                                     });
                                   },
-                                  tooltip: 'Clear subclass',
+                                  tooltip: l10n.clearSubclass,
                                 ),
                               IconButton(
                                 icon: const Icon(Icons.list),
@@ -343,7 +343,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                     _useCustomSubclass = false;
                                   });
                                 },
-                                tooltip: 'Choose from preset subclasses',
+                                tooltip: l10n.chooseSubclass,
                               ),
                             ],
                           ),
@@ -375,7 +375,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                 ? null
                                 : _subclassController.text,
                         decoration: InputDecoration(
-                          labelText: 'Subclass (Optional)',
+                          labelText: l10n.subclassOptional,
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.all(16),
                         ),
@@ -394,7 +394,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                   const SizedBox(width: 12),
                                   Flexible(
                                     child: Text(
-                                      'Clear Subclass',
+                                      l10n.clearSubclass,
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                       style: const TextStyle(
@@ -436,7 +436,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                 const SizedBox(width: 12),
                                 Flexible(
                                   child: Text(
-                                    'Custom Subclass...',
+                                    l10n.customSubclassPlaceholder,
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 1,
                                     style: const TextStyle(
@@ -495,10 +495,10 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                               matchingRace != null
                                   ? '${matchingRace.name}_${matchingRace.source}'
                                   : null,
-                          decoration: const InputDecoration(
-                            labelText: 'Race (Optional)',
+                          decoration: InputDecoration(
+                            labelText: l10n.raceOptional,
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(16),
+                            contentPadding: const EdgeInsets.all(16),
                           ),
                           isExpanded: true,
                           items: [
@@ -515,7 +515,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                     const SizedBox(width: 12),
                                     Flexible(
                                       child: Text(
-                                        'Clear Race',
+                                        l10n.clearRace,
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
                                         style: const TextStyle(
@@ -589,10 +589,10 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                               _backgroundController.text.isEmpty
                                   ? null
                                   : _backgroundController.text,
-                          decoration: const InputDecoration(
-                            labelText: 'Background (Optional)',
+                          decoration: InputDecoration(
+                            labelText: l10n.backgroundOptional,
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(16),
+                            contentPadding: const EdgeInsets.all(16),
                           ),
                           isExpanded: true,
                           items: [
@@ -609,7 +609,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                     const SizedBox(width: 12),
                                     Flexible(
                                       child: Text(
-                                        'Clear Background',
+                                        l10n.clearBackground,
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
                                         style: const TextStyle(
@@ -814,7 +814,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                             ),
                                             const SizedBox(width: 12),
                                             Text(
-                                              'Creating...',
+                                              l10n.creatingCharacter,
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
@@ -829,9 +829,9 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
                                           children: [
-                                            const Text(
-                                              'Create Character',
-                                              style: TextStyle(
+                                            Text(
+                                              l10n.createCharacter,
+                                              style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
                                                 color: Colors.white,

@@ -617,6 +617,54 @@
   "@characterLevel": {
     "description": "Etiqueta del nivel del personaje"
   },
+  "characterLevelRequired": "El nivel del personaje es obligatorio",
+  "@characterLevelRequired": {
+    "description": "Requisito de validación para el nivel del personaje"
+  },
+  "classLabel": "Clase",
+  "@classLabel": {
+    "description": "Etiqueta del campo de clase del personaje"
+  },
+  "customSubclass": "Subclase personalizada",
+  "@customSubclass": {
+    "description": "Etiqueta del campo de subclase personalizada"
+  },
+  "subclassOptional": "Subclase (opcional)",
+  "@subclassOptional": {
+    "description": "Etiqueta del selector opcional de subclase"
+  },
+  "clearSubclass": "Borrar subclase",
+  "@clearSubclass": {
+    "description": "Acción para borrar una subclase seleccionada"
+  },
+  "chooseSubclass": "Elegir entre subclases predefinidas",
+  "@chooseSubclass": {
+    "description": "Tooltip para cambiar de subclase personalizada a la lista predefinida"
+  },
+  "customSubclassPlaceholder": "Subclase personalizada...",
+  "@customSubclassPlaceholder": {
+    "description": "Texto de la opción de subclase personalizada"
+  },
+  "raceOptional": "Raza (opcional)",
+  "@raceOptional": {
+    "description": "Etiqueta del selector opcional de raza"
+  },
+  "clearRace": "Borrar raza",
+  "@clearRace": {
+    "description": "Acción para borrar una raza seleccionada"
+  },
+  "backgroundOptional": "Trasfondo (opcional)",
+  "@backgroundOptional": {
+    "description": "Etiqueta del selector opcional de trasfondo"
+  },
+  "clearBackground": "Borrar trasfondo",
+  "@clearBackground": {
+    "description": "Acción para borrar un trasfondo seleccionado"
+  },
+  "creatingCharacter": "Creando...",
+  "@creatingCharacter": {
+    "description": "Texto de carga mientras se crea un personaje"
+  },
   "validLevelRange": "Introduce un nivel válido entre {min} y {max}",
   "@validLevelRange": {
     "description": "Mensaje de validación para el rango del nivel",

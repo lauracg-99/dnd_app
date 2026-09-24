@@ -23,6 +23,18 @@ void main() {
     expect(AppLocalizations.of(context)!.navCharacters, 'Characters');
     expect(AppLocalizations.of(context)!.appTitle, 'D&D');
     expect(AppLocalizations.of(context)!.language, 'Language');
+    expect(AppLocalizations.of(context)!.classLabel, 'Class');
+    expect(AppLocalizations.of(context)!.customSubclass, 'Custom Subclass');
+    expect(
+      AppLocalizations.of(context)!.subclassOptional,
+      'Subclass (Optional)',
+    );
+    expect(AppLocalizations.of(context)!.raceOptional, 'Race (Optional)');
+    expect(
+      AppLocalizations.of(context)!.backgroundOptional,
+      'Background (Optional)',
+    );
+    expect(AppLocalizations.of(context)!.creatingCharacter, 'Creating...');
     expect(
       AppLocalizations.of(context)!.signInBackupDescription,
       'Sign in to backup your data and access it from anywhere',
@@ -55,6 +67,21 @@ void main() {
 
     expect(AppLocalizations.of(context)!.navCharacters, 'Personajes');
     expect(AppLocalizations.of(context)!.language, 'Idioma');
+    expect(AppLocalizations.of(context)!.classLabel, 'Clase');
+    expect(
+      AppLocalizations.of(context)!.customSubclass,
+      'Subclase personalizada',
+    );
+    expect(
+      AppLocalizations.of(context)!.subclassOptional,
+      'Subclase (opcional)',
+    );
+    expect(AppLocalizations.of(context)!.raceOptional, 'Raza (opcional)');
+    expect(
+      AppLocalizations.of(context)!.backgroundOptional,
+      'Trasfondo (opcional)',
+    );
+    expect(AppLocalizations.of(context)!.creatingCharacter, 'Creando...');
     expect(
       AppLocalizations.of(context)!.cloudSyncOptions,
       'Opciones de sincronización',

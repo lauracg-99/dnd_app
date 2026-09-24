@@ -617,6 +617,54 @@
   "@characterLevel": {
     "description": "Label for character level field"
   },
+  "characterLevelRequired": "Character level is required",
+  "@characterLevelRequired": {
+    "description": "Validation requirement for character level"
+  },
+  "classLabel": "Class",
+  "@classLabel": {
+    "description": "Label for character class field"
+  },
+  "customSubclass": "Custom Subclass",
+  "@customSubclass": {
+    "description": "Label for custom subclass input"
+  },
+  "subclassOptional": "Subclass (Optional)",
+  "@subclassOptional": {
+    "description": "Label for optional subclass selector"
+  },
+  "clearSubclass": "Clear Subclass",
+  "@clearSubclass": {
+    "description": "Action to clear a selected subclass"
+  },
+  "chooseSubclass": "Choose from preset subclasses",
+  "@chooseSubclass": {
+    "description": "Tooltip to switch from custom subclass to preset list"
+  },
+  "customSubclassPlaceholder": "Custom Subclass...",
+  "@customSubclassPlaceholder": {
+    "description": "Placeholder text for the custom subclass option"
+  },
+  "raceOptional": "Race (Optional)",
+  "@raceOptional": {
+    "description": "Label for optional race selector"
+  },
+  "clearRace": "Clear Race",
+  "@clearRace": {
+    "description": "Action to clear a selected race"
+  },
+  "backgroundOptional": "Background (Optional)",
+  "@backgroundOptional": {
+    "description": "Label for optional background selector"
+  },
+  "clearBackground": "Clear Background",
+  "@clearBackground": {
+    "description": "Action to clear a selected background"
+  },
+  "creatingCharacter": "Creating...",
+  "@creatingCharacter": {
+    "description": "Loading text while creating a character"
+  },
   "validLevelRange": "Please enter a valid level between {min} and {max}",
   "@validLevelRange": {
     "description": "Validation message for character level bounds",
