@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'dart:convert';
+import '../../l10n/app_localizations.dart';
 import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
 import '../../models/diary_group_model.dart';
@@ -112,6 +113,8 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.character.name}\'s Diary'),
@@ -150,13 +153,13 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                   _selectedEntryIds.clear();
                 });
               },
-              tooltip: 'Cancel Selection',
+              tooltip: l10n.cancelSelection,
             ),
           ] else ...[
             IconButton(
               icon: const Icon(Icons.upload_outlined),
               onPressed: _showExportAllDialog,
-              tooltip: 'Export diaries to another character',
+              tooltip: l10n.exportDiariesToAnotherCharacter,
             ),
             // Selection mode toggle
             IconButton(
@@ -166,7 +169,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                   _isSelectionMode = true;
                 });
               },
-              tooltip: 'Select Multiple',
+              tooltip: l10n.selectMultiple,
             ),
             _buildSortSelector(),
           ],
@@ -180,7 +183,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search diary entries...',
+                hintText: l10n.searchDiaryEntries,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -217,7 +220,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
       floatingActionButton: FloatingActionButton(
         heroTag: 'diary_fab',
         onPressed: _createNewDiaryEntry,
-        tooltip: 'New Diary Entry',
+        tooltip: l10n.newDiaryEntry,
         child: const Icon(Icons.add),
       ),
     );
@@ -259,6 +262,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
 
   Widget _buildEmptyView() {
     final isSearchResult = _searchController.text.isNotEmpty;
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Column(
@@ -271,15 +275,13 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            isSearchResult
-                ? 'No diary entries found matching your search.'
-                : 'No diary entries yet. Create your first entry!',
+            isSearchResult ? l10n.noDiaryEntriesFound : l10n.noDiaryEntriesYet,
           ),
           if (!isSearchResult) ...[
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _createNewDiaryEntry,
-              child: const Text('Create Diary Entry'),
+              child: Text(l10n.createDiaryEntry),
             ),
           ],
         ],
@@ -668,6 +670,8 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
   }
 
   Widget _buildGroupSelector() {
+    final l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
@@ -677,7 +681,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
               initialValue: _selectedGroupId,
               borderRadius: BorderRadius.circular(10),
               decoration: InputDecoration(
-                labelText: 'Filter by Group',
+                labelText: l10n.filterByGroup,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -688,7 +692,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
               ),
               isExpanded: true,
               items: [
-                const DropdownMenuItem(value: null, child: Text('All Entries')),
+                DropdownMenuItem(value: null, child: Text(l10n.allEntries)),
                 ..._diaryGroups.map((group) {
                   return DropdownMenuItem(
                     value: group.id,
@@ -712,18 +716,18 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: _showCreateGroupDialog,
-            tooltip: 'Create New Group',
+            tooltip: l10n.createNewGroup,
           ),
           if (_selectedGroupId != null) ...[
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () => _showEditGroupDialog(_selectedGroupId!),
-              tooltip: 'Edit Group Name',
+              tooltip: l10n.editGroupName,
             ),
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () => _showDeleteGroupDialog(_selectedGroupId!),
-              tooltip: 'Delete Group',
+              tooltip: l10n.deleteGroup,
             ),
           ],
         ],
@@ -758,24 +762,25 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
 
   void _showCreateGroupDialog() {
     final TextEditingController nameController = TextEditingController();
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Create New Group'),
+            title: Text(l10n.createNewGroup),
             content: TextField(
               controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Group Name',
-                hintText: 'e.g., Session 1, Campaign Arc, etc.',
+              decoration: InputDecoration(
+                labelText: l10n.groupName,
+                hintText: l10n.groupNameHint,
               ),
               autofocus: true,
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () async {
@@ -784,7 +789,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                     if (mounted) {
                       SnackbarHelper.showError(
                         context,
-                        'Please enter a group name',
+                        l10n.pleaseEnterGroupName,
                       );
                     }
                     return;
@@ -802,7 +807,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                     if (mounted) {
                       SnackbarHelper.showSuccess(
                         context,
-                        'Group created successfully',
+                        l10n.groupCreatedSuccessfully,
                       );
                     }
                   } catch (e) {
@@ -814,7 +819,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                     }
                   }
                 },
-                child: const Text('Create'),
+                child: Text(l10n.createCharacter),
               ),
             ],
           ),
@@ -826,24 +831,25 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
     final TextEditingController nameController = TextEditingController(
       text: group.name,
     );
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Edit Group Name'),
+            title: Text(l10n.editGroupName),
             content: TextField(
               controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Group Name',
-                hintText: 'e.g., Session 1, Campaign Arc, etc.',
+              decoration: InputDecoration(
+                labelText: l10n.groupName,
+                hintText: l10n.groupNameHint,
               ),
               autofocus: true,
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () async {
@@ -852,7 +858,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                     if (mounted) {
                       SnackbarHelper.showError(
                         context,
-                        'Please enter a group name',
+                        l10n.pleaseEnterGroupName,
                       );
                     }
                     return;
@@ -868,7 +874,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                     if (mounted) {
                       SnackbarHelper.showSuccess(
                         context,
-                        'Group name updated successfully',
+                        l10n.groupNameUpdatedSuccessfully,
                       );
                     }
                   } catch (e) {
@@ -880,7 +886,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                     }
                   }
                 },
-                child: const Text('Save'),
+                child: Text(l10n.save),
               ),
             ],
           ),
@@ -889,19 +895,20 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
 
   void _showDeleteGroupDialog(String groupId) {
     final group = _diaryGroups.firstWhere((g) => g.id == groupId);
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Delete Group'),
+            title: Text(l10n.deleteGroup),
             content: Text(
               'Are you sure you want to delete "${group.name}"? Entries in this group will be unassigned but not deleted.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () async {
@@ -938,7 +945,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                     if (mounted) {
                       SnackbarHelper.showSuccess(
                         context,
-                        'Group deleted successfully',
+                        l10n.groupDeletedSuccessfully,
                       );
                     }
                   } catch (e) {
@@ -951,7 +958,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                   }
                 },
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
+                child: Text(l10n.delete),
               ),
             ],
           ),
@@ -959,18 +966,20 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
   }
 
   void _showAssignGroupDialog(DiaryEntry entry) {
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Assign to Group'),
+            title: Text(l10n.addToGroup),
             content:
                 _diaryGroups.isEmpty
-                    ? const Text('No groups available. Create a group first.')
+                    ? Text(l10n.noGroupsAvailable)
                     : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Select a group for this entry:'),
+                        Text(l10n.selectGroupForEntry),
                         const SizedBox(height: 16),
                         ..._diaryGroups.map((group) {
                           return ListTile(
@@ -992,7 +1001,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                           );
                         }),
                         ListTile(
-                          title: const Text('No Group'),
+                          title: Text(l10n.noGroup),
                           leading: RadioGroup<String>(
                             groupValue: entry.groupId ?? '',
                             onChanged: (value) async {
@@ -1014,7 +1023,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
             ],
           ),
@@ -1042,6 +1051,8 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
   }
 
   void _showBulkAssignGroupDialog() {
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       builder:
@@ -1049,11 +1060,11 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
             title: Text('Assign ${_selectedEntryIds.length} Entries to Group'),
             content:
                 _diaryGroups.isEmpty
-                    ? const Text('No groups available. Create a group first.')
+                    ? Text(l10n.noGroupsAvailable)
                     : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Select a group for these entries:'),
+                        Text(l10n.selectGroupForEntries),
                         const SizedBox(height: 16),
                         ..._diaryGroups.map((group) {
                           return ListTile(
@@ -1065,7 +1076,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                           );
                         }),
                         ListTile(
-                          title: const Text('No Group'),
+                          title: Text(l10n.noGroup),
                           onTap: () async {
                             Navigator.pop(context);
                             await _bulkAssignEntriesToGroup(null);
@@ -1076,7 +1087,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
             ],
           ),

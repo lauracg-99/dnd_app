@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class DeleteConfirmationDialog extends StatelessWidget {
   final String title;
   final String message;
@@ -14,13 +16,15 @@ class DeleteConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return AlertDialog(
       title: Text(title),
       content: Text(message),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () {
@@ -28,7 +32,7 @@ class DeleteConfirmationDialog extends StatelessWidget {
             onConfirm();
           },
           style: TextButton.styleFrom(foregroundColor: Colors.red),
-          child: const Text('Remove'),
+          child: Text(l10n.remove),
         ),
       ],
     );

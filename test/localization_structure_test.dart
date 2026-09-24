@@ -63,6 +63,17 @@ void main() {
       AppLocalizations.of(context)!.characterAppearance,
       'Character Appereance',
     );
+    expect(
+      AppLocalizations.of(context)!.createDiaryEntry,
+      'Create Diary Entry',
+    );
+    expect(AppLocalizations.of(context)!.filterByGroup, 'Filter by Group');
+    expect(AppLocalizations.of(context)!.editDiaryEntry, 'Edit Diary Entry');
+    expect(AppLocalizations.of(context)!.diaryEntryTitle, 'Title');
+    expect(
+      AppLocalizations.of(context)!.diaryEntryContentPlaceholder,
+      'Write your diary entry here...',
+    );
   });
 
   testWidgets('app supports spanish locale switch entries', (tester) async {

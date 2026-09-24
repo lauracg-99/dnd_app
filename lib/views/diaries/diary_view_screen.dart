@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'dart:convert';
+import '../../l10n/app_localizations.dart';
 import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
 import '../../models/diary_group_model.dart';
@@ -37,6 +38,8 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return WillPopScope(
       onWillPop: () async {
         Navigator.pop(context, _hasUpdated ? true : null);
@@ -51,12 +54,12 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
             IconButton(
               icon: const Icon(Icons.folder),
               onPressed: _showGroupAssignmentDialog,
-              tooltip: 'Assign to Group',
+              tooltip: l10n.addToGroup,
             ),
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () => _editDiaryEntry(context),
-              tooltip: 'Edit Entry',
+              tooltip: l10n.editEntry,
             ),
           ],
         ),
@@ -69,10 +72,10 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: _buildMetadata(context),
               ),
-              
+
               // Entry content - natural height with full width
               _buildContent(),
-              SizedBox(height: 50,)
+              SizedBox(height: 50),
             ],
           ),
         ),
@@ -103,14 +106,13 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                 const SizedBox(width: 8),
                 Text(
                   _formatDate(_diaryEntry.createdAt),
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
             ),
-            if (_diaryEntry.updatedAt.isAfter(_diaryEntry.createdAt.add(const Duration(minutes: 1)))) ...[
+            if (_diaryEntry.updatedAt.isAfter(
+              _diaryEntry.createdAt.add(const Duration(minutes: 1)),
+            )) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -128,29 +130,27 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
               ),
             ],
 
-              if (_diaryEntry.groupId != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.folder, size: 16, color: Colors.grey[600]),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'Group: ${_diaryGroups.firstWhere(
-                          (g) => g.id == _diaryEntry.groupId).name}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+            if (_diaryEntry.groupId != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.folder, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'Group: ${_diaryGroups.firstWhere((g) => g.id == _diaryEntry.groupId).name}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-                  ],
-                ),
-              ],
-
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -171,13 +171,13 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
               _diaryEntry.content.isNotEmpty
                   ? _buildRichContent()
                   : Text(
-                      'No content',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.grey[600],
-                      ),
+                    AppLocalizations.of(context)!.noContent,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey[600],
                     ),
+                  ),
             ],
           ),
         ),
@@ -189,9 +189,9 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
     try {
       // Try to parse as JSON (new format with rich text)
       final List<dynamic> jsonDelta = jsonDecode(_diaryEntry.content);
-      final controller = QuillController.basic()
-        ..document = Document.fromJson(jsonDelta);
-      
+      final controller =
+          QuillController.basic()..document = Document.fromJson(jsonDelta);
+
       return IgnorePointer(
         child: QuillEditor.basic(
           controller: controller,
@@ -207,7 +207,7 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                 const HorizontalSpacing(0, 0),
                 const VerticalSpacing(0, 0),
                 const VerticalSpacing(0, 0),
-                const BoxDecoration(), 
+                const BoxDecoration(),
               ),
             ),
           ),
@@ -217,10 +217,7 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
       // Fallback to plain text (old format)
       return Text(
         _diaryEntry.content,
-        style: const TextStyle(
-          fontSize: 16,
-          height: 1.5,
-        ),
+        style: const TextStyle(fontSize: 16, height: 1.5),
       );
     }
   }
@@ -250,10 +247,11 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DiaryEditorScreen(
-          character: widget.character,
-          diaryEntry: _diaryEntry,
-        ),
+        builder:
+            (context) => DiaryEditorScreen(
+              character: widget.character,
+              diaryEntry: _diaryEntry,
+            ),
       ),
     );
 
@@ -283,126 +281,131 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
   }
 
   void _showGroupAssignmentDialog() {
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Assign to Group'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: _diaryGroups.isEmpty
-              ? const Text('No groups available. Create a group first.')
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Select a group for this entry:'),
-                    const SizedBox(height: 16),
-                    ..._diaryGroups.map((group) {
-                      return RadioListTile<String>(
-                        title: Text(group.name),
-                        value: group.id,
-                        groupValue: _diaryEntry.groupId,
-                        onChanged: (value) async {
-                          Navigator.pop(context);
-                          if (value != null) {
-                            await _assignEntryToGroup(value);
-                          }
-                        },
-                      );
-                    }),
-                    RadioListTile<String>(
-                      title: const Text('No Group'),
-                      value: '',
-                      groupValue: _diaryEntry.groupId ?? '',
-                      onChanged: (value) async {
-                        Navigator.pop(context);
-                        if (value == '') {
-                          await _assignEntryToGroup(null);
-                        }
-                      },
-                    ),
-                  ],
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: Text(l10n.addToGroup),
+            content: SizedBox(
+              width: double.maxFinite,
+              child:
+                  _diaryGroups.isEmpty
+                      ? Text(l10n.noGroupsAvailable)
+                      : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(l10n.selectGroupForEntry),
+                          const SizedBox(height: 16),
+                          ..._diaryGroups.map((group) {
+                            return RadioListTile<String>(
+                              title: Text(group.name),
+                              value: group.id,
+                              groupValue: _diaryEntry.groupId,
+                              onChanged: (value) async {
+                                Navigator.pop(context);
+                                if (value != null) {
+                                  await _assignEntryToGroup(value);
+                                }
+                              },
+                            );
+                          }),
+                          RadioListTile<String>(
+                            title: Text(l10n.noGroup),
+                            value: '',
+                            groupValue: _diaryEntry.groupId ?? '',
+                            onChanged: (value) async {
+                              Navigator.pop(context);
+                              if (value == '') {
+                                await _assignEntryToGroup(null);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: _showCreateGroupDialog,
+                child: Text(l10n.createNewGroup),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: _showCreateGroupDialog,
-            child: const Text('Create New Group'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showCreateGroupDialog() {
-    Navigator.pop(context); // Close the assignment dialog first
-    
+    final l10n = AppLocalizations.of(context)!;
+    Navigator.pop(context);
+
     final TextEditingController nameController = TextEditingController();
-    
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Create New Group'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Group Name',
-            hintText: 'e.g., Session 1, Campaign Arc, etc.',
+      builder:
+          (context) => AlertDialog(
+            title: Text(l10n.createNewGroup),
+            content: TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: l10n.groupName,
+                hintText: l10n.groupNameHint,
+              ),
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final groupName = nameController.text.trim();
+                  if (groupName.isEmpty) {
+                    if (mounted) {
+                      SnackbarHelper.showError(
+                        context,
+                        l10n.pleaseEnterGroupName,
+                      );
+                    }
+                    return;
+                  }
+
+                  Navigator.pop(context);
+
+                  try {
+                    final newGroup = await DiaryGroupService.createDiaryGroup(
+                      characterId: widget.character.id,
+                      name: groupName,
+                    );
+                    await _loadDiaryGroups();
+
+                    await _assignEntryToGroup(newGroup.id);
+
+                    if (mounted) {
+                      SnackbarHelper.showSuccess(
+                        context,
+                        l10n.groupCreatedAndAssignedSuccessfully,
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      SnackbarHelper.showError(
+                        context,
+                        'Error creating group: $e',
+                      );
+                    }
+                  }
+                },
+                child: Text(l10n.createCharacter),
+              ),
+            ],
           ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final groupName = nameController.text.trim();
-              if (groupName.isEmpty) {
-                if (mounted) {
-                  SnackbarHelper.showError(
-                    context,
-                    'Please enter a group name',
-                  );
-                }
-                return;
-              }
-              
-              Navigator.pop(context);
-              
-              try {
-                final newGroup = await DiaryGroupService.createDiaryGroup(
-                  characterId: widget.character.id,
-                  name: groupName,
-                );
-                await _loadDiaryGroups();
-                
-                // Assign the newly created group to the entry
-                await _assignEntryToGroup(newGroup.id);
-                
-                if (mounted) {
-                  SnackbarHelper.showSuccess(
-                    context,
-                    'Group created and assigned successfully',
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  SnackbarHelper.showError(
-                    context,
-                    'Error creating group: $e',
-                  );
-                }
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -410,27 +413,25 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
     try {
       final updatedEntry = _diaryEntry.copyWith(groupId: groupId);
       await DiaryService.updateDiaryEntry(updatedEntry);
-      
+
       if (mounted) {
         setState(() {
           _diaryEntry = updatedEntry;
           _hasUpdated = true;
         });
-        
-        final groupName = groupId != null 
-            ? _diaryGroups.firstWhere((g) => g.id == groupId).name 
-            : 'No Group';
+
+        final groupName =
+            groupId != null
+                ? _diaryGroups.firstWhere((g) => g.id == groupId).name
+                : AppLocalizations.of(context)!.noGroup;
         SnackbarHelper.showSuccess(
           context,
-          'Assigned to "$groupName"',
+          AppLocalizations.of(context)!.assignedToGroup(groupName),
         );
       }
     } catch (e) {
       if (mounted) {
-        SnackbarHelper.showError(
-          context,
-          'Error assigning to group: $e',
-        );
+        SnackbarHelper.showError(context, 'Error assigning to group: $e');
       }
     }
   }

@@ -128,6 +128,164 @@
   "@diary": {
     "description": "Diary action label"
   },
+  "createDiaryEntry": "Create Diary Entry",
+  "@createDiaryEntry": {
+    "description": "Create a diary entry action label"
+  },
+  "filterByGroup": "Filter by Group",
+  "@filterByGroup": {
+    "description": "Label for the diary group filter selector"
+  },
+  "allEntries": "All Entries",
+  "@allEntries": {
+    "description": "Option label for showing all diary entries in the group filter"
+  },
+  "searchDiaryEntries": "Search diary entries...",
+  "@searchDiaryEntries": {
+    "description": "Diary search input hint"
+  },
+  "noDiaryEntriesFound": "No diary entries found matching your search.",
+  "@noDiaryEntriesFound": {
+    "description": "Empty state text when a diary search returns no results"
+  },
+  "noDiaryEntriesYet": "No diary entries yet. Create your first entry!",
+  "@noDiaryEntriesYet": {
+    "description": "Empty state text when the diary list is empty"
+  },
+  "newDiaryEntry": "New Diary Entry",
+  "@newDiaryEntry": {
+    "description": "Tooltip for creating a new diary entry"
+  },
+  "createNewGroup": "Create New Group",
+  "@createNewGroup": {
+    "description": "Title for the diary group creation dialog"
+  },
+  "editGroupName": "Edit Group Name",
+  "@editGroupName": {
+    "description": "Title for the diary group rename dialog"
+  },
+  "deleteGroup": "Delete Group",
+  "@deleteGroup": {
+    "description": "Title for the diary group deletion dialog"
+  },
+  "groupName": "Group Name",
+  "@groupName": {
+    "description": "Field label for a diary group name"
+  },
+  "groupNameHint": "e.g., Session 1, Campaign Arc, etc.",
+  "@groupNameHint": {
+    "description": "Hint text for the diary group name field"
+  },
+  "pleaseEnterGroupName": "Please enter a group name",
+  "@pleaseEnterGroupName": {
+    "description": "Validation message when the user submits an empty group name"
+  },
+  "groupCreatedSuccessfully": "Group created successfully",
+  "@groupCreatedSuccessfully": {
+    "description": "Success message when a diary group is created"
+  },
+  "groupNameUpdatedSuccessfully": "Group name updated successfully",
+  "@groupNameUpdatedSuccessfully": {
+    "description": "Success message when a diary group is renamed"
+  },
+  "groupDeletedSuccessfully": "Group deleted successfully",
+  "@groupDeletedSuccessfully": {
+    "description": "Success message when a diary group is deleted"
+  },
+  "noGroupsAvailable": "No groups available. Create a group first.",
+  "@noGroupsAvailable": {
+    "description": "Empty state for diary group assignment when no groups exist"
+  },
+  "selectGroupForEntry": "Select a group for this entry:",
+  "@selectGroupForEntry": {
+    "description": "Prompt shown when assigning a diary entry to a group"
+  },
+  "selectGroupForEntries": "Select a group for these entries:",
+  "@selectGroupForEntries": {
+    "description": "Prompt shown when assigning multiple diary entries to a group"
+  },
+  "noGroup": "No Group",
+  "@noGroup": {
+    "description": "Option label for ungrouped diary entries"
+  },
+  "diaryEntryTitle": "Title",
+  "@diaryEntryTitle": {
+    "description": "Label for the diary entry title field"
+  },
+  "diaryEntryTitleHint": "Enter diary entry title...",
+  "@diaryEntryTitleHint": {
+    "description": "Hint text for the diary entry title field"
+  },
+  "diaryEntryContentPlaceholder": "Write your diary entry here...",
+  "@diaryEntryContentPlaceholder": {
+    "description": "Placeholder text for the diary entry content editor"
+  },
+  "characterLabel": "Character",
+  "@characterLabel": {
+    "description": "Label for the character name in the diary editor footer"
+  },
+  "createdLabel": "Created",
+  "@createdLabel": {
+    "description": "Label for the creation date in the diary editor footer"
+  },
+  "editDiaryEntry": "Edit Diary Entry",
+  "@editDiaryEntry": {
+    "description": "Title for the diary editor when editing an existing entry"
+  },
+  "pleaseEnterDiaryTitle": "Please enter a title for the diary entry",
+  "@pleaseEnterDiaryTitle": {
+    "description": "Validation message when the diary title is empty"
+  },
+  "diaryEntryCreatedSuccessfully": "Diary entry created successfully",
+  "@diaryEntryCreatedSuccessfully": {
+    "description": "Success message after creating a diary entry"
+  },
+  "diaryEntryUpdatedSuccessfully": "Diary entry updated successfully",
+  "@diaryEntryUpdatedSuccessfully": {
+    "description": "Success message after updating a diary entry"
+  },
+  "errorSavingDiaryEntry": "Error saving diary entry: {error}",
+  "@errorSavingDiaryEntry": {
+    "description": "Error message when saving a diary entry fails",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "groupCreatedAndAssignedSuccessfully": "Group created and assigned successfully",
+  "@groupCreatedAndAssignedSuccessfully": {
+    "description": "Success message after creating and assigning a diary group"
+  },
+  "noContent": "No content",
+  "@noContent": {
+    "description": "Empty content placeholder for a diary entry preview"
+  },
+  "editEntry": "Edit Entry",
+  "@editEntry": {
+    "description": "Action tooltip for editing a diary entry"
+  },
+  "assignedToGroup": "Assigned to \"{groupName}\"",
+  "@assignedToGroup": {
+    "description": "Success message when assigning a diary entry to a group",
+    "placeholders": {
+      "groupName": {}
+    }
+  },
+  "cancelSelection": "Cancel Selection",
+  "@cancelSelection": {
+    "description": "Tooltip for leaving diary selection mode"
+  },
+  "selectMultiple": "Select Multiple",
+  "@selectMultiple": {
+    "description": "Tooltip for entering diary multi-select mode"
+  },
+  "exportSelectedDiaries": "Export selected diaries",
+  "@exportSelectedDiaries": {
+    "description": "Tooltip for exporting selected diary entries"
+  },
+  "exportDiariesToAnotherCharacter": "Export diaries to another character",
+  "@exportDiariesToAnotherCharacter": {
+    "description": "Tooltip for exporting diary entries to another character"
+  },
   "addToGroup": "Add to a group",
   "@addToGroup": {
     "description": "Character action to add to a group"

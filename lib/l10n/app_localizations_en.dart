@@ -109,6 +109,131 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diary => 'Diary';
 
   @override
+  String get createDiaryEntry => 'Create Diary Entry';
+
+  @override
+  String get filterByGroup => 'Filter by Group';
+
+  @override
+  String get allEntries => 'All Entries';
+
+  @override
+  String get searchDiaryEntries => 'Search diary entries...';
+
+  @override
+  String get noDiaryEntriesFound =>
+      'No diary entries found matching your search.';
+
+  @override
+  String get noDiaryEntriesYet =>
+      'No diary entries yet. Create your first entry!';
+
+  @override
+  String get newDiaryEntry => 'New Diary Entry';
+
+  @override
+  String get createNewGroup => 'Create New Group';
+
+  @override
+  String get editGroupName => 'Edit Group Name';
+
+  @override
+  String get deleteGroup => 'Delete Group';
+
+  @override
+  String get groupName => 'Group Name';
+
+  @override
+  String get groupNameHint => 'e.g., Session 1, Campaign Arc, etc.';
+
+  @override
+  String get pleaseEnterGroupName => 'Please enter a group name';
+
+  @override
+  String get groupCreatedSuccessfully => 'Group created successfully';
+
+  @override
+  String get groupNameUpdatedSuccessfully => 'Group name updated successfully';
+
+  @override
+  String get groupDeletedSuccessfully => 'Group deleted successfully';
+
+  @override
+  String get noGroupsAvailable => 'No groups available. Create a group first.';
+
+  @override
+  String get selectGroupForEntry => 'Select a group for this entry:';
+
+  @override
+  String get selectGroupForEntries => 'Select a group for these entries:';
+
+  @override
+  String get noGroup => 'No Group';
+
+  @override
+  String get diaryEntryTitle => 'Title';
+
+  @override
+  String get diaryEntryTitleHint => 'Enter diary entry title...';
+
+  @override
+  String get diaryEntryContentPlaceholder => 'Write your diary entry here...';
+
+  @override
+  String get characterLabel => 'Character';
+
+  @override
+  String get createdLabel => 'Created';
+
+  @override
+  String get editDiaryEntry => 'Edit Diary Entry';
+
+  @override
+  String get pleaseEnterDiaryTitle =>
+      'Please enter a title for the diary entry';
+
+  @override
+  String get diaryEntryCreatedSuccessfully =>
+      'Diary entry created successfully';
+
+  @override
+  String get diaryEntryUpdatedSuccessfully =>
+      'Diary entry updated successfully';
+
+  @override
+  String errorSavingDiaryEntry(Object error) {
+    return 'Error saving diary entry: $error';
+  }
+
+  @override
+  String get groupCreatedAndAssignedSuccessfully =>
+      'Group created and assigned successfully';
+
+  @override
+  String get noContent => 'No content';
+
+  @override
+  String get editEntry => 'Edit Entry';
+
+  @override
+  String assignedToGroup(Object groupName) {
+    return 'Assigned to \"$groupName\"';
+  }
+
+  @override
+  String get cancelSelection => 'Cancel Selection';
+
+  @override
+  String get selectMultiple => 'Select Multiple';
+
+  @override
+  String get exportSelectedDiaries => 'Export selected diaries';
+
+  @override
+  String get exportDiariesToAnotherCharacter =>
+      'Export diaries to another character';
+
+  @override
   String get addToGroup => 'Add to a group';
 
   @override

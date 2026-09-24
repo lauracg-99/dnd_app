@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'dart:convert';
+import '../../l10n/app_localizations.dart';
 import '../../models/character_model.dart';
 import '../../models/diary_model.dart';
 import '../../models/diary_group_model.dart';
@@ -79,6 +80,8 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return PopScope(
       canPop:
           false, // Bloquea la salida inmediata para ejecutar el guardado primero
@@ -91,7 +94,9 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
       child: (Scaffold(
         appBar: AppBar(
           title: Text(
-            widget.diaryEntry == null ? 'New Diary Entry' : 'Edit Diary Entry',
+            widget.diaryEntry == null
+                ? l10n.newDiaryEntry
+                : l10n.editDiaryEntry,
           ),
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           actions: [
@@ -99,7 +104,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
             IconButton(
               icon: const Icon(Icons.folder),
               onPressed: _showGroupAssignmentDialog,
-              tooltip: 'Assign to Group',
+              tooltip: l10n.addToGroup,
             ),
             if (_isLoading)
               const Padding(
@@ -114,7 +119,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
               IconButton(
                 icon: const Icon(Icons.save),
                 onPressed: _saveDiaryEntry,
-                tooltip: 'Save',
+                tooltip: l10n.save,
               ),
           ],
         ),
@@ -125,10 +130,10 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
               padding: const EdgeInsets.all(16.0),
               child: TextField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'Enter diary entry title...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.diaryEntryTitle,
+                  hintText: l10n.diaryEntryTitleHint,
+                  border: const OutlineInputBorder(),
                 ),
                 style: const TextStyle(
                   fontSize: 18,
@@ -145,7 +150,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
                 child: SimpleQuillEditorNoCard(
                   controller: _contentController,
                   toolbarConfig: QuillToolbarConfigs.minimal,
-                  placeholder: 'Write your diary entry here...',
+                  placeholder: l10n.diaryEntryContentPlaceholder,
                   height: double.infinity,
                 ),
               ),
@@ -160,7 +165,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
                   Icon(Icons.person, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 8),
                   Text(
-                    'Character: ${widget.character.name}',
+                    '${l10n.characterLabel}: ${widget.character.name}',
                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
                   const Spacer(),
@@ -168,7 +173,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
                     Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 8),
                     Text(
-                      'Created: ${_formatDate(widget.diaryEntry!.createdAt)}',
+                      '${l10n.createdLabel}: ${_formatDate(widget.diaryEntry!.createdAt)}',
                       style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
                   ],
@@ -196,6 +201,8 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
   }
 
   Future<void> _saveDiaryEntry({bool isAutosave = false}) async {
+    final l10n = AppLocalizations.of(context)!;
+
     // 1. Si es autoguardado y NO hay cambios, salimos sin guardar e informamos que no hubo cambios (false)
     if (isAutosave && !_hasChanges()) {
       if (mounted) Navigator.pop(context, false);
@@ -217,7 +224,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
         // Si sale con título vacío en autoguardado, no podemos guardar. Salimos sin guardar.
         if (mounted) Navigator.pop(context, false);
       } else {
-        _showErrorSnackBar('Please enter a title for the diary entry');
+        _showErrorSnackBar(l10n.pleaseEnterDiaryTitle);
       }
       return;
     }
@@ -258,8 +265,8 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
         SnackbarHelper.showSuccess(
           context,
           widget.diaryEntry == null
-              ? 'Diary entry created successfully'
-              : 'Diary entry updated successfully',
+              ? l10n.diaryEntryCreatedSuccessfully
+              : l10n.diaryEntryUpdatedSuccessfully,
         );
 
         Navigator.pop(context, savedEntry);
@@ -267,7 +274,7 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
     } catch (e) {
       debugPrint('Error saving diary entry: $e');
       if (mounted) {
-        _showErrorSnackBar('Error saving diary entry: $e');
+        _showErrorSnackBar(l10n.errorSavingDiaryEntry(e));
         if (isAutosave) Navigator.pop(context, false);
       }
     } finally {
@@ -304,126 +311,132 @@ class _DiaryEditorScreenState extends State<DiaryEditorScreen> {
   }
 
   void _showGroupAssignmentDialog() {
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Assign to Group'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: _diaryGroups.isEmpty
-              ? const Text('No groups available. Create a group first.')
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Select a group for this entry:'),
-                    const SizedBox(height: 16),
-                    ..._diaryGroups.map((group) {
-                      return RadioListTile<String>(
-                        title: Text(group.name),
-                        value: group.id,
-                        groupValue: _selectedGroupId,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedGroupId = value;
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    }),
-                    RadioListTile<String>(
-                      title: const Text('No Group'),
-                      value: '',
-                      groupValue: _selectedGroupId ?? '',
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedGroupId = null;
-                        });
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: Text(l10n.addToGroup),
+            content: SizedBox(
+              width: double.maxFinite,
+              child:
+                  _diaryGroups.isEmpty
+                      ? Text(l10n.noGroupsAvailable)
+                      : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(l10n.selectGroupForEntry),
+                          const SizedBox(height: 16),
+                          ..._diaryGroups.map((group) {
+                            return RadioListTile<String>(
+                              title: Text(group.name),
+                              value: group.id,
+                              groupValue: _selectedGroupId,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedGroupId = value;
+                                });
+                                Navigator.pop(context);
+                              },
+                            );
+                          }),
+                          RadioListTile<String>(
+                            title: Text(l10n.noGroup),
+                            value: '',
+                            groupValue: _selectedGroupId ?? '',
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedGroupId = null;
+                              });
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: _showCreateGroupDialog,
+                child: Text(l10n.createNewGroup),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: _showCreateGroupDialog,
-            child: const Text('Create New Group'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showCreateGroupDialog() {
-    Navigator.pop(context); // Close the assignment dialog first
-    
+    final l10n = AppLocalizations.of(context)!;
+    Navigator.pop(context);
+
     final TextEditingController nameController = TextEditingController();
-    
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Create New Group'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Group Name',
-            hintText: 'e.g., Session 1, Campaign Arc, etc.',
+      builder:
+          (context) => AlertDialog(
+            title: Text(l10n.createNewGroup),
+            content: TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: l10n.groupName,
+                hintText: l10n.groupNameHint,
+              ),
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final groupName = nameController.text.trim();
+                  if (groupName.isEmpty) {
+                    if (mounted) {
+                      SnackbarHelper.showError(
+                        context,
+                        l10n.pleaseEnterGroupName,
+                      );
+                    }
+                    return;
+                  }
+
+                  Navigator.pop(context);
+
+                  try {
+                    final newGroup = await DiaryGroupService.createDiaryGroup(
+                      characterId: widget.character.id,
+                      name: groupName,
+                    );
+                    await _loadDiaryGroups();
+
+                    if (mounted) {
+                      setState(() {
+                        _selectedGroupId = newGroup.id;
+                      });
+                      SnackbarHelper.showSuccess(
+                        context,
+                        l10n.groupCreatedAndAssignedSuccessfully,
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      SnackbarHelper.showError(
+                        context,
+                        'Error creating group: $e',
+                      );
+                    }
+                  }
+                },
+                child: Text(l10n.createCharacter),
+              ),
+            ],
           ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final groupName = nameController.text.trim();
-              if (groupName.isEmpty) {
-                if (mounted) {
-                  SnackbarHelper.showError(
-                    context,
-                    'Please enter a group name',
-                  );
-                }
-                return;
-              }
-              
-              Navigator.pop(context);
-              
-              try {
-                final newGroup = await DiaryGroupService.createDiaryGroup(
-                  characterId: widget.character.id,
-                  name: groupName,
-                );
-                await _loadDiaryGroups();
-                
-                if (mounted) {
-                  setState(() {
-                    _selectedGroupId = newGroup.id;
-                  });
-                  SnackbarHelper.showSuccess(
-                    context,
-                    'Group created and assigned successfully',
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  SnackbarHelper.showError(
-                    context,
-                    'Error creating group: $e',
-                  );
-                }
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
     );
   }
 }

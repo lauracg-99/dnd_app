@@ -128,6 +128,164 @@
   "@diary": {
     "description": "Acción de diario"
   },
+  "createDiaryEntry": "Crear entrada del diario",
+  "@createDiaryEntry": {
+    "description": "Etiqueta de acción para crear una entrada del diario"
+  },
+  "filterByGroup": "Filtrar por grupo",
+  "@filterByGroup": {
+    "description": "Etiqueta del selector de filtro de grupo del diario"
+  },
+  "allEntries": "Todas las entradas",
+  "@allEntries": {
+    "description": "Etiqueta de la opción para mostrar todas las entradas del diario en el filtro de grupos"
+  },
+  "searchDiaryEntries": "Buscar entradas del diario...",
+  "@searchDiaryEntries": {
+    "description": "Texto de sugerencia para la búsqueda del diario"
+  },
+  "noDiaryEntriesFound": "No se encontraron entradas del diario que coincidan con tu búsqueda.",
+  "@noDiaryEntriesFound": {
+    "description": "Texto de estado vacío cuando la búsqueda del diario no devuelve resultados"
+  },
+  "noDiaryEntriesYet": "Todavía no hay entradas del diario. ¡Crea tu primera entrada!",
+  "@noDiaryEntriesYet": {
+    "description": "Texto de estado vacío cuando la lista del diario está vacía"
+  },
+  "newDiaryEntry": "Nueva entrada del diario",
+  "@newDiaryEntry": {
+    "description": "Tooltip para crear una nueva entrada del diario"
+  },
+  "createNewGroup": "Crear nuevo grupo",
+  "@createNewGroup": {
+    "description": "Título del diálogo de creación de grupo del diario"
+  },
+  "editGroupName": "Editar nombre del grupo",
+  "@editGroupName": {
+    "description": "Título del diálogo para renombrar un grupo del diario"
+  },
+  "deleteGroup": "Eliminar grupo",
+  "@deleteGroup": {
+    "description": "Título del diálogo para eliminar un grupo del diario"
+  },
+  "groupName": "Nombre del grupo",
+  "@groupName": {
+    "description": "Etiqueta del campo para el nombre de un grupo del diario"
+  },
+  "groupNameHint": "p. ej., Sesión 1, Arco de la campaña, etc.",
+  "@groupNameHint": {
+    "description": "Texto de sugerencia para el campo del nombre del grupo"
+  },
+  "pleaseEnterGroupName": "Introduce un nombre de grupo",
+  "@pleaseEnterGroupName": {
+    "description": "Mensaje de validación cuando el usuario deja vacío el nombre del grupo"
+  },
+  "groupCreatedSuccessfully": "Grupo creado correctamente",
+  "@groupCreatedSuccessfully": {
+    "description": "Mensaje de éxito cuando se crea un grupo del diario"
+  },
+  "groupNameUpdatedSuccessfully": "Nombre del grupo actualizado correctamente",
+  "@groupNameUpdatedSuccessfully": {
+    "description": "Mensaje de éxito cuando se renombra un grupo del diario"
+  },
+  "groupDeletedSuccessfully": "Grupo eliminado correctamente",
+  "@groupDeletedSuccessfully": {
+    "description": "Mensaje de éxito cuando se elimina un grupo del diario"
+  },
+  "noGroupsAvailable": "No hay grupos disponibles. Crea uno primero.",
+  "@noGroupsAvailable": {
+    "description": "Estado vacío al asignar un diario a un grupo cuando no existen grupos"
+  },
+  "selectGroupForEntry": "Selecciona un grupo para esta entrada:",
+  "@selectGroupForEntry": {
+    "description": "Texto mostrado al asignar una entrada del diario a un grupo"
+  },
+  "selectGroupForEntries": "Selecciona un grupo para estas entradas:",
+  "@selectGroupForEntries": {
+    "description": "Texto mostrado al asignar varias entradas del diario a un grupo"
+  },
+  "noGroup": "Sin grupo",
+  "@noGroup": {
+    "description": "Etiqueta de la opción para entradas sin grupo"
+  },
+  "diaryEntryTitle": "Título",
+  "@diaryEntryTitle": {
+    "description": "Etiqueta del campo de título de la entrada del diario"
+  },
+  "diaryEntryTitleHint": "Introduce el título de la entrada del diario...",
+  "@diaryEntryTitleHint": {
+    "description": "Texto de sugerencia para el campo de título de la entrada del diario"
+  },
+  "diaryEntryContentPlaceholder": "Escribe tu entrada del diario aquí...",
+  "@diaryEntryContentPlaceholder": {
+    "description": "Texto de marcador para el contenido de la entrada del diario"
+  },
+  "characterLabel": "Personaje",
+  "@characterLabel": {
+    "description": "Etiqueta del nombre del personaje en el pie del editor del diario"
+  },
+  "createdLabel": "Creado",
+  "@createdLabel": {
+    "description": "Etiqueta de la fecha de creación en el pie del editor del diario"
+  },
+  "editDiaryEntry": "Editar entrada del diario",
+  "@editDiaryEntry": {
+    "description": "Título del editor del diario al editar una entrada existente"
+  },
+  "pleaseEnterDiaryTitle": "Introduce un título para la entrada del diario",
+  "@pleaseEnterDiaryTitle": {
+    "description": "Mensaje de validación cuando el título del diario está vacío"
+  },
+  "diaryEntryCreatedSuccessfully": "Entrada del diario creada correctamente",
+  "@diaryEntryCreatedSuccessfully": {
+    "description": "Mensaje de éxito después de crear una entrada del diario"
+  },
+  "diaryEntryUpdatedSuccessfully": "Entrada del diario actualizada correctamente",
+  "@diaryEntryUpdatedSuccessfully": {
+    "description": "Mensaje de éxito después de actualizar una entrada del diario"
+  },
+  "errorSavingDiaryEntry": "Error al guardar la entrada del diario: {error}",
+  "@errorSavingDiaryEntry": {
+    "description": "Mensaje de error cuando falla el guardado de una entrada del diario",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "groupCreatedAndAssignedSuccessfully": "Grupo creado y asignado correctamente",
+  "@groupCreatedAndAssignedSuccessfully": {
+    "description": "Mensaje de éxito tras crear y asignar un grupo del diario"
+  },
+  "noContent": "Sin contenido",
+  "@noContent": {
+    "description": "Marcador de contenido vacío para una vista previa de entrada del diario"
+  },
+  "editEntry": "Editar entrada",
+  "@editEntry": {
+    "description": "Tooltip de la acción para editar una entrada del diario"
+  },
+  "assignedToGroup": "Asignado a \"{groupName}\"",
+  "@assignedToGroup": {
+    "description": "Mensaje de éxito al asignar una entrada del diario a un grupo",
+    "placeholders": {
+      "groupName": {}
+    }
+  },
+  "cancelSelection": "Cancelar selección",
+  "@cancelSelection": {
+    "description": "Tooltip para salir del modo de selección del diario"
+  },
+  "selectMultiple": "Seleccionar varios",
+  "@selectMultiple": {
+    "description": "Tooltip para entrar en el modo de selección múltiple del diario"
+  },
+  "exportSelectedDiaries": "Exportar diarios seleccionados",
+  "@exportSelectedDiaries": {
+    "description": "Tooltip para exportar entradas del diario seleccionadas"
+  },
+  "exportDiariesToAnotherCharacter": "Exportar diarios a otro personaje",
+  "@exportDiariesToAnotherCharacter": {
+    "description": "Tooltip para exportar entradas del diario a otro personaje"
+  },
   "addToGroup": "Añadir a un grupo",
   "@addToGroup": {
     "description": "Acción para añadir un personaje a un grupo"

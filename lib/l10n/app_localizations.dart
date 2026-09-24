@@ -290,6 +290,234 @@ abstract class AppLocalizations {
   /// **'Diary'**
   String get diary;
 
+  /// Create a diary entry action label
+  ///
+  /// In en, this message translates to:
+  /// **'Create Diary Entry'**
+  String get createDiaryEntry;
+
+  /// Label for the diary group filter selector
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by Group'**
+  String get filterByGroup;
+
+  /// Option label for showing all diary entries in the group filter
+  ///
+  /// In en, this message translates to:
+  /// **'All Entries'**
+  String get allEntries;
+
+  /// Diary search input hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search diary entries...'**
+  String get searchDiaryEntries;
+
+  /// Empty state text when a diary search returns no results
+  ///
+  /// In en, this message translates to:
+  /// **'No diary entries found matching your search.'**
+  String get noDiaryEntriesFound;
+
+  /// Empty state text when the diary list is empty
+  ///
+  /// In en, this message translates to:
+  /// **'No diary entries yet. Create your first entry!'**
+  String get noDiaryEntriesYet;
+
+  /// Tooltip for creating a new diary entry
+  ///
+  /// In en, this message translates to:
+  /// **'New Diary Entry'**
+  String get newDiaryEntry;
+
+  /// Title for the diary group creation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Group'**
+  String get createNewGroup;
+
+  /// Title for the diary group rename dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Group Name'**
+  String get editGroupName;
+
+  /// Title for the diary group deletion dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Group'**
+  String get deleteGroup;
+
+  /// Field label for a diary group name
+  ///
+  /// In en, this message translates to:
+  /// **'Group Name'**
+  String get groupName;
+
+  /// Hint text for the diary group name field
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Session 1, Campaign Arc, etc.'**
+  String get groupNameHint;
+
+  /// Validation message when the user submits an empty group name
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a group name'**
+  String get pleaseEnterGroupName;
+
+  /// Success message when a diary group is created
+  ///
+  /// In en, this message translates to:
+  /// **'Group created successfully'**
+  String get groupCreatedSuccessfully;
+
+  /// Success message when a diary group is renamed
+  ///
+  /// In en, this message translates to:
+  /// **'Group name updated successfully'**
+  String get groupNameUpdatedSuccessfully;
+
+  /// Success message when a diary group is deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Group deleted successfully'**
+  String get groupDeletedSuccessfully;
+
+  /// Empty state for diary group assignment when no groups exist
+  ///
+  /// In en, this message translates to:
+  /// **'No groups available. Create a group first.'**
+  String get noGroupsAvailable;
+
+  /// Prompt shown when assigning a diary entry to a group
+  ///
+  /// In en, this message translates to:
+  /// **'Select a group for this entry:'**
+  String get selectGroupForEntry;
+
+  /// Prompt shown when assigning multiple diary entries to a group
+  ///
+  /// In en, this message translates to:
+  /// **'Select a group for these entries:'**
+  String get selectGroupForEntries;
+
+  /// Option label for ungrouped diary entries
+  ///
+  /// In en, this message translates to:
+  /// **'No Group'**
+  String get noGroup;
+
+  /// Label for the diary entry title field
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get diaryEntryTitle;
+
+  /// Hint text for the diary entry title field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter diary entry title...'**
+  String get diaryEntryTitleHint;
+
+  /// Placeholder text for the diary entry content editor
+  ///
+  /// In en, this message translates to:
+  /// **'Write your diary entry here...'**
+  String get diaryEntryContentPlaceholder;
+
+  /// Label for the character name in the diary editor footer
+  ///
+  /// In en, this message translates to:
+  /// **'Character'**
+  String get characterLabel;
+
+  /// Label for the creation date in the diary editor footer
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get createdLabel;
+
+  /// Title for the diary editor when editing an existing entry
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Diary Entry'**
+  String get editDiaryEntry;
+
+  /// Validation message when the diary title is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a title for the diary entry'**
+  String get pleaseEnterDiaryTitle;
+
+  /// Success message after creating a diary entry
+  ///
+  /// In en, this message translates to:
+  /// **'Diary entry created successfully'**
+  String get diaryEntryCreatedSuccessfully;
+
+  /// Success message after updating a diary entry
+  ///
+  /// In en, this message translates to:
+  /// **'Diary entry updated successfully'**
+  String get diaryEntryUpdatedSuccessfully;
+
+  /// Error message when saving a diary entry fails
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving diary entry: {error}'**
+  String errorSavingDiaryEntry(Object error);
+
+  /// Success message after creating and assigning a diary group
+  ///
+  /// In en, this message translates to:
+  /// **'Group created and assigned successfully'**
+  String get groupCreatedAndAssignedSuccessfully;
+
+  /// Empty content placeholder for a diary entry preview
+  ///
+  /// In en, this message translates to:
+  /// **'No content'**
+  String get noContent;
+
+  /// Action tooltip for editing a diary entry
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Entry'**
+  String get editEntry;
+
+  /// Success message when assigning a diary entry to a group
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to \"{groupName}\"'**
+  String assignedToGroup(Object groupName);
+
+  /// Tooltip for leaving diary selection mode
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Selection'**
+  String get cancelSelection;
+
+  /// Tooltip for entering diary multi-select mode
+  ///
+  /// In en, this message translates to:
+  /// **'Select Multiple'**
+  String get selectMultiple;
+
+  /// Tooltip for exporting selected diary entries
+  ///
+  /// In en, this message translates to:
+  /// **'Export selected diaries'**
+  String get exportSelectedDiaries;
+
+  /// Tooltip for exporting diary entries to another character
+  ///
+  /// In en, this message translates to:
+  /// **'Export diaries to another character'**
+  String get exportDiariesToAnotherCharacter;
+
   /// Character action to add to a group
   ///
   /// In en, this message translates to:
