@@ -123,10 +123,11 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
 
                     const SizedBox(height: 16),
                     if (widget.spell.description.toLowerCase().contains(
-                      'ranged spell attack',
-                    )|| widget.spell.description.toLowerCase().contains(
-                      'melee spell attack',
-                    )) ...[
+                          'ranged spell attack',
+                        ) ||
+                        widget.spell.description.toLowerCase().contains(
+                          'melee spell attack',
+                        )) ...[
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -178,7 +179,6 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
                           ],
                         ],
                       ),
-                    
                     ],
                     const SizedBox(height: 16),
                     if (widget.spell.damageDice.isNotEmpty) ...[
@@ -186,9 +186,8 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
                         final int index = entry.key;
                         final dice = entry.value;
                         final characterMod = widget.characterModifier;
-                        final descriptionLower = widget.spell.description.toLowerCase();
-                        final hasSpellcastingModifier = descriptionLower.contains('spellcasting ability modifier') || 
-                                 descriptionLower.contains('saving throw');
+                        final hasSpellcastingModifier =
+                            widget.spell.includesDamageModifier;
                         final diceString =
                             hasSpellcastingModifier
                                 ? '${dice.diceAmount}${dice.diceType}+${characterMod}'
@@ -231,13 +230,11 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
                               final currentDamageResult = _damageResults[index];
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [  
+                                children: [
                                   if (index == 0) ...[
-                                     DetailRow(label: 'Dices', value: ''),                           
-                                  ], 
-                                  if (index != 0) ...[
-                                     Divider()                              
+                                    DetailRow(label: 'Dices', value: ''),
                                   ],
+                                  if (index != 0) ...[Divider()],
                                   const SizedBox(height: 16),
                                   Column(
                                     crossAxisAlignment:
@@ -263,7 +260,9 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Image.asset(
-                                              CharacterAbilityHelper.getDiceAsset('d8'),
+                                              CharacterAbilityHelper.getDiceAsset(
+                                                'd8',
+                                              ),
                                               width: 22,
                                               height: 22,
                                               color: Colors.white,
@@ -338,6 +337,4 @@ class _SpellDetailsModalState extends State<SpellDetailsModal> {
       ),
     );
   }
-
-
 }

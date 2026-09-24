@@ -49,41 +49,50 @@ void main() {
 
       // Test search by name
       String searchQuery = 'fire';
-      List<Spell> filteredSpells = spells.where((spell) {
-        if (searchQuery.isNotEmpty) {
-          if (!spell.name.toLowerCase().contains(searchQuery.toLowerCase())) {
-            return false;
-          }
-        }
-        return true;
-      }).toList();
+      List<Spell> filteredSpells =
+          spells.where((spell) {
+            if (searchQuery.isNotEmpty) {
+              if (!spell.name.toLowerCase().contains(
+                searchQuery.toLowerCase(),
+              )) {
+                return false;
+              }
+            }
+            return true;
+          }).toList();
 
       expect(filteredSpells.length, 1);
       expect(filteredSpells.first.name, 'Fireball');
 
       // Test search with empty query (should return all)
       searchQuery = '';
-      filteredSpells = spells.where((spell) {
-        if (searchQuery.isNotEmpty) {
-          if (!spell.name.toLowerCase().contains(searchQuery.toLowerCase())) {
-            return false;
-          }
-        }
-        return true;
-      }).toList();
+      filteredSpells =
+          spells.where((spell) {
+            if (searchQuery.isNotEmpty) {
+              if (!spell.name.toLowerCase().contains(
+                searchQuery.toLowerCase(),
+              )) {
+                return false;
+              }
+            }
+            return true;
+          }).toList();
 
       expect(filteredSpells.length, 3);
 
       // Test case insensitive search
       searchQuery = 'MAGIC';
-      filteredSpells = spells.where((spell) {
-        if (searchQuery.isNotEmpty) {
-          if (!spell.name.toLowerCase().contains(searchQuery.toLowerCase())) {
-            return false;
-          }
-        }
-        return true;
-      }).toList();
+      filteredSpells =
+          spells.where((spell) {
+            if (searchQuery.isNotEmpty) {
+              if (!spell.name.toLowerCase().contains(
+                searchQuery.toLowerCase(),
+              )) {
+                return false;
+              }
+            }
+            return true;
+          }).toList();
 
       expect(filteredSpells.length, 1);
       expect(filteredSpells.first.name, 'Magic Missile');
@@ -136,29 +145,76 @@ void main() {
       // Test search + level filter
       String searchQuery = 'magic';
       String? selectedLevelFilter = 'Level 1';
-      
-      List<Spell> filteredSpells = spells.where((spell) {
-        // Search by name
-        if (searchQuery.isNotEmpty) {
-          if (!spell.name.toLowerCase().contains(searchQuery.toLowerCase())) {
-            return false;
-          }
-        }
 
-        // Filter by level
-        if (selectedLevelFilter == 'Cantrips') {
-          if (spell.levelNumber != 0) return false;
-        } else if (selectedLevelFilter.startsWith('Level')) {
-          final level = int.tryParse(selectedLevelFilter.split(' ')[1]);
-          if (spell.levelNumber != level) return false;
-        }
-      
-        return true;
-      }).toList();
+      List<Spell> filteredSpells =
+          spells.where((spell) {
+            // Search by name
+            if (searchQuery.isNotEmpty) {
+              if (!spell.name.toLowerCase().contains(
+                searchQuery.toLowerCase(),
+              )) {
+                return false;
+              }
+            }
+
+            // Filter by level
+            if (selectedLevelFilter == 'Cantrips') {
+              if (spell.levelNumber != 0) return false;
+            } else if (selectedLevelFilter.startsWith('Level')) {
+              final level = int.tryParse(selectedLevelFilter.split(' ')[1]);
+              if (spell.levelNumber != level) return false;
+            }
+
+            return true;
+          }).toList();
 
       expect(filteredSpells.length, 1);
       expect(filteredSpells.first.name, 'Magic Missile');
     });
+
+    test(
+      'Spells with saving throws but no damage modifier should not add spellcasting modifier',
+      () {
+        final spell = Spell(
+          id: 'toll-the-dead',
+          name: 'Toll the Dead',
+          level: 'spell_level_0',
+          school: 'spell_school_necromancy',
+          castingTime: '1 action',
+          range: '60 feet',
+          duration: 'Instantaneous',
+          classes: ['cleric', 'wizard'],
+          dice: [],
+          description:
+              'Each target must make a Wisdom saving throw. On a failed save, the target takes 1d12 necrotic damage.',
+          updatedAt: DateTime.now(),
+        );
+
+        expect(spell.includesDamageModifier, isFalse);
+      },
+    );
+
+    test(
+      'Spells with explicit spellcasting modifier in the damage formula should include it',
+      () {
+        final spell = Spell(
+          id: 'cure-wounds',
+          name: 'Cure Wounds',
+          level: 'spell_level_1',
+          school: 'spell_school_evocation',
+          castingTime: '1 action',
+          range: 'Touch',
+          duration: 'Instantaneous',
+          classes: ['cleric', 'druid', 'bard'],
+          dice: [],
+          description:
+              'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
+          updatedAt: DateTime.now(),
+        );
+
+        expect(spell.includesDamageModifier, isTrue);
+      },
+    );
 
     test('Filter reset functionality works correctly', () {
       // Simulate filter states before reset

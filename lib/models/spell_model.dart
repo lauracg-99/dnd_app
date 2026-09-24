@@ -51,6 +51,18 @@ class Spell extends BaseModel {
   /// Get the school name without the prefix
   String get schoolName => school.replaceAll('spell_school_', '');
 
+  /// Returns true only when the spell description explicitly includes a
+  /// damage bonus from the spellcasting modifier.
+  bool get includesDamageModifier {
+    final text = '${description} ${higherLevelDescription ?? ''}'.toLowerCase();
+    final modifierPattern = RegExp(
+      r'(?:damage|hit points|healing|deals|deal|takes|take|regains|regain|equal to).*?\+\s*your\s+(?:spellcasting\s+(?:ability\s+)?modifier|[a-z]+\s+modifier)',
+      caseSensitive: false,
+    );
+
+    return modifierPattern.hasMatch(text);
+  }
+
   /// Extract damage dice from the raw nested dice JSON.
   List<SpellDamageDice> get damageDice => _parseSpellDamageDice();
 
@@ -144,25 +156,25 @@ class Spell extends BaseModel {
       if (levelledEntry is! Map<String, dynamic>) continue;
       final levelledStats = levelledEntry['stats'] as Map<String, dynamic>?;
       final level = levelledStats?['level']?['value'] as int?;
-      
+
       final damageDiceList =
           levelledStats?['damage_dice']?['value'] as List<dynamic>? ?? [];
 
       for (final damageEntry in damageDiceList) {
         if (damageEntry is! Map<String, dynamic>) continue;
         final damageStats = damageEntry['stats'] as Map<String, dynamic>?;
-        
+
         // El JSON real no trae 'damage_type', manejamos un valor por defecto seguro
         final damageType =
             damageStats?['damage_type']?['value'] as String? ?? 'unknown';
-            
+
         // Entramos directamente a 'dices'
         final dices = damageStats?['dices']?['value'] as List<dynamic>? ?? [];
 
         for (final diceEntry in dices) {
           if (diceEntry is! Map<String, dynamic>) continue;
           final diceStats = diceEntry['stats'] as Map<String, dynamic>?;
-          
+
           // Extraemos de forma segura el amount y el type
           final amount = diceStats?['dice_amount']?['value'] as int?;
           final type = diceStats?['dice_type']?['value'] as String?;
