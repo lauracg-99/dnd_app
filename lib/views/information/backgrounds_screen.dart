@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:dnd_app/l10n/app_localizations.dart';
 import '../../models/background_model.dart';
 import '../../utils/source_mapper.dart';
 import '../../viewmodels/backgrounds_viewmodel.dart';
@@ -31,9 +32,11 @@ class _BackgroundsScreenState extends State<BackgroundsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Backgrounds'),
+        title: Text(l10n.backgrounds),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
@@ -41,7 +44,7 @@ class _BackgroundsScreenState extends State<BackgroundsScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search backgrounds...',
+                hintText: l10n.searchBackgrounds,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -75,7 +78,7 @@ class _BackgroundsScreenState extends State<BackgroundsScreen> {
           if (viewModel.error != null) {
             return Center(
               child: Text(
-                'Error: ${viewModel.error}',
+                '${l10n.error}: ${viewModel.error}',
                 style: const TextStyle(color: Colors.red),
               ),
             );
@@ -93,7 +96,7 @@ class _BackgroundsScreenState extends State<BackgroundsScreen> {
                       .toList();
 
           if (backgrounds.isEmpty) {
-            return const Center(child: Text('No backgrounds found.'));
+            return Center(child: Text(l10n.noBackgroundsFound));
           }
 
           return ListView.builder(
@@ -130,6 +133,8 @@ class _BackgroundsScreenState extends State<BackgroundsScreen> {
   }
 
   void _showBackgroundDetails(BuildContext context, Background background) {
+    final l10n = AppLocalizations.of(context)!;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -164,7 +169,7 @@ class _BackgroundsScreenState extends State<BackgroundsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Source: ${SourceMapper.getFullBookName(background.source)}',
+                          '${l10n.sourceLabel} ${SourceMapper.getFullBookName(background.source)}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 8),

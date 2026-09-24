@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:dnd_app/l10n/app_localizations.dart';
 import '../../../viewmodels/weapons_viewmodel.dart';
 import '../../../models/weapon_model.dart';
 import '../../../utils/source_mapper.dart';
@@ -44,9 +45,11 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weapons'),
+        title: Text(l10n.weapons),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_alt),
@@ -65,11 +68,11 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Error: ${viewModel.error}'),
+                  Text('${l10n.error}: ${viewModel.error}'),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadWeapons,
-                    child: const Text('Retry'),
+                    child: Text(l10n.retry),
                   ),
                 ],
               ),
@@ -78,7 +81,7 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
 
           final weapons = viewModel.weapons;
           if (weapons.isEmpty) {
-            return const Center(child: Text('No weapons found'));
+            return Center(child: Text(l10n.noWeaponsFound));
           }
 
           return Column(
@@ -88,7 +91,7 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search weapons...',
+                    hintText: l10n.searchWeapons,
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -137,7 +140,7 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Active Filters:',
+                              l10n.activeFilters,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.blue.shade700,
@@ -162,9 +165,9 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text(
-                                'Clear All',
-                                style: TextStyle(fontSize: 12),
+                              child: Text(
+                                l10n.clearAll,
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ),
                           ],
@@ -176,7 +179,8 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
                           children: [
                             if (viewModel.searchQuery.isNotEmpty)
                               AppFilterChip(
-                                label: 'Search: "${viewModel.searchQuery}"',
+                                label:
+                                    '${l10n.searchFilterLabel} "${viewModel.searchQuery}"',
                                 onClear: () {
                                   _searchController.clear();
                                   viewModel.setSearchQuery('');
@@ -184,7 +188,8 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
                               ),
                             if (viewModel.selectedType != 'All')
                               AppFilterChip(
-                                label: 'Type: ${_getFormattedSelectedType()}',
+                                label:
+                                    '${l10n.typeFilterLabel} ${_getFormattedSelectedType()}',
                                 onClear: () {
                                   setState(() {
                                     _selectedType = 'All';

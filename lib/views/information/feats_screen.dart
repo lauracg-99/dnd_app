@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:dnd_app/l10n/app_localizations.dart';
 import '../../models/feat_model.dart';
 import '../../utils/source_mapper.dart';
 import '../../viewmodels/feats_viewmodel.dart';
@@ -31,9 +32,11 @@ class _FeatsScreenState extends State<FeatsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Feats'),
+        title: Text(l10n.feats),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
@@ -41,7 +44,7 @@ class _FeatsScreenState extends State<FeatsScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search feats...',
+                hintText: l10n.searchFeats,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -75,7 +78,7 @@ class _FeatsScreenState extends State<FeatsScreen> {
           if (viewModel.error != null) {
             return Center(
               child: Text(
-                'Error: ${viewModel.error}',
+                '${l10n.error}: ${viewModel.error}',
                 style: const TextStyle(color: Colors.red),
               ),
             );
@@ -93,7 +96,7 @@ class _FeatsScreenState extends State<FeatsScreen> {
                       .toList();
 
           if (feats.isEmpty) {
-            return const Center(child: Text('No feats found.'));
+            return Center(child: Text(l10n.noFeatsFound));
           }
 
           return ListView.builder(
@@ -130,6 +133,8 @@ class _FeatsScreenState extends State<FeatsScreen> {
   }
 
   void _showFeatDetails(BuildContext context, Feat feat) {
+    final l10n = AppLocalizations.of(context)!;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -164,12 +169,12 @@ class _FeatsScreenState extends State<FeatsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Source: ${SourceMapper.getFullBookName(feat.source)}',
+                          '${l10n.sourceLabel} ${SourceMapper.getFullBookName(feat.source)}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Description:',
+                          l10n.descriptionLabel,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),

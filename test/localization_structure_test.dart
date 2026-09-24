@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dnd_app/l10n/app_localizations.dart';
+import 'package:dnd_app/services/locale_service.dart';
 
 void main() {
   testWidgets('app exposes localization delegates and english labels', (
@@ -25,12 +27,18 @@ void main() {
       AppLocalizations.of(context)!.signInBackupDescription,
       'Sign in to backup your data and access it from anywhere',
     );
-    expect(AppLocalizations.of(context)!.cloudSyncOptions, 'Cloud Sync Options');
+    expect(
+      AppLocalizations.of(context)!.cloudSyncOptions,
+      'Cloud Sync Options',
+    );
     expect(AppLocalizations.of(context)!.syncNow, 'Sync Now');
     expect(
       AppLocalizations.of(context)!.accountDeletedSuccessfully,
       'Account deleted successfully',
     );
+    expect(AppLocalizations.of(context)!.searchClasses, 'Search classes...');
+    expect(AppLocalizations.of(context)!.noClassesFound, 'No classes found');
+    expect(AppLocalizations.of(context)!.searchWeapons, 'Search weapons...');
   });
 
   testWidgets('app supports spanish locale switch entries', (tester) async {
@@ -47,7 +55,10 @@ void main() {
 
     expect(AppLocalizations.of(context)!.navCharacters, 'Personajes');
     expect(AppLocalizations.of(context)!.language, 'Idioma');
-    expect(AppLocalizations.of(context)!.cloudSyncOptions, 'Opciones de sincronización');
+    expect(
+      AppLocalizations.of(context)!.cloudSyncOptions,
+      'Opciones de sincronización',
+    );
     expect(AppLocalizations.of(context)!.syncNow, 'Sincronizar ahora');
     expect(
       AppLocalizations.of(context)!.languageWarningTitle,
@@ -58,5 +69,15 @@ void main() {
       'Al cambiar a español, algunos recursos como la información de los hechizos seguirán en inglés.',
     );
     expect(AppLocalizations.supportedLocales, contains(const Locale('es')));
+  });
+
+  testWidgets('selected locale persists across restarts', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await AppLocaleStorage.saveLocale(const Locale('es'));
+    final locale = await AppLocaleStorage.loadLocale();
+
+    expect(locale, const Locale('es'));
+    expect(AppLocalizations.supportedLocales, contains(locale));
   });
 }

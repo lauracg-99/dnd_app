@@ -614,6 +614,102 @@ abstract class AppLocalizations {
   /// **'Backgrounds'**
   String get backgrounds;
 
+  /// Search field placeholder for backgrounds
+  ///
+  /// In en, this message translates to:
+  /// **'Search backgrounds...'**
+  String get searchBackgrounds;
+
+  /// Empty state for backgrounds list
+  ///
+  /// In en, this message translates to:
+  /// **'No backgrounds found.'**
+  String get noBackgroundsFound;
+
+  /// Search field placeholder for classes
+  ///
+  /// In en, this message translates to:
+  /// **'Search classes...'**
+  String get searchClasses;
+
+  /// Empty state for classes list
+  ///
+  /// In en, this message translates to:
+  /// **'No classes found'**
+  String get noClassesFound;
+
+  /// Label for the class hit die
+  ///
+  /// In en, this message translates to:
+  /// **'Hit Die:'**
+  String get hitDieLabel;
+
+  /// Search field placeholder for feats
+  ///
+  /// In en, this message translates to:
+  /// **'Search feats...'**
+  String get searchFeats;
+
+  /// Empty state for feats list
+  ///
+  /// In en, this message translates to:
+  /// **'No feats found.'**
+  String get noFeatsFound;
+
+  /// Search field placeholder for races
+  ///
+  /// In en, this message translates to:
+  /// **'Search races...'**
+  String get searchRaces;
+
+  /// Empty state for races list
+  ///
+  /// In en, this message translates to:
+  /// **'No races found.'**
+  String get noRacesFound;
+
+  /// Search field placeholder for weapons
+  ///
+  /// In en, this message translates to:
+  /// **'Search weapons...'**
+  String get searchWeapons;
+
+  /// Empty state for weapons list
+  ///
+  /// In en, this message translates to:
+  /// **'No weapons found'**
+  String get noWeaponsFound;
+
+  /// Label for the source of a lore item
+  ///
+  /// In en, this message translates to:
+  /// **'Source:'**
+  String get sourceLabel;
+
+  /// Label for list of active filters
+  ///
+  /// In en, this message translates to:
+  /// **'Active Filters:'**
+  String get activeFilters;
+
+  /// Action to clear all filters
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All'**
+  String get clearAll;
+
+  /// Prefix label for a search filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Search:'**
+  String get searchFilterLabel;
+
+  /// Prefix label for a type filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Type:'**
+  String get typeFilterLabel;
+
   /// Title for spells list screen
   ///
   /// In en, this message translates to:

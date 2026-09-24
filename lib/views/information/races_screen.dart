@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:dnd_app/l10n/app_localizations.dart';
 import '../../models/race_model.dart';
 import '../../utils/source_mapper.dart';
 import '../../viewmodels/races_viewmodel.dart';
@@ -31,9 +32,11 @@ class _RacesScreenState extends State<RacesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Races'),
+        title: Text(l10n.races),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
@@ -41,7 +44,7 @@ class _RacesScreenState extends State<RacesScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search races...',
+                hintText: l10n.searchRaces,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -75,7 +78,7 @@ class _RacesScreenState extends State<RacesScreen> {
           if (viewModel.error != null) {
             return Center(
               child: Text(
-                'Error: ${viewModel.error}',
+                '${l10n.error}: ${viewModel.error}',
                 style: const TextStyle(color: Colors.red),
               ),
             );
@@ -93,7 +96,7 @@ class _RacesScreenState extends State<RacesScreen> {
                       .toList();
 
           if (races.isEmpty) {
-            return const Center(child: Text('No races found.'));
+            return Center(child: Text(l10n.noRacesFound));
           }
 
           return ListView.builder(
@@ -117,7 +120,7 @@ class _RacesScreenState extends State<RacesScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
-          _getRacePreview(race),
+          _getRacePreview(context, race),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -129,7 +132,8 @@ class _RacesScreenState extends State<RacesScreen> {
     );
   }
 
-  String _getRacePreview(Race race) {
+  String _getRacePreview(BuildContext context, Race race) {
+    final l10n = AppLocalizations.of(context)!;
     final buffer = StringBuffer();
 
     if (race.flySpeed != null) {
@@ -145,13 +149,17 @@ class _RacesScreenState extends State<RacesScreen> {
     }
 
     if (buffer.isEmpty) {
-      buffer.write('Source: ${SourceMapper.getFullBookName(race.source)}');
+      buffer.write(
+        '${l10n.sourceLabel} ${SourceMapper.getFullBookName(race.source)}',
+      );
     }
 
     return buffer.toString();
   }
 
   void _showRaceDetails(BuildContext context, Race race) {
+    final l10n = AppLocalizations.of(context)!;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -186,12 +194,12 @@ class _RacesScreenState extends State<RacesScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Source: ${SourceMapper.getFullBookName(race.source)}',
+                          '${l10n.sourceLabel} ${SourceMapper.getFullBookName(race.source)}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Description:',
+                          l10n.descriptionLabel,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),

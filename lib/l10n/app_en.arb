@@ -371,6 +371,70 @@
   "@backgrounds": {
     "description": "Category title for backgrounds"
   },
+  "searchBackgrounds": "Search backgrounds...",
+  "@searchBackgrounds": {
+    "description": "Search field placeholder for backgrounds"
+  },
+  "noBackgroundsFound": "No backgrounds found.",
+  "@noBackgroundsFound": {
+    "description": "Empty state for backgrounds list"
+  },
+  "searchClasses": "Search classes...",
+  "@searchClasses": {
+    "description": "Search field placeholder for classes"
+  },
+  "noClassesFound": "No classes found",
+  "@noClassesFound": {
+    "description": "Empty state for classes list"
+  },
+  "hitDieLabel": "Hit Die:",
+  "@hitDieLabel": {
+    "description": "Label for the class hit die"
+  },
+  "searchFeats": "Search feats...",
+  "@searchFeats": {
+    "description": "Search field placeholder for feats"
+  },
+  "noFeatsFound": "No feats found.",
+  "@noFeatsFound": {
+    "description": "Empty state for feats list"
+  },
+  "searchRaces": "Search races...",
+  "@searchRaces": {
+    "description": "Search field placeholder for races"
+  },
+  "noRacesFound": "No races found.",
+  "@noRacesFound": {
+    "description": "Empty state for races list"
+  },
+  "searchWeapons": "Search weapons...",
+  "@searchWeapons": {
+    "description": "Search field placeholder for weapons"
+  },
+  "noWeaponsFound": "No weapons found",
+  "@noWeaponsFound": {
+    "description": "Empty state for weapons list"
+  },
+  "sourceLabel": "Source:",
+  "@sourceLabel": {
+    "description": "Label for the source of a lore item"
+  },
+  "activeFilters": "Active Filters:",
+  "@activeFilters": {
+    "description": "Label for list of active filters"
+  },
+  "clearAll": "Clear All",
+  "@clearAll": {
+    "description": "Action to clear all filters"
+  },
+  "searchFilterLabel": "Search:",
+  "@searchFilterLabel": {
+    "description": "Prefix label for a search filter chip"
+  },
+  "typeFilterLabel": "Type:",
+  "@typeFilterLabel": {
+    "description": "Prefix label for a type filter chip"
+  },
   "dndSpells": "D&D Spells",
   "@dndSpells": {
     "description": "Title for spells list screen"

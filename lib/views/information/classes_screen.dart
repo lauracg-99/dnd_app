@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:dnd_app/l10n/app_localizations.dart';
 import '../../../viewmodels/class_viewmodel.dart';
 import '../../../models/class_model.dart';
 import 'package:dnd_app/views/information/class_detail_screen.dart';
@@ -42,9 +43,11 @@ class _ClassesScreenState extends State<ClassesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Classes'),
+        title: Text(l10n.classes),
         actions: [
           /*           IconButton(
             icon: const Icon(Icons.filter_alt),
@@ -63,11 +66,11 @@ class _ClassesScreenState extends State<ClassesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Error: ${viewModel.error}'),
+                  Text('${l10n.error}: ${viewModel.error}'),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadClasses,
-                    child: const Text('Retry'),
+                    child: Text(l10n.retry),
                   ),
                 ],
               ),
@@ -76,7 +79,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
 
           final classes = viewModel.classes;
           if (classes.isEmpty) {
-            return const Center(child: Text('No classes found'));
+            return Center(child: Text(l10n.noClassesFound));
           }
 
           return Column(
@@ -86,7 +89,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search classes...',
+                    hintText: l10n.searchClasses,
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -112,7 +115,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
                   itemCount: classes.length,
                   itemBuilder: (context, index) {
                     final dndClass = classes[index];
-                    return _buildClassCard(dndClass);
+                    return _buildClassCard(context, dndClass);
                   },
                 ),
               ),
@@ -123,7 +126,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
     );
   }
 
-  Widget _buildClassCard(DndClass dndClass) {
+  Widget _buildClassCard(BuildContext context, DndClass dndClass) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
@@ -131,7 +136,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
           dndClass.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text('Hit Die: ${dndClass.hitDie.toUpperCase()}'),
+        subtitle: Text('${l10n.hitDieLabel} ${dndClass.hitDie.toUpperCase()}'),
         onTap: () {
           Navigator.push(
             context,

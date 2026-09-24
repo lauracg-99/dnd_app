@@ -297,6 +297,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backgrounds => 'Backgrounds';
 
   @override
+  String get searchBackgrounds => 'Search backgrounds...';
+
+  @override
+  String get noBackgroundsFound => 'No backgrounds found.';
+
+  @override
+  String get searchClasses => 'Search classes...';
+
+  @override
+  String get noClassesFound => 'No classes found';
+
+  @override
+  String get hitDieLabel => 'Hit Die:';
+
+  @override
+  String get searchFeats => 'Search feats...';
+
+  @override
+  String get noFeatsFound => 'No feats found.';
+
+  @override
+  String get searchRaces => 'Search races...';
+
+  @override
+  String get noRacesFound => 'No races found.';
+
+  @override
+  String get searchWeapons => 'Search weapons...';
+
+  @override
+  String get noWeaponsFound => 'No weapons found';
+
+  @override
+  String get sourceLabel => 'Source:';
+
+  @override
+  String get activeFilters => 'Active Filters:';
+
+  @override
+  String get clearAll => 'Clear All';
+
+  @override
+  String get searchFilterLabel => 'Search:';
+
+  @override
+  String get typeFilterLabel => 'Type:';
+
+  @override
   String get dndSpells => 'D&D Spells';
 
   @override

@@ -23,6 +23,7 @@ import 'services/diary_group_service.dart';
 import 'services/firebase_auth_service.dart';
 import 'services/cloud_sync_service.dart';
 import 'services/remote_config_service.dart';
+import 'services/locale_service.dart';
 import 'firebase_options.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -74,10 +75,34 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Locale _locale = const Locale('en');
+  Locale _locale = AppLocaleStorage.defaultLocale;
 
-  void _setLocale(Locale locale) {
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLocale();
+  }
+
+  Future<void> _loadSavedLocale() async {
+    final savedLocale = await AppLocaleStorage.loadLocale();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _locale = savedLocale;
+    });
+  }
+
+  Future<void> _setLocale(Locale locale) async {
     if (!AppLocalizations.supportedLocales.contains(locale)) {
+      return;
+    }
+
+    await AppLocaleStorage.saveLocale(locale);
+
+    if (!mounted) {
       return;
     }
 

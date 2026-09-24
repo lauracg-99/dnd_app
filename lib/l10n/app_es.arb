@@ -371,6 +371,70 @@
   "@backgrounds": {
     "description": "Título de categoría para trasfondos"
   },
+  "searchBackgrounds": "Buscar trasfondos...",
+  "@searchBackgrounds": {
+    "description": "Marcador de búsqueda para trasfondos"
+  },
+  "noBackgroundsFound": "No se encontraron trasfondos.",
+  "@noBackgroundsFound": {
+    "description": "Estado vacío para la lista de trasfondos"
+  },
+  "searchClasses": "Buscar clases...",
+  "@searchClasses": {
+    "description": "Marcador de búsqueda para clases"
+  },
+  "noClassesFound": "No se encontraron clases",
+  "@noClassesFound": {
+    "description": "Estado vacío para la lista de clases"
+  },
+  "hitDieLabel": "Dado de golpe:",
+  "@hitDieLabel": {
+    "description": "Etiqueta del dado de golpe de una clase"
+  },
+  "searchFeats": "Buscar rasgos...",
+  "@searchFeats": {
+    "description": "Marcador de búsqueda para rasgos"
+  },
+  "noFeatsFound": "No se encontraron rasgos.",
+  "@noFeatsFound": {
+    "description": "Estado vacío para la lista de rasgos"
+  },
+  "searchRaces": "Buscar razas...",
+  "@searchRaces": {
+    "description": "Marcador de búsqueda para razas"
+  },
+  "noRacesFound": "No se encontraron razas.",
+  "@noRacesFound": {
+    "description": "Estado vacío para la lista de razas"
+  },
+  "searchWeapons": "Buscar armas...",
+  "@searchWeapons": {
+    "description": "Marcador de búsqueda para armas"
+  },
+  "noWeaponsFound": "No se encontraron armas",
+  "@noWeaponsFound": {
+    "description": "Estado vacío para la lista de armas"
+  },
+  "sourceLabel": "Fuente:",
+  "@sourceLabel": {
+    "description": "Etiqueta para la fuente de un elemento"
+  },
+  "activeFilters": "Filtros activos:",
+  "@activeFilters": {
+    "description": "Etiqueta de los filtros activos"
+  },
+  "clearAll": "Limpiar todo",
+  "@clearAll": {
+    "description": "Acción para borrar todos los filtros"
+  },
+  "searchFilterLabel": "Búsqueda:",
+  "@searchFilterLabel": {
+    "description": "Prefijo de la etiqueta del filtro de búsqueda"
+  },
+  "typeFilterLabel": "Tipo:",
+  "@typeFilterLabel": {
+    "description": "Prefijo de la etiqueta del filtro de tipo"
+  },
   "dndSpells": "Hechizos de D&D",
   "@dndSpells": {
     "description": "Título de la pantalla de hechizos"

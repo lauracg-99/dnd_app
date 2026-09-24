@@ -302,6 +302,54 @@ class AppLocalizationsEs extends AppLocalizations {
   String get backgrounds => 'Trasfondos';
 
   @override
+  String get searchBackgrounds => 'Buscar trasfondos...';
+
+  @override
+  String get noBackgroundsFound => 'No se encontraron trasfondos.';
+
+  @override
+  String get searchClasses => 'Buscar clases...';
+
+  @override
+  String get noClassesFound => 'No se encontraron clases';
+
+  @override
+  String get hitDieLabel => 'Dado de golpe:';
+
+  @override
+  String get searchFeats => 'Buscar rasgos...';
+
+  @override
+  String get noFeatsFound => 'No se encontraron rasgos.';
+
+  @override
+  String get searchRaces => 'Buscar razas...';
+
+  @override
+  String get noRacesFound => 'No se encontraron razas.';
+
+  @override
+  String get searchWeapons => 'Buscar armas...';
+
+  @override
+  String get noWeaponsFound => 'No se encontraron armas';
+
+  @override
+  String get sourceLabel => 'Fuente:';
+
+  @override
+  String get activeFilters => 'Filtros activos:';
+
+  @override
+  String get clearAll => 'Limpiar todo';
+
+  @override
+  String get searchFilterLabel => 'Búsqueda:';
+
+  @override
+  String get typeFilterLabel => 'Tipo:';
+
+  @override
   String get dndSpells => 'Hechizos de D&D';
 
   @override
