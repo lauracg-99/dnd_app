@@ -348,283 +348,290 @@ class _SpellByLevelState extends State<SpellByLevel> {
                   ),
                 ],
               ),
-              child: ListTile(
-                leading:
-                    canPrepare
-                        ? AnimatedScale(
-                          scale: isPrepared ? 1.12 : 0.96,
-                          duration: const Duration(milliseconds: 180),
-                          curve: Curves.easeOutBack,
-                          child: Checkbox(
-                            shape: const CircleBorder(),
-                            value: isPrepared,
-                            onChanged: (bool? value) {
-                              if (value == true) {
-                                if (canPrepareMore || isAlwaysPrepared) {
+              child: SelectionArea(
+                child: ListTile(
+                  leading:
+                      canPrepare
+                          ? AnimatedScale(
+                            scale: isPrepared ? 1.12 : 0.96,
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOutBack,
+                            child: Checkbox(
+                              shape: const CircleBorder(),
+                              value: isPrepared,
+                              onChanged: (bool? value) {
+                                if (value == true) {
+                                  if (canPrepareMore || isAlwaysPrepared) {
+                                    widget.onToggleSpellPreparation(
+                                      spell.id,
+                                      true,
+                                    );
+                                  } else {
+                                    SnackbarHelper.showError(
+                                      context,
+                                      'Cannot prepare more spells. Maximum: $currentMaxPrepared',
+                                    );
+                                  }
+                                } else {
                                   widget.onToggleSpellPreparation(
                                     spell.id,
-                                    true,
-                                  );
-                                } else {
-                                  SnackbarHelper.showError(
-                                    context,
-                                    'Cannot prepare more spells. Maximum: $currentMaxPrepared',
+                                    false,
                                   );
                                 }
-                              } else {
-                                widget.onToggleSpellPreparation(
-                                  spell.id,
-                                  false,
-                                );
-                              }
-                            },
-                          ),
-                        )
-                        : null,
-                title: InkWell(
-                  child: Text(
-                    spell.name,
-                    style: const TextStyle(color: Colors.blue),
-                  ),
-                  onTap: () => widget.onShowSpellDetails(spell.name),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}${spell.ritual ? ' • (ritual)' : ''}',
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              },
+                            ),
+                          )
+                          : null,
+                  title: InkWell(
+                    child: Text(
+                      spell.name,
+                      style: const TextStyle(color: Colors.blue),
                     ),
-                    if (isAlwaysPrepared ||
-                        isFreeUse ||
-                        isRitual ||
-                        canPrepare ||
-                        spell.levelNumber > 0) ...[
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          if (isAlwaysPrepared) ...[
-                            GestureDetector(
-                              onTap:
-                                  () => widget.onToggleAlwaysPrepared(spell.id),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.purple.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.star,
-                                      size: 12,
-                                      color: Colors.purple.shade700,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      'Always prepared',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
+                    onTap: () => widget.onShowSpellDetails(spell.name),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${spell.schoolName.split('_').map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')} • ${spell.castingTime}${spell.ritual ? ' • (ritual)' : ''}',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (isAlwaysPrepared ||
+                          isFreeUse ||
+                          isRitual ||
+                          canPrepare ||
+                          spell.levelNumber > 0) ...[
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            if (isAlwaysPrepared) ...[
+                              GestureDetector(
+                                onTap:
+                                    () =>
+                                        widget.onToggleAlwaysPrepared(spell.id),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.purple.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        size: 12,
                                         color: Colors.purple.shade700,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ] else if (canPrepare) ...[
-                            GestureDetector(
-                              onTap:
-                                  () => widget.onToggleAlwaysPrepared(spell.id),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'Always prepared',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.purple.shade700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.star_border,
-                                      size: 12,
-                                      color: Colors.grey.shade600,
+                              ),
+                            ] else if (canPrepare) ...[
+                              GestureDetector(
+                                onTap:
+                                    () =>
+                                        widget.onToggleAlwaysPrepared(spell.id),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
                                     ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      'Always prepared',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star_border,
+                                        size: 12,
                                         color: Colors.grey.shade600,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'Always prepared',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                          if (isFreeUse) ...[
-                            GestureDetector(
-                              onTap: () => widget.onToggleFreeUse(spell.id),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.bolt,
-                                      size: 12,
-                                      color: Colors.green.shade700,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      'Free use',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
+                            ],
+                            if (isFreeUse) ...[
+                              GestureDetector(
+                                onTap: () => widget.onToggleFreeUse(spell.id),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.bolt,
+                                        size: 12,
                                         color: Colors.green.shade700,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ] else ...[
-                            GestureDetector(
-                              onTap: () => widget.onToggleFreeUse(spell.id),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'Free use',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.green.shade700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.bolt_outlined,
-                                      size: 12,
-                                      color: Colors.grey.shade600,
+                              ),
+                            ] else ...[
+                              GestureDetector(
+                                onTap: () => widget.onToggleFreeUse(spell.id),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
                                     ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      'Free use',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.bolt_outlined,
+                                        size: 12,
                                         color: Colors.grey.shade600,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'Free use',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                          if (isRitual) ...[
-                            GestureDetector(
-                              onTap: () => widget.onToggleRitual(spell.id),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.auto_awesome,
-                                      size: 12,
-                                      color: Colors.amber.shade800,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      'Ritual',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
+                            ],
+                            if (isRitual) ...[
+                              GestureDetector(
+                                onTap: () => widget.onToggleRitual(spell.id),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.auto_awesome,
+                                        size: 12,
                                         color: Colors.amber.shade800,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ] else ...[
-                            GestureDetector(
-                              onTap: () => widget.onToggleRitual(spell.id),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'Ritual',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.amber.shade800,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.auto_awesome_outlined,
-                                      size: 12,
-                                      color: Colors.grey.shade600,
+                              ),
+                            ] else ...[
+                              GestureDetector(
+                                onTap: () => widget.onToggleRitual(spell.id),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
                                     ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      'Ritual',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.auto_awesome_outlined,
+                                        size: 12,
                                         color: Colors.grey.shade600,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'Ritual',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
-                      ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
+                  trailing:
+                      const SizedBox.shrink(), // No trailing buttons needed anymore
                 ),
-                trailing:
-                    const SizedBox.shrink(), // No trailing buttons needed anymore
               ),
             ),
           ),

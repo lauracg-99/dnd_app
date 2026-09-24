@@ -9,7 +9,7 @@ class WeaponsScreen extends StatefulWidget {
   const WeaponsScreen({super.key});
 
   @override
-  State<WeaponsScreen> createState() => _WeaponsScreenState(); 
+  State<WeaponsScreen> createState() => _WeaponsScreenState();
 }
 
 class _WeaponsScreenState extends State<WeaponsScreen> {
@@ -252,105 +252,110 @@ class _WeaponsScreenState extends State<WeaponsScreen> {
             minChildSize: 0.5,
             expand: false,
             builder:
-                (context, scrollController) => Container(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Handle bar
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-
-                      // Header
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              weapon.name,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
+                (context, scrollController) => SelectionArea(
+                  child: Container(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Handle bar
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
+                        ),
 
-                      // Content
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Basic Information
-                              _buildSheetSection('Type', weapon.formattedType),
-                              const SizedBox(height: 16),
-                              if (weapon.rarity != 'none')
-                                _buildSheetSection(
-                                  'Rarity',
-                                  weapon.rarity.toUpperCase(),
+                        // Header
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                weapon.name,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              const SizedBox(height: 16),
-                              _buildSheetSection(
-                                'Source',
-                                '${SourceMapper.getFullBookName(weapon.source)}${weapon.isCore ? ' • Core' : ''}',
                               ),
-                              const SizedBox(height: 16),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
 
-                              // Damage Information
-                              if (weapon.damageDice.isNotEmpty) ...[
+                        // Content
+                        Expanded(
+                          child: SingleChildScrollView(
+                            controller: scrollController,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Basic Information
                                 _buildSheetSection(
-                                  'Damage',
-                                  weapon.formattedDamage,
+                                  'Type',
+                                  weapon.formattedType,
                                 ),
                                 const SizedBox(height: 16),
-                              ],
-
-                              // Properties
-                              _buildSheetSection(
-                                'Properties',
-                                weapon.formattedProperties,
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Cost and Weight
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildSheetSection(
-                                      'Weight',
-                                      '${weapon.weight} lb',
-                                    ),
+                                if (weapon.rarity != 'none')
+                                  _buildSheetSection(
+                                    'Rarity',
+                                    weapon.rarity.toUpperCase(),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Thrown Range (if applicable)
-                              if (weapon.isThrown &&
-                                  weapon.thrownRange != null) ...[
+                                const SizedBox(height: 16),
                                 _buildSheetSection(
-                                  'Thrown Range',
-                                  weapon.thrownRange!,
+                                  'Source',
+                                  '${SourceMapper.getFullBookName(weapon.source)}${weapon.isCore ? ' • Core' : ''}',
                                 ),
                                 const SizedBox(height: 16),
+
+                                // Damage Information
+                                if (weapon.damageDice.isNotEmpty) ...[
+                                  _buildSheetSection(
+                                    'Damage',
+                                    weapon.formattedDamage,
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+
+                                // Properties
+                                _buildSheetSection(
+                                  'Properties',
+                                  weapon.formattedProperties,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Cost and Weight
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildSheetSection(
+                                        'Weight',
+                                        '${weapon.weight} lb',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Thrown Range (if applicable)
+                                if (weapon.isThrown &&
+                                    weapon.thrownRange != null) ...[
+                                  _buildSheetSection(
+                                    'Thrown Range',
+                                    weapon.thrownRange!,
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
           ),

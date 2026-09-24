@@ -37,7 +37,7 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
     super.initState();
     _feats = List.from(widget.feats);
     _featNotesController = widget.featNotesController;
-    
+
     // Load feats when the widget initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -70,129 +70,138 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
 
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: double.maxFinite,
-          height: 500,
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.military_tech),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Add Feat to ${widget.characterName}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-
-              // Feats list
-              Expanded(
-                child: Consumer<FeatsViewModel>(
-                  builder: (context, featsViewModel, child) {
-                    if (featsViewModel.isLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-
-                    if (featsViewModel.error != null) {
-                      return Center(
-                        child: Text('Error: ${featsViewModel.error}'),
-                      );
-                    }
-
-                    final feats = featsViewModel.feats;
-                    final searchQuery = '';
-                    final filteredFeats = searchQuery.isEmpty
-                        ? feats
-                        : feats
-                            .where(
-                              (feat) => feat.name
-                                  .toLowerCase()
-                                  .contains(searchQuery.toLowerCase()),
-                            )
-                            .toList();
-
-                    if (filteredFeats.isEmpty) {
-                      return const Center(child: Text('No feats found'));
-                    }
-
-                    return ListView.builder(
-                      itemCount: filteredFeats.length,
-                      itemBuilder: (context, index) {
-                        final feat = filteredFeats[index];
-                        final isKnown = _feats.contains(feat.name);
-
-                        return ListTile(
-                          title: Text(feat.name),
-                          subtitle: Text(
-                            SourceMapper.getFullBookName(feat.source),
+      builder:
+          (context) => Dialog(
+            child: SizedBox(
+              width: double.maxFinite,
+              height: 500,
+              child: Column(
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.military_tech),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Add Feat to ${widget.characterName}',
                             style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          trailing: isKnown
-                              ? const Icon(
-                                  Icons.check,
-                                  color: Colors.green,
-                                )
-                              : const Icon(Icons.add),
-                          enabled: !isKnown,
-                          onTap: isKnown
-                              ? null
-                              : () {
-                                  final newFeats = List<String>.from(_feats);
-                                  newFeats.add(feat.name);
-                                  _updateFeats(newFeats);
-                                  Navigator.pop(context);
-                                  SnackbarHelper.showSuccess(context,'Added ${feat.name} to ${widget.characterName}',);                                  
-                                },
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+
+                  // Feats list
+                  Expanded(
+                    child: Consumer<FeatsViewModel>(
+                      builder: (context, featsViewModel, child) {
+                        if (featsViewModel.isLoading) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        if (featsViewModel.error != null) {
+                          return Center(
+                            child: Text('Error: ${featsViewModel.error}'),
+                          );
+                        }
+
+                        final feats = featsViewModel.feats;
+                        final searchQuery = '';
+                        final filteredFeats =
+                            searchQuery.isEmpty
+                                ? feats
+                                : feats
+                                    .where(
+                                      (feat) => feat.name
+                                          .toLowerCase()
+                                          .contains(searchQuery.toLowerCase()),
+                                    )
+                                    .toList();
+
+                        if (filteredFeats.isEmpty) {
+                          return const Center(child: Text('No feats found'));
+                        }
+
+                        return ListView.builder(
+                          itemCount: filteredFeats.length,
+                          itemBuilder: (context, index) {
+                            final feat = filteredFeats[index];
+                            final isKnown = _feats.contains(feat.name);
+
+                            return ListTile(
+                              title: Text(feat.name),
+                              subtitle: Text(
+                                SourceMapper.getFullBookName(feat.source),
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              trailing:
+                                  isKnown
+                                      ? const Icon(
+                                        Icons.check,
+                                        color: Colors.green,
+                                      )
+                                      : const Icon(Icons.add),
+                              enabled: !isKnown,
+                              onTap:
+                                  isKnown
+                                      ? null
+                                      : () {
+                                        final newFeats = List<String>.from(
+                                          _feats,
+                                        );
+                                        newFeats.add(feat.name);
+                                        _updateFeats(newFeats);
+                                        Navigator.pop(context);
+                                        SnackbarHelper.showSuccess(
+                                          context,
+                                          'Added ${feat.name} to ${widget.characterName}',
+                                        );
+                                      },
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                ),
-              ),
+                    ),
+                  ),
 
-              // Footer
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                  // Footer
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        Text(
+                          '${_feats.length} feats known',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '${_feats.length} feats known',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 
@@ -200,174 +209,182 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(16),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              // Header
-              Row(
-                children: [
-                  const Icon(Icons.military_tech, size: 28),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      feat.name,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            expand: false,
+            builder:
+                (context, scrollController) => SelectionArea(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    child: ListView(
+                      controller: scrollController,
+                      children: [
+                        // Header
+                        Row(
+                          children: [
+                            const Icon(Icons.military_tech, size: 28),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                feat.name,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Source
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.book,
+                                size: 16,
+                                color: Colors.blue,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Source: ${SourceMapper.getFullBookName(feat.source)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Prerequisite
+                        if (feat.prerequisite != null &&
+                            feat.prerequisite!.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange.shade200),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Prerequisite:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(feat.prerequisite!),
+                              ],
+                            ),
+                          ),
+                        if (feat.prerequisite != null &&
+                            feat.prerequisite!.isNotEmpty)
+                          const SizedBox(height: 16),
+
+                        // Description
+                        const Text(
+                          'Description',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          feat.description,
+                          style: const TextStyle(fontSize: 16, height: 1.5),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Effects
+                        if (feat.effects.isNotEmpty)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Effects',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: Text(
+                                  feat.formattedEffects,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // Character info
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.green.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.person,
+                                size: 16,
+                                color: Colors.green,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Known by: ${widget.characterName}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Source
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.book,
-                      size: 16,
-                      color: Colors.blue,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Source: ${SourceMapper.getFullBookName(feat.source)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Prerequisite
-              if (feat.prerequisite != null && feat.prerequisite!.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.shade200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Prerequisite:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(feat.prerequisite!),
-                    ],
-                  ),
-                ),
-              if (feat.prerequisite != null && feat.prerequisite!.isNotEmpty)
-                const SizedBox(height: 16),
-
-              // Description
-              const Text(
-                'Description',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                feat.description,
-                style: const TextStyle(fontSize: 16, height: 1.5),
-              ),
-              const SizedBox(height: 16),
-
-              // Effects
-              if (feat.effects.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Effects',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        feat.formattedEffects,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-              const SizedBox(height: 16),
-
-              // Character info
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.person,
-                      size: 16,
-                      color: Colors.green,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Known by: ${widget.characterName}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
-        ),
-      ),
     );
   }
 
@@ -377,10 +394,10 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [          
+        children: [
           const SizedBox(height: 4),
-         
-         ActionButton.primary(
+
+          ActionButton.primary(
             context: context,
             onPressed: _showAddFeatDialog,
             label: 'Add Feat',
@@ -438,7 +455,9 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                     decoration: BoxDecoration(
                       color: Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color.fromARGB(255, 205, 205, 205)),
+                      border: Border.all(
+                        color: const Color.fromARGB(255, 205, 205, 205),
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -467,50 +486,54 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
               }
 
               return Column(
-                children: _feats.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final featName = entry.value;
+                children:
+                    _feats.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final featName = entry.value;
 
-                  // Try to find feat details
-                  final feat = featsViewModel.feats.firstWhere(
-                    (f) => f.name.toLowerCase() == featName.toLowerCase(),
-                    orElse: () => Feat(
-                      id: 'unknown',
-                      name: featName,
-                      description: 'Custom feat',
-                      source: 'Unknown',
-                    ),
-                  );
+                      // Try to find feat details
+                      final feat = featsViewModel.feats.firstWhere(
+                        (f) => f.name.toLowerCase() == featName.toLowerCase(),
+                        orElse:
+                            () => Feat(
+                              id: 'unknown',
+                              name: featName,
+                              description: 'Custom feat',
+                              source: 'Unknown',
+                            ),
+                      );
 
-                  return Card(
-                    child: ListTile(
-                      title: InkWell(
-                        child: Text(
-                          feat.name,   
-                          style: const TextStyle(color: Colors.blue),                       
+                      return Card(
+                        child: ListTile(
+                          title: InkWell(
+                            child: Text(
+                              feat.name,
+                              style: const TextStyle(color: Colors.blue),
+                            ),
+                            onTap: () => _showFeatDetails(feat),
+                          ),
+                          subtitle: Text(
+                            SourceMapper.getFullBookName(feat.source),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () {
+                              final newFeats = List<String>.from(_feats);
+                              newFeats.removeAt(index);
+                              _updateFeats(newFeats);
+                            },
+                          ),
                         ),
-                        onTap: () => _showFeatDetails(feat),
-                      ),
-                      subtitle: Text(
-                        SourceMapper.getFullBookName(feat.source),
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          final newFeats = List<String>.from(_feats);
-                          newFeats.removeAt(index);
-                          _updateFeats(newFeats);
-                        },
-                      ),
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
               );
             },
           ),
 
- 
           const SizedBox(height: 16),
 
           // Feat Notes Section
@@ -551,13 +574,12 @@ class _CharactersFeatsTabState extends State<CharactersFeatsTab> {
                       color: Colors.grey.shade50,
                     ),
                     child: SimpleQuillEditor(
-                      controller: _featNotesController, 
+                      controller: _featNotesController,
                       toolbarConfig: QuillToolbarConfigs.minimal,
-                      placeholder: 'Add notes about your feats...\n\n',                           
-                            height: 300,
-                    )
-
-                  ),                  
+                      placeholder: 'Add notes about your feats...\n\n',
+                      height: 300,
+                    ),
+                  ),
                 ],
               ),
             ),

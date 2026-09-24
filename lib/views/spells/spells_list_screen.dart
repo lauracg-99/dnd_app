@@ -305,18 +305,20 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
 
   // Build a single spell item
   Widget _buildSpellItem(Spell spell, BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      child: ListTile(
-        title: Text(spell.name),
-        subtitle: Text(
-          '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}${spell.ritual ? ' (Ritual)' : ''}'
-              .trim(),
+    return SelectionArea(
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+        child: ListTile(
+          title: Text(spell.name),
+          subtitle: Text(
+            '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}${spell.ritual ? ' (Ritual)' : ''}'
+                .trim(),
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            _showSpellDetails(context, spell);
+          },
         ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          _showSpellDetails(context, spell);
-        },
       ),
     );
   }
@@ -378,89 +380,77 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
             maxChildSize: 0.9,
             expand: false,
             builder:
-                (_, controller) => SingleChildScrollView(
-                  controller: controller,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[400],
-                              borderRadius: BorderRadius.circular(2),
+                (_, controller) => SelectionArea(
+                  child: SingleChildScrollView(
+                    controller: controller,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[400],
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
-                        ),
-                        Text(
-                          spell.name,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Casting Time
-                        DetailRow(
-                          label: 'Casting Time',
-                          value: spell.castingTime,
-                        ),
-
-                        // Range
-                        DetailRow(label: 'Range', value: spell.range),
-
-                        // Components
-                        DetailRow(
-                          label: 'Components',
-                          value: _formatComponents(spell),
-                        ),
-
-                        // Duration
-                        DetailRow(label: 'Duration', value: spell.duration),
-
-                        // Ritual
-                        if (spell.ritual)
-                          DetailRow(label: 'Ritual', value: 'Yes'),
-
-                        // Classes
-                        DetailRow(
-                          label: 'Classes',
-                          value: spell.classes
-                              .map((c) => c.capitalize().replaceAll('_', ' '))
-                              .join(', '),
-                        ),
-
-                        const Divider(),
-                        const SizedBox(height: 5),
-                        DetailRow(label: 'Description', value: ''),
-                        // Description
-                        Text(
-                          spell.description,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        if (spell.higherLevelDescription != null &&
-                            spell.higherLevelDescription!.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          DetailRow(label: 'At Higher Levels', value: ''),
                           Text(
-                            spell.higherLevelDescription ?? '',
+                            spell.name,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 16),
+
+                          DetailRow(
+                            label: 'Casting Time',
+                            value: spell.castingTime,
+                          ),
+                          DetailRow(label: 'Range', value: spell.range),
+                          DetailRow(
+                            label: 'Components',
+                            value: _formatComponents(spell),
+                          ),
+                          DetailRow(label: 'Duration', value: spell.duration),
+                          if (spell.ritual)
+                            DetailRow(label: 'Ritual', value: 'Yes'),
+                          DetailRow(
+                            label: 'Classes',
+                            value: spell.classes
+                                .map((c) => c.capitalize().replaceAll('_', ' '))
+                                .join(', '),
+                          ),
+                          const Divider(),
+                          const SizedBox(height: 5),
+                          DetailRow(label: 'Description', value: ''),
+                          Text(
+                            spell.description,
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
+                          if (spell.higherLevelDescription != null &&
+                              spell.higherLevelDescription!.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            DetailRow(label: 'At Higher Levels', value: ''),
+                            Text(
+                              spell.higherLevelDescription ?? '',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
           ),
     );
-  
   }
 
   String _formatComponents(Spell spell) {
@@ -472,7 +462,6 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
     }
     return components.join(', ');
   }
-
 }
 
 extension StringExtension on String {

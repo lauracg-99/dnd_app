@@ -131,11 +131,11 @@ class _RacesScreenState extends State<RacesScreen> {
 
   String _getRacePreview(Race race) {
     final buffer = StringBuffer();
-    
+
     if (race.flySpeed != null) {
       buffer.write('Fly Speed: ${race.flySpeed} ft');
     }
-    
+
     if (race.traits.isNotEmpty) {
       if (buffer.isNotEmpty) buffer.write(' • ');
       final firstTrait = race.traits.first['stats'];
@@ -143,11 +143,11 @@ class _RacesScreenState extends State<RacesScreen> {
         buffer.write(firstTrait['name']['value']);
       }
     }
-    
+
     if (buffer.isEmpty) {
       buffer.write('Source: ${SourceMapper.getFullBookName(race.source)}');
     }
-    
+
     return buffer.toString();
   }
 
@@ -162,51 +162,53 @@ class _RacesScreenState extends State<RacesScreen> {
             initialChildSize: 0.5,
             minChildSize: 0.25,
             builder:
-                (_, controller) => SingleChildScrollView(
-                  controller: controller,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[400],
-                            borderRadius: BorderRadius.circular(2),
+                (_, controller) => SelectionArea(
+                  child: SingleChildScrollView(
+                    controller: controller,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[400],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
                         ),
-                      ),
-                      Text(
-                        race.name,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Source: ${SourceMapper.getFullBookName(race.source)}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Description:',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        race.description,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Close'),
+                        Text(
+                          race.name,
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Text(
+                          'Source: ${SourceMapper.getFullBookName(race.source)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Description:',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          race.description,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Close'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
           ),

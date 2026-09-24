@@ -71,161 +71,168 @@ class _AttackDetailSheetState extends State<AttackDetailSheet> {
       minChildSize: 0.5,
       expand: false,
       builder:
-          (context, scrollController) => Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Text(
-                  'Edit Attack',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildEditableField('Name', _nameController),
-                          const SizedBox(height: 16),
-                          _buildEditableField(
-                            'Attack Bonus',
-                            _attackBonusController,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildEditableField('Damage', _damageController),
-                          const SizedBox(height: 16),
-                          _buildEditableField(
-                            'Damage Type',
-                            _damageTypeController,
-                          ),
-                          const SizedBox(height: 32),
-                          ElevatedButton(
-                            onPressed: () async {
-                              final diceExpression =
-                                  currentAttackBonus.isEmpty
-                                      ? '1d20'
-                                      : '1d20$currentAttackBonus';
-                              final res = await DiceService.lanzarDadosResult(
-                                context,
-                                diceExpression,
-                              );
-                              if (res != null) {
-                                setState(() {
-                                  _attackResult = res;
-                                });
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red[700]!,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Image.asset(
-                                  CharacterAbilityHelper.getDiceAsset('d20'),
-                                  width: 22,
-                                  height: 22,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Roll Attack: 1d20${currentAttackBonus.isEmpty ? '' : currentAttackBonus}',
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (_attackResult != null) ...[
-                            const SizedBox(height: 8),
-                            _buildResultSquare(_attackResult, Colors.blue[700]),
-                          ],
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () async {
-                              final diceExpression = currentDamage.replaceAll(
-                                ' ',
-                                '',
-                              );
-                              final res = await DiceService.lanzarDadosResult(
-                                context,
-                                diceExpression.isEmpty ? '1d8' : diceExpression,
-                              );
-                              if (res != null) {
-                                setState(() {
-                                  _damageResult = res;
-                                });
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[700]!,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Image.asset(
-                                  CharacterAbilityHelper.getDiceAsset('d8'),
-                                  width: 22,
-                                  height: 22,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Roll Damage: ${currentDamage.isEmpty ? '1d8' : currentDamage.replaceAll(' ', '')}',
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (_damageResult != null) ...[
-                            const SizedBox(height: 8),
-                            _buildResultSquare(
-                              _damageResult,
-                              Colors.purple[700],
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _saveChanges,
-                              icon: const Icon(Icons.save),
-                              label: const Text('Save Changes'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue.shade700,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+          (context, scrollController) => SelectionArea(
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  Text(
+                    'Edit Attack',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildEditableField('Name', _nameController),
+                            const SizedBox(height: 16),
+                            _buildEditableField(
+                              'Attack Bonus',
+                              _attackBonusController,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildEditableField('Damage', _damageController),
+                            const SizedBox(height: 16),
+                            _buildEditableField(
+                              'Damage Type',
+                              _damageTypeController,
+                            ),
+                            const SizedBox(height: 32),
+                            ElevatedButton(
+                              onPressed: () async {
+                                final diceExpression =
+                                    currentAttackBonus.isEmpty
+                                        ? '1d20'
+                                        : '1d20$currentAttackBonus';
+                                final res = await DiceService.lanzarDadosResult(
+                                  context,
+                                  diceExpression,
+                                );
+                                if (res != null) {
+                                  setState(() {
+                                    _attackResult = res;
+                                  });
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red[700]!,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    CharacterAbilityHelper.getDiceAsset('d20'),
+                                    width: 22,
+                                    height: 22,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Roll Attack: 1d20${currentAttackBonus.isEmpty ? '' : currentAttackBonus}',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_attackResult != null) ...[
+                              const SizedBox(height: 8),
+                              _buildResultSquare(
+                                _attackResult,
+                                Colors.blue[700],
+                              ),
+                            ],
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () async {
+                                final diceExpression = currentDamage.replaceAll(
+                                  ' ',
+                                  '',
+                                );
+                                final res = await DiceService.lanzarDadosResult(
+                                  context,
+                                  diceExpression.isEmpty
+                                      ? '1d8'
+                                      : diceExpression,
+                                );
+                                if (res != null) {
+                                  setState(() {
+                                    _damageResult = res;
+                                  });
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green[700]!,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    CharacterAbilityHelper.getDiceAsset('d8'),
+                                    width: 22,
+                                    height: 22,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Roll Damage: ${currentDamage.isEmpty ? '1d8' : currentDamage.replaceAll(' ', '')}',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_damageResult != null) ...[
+                              const SizedBox(height: 8),
+                              _buildResultSquare(
+                                _damageResult,
+                                Colors.purple[700],
+                              ),
+                            ],
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _saveChanges,
+                                icon: const Icon(Icons.save),
+                                label: const Text('Save Changes'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue.shade700,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
     );
