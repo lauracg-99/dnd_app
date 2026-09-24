@@ -1,3 +1,4 @@
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/services/dice_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -33,9 +34,11 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('D&D Spells'),
+        title: Text(l10n.dndSpells),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -56,7 +59,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                   'Filter button pressed. Expanded: $_isFilterExpanded',
                 );
               },
-              tooltip: 'Filter spells',
+              tooltip: l10n.filterSpells,
             ),
           ),
         ],
@@ -88,6 +91,8 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
   Widget _buildSearchAndFilters() {
     return Consumer<SpellsViewModel>(
       builder: (context, viewModel, _) {
+        final l10n = AppLocalizations.of(context)!;
+
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -96,7 +101,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
               TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search spells...',
+                  hintText: l10n.searchSpells,
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -140,6 +145,8 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
   }
 
   List<Widget> _buildFilterControls(SpellsViewModel viewModel) {
+    final l10n = AppLocalizations.of(context)!;
+
     return [
       const SizedBox(height: 8),
       // Level filter
@@ -148,17 +155,17 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         child: ListView(
           scrollDirection: Axis.horizontal,
           children: [
-            const Text(
-              'Level: ',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              '${l10n.levelFilter} ',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             FilterChip(
-              label: const Text('All'),
+              label: Text(l10n.all),
               selected: viewModel.selectedLevel == null,
               onSelected: (_) => viewModel.setSelectedLevel(null),
             ),
             ...viewModel.availableLevels.map((level) {
-              final label = level == 0 ? 'Cantrip' : 'Level $level';
+              final label = level == 0 ? l10n.cantrip : l10n.levelLabel(level);
               return Padding(
                 padding: const EdgeInsets.only(left: 4.0),
                 child: FilterChip(
@@ -179,12 +186,12 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         child: ListView(
           scrollDirection: Axis.horizontal,
           children: [
-            const Text(
-              'Class: ',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              '${l10n.classFilter} ',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             FilterChip(
-              label: const Text('All'),
+              label: Text(l10n.all),
               selected: viewModel.selectedClass.isEmpty,
               onSelected: (_) => viewModel.setSelectedClass(''),
             ),
@@ -214,12 +221,12 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
         child: ListView(
           scrollDirection: Axis.horizontal,
           children: [
-            const Text(
-              'School: ',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              '${l10n.schoolFilter} ',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             FilterChip(
-              label: const Text('All'),
+              label: Text(l10n.all),
               selected: viewModel.selectedSchool.isEmpty,
               onSelected: (_) => viewModel.setSelectedSchool(''),
             ),
@@ -240,17 +247,19 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
   }
 
   Widget _buildErrorView(SpellsViewModel viewModel) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.error_outline, size: 48, color: Colors.red),
           const SizedBox(height: 16),
-          Text('Error: ${viewModel.error}'),
+          Text('${l10n.error}: ${viewModel.error}'),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: viewModel.loadSpells,
-            child: const Text('Retry'),
+            child: Text(l10n.retry),
           ),
         ],
       ),
@@ -258,13 +267,15 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
   }
 
   Widget _buildEmptyView() {
-    return const Center(
+    final l10n = AppLocalizations.of(context)!;
+
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 48, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('No spells found. Try adjusting your search or filters.'),
+          const Icon(Icons.search_off, size: 48, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(l10n.noSpellsFound),
         ],
       ),
     );
@@ -291,10 +302,12 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
 
   // Build a section header for a spell level
   Widget _buildSectionHeader(int level) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Text(
-        level == 0 ? 'Cantrips' : 'Level $level Spells',
+        level == 0 ? l10n.cantrip : l10n.levelLabel(level),
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
           color: Theme.of(context).colorScheme.primary,
@@ -305,13 +318,15 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
 
   // Build a single spell item
   Widget _buildSpellItem(Spell spell, BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SelectionArea(
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
         child: ListTile(
           title: Text(spell.name),
           subtitle: Text(
-            '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}${spell.ritual ? ' (Ritual)' : ''}'
+            '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? l10n.cantrip : l10n.levelLabel(spell.levelNumber)}${spell.ritual ? ' (${l10n.ritual})' : ''}'
                 .trim(),
           ),
           trailing: const Icon(Icons.chevron_right),
@@ -369,6 +384,8 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
   }
 
   void _showSpellDetails(BuildContext context, Spell spell) {
+    final l10n = AppLocalizations.of(context)!;
+
     showModalBottomSheet(
       isScrollControlled: true,
       backgroundColor: Colors.white,
@@ -405,32 +422,32 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? 'Cantrip' : 'Level ${spell.levelNumber}'}',
+                            '${spell.schoolName.capitalize()} ${spell.levelNumber == 0 ? l10n.cantrip : l10n.levelLabel(spell.levelNumber)}',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 16),
 
                           DetailRow(
-                            label: 'Casting Time',
+                            label: l10n.castingTime,
                             value: spell.castingTime,
                           ),
-                          DetailRow(label: 'Range', value: spell.range),
+                          DetailRow(label: l10n.range, value: spell.range),
                           DetailRow(
-                            label: 'Components',
+                            label: l10n.components,
                             value: _formatComponents(spell),
                           ),
-                          DetailRow(label: 'Duration', value: spell.duration),
+                          DetailRow(label: l10n.duration, value: spell.duration),
                           if (spell.ritual)
-                            DetailRow(label: 'Ritual', value: 'Yes'),
+                            DetailRow(label: l10n.ritual, value: l10n.yes),
                           DetailRow(
-                            label: 'Classes',
+                            label: l10n.classes,
                             value: spell.classes
                                 .map((c) => c.capitalize().replaceAll('_', ' '))
                                 .join(', '),
                           ),
                           const Divider(),
                           const SizedBox(height: 5),
-                          DetailRow(label: 'Description', value: ''),
+                          DetailRow(label: l10n.descriptionLabel, value: ''),
                           Text(
                             spell.description,
                             style: Theme.of(context).textTheme.bodyLarge,
@@ -438,7 +455,7 @@ class _SpellsListScreenState extends State<SpellsListScreen> {
                           if (spell.higherLevelDescription != null &&
                               spell.higherLevelDescription!.isNotEmpty) ...[
                             const SizedBox(height: 12),
-                            DetailRow(label: 'At Higher Levels', value: ''),
+                            DetailRow(label: l10n.atHigherLevels, value: ''),
                             Text(
                               spell.higherLevelDescription ?? '',
                               style: Theme.of(context).textTheme.bodyLarge,

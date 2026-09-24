@@ -1,3 +1,4 @@
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,10 +19,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final FirebaseAuthService _authService = FirebaseAuthService();
   final CloudSyncService _syncService = CloudSyncService();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
-  final bool _isCreatingAccount = false;
   bool _allowSignIn = true;
   bool _allowRegister = true;
 
@@ -48,9 +48,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign In / Sign Up'),
+        title: Text(l10n.signIn),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SafeArea(
@@ -59,267 +61,276 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Form(
             key: _formKey,
             child: AutofillGroup(
-              child:Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 40),
-                
-                // Cloud illustration
-                Icon(
-                  Icons.cloud,
-                  size: 120,
-                  color: Theme.of(context).primaryColor,
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Title
-                Text(
-                  'Cloud Sync',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 40),
+
+                  // Cloud illustration
+                  Icon(
+                    Icons.cloud,
+                    size: 120,
+                    color: Theme.of(context).primaryColor,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 8),
-                
-                Text(
-                  'Sign in to sync your characters and journals across all your devices',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 48),
-                
-                // Email field
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.email],
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email address',
-                    prefixIcon: const Icon(Icons.email),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+
+                  const SizedBox(height: 32),
+
+                  // Title
+                  Text(
+                    l10n.cloudSync,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                  enabled: !_isLoading,
-                ),
-                
-                const SizedBox(height: 20),
-                
-                // Password field
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.done,
-                  autofillHints: const [AutofillHints.password],
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    l10n.signInSyncDescription,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 48),
+
+                  // Email field
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    decoration: InputDecoration(
+                      labelText: l10n.email,
+                      hintText: l10n.enterYourEmail,
+                      prefixIcon: const Icon(Icons.email),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return l10n.pleaseEnterYourEmail;
+                      }
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
+                        return l10n.pleaseEnterValidEmail;
+                      }
+                      return null;
+                    },
+                    enabled: !_isLoading,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                  enabled: !_isLoading,
-                  onFieldSubmitted: (_) => _handleSubmit(),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                // Forgot password link
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _isLoading ? null : _showForgotPasswordDialog,
-                    child: const Text('Forgot Password?'),
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Info text about account creation / feature flags
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: Colors.blue.shade700,
-                        size: 24,
+
+                  const SizedBox(height: 20),
+
+                  // Password field
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.password],
+                    decoration: InputDecoration(
+                      labelText: l10n.password,
+                      hintText: l10n.enterYourPassword,
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        !_allowRegister
-                            ? 'Account creation is temporarily disabled. Please sign in with an existing account or try again later.'
-                            : 'If you don\'t have an account yet, we\'ll create one for you automatically when you sign in.',
-                        style: TextStyle(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return l10n.pleaseEnterYourPassword;
+                      }
+                      if (value.length < 6) {
+                        return l10n.passwordMinLength;
+                      }
+                      return null;
+                    },
+                    enabled: !_isLoading,
+                    onFieldSubmitted: (_) => _handleSubmit(),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Forgot password link
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _isLoading ? null : _showForgotPasswordDialog,
+                      child: Text(l10n.forgotPassword),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Info text about account creation / feature flags
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
                           color: Colors.blue.shade700,
-                          fontSize: 14,
+                          size: 24,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Submit button
-                ElevatedButton(
-                  onPressed: (_isLoading || !_allowSignIn) ? null : _handleSubmit,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 8),
+                        Text(
+                          !_allowRegister
+                              ? l10n.accountCreationDisabled
+                              : l10n.accountCreationInfo,
+                          style: TextStyle(
+                            color: Colors.blue.shade700,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
-                  child: _isLoading
-                      ? const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
+
+                  const SizedBox(height: 32),
+
+                  // Submit button
+                  ElevatedButton(
+                    onPressed:
+                        (_isLoading || !_allowSignIn) ? null : _handleSubmit,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child:
+                        _isLoading
+                            ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(l10n.signingIn),
+                              ],
+                            )
+                            : Text(
+                              l10n.signIn,
+                              style: const TextStyle(fontSize: 16),
                             ),
-                            SizedBox(width: 12),
-                            Text('Signing In...'),
-                          ],
-                        )
-                      : const Text(
-                          'Sign In',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Cancel button
-                OutlinedButton(
-                  onPressed: _isLoading ? null : () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Cancel button
+                  OutlinedButton(
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.cancel,
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Features list
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'With Cloud Sync you can:',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+
+                  const SizedBox(height: 32),
+
+                  // Features list
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.syncFeatureTitle,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      ..._buildFeatureList(),
-                    ],
+                        const SizedBox(height: 12),
+                        ..._buildFeatureList(l10n),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )
           ),
         ),
       ),
     );
   }
 
-  List<Widget> _buildFeatureList() {
+  List<Widget> _buildFeatureList(AppLocalizations l10n) {
     final features = [
-      'Access your characters from any device',
-      'Automatic backup of all your data',
-      'Sync journals and character sheets',
-      'Never lose your campaign data',
+      l10n.cloudSyncFeature1,
+      l10n.cloudSyncFeature2,
+      l10n.cloudSyncFeature3,
+      l10n.cloudSyncFeature4,
     ];
-    
-    return features.map((feature) => Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Icon(
-            Icons.check_circle,
-            size: 16,
-            color: Colors.green.shade600,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              feature,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-              ),
+
+    return features
+        .map(
+          (feature) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  size: 16,
+                  color: Colors.green.shade600,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    feature,
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-    )).toList();
+        )
+        .toList();
   }
 
   Future<void> _handleSubmit() async {
     // Check remote flags before attempting auth
     if (!RemoteConfigService.instance.allowSignIn) {
-      SnackbarHelper.showInfo(context, 'Sign in is temporarily disabled. Please try again later or contact support.');
+      SnackbarHelper.showInfo(
+        context,
+        AppLocalizations.of(context)!.signInTemporarilyDisabled,
+      );
       return;
     }
     if (!_formKey.currentState!.validate()) {
@@ -341,21 +352,32 @@ class _LoginScreenState extends State<LoginScreen> {
         if (result.success) {
           TextInput.finishAutofillContext();
           // Accedemos al usuario nativo de Firebase
-          final user = result.user; 
+          final user = result.user;
           bool isNewUser = false;
 
-          if (user != null && user.metadata.creationTime != null && user.metadata.lastSignInTime != null) {
+          if (user != null &&
+              user.metadata.creationTime != null &&
+              user.metadata.lastSignInTime != null) {
             // Si el tiempo de creación y de último login difieren por menos de un par de segundos, es una cuenta nueva
-            final difference = user.metadata.lastSignInTime!.difference(user.metadata.creationTime!).inSeconds.abs();
-            isNewUser = difference < 2; 
+            final difference =
+                user.metadata.lastSignInTime!
+                    .difference(user.metadata.creationTime!)
+                    .inSeconds
+                    .abs();
+            isNewUser = difference < 2;
           }
           // Show success message
-          SnackbarHelper.showSuccess(context, isNewUser 
-                    ? 'Account created and signed in successfully!'
-                    : 'Signed in successfully!');          
+          SnackbarHelper.showSuccess(
+            context,
+            isNewUser
+                ? AppLocalizations.of(
+                  context,
+                )!.accountCreatedAndSignedInSuccessfully
+                : AppLocalizations.of(context)!.signedInSuccessfully,
+          );
           // Check if user has existing cloud data
           final hasCloudData = await _syncService.hasExistingCloudData();
-          
+
           if (hasCloudData) {
             // Download existing data from cloud for returning users
             await _downloadExistingData();
@@ -365,12 +387,19 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         } else {
           // Show error message
-          SnackbarHelper.showError(context, result.errorMessage ?? 'Authentication failed');          
+          SnackbarHelper.showError(
+            context,
+            result.errorMessage ??
+                AppLocalizations.of(context)!.authenticationFailed,
+          );
         }
       }
     } catch (e) {
       if (mounted) {
-        SnackbarHelper.showError(context, 'An unexpected error occurred: $e');         
+        SnackbarHelper.showError(
+          context,
+          AppLocalizations.of(context)!.unexpectedError(e),
+        );
       }
     } finally {
       if (mounted) {
@@ -385,7 +414,12 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final result = await _syncService.uploadAllLocalData();
       if (mounted && !result.success) {
-        SnackbarHelper.showWarning(context, 'Warning: ${result.errorMessage}');        
+        SnackbarHelper.showWarning(
+          context,
+          AppLocalizations.of(
+            context,
+          )!.warningWithValue(result.errorMessage ?? ''),
+        );
       }
       // Navigate back after upload completes (regardless of success/failure)
       if (mounted) {
@@ -405,31 +439,48 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // Show loading message
       if (mounted) {
-        SnackbarHelper.showInfo(context, 'Downloading your data from cloud...', duration: const Duration(seconds: 4));
+        SnackbarHelper.showInfo(
+          context,
+          AppLocalizations.of(context)!.downloadingCloudData,
+          duration: const Duration(seconds: 4),
+        );
       }
 
       final result = await _syncService.downloadAllData();
       if (mounted) {
         if (result.success) {
-          SnackbarHelper.showSuccess(context, 'Data sync successfully!');
+          SnackbarHelper.showSuccess(
+            context,
+            AppLocalizations.of(context)!.dataSyncSuccessfully,
+          );
         } else {
-          SnackbarHelper.showError(context, 'Could not download cloud data: ${result.errorMessage}');
+          SnackbarHelper.showError(
+            context,
+            AppLocalizations.of(
+              context,
+            )!.couldNotDownloadCloudData(result.errorMessage ?? ''),
+          );
         }
-          // Trigger UI refresh on characters list after successful download
-          // Use a small delay to ensure data is properly saved to local storage
-          Future.delayed(const Duration(milliseconds: 500), () {
-            // Force refresh of characters list when we return to it
-            if (mounted) {
-              // This will be picked up by the characters list screen's auth state listener
-              // or when the screen rebuilds after navigation
-              Navigator.pop(context);
-            }
-          });
-        } else {
-          SnackbarHelper.showWarning(context, 'Could not download cloud data: ${result.errorMessage}');          
-          // Still navigate back even on download failure
-          Navigator.pop(context);
-        }      
+        // Trigger UI refresh on characters list after successful download
+        // Use a small delay to ensure data is properly saved to local storage
+        Future.delayed(const Duration(milliseconds: 500), () {
+          // Force refresh of characters list when we return to it
+          if (mounted) {
+            // This will be picked up by the characters list screen's auth state listener
+            // or when the screen rebuilds after navigation
+            Navigator.pop(context);
+          }
+        });
+      } else {
+        SnackbarHelper.showWarning(
+          context,
+          AppLocalizations.of(
+            context,
+          )!.couldNotDownloadCloudData(result.errorMessage ?? ''),
+        );
+        // Still navigate back even on download failure
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         // Don't show error for sync failure, just log it
@@ -444,11 +495,12 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showForgotPasswordDialog() {
     showDialog(
       context: context,
-      builder: (dialogContext) => _ForgotPasswordDialog(
-        authService: _authService,
-        initialEmail: _emailController.text,
-        parentContext: context,
-      ),
+      builder:
+          (dialogContext) => _ForgotPasswordDialog(
+            authService: _authService,
+            initialEmail: _emailController.text,
+            parentContext: context,
+          ),
     );
   }
 }
@@ -486,21 +538,19 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Reset Password'),
+      title: Text(AppLocalizations.of(context)!.resetPassword),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Enter your email address and we\'ll send you a link to reset your password.',
-          ),
+          Text(AppLocalizations.of(context)!.resetPasswordDescription),
           const SizedBox(height: 16),
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              labelText: 'Email',
-              hintText: 'Enter your email address',
+              labelText: AppLocalizations.of(context)!.email,
+              hintText: AppLocalizations.of(context)!.enterYourEmail,
               prefixIcon: const Icon(Icons.email),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -514,23 +564,26 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context)!.cancel),
         ),
         ElevatedButton(
           onPressed: () async {
             final email = _emailController.text.trim();
-            
+
             if (email.isEmpty) {
-              SnackbarHelper.showError(context, 'Please enter your email address');              
+              SnackbarHelper.showError(
+                context,
+                AppLocalizations.of(context)!.pleaseEnterEmailAddress,
+              );
               return;
             }
-            
+
             // Close dialog
             Navigator.pop(context);
-            
+
             // Send password reset email
             final result = await widget.authService.resetPassword(email);
-            
+
             if (widget.parentContext.mounted) {
               ScaffoldMessenger.of(widget.parentContext).showSnackBar(
                 SnackBar(
@@ -544,7 +597,9 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
                       Expanded(
                         child: Text(
                           result.success
-                              ? 'Password reset email sent! Check your inbox (or spam folder).'
+                              ? AppLocalizations.of(
+                                widget.parentContext,
+                              )!.passwordResetEmailSent
                               : result.errorMessage!,
                         ),
                       ),
@@ -557,7 +612,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
               );
             }
           },
-          child: const Text('Send Reset Link'),
+          child: Text(AppLocalizations.of(context)!.sendResetLink),
         ),
       ],
     );

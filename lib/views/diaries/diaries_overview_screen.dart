@@ -1,3 +1,4 @@
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/utils/character_helper.dart';
 import 'package:dnd_app/views/characters/character_create_screen.dart';
 import 'package:dnd_app/widgets/custom_group_expansion_tile.dart';
@@ -35,10 +36,12 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 209, 161, 216),
-        title: const Text('Character Diaries'),
+        title: Text(l10n.characterDiaries),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(10),
           child: const SizedBox(),
@@ -78,6 +81,8 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
   Widget _buildSearchAndFilters() {
     return Consumer<CharactersViewModel>(
       builder: (context, viewModel, _) {
+        final l10n = AppLocalizations.of(context)!;
+
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -86,7 +91,7 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
               TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search characters...',
+                  hintText: l10n.searchCharacters,
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -112,17 +117,19 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
   }
 
   Widget _buildErrorView(CharactersViewModel viewModel) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.error_outline, size: 48, color: Colors.red),
           const SizedBox(height: 16),
-          Text('Error: ${viewModel.error}'),
+          Text('${l10n.error}: ${viewModel.error}'),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: viewModel.loadCharacters,
-            child: const Text('Retry'),
+            child: Text(l10n.retry),
           ),
         ],
       ),
@@ -130,21 +137,21 @@ class _DiariesOverviewScreenState extends State<DiariesOverviewScreen> {
   }
 
   Widget _buildEmptyView() {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.person_off, size: 48, color: Colors.grey),
           const SizedBox(height: 16),
-          const Text(
-            'No characters found. \n Create your first character to start writing diaries!',
-          ),
+          Text(l10n.noCharactersFoundDiary),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
               _navigateToCreateCharacter();
             },
-            child: const Text('Go to Characters'),
+            child: Text(l10n.goToCharacters),
           ),
         ],
       ),

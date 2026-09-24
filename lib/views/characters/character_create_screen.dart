@@ -1,3 +1,4 @@
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/services/character_service.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
@@ -64,13 +65,17 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context)!;
     final level = int.tryParse(_levelController.text.trim());
     if (level == null ||
         level < CharacterLevelConstants.minLevel ||
         level > CharacterLevelConstants.maxLevel) {
       SnackbarHelper.showError(
         context,
-        'Please enter a valid level between ${CharacterLevelConstants.minLevel} and ${CharacterLevelConstants.maxLevel}',
+        l10n.validLevelRange(
+          CharacterLevelConstants.minLevel,
+          CharacterLevelConstants.maxLevel,
+        ),
       );
       return;
     }
@@ -115,8 +120,10 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Create New Character')),
+      appBar: AppBar(title: Text(l10n.createNewCharacter)),
       body: Consumer<CharactersViewModel>(
         builder: (context, viewModel, child) {
           return Form(
@@ -146,9 +153,9 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Create New Character',
-                              style: TextStyle(
+                            Text(
+                              l10n.createNewCharacter,
+                              style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.blue,
@@ -156,7 +163,7 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Fill in the details below to create your character',
+                              l10n.fillCharacterDetails,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey.shade600,
@@ -186,12 +193,12 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                       controller: _nameController,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Character name is required';
+                          return l10n.characterNameRequired;
                         }
                         return null;
                       },
                       decoration: InputDecoration(
-                        labelText: 'Character Name *',
+                        labelText: '${l10n.characterName} *',
                         prefixIcon: const Icon(
                           Icons.person,
                           color: Colors.blue,

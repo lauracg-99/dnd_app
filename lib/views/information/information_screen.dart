@@ -1,4 +1,5 @@
 import 'package:dart_dice_parser/dart_dice_parser.dart';
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/services/dice_service.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:dnd_app/views/information/weapons_screen.dart';
@@ -15,15 +16,17 @@ class InformationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Information')),
+      appBar: AppBar(title: Text(l10n.information)),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           const SizedBox(height: 8),
           _buildCategoryCard(
             context: context,
-            title: 'Feats',
+            title: l10n.feats,
             icon: Icons.emoji_events,
             onTap: () {
               // Navigate to Feats screen
@@ -35,7 +38,7 @@ class InformationScreen extends StatelessWidget {
           ),
           _buildCategoryCard(
             context: context,
-            title: 'Classes',
+            title: l10n.classes,
             icon: Icons.class_,
             onTap: () {
               // Navigate to Classes screen
@@ -47,7 +50,7 @@ class InformationScreen extends StatelessWidget {
           ),
           _buildCategoryCard(
             context: context,
-            title: 'Races',
+            title: l10n.races,
             icon: Icons.people,
             onTap: () {
               // Navigate to Races screen
@@ -59,7 +62,7 @@ class InformationScreen extends StatelessWidget {
           ),
           _buildCategoryCard(
             context: context,
-            title: 'Weapons',
+            title: l10n.weapons,
             icon: Symbols.swords,
             onTap: () {
               Navigator.push(
@@ -70,7 +73,7 @@ class InformationScreen extends StatelessWidget {
           ),
           _buildCategoryCard(
             context: context,
-            title: 'Backgrounds',
+            title: l10n.backgrounds,
             icon: Icons.history_edu,
             onTap: () {
               Navigator.push(

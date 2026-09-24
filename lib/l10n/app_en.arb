@@ -1,0 +1,564 @@
+{
+  "@@locale": "en",
+  "appTitle": "D&D",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "navCharacters": "Characters",
+  "@navCharacters": {
+    "description": "Navigation item label for the Characters screen"
+  },
+  "navDiaries": "Diaries",
+  "@navDiaries": {
+    "description": "Navigation item label for the Diaries screen"
+  },
+  "navSpells": "Spells",
+  "@navSpells": {
+    "description": "Navigation item label for the Spells screen"
+  },
+  "navInformation": "Information",
+  "@navInformation": {
+    "description": "Navigation item label for the Information screen"
+  },
+  "signIn": "Sign In",
+  "@signIn": {
+    "description": "Authentication action"
+  },
+  "createCharacter": "Create Character",
+  "@createCharacter": {
+    "description": "Button label to create a character"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Generic cancel action"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Generic save action"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry action"
+  },
+  "unknown": "Unknown",
+  "@unknown": {
+    "description": "Fallback label for unknown values"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language selector label"
+  },
+  "languageWarningTitle": "Language change",
+  "@languageWarningTitle": {
+    "description": "Title of the warning dialog when switching to Spanish"
+  },
+  "languageWarningMessage": "Changing to Spanish will switch the app language, but some resources such as spell information may still remain in English.",
+  "@languageWarningMessage": {
+    "description": "Warning content shown before changing the app language to Spanish"
+  },
+  "continueLabel": "Continue",
+  "@continueLabel": {
+    "description": "Confirmation button in the locale warning dialog"
+  },
+  "english": "English",
+  "@english": {
+    "description": "English language option"
+  },
+  "spanish": "Español",
+  "@spanish": {
+    "description": "Spanish language option"
+  },
+  "signInBackupDescription": "Sign in to backup your data and access it from anywhere",
+  "@signInBackupDescription": {
+    "description": "Login callout text encouraging sign in for cloud sync"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit action label"
+  },
+  "diary": "Diary",
+  "@diary": {
+    "description": "Diary action label"
+  },
+  "addToGroup": "Add to a group",
+  "@addToGroup": {
+    "description": "Character action to add to a group"
+  },
+  "modifyGroup": "Modify group",
+  "@modifyGroup": {
+    "description": "Character action to edit a group"
+  },
+  "removeFromGroup": "Remove from group",
+  "@removeFromGroup": {
+    "description": "Character action to remove a character from a group"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete action label"
+  },
+  "downloadChanges": "Download Changes",
+  "@downloadChanges": {
+    "description": "Title for the cloud download confirmation dialog"
+  },
+  "downloadChangesDescription": "Changes from other devices are available. Download them now?\n\nThis will replace your local data with the latest changes from the cloud.",
+  "@downloadChangesDescription": {
+    "description": "Explanation for the cloud download confirmation dialog"
+  },
+  "download": "Download",
+  "@download": {
+    "description": "Download action label"
+  },
+  "cloudSyncOptions": "Cloud Sync Options",
+  "@cloudSyncOptions": {
+    "description": "Title for the cloud sync options sheet"
+  },
+  "signedInAs": "Signed in as: {email}",
+  "@signedInAs": {
+    "description": "Subtitle showing the authenticated user email",
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "syncNow": "Sync Now",
+  "@syncNow": {
+    "description": "Button label to upload local changes to the cloud"
+  },
+  "syncNowDescription": "Upload all local changes to cloud",
+  "@syncNowDescription": {
+    "description": "Subtitle for manual sync action"
+  },
+  "downloadFromCloud": "Download from Cloud",
+  "@downloadFromCloud": {
+    "description": "Action to replace local data with cloud data"
+  },
+  "downloadFromCloudDescription": "Replace local data with cloud data",
+  "@downloadFromCloudDescription": {
+    "description": "Subtitle for cloud download action"
+  },
+  "signOutAndDisableCloudSync": "Sign out and disable cloud sync",
+  "@signOutAndDisableCloudSync": {
+    "description": "Subtitle for the sign out action"
+  },
+  "deleteAccountAndCloudData": "Permanently delete your account and all cloud data",
+  "@deleteAccountAndCloudData": {
+    "description": "Subtitle for the account deletion action"
+  },
+  "confirmSync": "Confirm Sync",
+  "@confirmSync": {
+    "description": "Title for the confirmation dialog before sync"
+  },
+  "confirmSyncDescription": "This sync will permanently change the data from the cloud. Are you sure you want to continue?",
+  "@confirmSyncDescription": {
+    "description": "Confirmation text before uploading local data to the cloud"
+  },
+  "syncLabel": "Sync",
+  "@syncLabel": {
+    "description": "Action label to confirm a sync"
+  },
+  "deleteAccountQuestion": "Delete Account?",
+  "@deleteAccountQuestion": {
+    "description": "Title for the first account deletion confirmation dialog"
+  },
+  "deleteAccountWarningTitle": "This will permanently delete:",
+  "@deleteAccountWarningTitle": {
+    "description": "Heading for the account deletion warning"
+  },
+  "deleteAccountWarningAccount": "• Your account",
+  "@deleteAccountWarningAccount": {
+    "description": "Account deletion warning item"
+  },
+  "deleteAccountWarningCharacters": "• All cloud-synced characters",
+  "@deleteAccountWarningCharacters": {
+    "description": "Account deletion warning item"
+  },
+  "deleteAccountWarningDiaries": "• All cloud-synced diaries",
+  "@deleteAccountWarningDiaries": {
+    "description": "Account deletion warning item"
+  },
+  "deleteAccountWarningNote": "Note: Local data on this device will NOT be deleted.",
+  "@deleteAccountWarningNote": {
+    "description": "Important note in the account deletion warning"
+  },
+  "deleteAccountWarningPermanent": "This action cannot be undone.",
+  "@deleteAccountWarningPermanent": {
+    "description": "Final warning sentence in the account deletion dialog"
+  },
+  "accountDeletionConfirmationTitle": "Are you absolutely sure?",
+  "@accountDeletionConfirmationTitle": {
+    "description": "Title for the final account deletion confirmation"
+  },
+  "accountDeletionConfirmationMessage": "Your account and all cloud data will be permanently deleted. This action cannot be undone.\n\nDo you want to proceed?",
+  "@accountDeletionConfirmationMessage": {
+    "description": "Final account deletion confirmation message"
+  },
+  "deleteMyAccount": "Delete My Account",
+  "@deleteMyAccount": {
+    "description": "Final destructive action to delete the user account"
+  },
+  "deletingAccount": "Deleting account...",
+  "@deletingAccount": {
+    "description": "Loading text shown while the account is being deleted"
+  },
+  "failedToDeleteCloudData": "Failed to delete cloud data: {error}",
+  "@failedToDeleteCloudData": {
+    "description": "Error when cloud data cannot be deleted",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "accountDeletedSuccessfully": "Account deleted successfully",
+  "@accountDeletedSuccessfully": {
+    "description": "Success message after deleting an account"
+  },
+  "failedToDeleteAccount": "Failed to delete account: {error}",
+  "@failedToDeleteAccount": {
+    "description": "Error when account deletion fails",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorDeletingAccount": "Error deleting account: {error}",
+  "@errorDeletingAccount": {
+    "description": "Exception raised while deleting an account",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "changesDownloadedSuccessfully": "Changes downloaded successfully!",
+  "@changesDownloadedSuccessfully": {
+    "description": "Success message after downloading cloud changes"
+  },
+  "accountCreatedAndSignedInSuccessfully": "Account created and signed in successfully!",
+  "@accountCreatedAndSignedInSuccessfully": {
+    "description": "Success message when a new account is created and signed in"
+  },
+  "signedInSuccessfully": "Signed in successfully!",
+  "@signedInSuccessfully": {
+    "description": "Success message after sign in"
+  },
+  "authenticationFailed": "Authentication failed",
+  "@authenticationFailed": {
+    "description": "Generic login failure message"
+  },
+  "unexpectedError": "An unexpected error occurred: {error}",
+  "@unexpectedError": {
+    "description": "Fallback error message for unexpected exceptions",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "warningWithValue": "Warning: {message}",
+  "@warningWithValue": {
+    "description": "Warning banner message with a dynamic value",
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "signOut": "Sign Out",
+  "@signOut": {
+    "description": "User sign out action"
+  },
+  "deleteAccount": "Delete Account",
+  "@deleteAccount": {
+    "description": "Delete user account action"
+  },
+  "signedOutSuccessfully": "Signed out successfully",
+  "@signedOutSuccessfully": {
+    "description": "Success message after signing out"
+  },
+  "errorSigningOut": "Error signing out: {error}",
+  "@errorSigningOut": {
+    "description": "Error message when signing out fails",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "downloadFailed": "Download failed: {error}",
+  "@downloadFailed": {
+    "description": "Error message when cloud download fails",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "downloadError": "Download error: {error}",
+  "@downloadError": {
+    "description": "Exception message when a download operation throws",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "castingTime": "Casting Time",
+  "@castingTime": {
+    "description": "Spell detail label for casting time"
+  },
+  "range": "Range",
+  "@range": {
+    "description": "Spell detail label for range"
+  },
+  "components": "Components",
+  "@components": {
+    "description": "Spell detail label for components"
+  },
+  "duration": "Duration",
+  "@duration": {
+    "description": "Spell detail label for duration"
+  },
+  "ritual": "Ritual",
+  "@ritual": {
+    "description": "Spell detail label for ritual"
+  },
+  "yes": "Yes",
+  "@yes": {
+    "description": "Generic affirmative response"
+  },
+  "descriptionLabel": "Description",
+  "@descriptionLabel": {
+    "description": "Spell detail label for description"
+  },
+  "atHigherLevels": "At Higher Levels",
+  "@atHigherLevels": {
+    "description": "Spell detail label for higher-level effects"
+  },
+  "dndCharacters": "D&D Characters",
+  "@dndCharacters": {
+    "description": "Title for the characters list screen"
+  },
+  "searchCharacters": "Search characters...",
+  "@searchCharacters": {
+    "description": "Search field placeholder for characters"
+  },
+  "createFirstCharacter": "No characters found. Create your first character!",
+  "@createFirstCharacter": {
+    "description": "Empty state for character list"
+  },
+  "syncAcrossDevices": "Sync Across Devices",
+  "@syncAcrossDevices": {
+    "description": "Callout title for cloud sync in character list"
+  },
+  "characterDiaries": "Character Diaries",
+  "@characterDiaries": {
+    "description": "Title for the diaries overview screen"
+  },
+  "noCharactersFoundDiary": "No characters found.\nCreate your first character to start writing diaries!",
+  "@noCharactersFoundDiary": {
+    "description": "Empty state for diaries overview"
+  },
+  "goToCharacters": "Go to Characters",
+  "@goToCharacters": {
+    "description": "Button to go back to characters from diary overview"
+  },
+  "information": "Information",
+  "@information": {
+    "description": "Title of the information screen"
+  },
+  "feats": "Feats",
+  "@feats": {
+    "description": "Category title for feats"
+  },
+  "classes": "Classes",
+  "@classes": {
+    "description": "Category title for classes"
+  },
+  "races": "Races",
+  "@races": {
+    "description": "Category title for races"
+  },
+  "weapons": "Weapons",
+  "@weapons": {
+    "description": "Category title for weapons"
+  },
+  "backgrounds": "Backgrounds",
+  "@backgrounds": {
+    "description": "Category title for backgrounds"
+  },
+  "dndSpells": "D&D Spells",
+  "@dndSpells": {
+    "description": "Title for spells list screen"
+  },
+  "filterSpells": "Filter spells",
+  "@filterSpells": {
+    "description": "Tooltip for filtering spells"
+  },
+  "searchSpells": "Search spells...",
+  "@searchSpells": {
+    "description": "Search field placeholder for spells"
+  },
+  "levelFilter": "Level:",
+  "@levelFilter": {
+    "description": "Filter label for spell level"
+  },
+  "classFilter": "Class:",
+  "@classFilter": {
+    "description": "Filter label for spell class"
+  },
+  "schoolFilter": "School:",
+  "@schoolFilter": {
+    "description": "Filter label for spell school"
+  },
+  "all": "All",
+  "@all": {
+    "description": "Generic label for all options"
+  },
+  "cantrip": "Cantrip",
+  "@cantrip": {
+    "description": "Label for cantrip spell level"
+  },
+  "levelLabel": "Level {level}",
+  "@levelLabel": {
+    "description": "Label for a spell level",
+    "placeholders": {
+      "level": {}
+    }
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Generic error label"
+  },
+  "noSpellsFound": "No spells found. Try adjusting your search or filters.",
+  "@noSpellsFound": {
+    "description": "Empty state for spells list"
+  },
+  "cloudSync": "Cloud Sync",
+  "@cloudSync": {
+    "description": "Cloud sync section title in login screen"
+  },
+  "signInSyncDescription": "Sign in to sync your characters and journals across all your devices",
+  "@signInSyncDescription": {
+    "description": "Login screen subtitle"
+  },
+  "email": "Email",
+  "@email": {
+    "description": "Email field label"
+  },
+  "enterYourEmail": "Enter your email address",
+  "@enterYourEmail": {
+    "description": "Email field hint"
+  },
+  "pleaseEnterYourEmail": "Please enter your email",
+  "@pleaseEnterYourEmail": {
+    "description": "Validation message for empty email"
+  },
+  "pleaseEnterValidEmail": "Please enter a valid email",
+  "@pleaseEnterValidEmail": {
+    "description": "Validation message for invalid email"
+  },
+  "password": "Password",
+  "@password": {
+    "description": "Password field label"
+  },
+  "enterYourPassword": "Enter your password",
+  "@enterYourPassword": {
+    "description": "Password field hint"
+  },
+  "pleaseEnterYourPassword": "Please enter your password",
+  "@pleaseEnterYourPassword": {
+    "description": "Validation message for empty password"
+  },
+  "passwordMinLength": "Password must be at least 6 characters",
+  "@passwordMinLength": {
+    "description": "Validation message for short password"
+  },
+  "forgotPassword": "Forgot Password?",
+  "@forgotPassword": {
+    "description": "Forgot password action label"
+  },
+  "accountCreationDisabled": "Account creation is temporarily disabled. Please sign in with an existing account or try again later.",
+  "@accountCreationDisabled": {
+    "description": "Information text when registration is disabled"
+  },
+  "accountCreationInfo": "If you don't have an account yet, we'll create one for you automatically when you sign in.",
+  "@accountCreationInfo": {
+    "description": "Information text for login flow"
+  },
+  "signingIn": "Signing In...",
+  "@signingIn": {
+    "description": "Loading text while signing in"
+  },
+  "syncFeatureTitle": "With Cloud Sync you can:",
+  "@syncFeatureTitle": {
+    "description": "Title for feature list on login screen"
+  },
+  "cloudSyncFeature1": "Access your characters from any device",
+  "@cloudSyncFeature1": {
+    "description": "Feature point in login screen"
+  },
+  "cloudSyncFeature2": "Automatic backup of all your data",
+  "@cloudSyncFeature2": {
+    "description": "Feature point in login screen"
+  },
+  "cloudSyncFeature3": "Sync journals and character sheets",
+  "@cloudSyncFeature3": {
+    "description": "Feature point in login screen"
+  },
+  "cloudSyncFeature4": "Never lose your campaign data",
+  "@cloudSyncFeature4": {
+    "description": "Feature point in login screen"
+  },
+  "signInTemporarilyDisabled": "Sign in is temporarily disabled. Please try again later or contact support.",
+  "@signInTemporarilyDisabled": {
+    "description": "Remote-config disabled sign-in message"
+  },
+  "downloadingCloudData": "Downloading your data from cloud...",
+  "@downloadingCloudData": {
+    "description": "Loading message while downloading cloud data"
+  },
+  "dataSyncSuccessfully": "Data sync successfully!",
+  "@dataSyncSuccessfully": {
+    "description": "Success message after cloud sync"
+  },
+  "couldNotDownloadCloudData": "Could not download cloud data: {error}",
+  "@couldNotDownloadCloudData": {
+    "description": "Error message when cloud download fails",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "resetPassword": "Reset Password",
+  "@resetPassword": {
+    "description": "Title for reset password dialog"
+  },
+  "resetPasswordDescription": "Enter your email address and we'll send you a link to reset your password.",
+  "@resetPasswordDescription": {
+    "description": "Description in reset password dialog"
+  },
+  "sendResetLink": "Send Reset Link",
+  "@sendResetLink": {
+    "description": "Button to send reset password email"
+  },
+  "pleaseEnterEmailAddress": "Please enter your email address",
+  "@pleaseEnterEmailAddress": {
+    "description": "Error when email is empty in reset dialog"
+  },
+  "passwordResetEmailSent": "Password reset email sent! Check your inbox (or spam folder).",
+  "@passwordResetEmailSent": {
+    "description": "Success message after reset email sent"
+  },
+  "createNewCharacter": "Create New Character",
+  "@createNewCharacter": {
+    "description": "Title for character creation screen"
+  },
+  "fillCharacterDetails": "Fill in the details below to create your character",
+  "@fillCharacterDetails": {
+    "description": "Subtitle for character creation screen"
+  },
+  "characterName": "Character Name",
+  "@characterName": {
+    "description": "Character name label"
+  },
+  "characterNameRequired": "Character name is required",
+  "@characterNameRequired": {
+    "description": "Validation requirement for character name"
+  },
+  "characterLevel": "Character Level",
+  "@characterLevel": {
+    "description": "Label for character level field"
+  },
+  "validLevelRange": "Please enter a valid level between {min} and {max}",
+  "@validLevelRange": {
+    "description": "Validation message for character level bounds",
+    "placeholders": {
+      "min": {},
+      "max": {}
+    }
+  }
+}

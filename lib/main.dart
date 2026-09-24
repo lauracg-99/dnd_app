@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'viewmodels/items_viewmodel.dart';
 import 'viewmodels/spells_viewmodel.dart';
 import 'viewmodels/characters_viewmodel.dart';
@@ -65,22 +66,41 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Locale _locale = const Locale('en');
+
+  void _setLocale(Locale locale) {
+    if (!AppLocalizations.supportedLocales.contains(locale)) {
+      return;
+    }
+
+    setState(() {
+      _locale = locale;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       scaffoldMessengerKey: scaffoldMessengerKey,
       title: 'D&D',
+      locale: _locale,
       debugShowCheckedModeBanner: false,
       localizationsDelegates: [
-        FlutterQuillLocalizations.delegate,
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('en')],
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
@@ -111,13 +131,20 @@ class MyApp extends StatelessWidget {
           child: child,
         );
       },
-      home: const MainNavigationScreen(),
+      home: MainNavigationScreen(onLocaleChanged: _setLocale, locale: _locale),
     );
   }
 }
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  const MainNavigationScreen({
+    super.key,
+    required this.onLocaleChanged,
+    required this.locale,
+  });
+
+  final ValueChanged<Locale> onLocaleChanged;
+  final Locale locale;
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -126,19 +153,40 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _screens = [
-    CharactersListScreen(),
-    DiariesOverviewScreen(),
-    SpellsListScreen(),
-    InformationScreen(),
-  ];
+  List<Widget> get _screens {
+    return [
+      CharactersListScreen(
+        locale: widget.locale,
+        onLocaleChanged: widget.onLocaleChanged,
+      ),
+      const DiariesOverviewScreen(),
+      const SpellsListScreen(),
+      const InformationScreen(),
+    ];
+  }
 
-  static const List<NavigationDestination> _destinations = [
-    NavigationDestination(icon: Icon(Icons.person), label: 'Characters'),
-    NavigationDestination(icon: Icon(Icons.book), label: 'Diaries'),
-    NavigationDestination(icon: Icon(Symbols.playing_cards), label: 'Spells'),
-    NavigationDestination(icon: Icon(Icons.menu_book), label: 'Information'),
-  ];
+  List<NavigationDestination> get _destinations {
+    final l10n = AppLocalizations.of(context)!;
+
+    return [
+      NavigationDestination(
+        icon: const Icon(Icons.person),
+        label: l10n.navCharacters,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.book),
+        label: l10n.navDiaries,
+      ),
+      NavigationDestination(
+        icon: const Icon(Symbols.playing_cards),
+        label: l10n.navSpells,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.menu_book),
+        label: l10n.navInformation,
+      ),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {

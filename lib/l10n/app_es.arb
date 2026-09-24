@@ -1,0 +1,564 @@
+{
+  "@@locale": "es",
+  "appTitle": "D&D",
+  "@appTitle": {
+    "description": "Título de la aplicación"
+  },
+  "navCharacters": "Personajes",
+  "@navCharacters": {
+    "description": "Etiqueta del menú para la pantalla de personajes"
+  },
+  "navDiaries": "Diarios",
+  "@navDiaries": {
+    "description": "Etiqueta del menú para la pantalla de diarios"
+  },
+  "navSpells": "Hechizos",
+  "@navSpells": {
+    "description": "Etiqueta del menú para la pantalla de hechizos"
+  },
+  "navInformation": "Información",
+  "@navInformation": {
+    "description": "Etiqueta del menú para la pantalla de información"
+  },
+  "signIn": "Iniciar sesión",
+  "@signIn": {
+    "description": "Acción de autenticación"
+  },
+  "createCharacter": "Crear personaje",
+  "@createCharacter": {
+    "description": "Etiqueta del botón para crear un personaje"
+  },
+  "cancel": "Cancelar",
+  "@cancel": {
+    "description": "Acción genérica de cancelar"
+  },
+  "save": "Guardar",
+  "@save": {
+    "description": "Acción genérica de guardar"
+  },
+  "retry": "Reintentar",
+  "@retry": {
+    "description": "Acción para reintentar"
+  },
+  "unknown": "Desconocido",
+  "@unknown": {
+    "description": "Texto de reserva para valores desconocidos"
+  },
+  "language": "Idioma",
+  "@language": {
+    "description": "Etiqueta del selector de idioma"
+  },
+  "languageWarningTitle": "Cambio de idioma",
+  "@languageWarningTitle": {
+    "description": "Título del aviso al cambiar a español"
+  },
+  "languageWarningMessage": "Al cambiar a español, algunos recursos como la información de los hechizos seguirán en inglés.",
+  "@languageWarningMessage": {
+    "description": "Mensaje de advertencia antes de cambiar el idioma a español"
+  },
+  "continueLabel": "Continuar",
+  "@continueLabel": {
+    "description": "Botón de confirmación en el aviso de idioma"
+  },
+  "english": "Inglés",
+  "@english": {
+    "description": "Opción de idioma inglés"
+  },
+  "spanish": "Español",
+  "@spanish": {
+    "description": "Opción de idioma español"
+  },
+  "signInBackupDescription": "Inicia sesión para guardar tu información y acceder a ella desde cualquier dispositivo",
+  "@signInBackupDescription": {
+    "description": "Texto de aviso para invitar a iniciar sesión con sincronización en la nube"
+  },
+  "edit": "Editar",
+  "@edit": {
+    "description": "Acción de edición"
+  },
+  "diary": "Diario",
+  "@diary": {
+    "description": "Acción de diario"
+  },
+  "addToGroup": "Añadir a un grupo",
+  "@addToGroup": {
+    "description": "Acción para añadir un personaje a un grupo"
+  },
+  "modifyGroup": "Modificar grupo",
+  "@modifyGroup": {
+    "description": "Acción para editar un grupo"
+  },
+  "removeFromGroup": "Quitar del grupo",
+  "@removeFromGroup": {
+    "description": "Acción para quitar a un personaje de un grupo"
+  },
+  "delete": "Eliminar",
+  "@delete": {
+    "description": "Acción de eliminación"
+  },
+  "downloadChanges": "Descargar cambios",
+  "@downloadChanges": {
+    "description": "Título del diálogo de confirmación para descargar cambios en la nube"
+  },
+  "downloadChangesDescription": "Hay cambios en otros dispositivos. ¿Deseas descargarlos ahora?\n\nEsto reemplazará tus datos locales con los cambios más recientes de la nube.",
+  "@downloadChangesDescription": {
+    "description": "Explicación del diálogo de confirmación para descargar cambios"
+  },
+  "download": "Descargar",
+  "@download": {
+    "description": "Etiqueta de la acción de descarga"
+  },
+  "cloudSyncOptions": "Opciones de sincronización",
+  "@cloudSyncOptions": {
+    "description": "Título del panel de opciones de sincronización"
+  },
+  "signedInAs": "Iniciado como: {email}",
+  "@signedInAs": {
+    "description": "Subtítulo con el correo del usuario autenticado",
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "syncNow": "Sincronizar ahora",
+  "@syncNow": {
+    "description": "Etiqueta para subir cambios locales a la nube"
+  },
+  "syncNowDescription": "Subir todos los cambios locales a la nube",
+  "@syncNowDescription": {
+    "description": "Subtítulo de la acción de sincronización manual"
+  },
+  "downloadFromCloud": "Descargar desde la nube",
+  "@downloadFromCloud": {
+    "description": "Acción para reemplazar los datos locales con los de la nube"
+  },
+  "downloadFromCloudDescription": "Reemplazar los datos locales por los de la nube",
+  "@downloadFromCloudDescription": {
+    "description": "Subtítulo de la acción de descarga desde la nube"
+  },
+  "signOutAndDisableCloudSync": "Cerrar sesión y desactivar la sincronización",
+  "@signOutAndDisableCloudSync": {
+    "description": "Subtítulo de la acción de cierre de sesión"
+  },
+  "deleteAccountAndCloudData": "Eliminar permanentemente tu cuenta y todos los datos de la nube",
+  "@deleteAccountAndCloudData": {
+    "description": "Subtítulo de la acción de eliminación de la cuenta"
+  },
+  "confirmSync": "Confirmar sincronización",
+  "@confirmSync": {
+    "description": "Título del diálogo de confirmación antes de sincronizar"
+  },
+  "confirmSyncDescription": "Esta sincronización cambiará permanentemente los datos de la nube. ¿Seguro que quieres continuar?",
+  "@confirmSyncDescription": {
+    "description": "Texto de confirmación antes de subir datos locales a la nube"
+  },
+  "syncLabel": "Sincronizar",
+  "@syncLabel": {
+    "description": "Etiqueta de la acción para confirmar una sincronización"
+  },
+  "deleteAccountQuestion": "¿Eliminar cuenta?",
+  "@deleteAccountQuestion": {
+    "description": "Título del primer diálogo de confirmación para eliminar la cuenta"
+  },
+  "deleteAccountWarningTitle": "Esto borrará permanentemente:",
+  "@deleteAccountWarningTitle": {
+    "description": "Encabezado de la advertencia de eliminación de la cuenta"
+  },
+  "deleteAccountWarningAccount": "• Tu cuenta",
+  "@deleteAccountWarningAccount": {
+    "description": "Elemento de la advertencia de eliminación de la cuenta"
+  },
+  "deleteAccountWarningCharacters": "• Todos los personajes sincronizados en la nube",
+  "@deleteAccountWarningCharacters": {
+    "description": "Elemento de la advertencia de eliminación de la cuenta"
+  },
+  "deleteAccountWarningDiaries": "• Todos los diarios sincronizados en la nube",
+  "@deleteAccountWarningDiaries": {
+    "description": "Elemento de la advertencia de eliminación de la cuenta"
+  },
+  "deleteAccountWarningNote": "Nota: Los datos locales de este dispositivo NO se borrarán.",
+  "@deleteAccountWarningNote": {
+    "description": "Nota importante en la advertencia de eliminación de la cuenta"
+  },
+  "deleteAccountWarningPermanent": "Esta acción no se puede deshacer.",
+  "@deleteAccountWarningPermanent": {
+    "description": "Frase final de advertencia en el diálogo de eliminación de la cuenta"
+  },
+  "accountDeletionConfirmationTitle": "¿Seguro que quieres continuar?",
+  "@accountDeletionConfirmationTitle": {
+    "description": "Título de la confirmación final de eliminación de la cuenta"
+  },
+  "accountDeletionConfirmationMessage": "Tu cuenta y todos los datos de la nube se eliminarán permanentemente. Esta acción no se puede deshacer.\n\n¿Quieres continuar?",
+  "@accountDeletionConfirmationMessage": {
+    "description": "Mensaje final de confirmación de eliminación de la cuenta"
+  },
+  "deleteMyAccount": "Eliminar mi cuenta",
+  "@deleteMyAccount": {
+    "description": "Acción destructiva final para eliminar la cuenta del usuario"
+  },
+  "deletingAccount": "Eliminando cuenta...",
+  "@deletingAccount": {
+    "description": "Texto de carga mientras se elimina la cuenta"
+  },
+  "failedToDeleteCloudData": "Error al eliminar los datos de la nube: {error}",
+  "@failedToDeleteCloudData": {
+    "description": "Error cuando no se pueden eliminar los datos de la nube",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "accountDeletedSuccessfully": "Cuenta eliminada correctamente",
+  "@accountDeletedSuccessfully": {
+    "description": "Mensaje de éxito tras eliminar una cuenta"
+  },
+  "failedToDeleteAccount": "Error al eliminar la cuenta: {error}",
+  "@failedToDeleteAccount": {
+    "description": "Error cuando falla la eliminación de la cuenta",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorDeletingAccount": "Error al eliminar la cuenta: {error}",
+  "@errorDeletingAccount": {
+    "description": "Excepción al intentar eliminar una cuenta",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "changesDownloadedSuccessfully": "¡Cambios descargados correctamente!",
+  "@changesDownloadedSuccessfully": {
+    "description": "Mensaje de éxito después de descargar cambios desde la nube"
+  },
+  "accountCreatedAndSignedInSuccessfully": "¡Cuenta creada e iniciada correctamente!",
+  "@accountCreatedAndSignedInSuccessfully": {
+    "description": "Mensaje de éxito al crear e iniciar sesión con una cuenta nueva"
+  },
+  "signedInSuccessfully": "¡Inicio de sesión correcto!",
+  "@signedInSuccessfully": {
+    "description": "Mensaje de éxito después de iniciar sesión"
+  },
+  "authenticationFailed": "Autenticación fallida",
+  "@authenticationFailed": {
+    "description": "Mensaje genérico de fallo de autenticación"
+  },
+  "unexpectedError": "Se produjo un error inesperado: {error}",
+  "@unexpectedError": {
+    "description": "Mensaje de error para excepciones inesperadas",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "warningWithValue": "Advertencia: {message}",
+  "@warningWithValue": {
+    "description": "Mensaje de advertencia con valor dinámico",
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "signOut": "Cerrar sesión",
+  "@signOut": {
+    "description": "Acción para cerrar sesión"
+  },
+  "deleteAccount": "Eliminar cuenta",
+  "@deleteAccount": {
+    "description": "Acción para eliminar la cuenta de usuario"
+  },
+  "signedOutSuccessfully": "Se ha cerrado la sesión correctamente",
+  "@signedOutSuccessfully": {
+    "description": "Mensaje de éxito tras cerrar sesión"
+  },
+  "errorSigningOut": "Error al cerrar sesión: {error}",
+  "@errorSigningOut": {
+    "description": "Mensaje de error al cerrar sesión",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "downloadFailed": "Error al descargar: {error}",
+  "@downloadFailed": {
+    "description": "Mensaje de error cuando falla la descarga desde la nube",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "downloadError": "Error de descarga: {error}",
+  "@downloadError": {
+    "description": "Mensaje de excepción al fallar una descarga",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "castingTime": "Tiempo de lanzamiento",
+  "@castingTime": {
+    "description": "Etiqueta de detalle del hechizo para el tiempo de lanzamiento"
+  },
+  "range": "Alcance",
+  "@range": {
+    "description": "Etiqueta de detalle del hechizo para el alcance"
+  },
+  "components": "Componentes",
+  "@components": {
+    "description": "Etiqueta de detalle del hechizo para los componentes"
+  },
+  "duration": "Duración",
+  "@duration": {
+    "description": "Etiqueta de detalle del hechizo para la duración"
+  },
+  "ritual": "Ritual",
+  "@ritual": {
+    "description": "Etiqueta de detalle del hechizo para ritual"
+  },
+  "yes": "Sí",
+  "@yes": {
+    "description": "Respuesta afirmativa genérica"
+  },
+  "descriptionLabel": "Descripción",
+  "@descriptionLabel": {
+    "description": "Etiqueta de detalle del hechizo para la descripción"
+  },
+  "atHigherLevels": "A niveles superiores",
+  "@atHigherLevels": {
+    "description": "Etiqueta de detalle del hechizo para efectos a niveles superiores"
+  },
+  "dndCharacters": "Personajes de D&D",
+  "@dndCharacters": {
+    "description": "Título de la pantalla de personajes"
+  },
+  "searchCharacters": "Buscar personajes...",
+  "@searchCharacters": {
+    "description": "Placeholder del buscador de personajes"
+  },
+  "createFirstCharacter": "No se encontraron personajes. ¡Crea tu primer personaje!",
+  "@createFirstCharacter": {
+    "description": "Estado vacío de la lista de personajes"
+  },
+  "syncAcrossDevices": "Sincronizar entre dispositivos",
+  "@syncAcrossDevices": {
+    "description": "Título del aviso de sincronización en la lista"
+  },
+  "characterDiaries": "Diarios de personajes",
+  "@characterDiaries": {
+    "description": "Título de la pantalla de diarios"
+  },
+  "noCharactersFoundDiary": "No se encontraron personajes.\nCrea tu primer personaje para empezar a escribir diarios.",
+  "@noCharactersFoundDiary": {
+    "description": "Estado vacío de la vista de diarios"
+  },
+  "goToCharacters": "Ir a personajes",
+  "@goToCharacters": {
+    "description": "Botón para volver a la pantalla de personajes"
+  },
+  "information": "Información",
+  "@information": {
+    "description": "Título de la pantalla de información"
+  },
+  "feats": "Dotes",
+  "@feats": {
+    "description": "Título de categoría para dotes"
+  },
+  "classes": "Clases",
+  "@classes": {
+    "description": "Título de categoría para clases"
+  },
+  "races": "Razas",
+  "@races": {
+    "description": "Título de categoría para razas"
+  },
+  "weapons": "Armas",
+  "@weapons": {
+    "description": "Título de categoría para armas"
+  },
+  "backgrounds": "Trasfondos",
+  "@backgrounds": {
+    "description": "Título de categoría para trasfondos"
+  },
+  "dndSpells": "Hechizos de D&D",
+  "@dndSpells": {
+    "description": "Título de la pantalla de hechizos"
+  },
+  "filterSpells": "Filtrar hechizos",
+  "@filterSpells": {
+    "description": "Tooltip para filtrar hechizos"
+  },
+  "searchSpells": "Buscar hechizos...",
+  "@searchSpells": {
+    "description": "Placeholder del buscador de hechizos"
+  },
+  "levelFilter": "Nivel:",
+  "@levelFilter": {
+    "description": "Etiqueta de filtro del nivel del hechizo"
+  },
+  "classFilter": "Clase:",
+  "@classFilter": {
+    "description": "Etiqueta de filtro de la clase del hechizo"
+  },
+  "schoolFilter": "Escuela:",
+  "@schoolFilter": {
+    "description": "Etiqueta de filtro de la escuela del hechizo"
+  },
+  "all": "Todo",
+  "@all": {
+    "description": "Etiqueta genérica para todas las opciones"
+  },
+  "cantrip": "Truco",
+  "@cantrip": {
+    "description": "Etiqueta para nivel de truco"
+  },
+  "levelLabel": "Nivel {level}",
+  "@levelLabel": {
+    "description": "Etiqueta para un nivel de hechizo",
+    "placeholders": {
+      "level": {}
+    }
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Etiqueta genérica de error"
+  },
+  "noSpellsFound": "No se encontraron hechizos. Prueba a ajustar la búsqueda o los filtros.",
+  "@noSpellsFound": {
+    "description": "Estado vacío de la lista de hechizos"
+  },
+  "cloudSync": "Sincronización en la nube",
+  "@cloudSync": {
+    "description": "Título de la sección de sincronización en la pantalla de inicio"
+  },
+  "signInSyncDescription": "Inicia sesión para sincronizar tus personajes y diarios en todos tus dispositivos",
+  "@signInSyncDescription": {
+    "description": "Subtítulo de la pantalla de inicio"
+  },
+  "email": "Correo electrónico",
+  "@email": {
+    "description": "Etiqueta del campo de correo"
+  },
+  "enterYourEmail": "Introduce tu correo electrónico",
+  "@enterYourEmail": {
+    "description": "Texto de ayuda del campo de correo"
+  },
+  "pleaseEnterYourEmail": "Introduce tu correo electrónico",
+  "@pleaseEnterYourEmail": {
+    "description": "Mensaje de validación para correo vacío"
+  },
+  "pleaseEnterValidEmail": "Introduce un correo electrónico válido",
+  "@pleaseEnterValidEmail": {
+    "description": "Mensaje de validación para correo inválido"
+  },
+  "password": "Contraseña",
+  "@password": {
+    "description": "Etiqueta del campo de contraseña"
+  },
+  "enterYourPassword": "Introduce tu contraseña",
+  "@enterYourPassword": {
+    "description": "Texto de ayuda del campo de contraseña"
+  },
+  "pleaseEnterYourPassword": "Introduce tu contraseña",
+  "@pleaseEnterYourPassword": {
+    "description": "Mensaje de validación para contraseña vacía"
+  },
+  "passwordMinLength": "La contraseña debe tener al menos 6 caracteres",
+  "@passwordMinLength": {
+    "description": "Mensaje de validación para contraseña corta"
+  },
+  "forgotPassword": "¿Has olvidado tu contraseña?",
+  "@forgotPassword": {
+    "description": "Acción de recuperar contraseña"
+  },
+  "accountCreationDisabled": "La creación de cuentas está temporalmente desactivada. Inicia sesión con una cuenta existente o vuelve a intentarlo más tarde.",
+  "@accountCreationDisabled": {
+    "description": "Texto informativo cuando el registro está deshabilitado"
+  },
+  "accountCreationInfo": "Si aún no tienes una cuenta, la crearemos automáticamente cuando inicies sesión.",
+  "@accountCreationInfo": {
+    "description": "Texto informativo del flujo de inicio de sesión"
+  },
+  "signingIn": "Iniciando sesión...",
+  "@signingIn": {
+    "description": "Texto de carga mientras se inicia sesión"
+  },
+  "syncFeatureTitle": "Con la sincronización en la nube puedes:",
+  "@syncFeatureTitle": {
+    "description": "Título de la lista de funciones de la pantalla de inicio"
+  },
+  "cloudSyncFeature1": "Accede a tus personajes desde cualquier dispositivo",
+  "@cloudSyncFeature1": {
+    "description": "Punto de la lista de funcionalidades"
+  },
+  "cloudSyncFeature2": "Copia de seguridad automática de todos tus datos",
+  "@cloudSyncFeature2": {
+    "description": "Punto de la lista de funcionalidades"
+  },
+  "cloudSyncFeature3": "Sincroniza diarios y fichas de personaje",
+  "@cloudSyncFeature3": {
+    "description": "Punto de la lista de funcionalidades"
+  },
+  "cloudSyncFeature4": "Nunca pierdas los datos de tu campaña",
+  "@cloudSyncFeature4": {
+    "description": "Punto de la lista de funcionalidades"
+  },
+  "signInTemporarilyDisabled": "El inicio de sesión está temporalmente deshabilitado. Inténtalo más tarde o contacta con soporte.",
+  "@signInTemporarilyDisabled": {
+    "description": "Mensaje cuando el inicio de sesión está desactivado por configuración remota"
+  },
+  "downloadingCloudData": "Descargando tus datos de la nube...",
+  "@downloadingCloudData": {
+    "description": "Mensaje de carga durante la descarga desde la nube"
+  },
+  "dataSyncSuccessfully": "¡Sincronización completada correctamente!",
+  "@dataSyncSuccessfully": {
+    "description": "Mensaje de éxito tras sincronizar con la nube"
+  },
+  "couldNotDownloadCloudData": "No se pudieron descargar los datos de la nube: {error}",
+  "@couldNotDownloadCloudData": {
+    "description": "Mensaje de error si falla la descarga desde la nube",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "resetPassword": "Restablecer contraseña",
+  "@resetPassword": {
+    "description": "Título del diálogo de restablecimiento"
+  },
+  "resetPasswordDescription": "Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+  "@resetPasswordDescription": {
+    "description": "Descripción del diálogo de restablecimiento"
+  },
+  "sendResetLink": "Enviar enlace",
+  "@sendResetLink": {
+    "description": "Botón para enviar el correo de restablecimiento"
+  },
+  "pleaseEnterEmailAddress": "Introduce tu dirección de correo electrónico",
+  "@pleaseEnterEmailAddress": {
+    "description": "Error cuando falta el correo en el diálogo de restablecimiento"
+  },
+  "passwordResetEmailSent": "¡Correo de restablecimiento enviado! Revisa tu bandeja de entrada (o la carpeta de spam).",
+  "@passwordResetEmailSent": {
+    "description": "Mensaje de éxito tras enviar el enlace"
+  },
+  "createNewCharacter": "Crear nuevo personaje",
+  "@createNewCharacter": {
+    "description": "Título de la pantalla de creación de personaje"
+  },
+  "fillCharacterDetails": "Rellena los detalles a continuación para crear tu personaje",
+  "@fillCharacterDetails": {
+    "description": "Subtítulo de la pantalla de creación de personaje"
+  },
+  "characterName": "Nombre del personaje",
+  "@characterName": {
+    "description": "Etiqueta del nombre del personaje"
+  },
+  "characterNameRequired": "El nombre del personaje es obligatorio",
+  "@characterNameRequired": {
+    "description": "Validación del nombre del personaje"
+  },
+  "characterLevel": "Nivel del personaje",
+  "@characterLevel": {
+    "description": "Etiqueta del nivel del personaje"
+  },
+  "validLevelRange": "Introduce un nivel válido entre {min} y {max}",
+  "@validLevelRange": {
+    "description": "Mensaje de validación para el rango del nivel",
+    "placeholders": {
+      "min": {},
+      "max": {}
+    }
+  }
+}

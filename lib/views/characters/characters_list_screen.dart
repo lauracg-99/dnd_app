@@ -1,4 +1,4 @@
-import 'package:dnd_app/services/character_service.dart';
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/utils/character_helper.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +8,6 @@ import '../../models/character_model.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/cloud_sync_service.dart';
 import '../../widgets/character_card.dart';
-import '../../widgets/group_selection_field.dart';
 import '../../widgets/custom_group_expansion_tile.dart';
 import 'character_edit_screen.dart';
 import 'character_create_screen.dart';
@@ -16,7 +15,14 @@ import '../diaries/diary_list_screen.dart';
 import '../auth/login_screen.dart';
 
 class CharactersListScreen extends StatefulWidget {
-  const CharactersListScreen({super.key});
+  const CharactersListScreen({
+    super.key,
+    required this.onLocaleChanged,
+    required this.locale,
+  });
+
+  final ValueChanged<Locale> onLocaleChanged;
+  final Locale locale;
 
   @override
   State<CharactersListScreen> createState() => _CharactersListScreenState();
@@ -77,13 +83,82 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     }
   }
 
+  Future<void> _handleLocaleSelection(Locale locale) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (locale != const Locale('es')) {
+      widget.onLocaleChanged(locale);
+      return;
+    }
+
+    final shouldChange = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(l10n.languageWarningTitle),
+          content: Text(l10n.languageWarningMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.continueLabel),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldChange == true) {
+      widget.onLocaleChanged(locale);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.shade100,
-        title: const Text('D&D Characters'),
+        centerTitle: true,
+        titleSpacing: 0,
+        title: Text(l10n.dndCharacters),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(left: 12.0),
+            child: PopupMenuButton<Locale>(
+              tooltip: l10n.language,
+              icon: const Icon(Icons.language),
+              initialValue: widget.locale,
+              onSelected: _handleLocaleSelection,
+              itemBuilder:
+                  (context) => [
+                    PopupMenuItem(
+                      value: const Locale('en'),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(l10n.english)),
+                          if (widget.locale.languageCode == 'en')
+                            const Icon(Icons.check, size: 18),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: const Locale('es'),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(l10n.spanish)),
+                          if (widget.locale.languageCode == 'es')
+                            const Icon(Icons.check, size: 18),
+                        ],
+                      ),
+                    ),
+                  ],
+            ),
+          ),
           // Cloud sync button
           StreamBuilder<SyncStatus>(
             stream: _syncService.syncStatus,
@@ -92,7 +167,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
               final syncStatus =
                   snapshot.data ?? _syncService.currentSyncStatus;
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                padding: const EdgeInsets.only(right: 30.0),
                 child: IconButton(
                   icon: Stack(
                     children: [
@@ -133,7 +208,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
       floatingActionButton: FloatingActionButton(
         heroTag: 'characters_fab',
         onPressed: _navigateToCreateCharacter,
-        tooltip: 'Create Character',
+        tooltip: l10n.createCharacter,
         child: const Icon(Icons.add),
       ),
       body: Consumer<CharactersViewModel>(
@@ -170,6 +245,8 @@ class _CharactersListScreenState extends State<CharactersListScreen>
   Widget _buildSearchAndFilters() {
     return Consumer<CharactersViewModel>(
       builder: (context, viewModel, _) {
+        final l10n = AppLocalizations.of(context)!;
+
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -178,7 +255,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
               TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search characters...',
+                  hintText: l10n.searchCharacters,
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -204,17 +281,19 @@ class _CharactersListScreenState extends State<CharactersListScreen>
   }
 
   Widget _buildErrorView(CharactersViewModel viewModel) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.error_outline, size: 48, color: Colors.red),
           const SizedBox(height: 16),
-          Text('Error: ${viewModel.error}'),
+          Text('${l10n.error}: ${viewModel.error}'),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: viewModel.loadCharacters,
-            child: const Text('Retry'),
+            child: Text(l10n.retry),
           ),
         ],
       ),
@@ -222,17 +301,19 @@ class _CharactersListScreenState extends State<CharactersListScreen>
   }
 
   Widget _buildEmptyView() {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.person_off, size: 48, color: Colors.grey),
           const SizedBox(height: 16),
-          const Text('No characters found. Create your first character!'),
+          Text(l10n.createFirstCharacter),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _navigateToCreateCharacter,
-            child: const Text('Create Character'),
+            child: Text(l10n.createCharacter),
           ),
           const SizedBox(height: 24),
           // Show login option if not authenticated
@@ -256,7 +337,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sync Across Devices',
+                    l10n.syncAcrossDevices,
                     style: TextStyle(
                       color: Colors.blue.shade700,
                       fontWeight: FontWeight.bold,
@@ -265,7 +346,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Sign in to backup your data and access it from anywhere',
+                    l10n.signInBackupDescription,
                     style: TextStyle(color: Colors.blue.shade600, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
@@ -273,7 +354,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                   OutlinedButton.icon(
                     onPressed: _navigateToLogin,
                     icon: const Icon(Icons.login),
-                    label: const Text('Sign In'),
+                    label: Text(l10n.signIn),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.blue.shade700,
                       side: BorderSide(color: Colors.blue.shade300),
@@ -364,64 +445,74 @@ class _CharactersListScreenState extends State<CharactersListScreen>
   }
 
   Widget _buildCharacterItem(Character character, BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return CharacterCard(
       character: character,
       onTap: () {
         _navigateToEditCharacter(character);
       },
       popupMenuItems: [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'edit',
           child: Row(
-            children: [Icon(Icons.edit), SizedBox(width: 8), Text('Edit')],
+            children: [
+              const Icon(Icons.edit),
+              const SizedBox(width: 8),
+              Text(l10n.edit),
+            ],
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'diary',
           child: Row(
-            children: [Icon(Icons.book), SizedBox(width: 8), Text('Diary')],
+            children: [
+              const Icon(Icons.book),
+              const SizedBox(width: 8),
+              Text(l10n.diary),
+            ],
           ),
         ),
         if (character.grupo == null || character.grupo!.isEmpty)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'add_group',
             child: Row(
               children: [
-                Icon(Icons.group_add),
-                SizedBox(width: 8),
-                Text('Add to a group'),
+                const Icon(Icons.group_add),
+                const SizedBox(width: 8),
+                Text(l10n.addToGroup),
               ],
             ),
           )
         else ...[
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'edit_group',
             child: Row(
               children: [
-                Icon(Icons.edit),
-                SizedBox(width: 8),
-                Text('Modify group'),
+                const Icon(Icons.edit),
+                const SizedBox(width: 8),
+                Text(l10n.modifyGroup),
               ],
             ),
           ),
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'remove_group',
             child: Row(
               children: [
-                Icon(Icons.remove_circle_outline),
-                SizedBox(width: 8),
-                Text('Remove from group'),
+                const Icon(Icons.remove_circle_outline),
+                const SizedBox(width: 8),
+                Text(l10n.removeFromGroup),
               ],
             ),
           ),
         ],
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
           child: Row(
             children: [
-              Icon(Icons.delete, color: Colors.red),
-              SizedBox(width: 8),
-              Text('Delete', style: TextStyle(color: Colors.red)),
+              const Icon(Icons.delete, color: Colors.red),
+              const SizedBox(width: 8),
+              Text(l10n.delete, style: const TextStyle(color: Colors.red)),
             ],
           ),
         ),
@@ -468,27 +559,26 @@ class _CharactersListScreenState extends State<CharactersListScreen>
 
   /// Manual sync when changes are available
   void _manualSyncChanges() async {
+    final l10n = AppLocalizations.of(context)!;
+
     // Show confirmation dialog before downloading changes
     final confirmed = await showDialog<bool>(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Download Changes'),
-            content: const Text(
-              'Changes from other devices are available. Download them now?\n\n'
-              'This will replace your local data with the latest changes from the cloud.',
-            ),
+            title: Text(l10n.downloadChanges),
+            content: Text(l10n.downloadChangesDescription),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop(false);
                   _showCloudSyncOptions();
                 },
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Download'),
+                child: Text(l10n.download),
               ),
             ],
           ),
@@ -504,25 +594,26 @@ class _CharactersListScreenState extends State<CharactersListScreen>
       if (result.success) {
         // Refresh characters after sync
         context.read<CharactersViewModel>().loadCharacters();
-        SnackbarHelper.showSuccess(context, 'Changes downloaded successfully!');
+        SnackbarHelper.showSuccess(context, l10n.changesDownloadedSuccessfully);
       } else {
         if (mounted) {
           SnackbarHelper.showError(
             context,
-            'Download failed: ${result.errorMessage}',
+            l10n.downloadFailed(result.errorMessage ?? ''),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        SnackbarHelper.showError(context, 'Download error: $e');
+        SnackbarHelper.showError(context, l10n.downloadError(e.toString()));
       }
     }
   }
 
   /// Show cloud sync options for authenticated users
   void _showCloudSyncOptions() {
-    final userEmail = _authService.currentUser?.email ?? 'Unknown';
+    final l10n = AppLocalizations.of(context)!;
+    final userEmail = _authService.currentUser?.email ?? l10n.unknown;
 
     showModalBottomSheet(
       context: context,
@@ -533,14 +624,14 @@ class _CharactersListScreenState extends State<CharactersListScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  title: const Text('Cloud Sync Options'),
-                  subtitle: Text('Signed in as: $userEmail'),
+                  title: Text(l10n.cloudSyncOptions),
+                  subtitle: Text(l10n.signedInAs(userEmail)),
                 ),
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.sync),
-                  title: const Text('Sync Now'),
-                  subtitle: const Text('Upload all local changes to cloud'),
+                  title: Text(l10n.syncNow),
+                  subtitle: Text(l10n.syncNowDescription),
                   onTap: () {
                     Navigator.pop(context);
                     _confirmAndSync();
@@ -548,8 +639,8 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                 ),
                 ListTile(
                   leading: const Icon(Icons.download),
-                  title: const Text('Download from Cloud'),
-                  subtitle: const Text('Replace local data with cloud data'),
+                  title: Text(l10n.downloadFromCloud),
+                  subtitle: Text(l10n.downloadFromCloudDescription),
                   onTap: () {
                     Navigator.pop(context);
                     _downloadFromCloud();
@@ -557,11 +648,11 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                 ),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text(
-                    'Sign Out',
-                    style: TextStyle(color: Colors.red),
+                  title: Text(
+                    l10n.signOut,
+                    style: const TextStyle(color: Colors.red),
                   ),
-                  subtitle: const Text('Sign out and disable cloud sync'),
+                  subtitle: Text(l10n.signOutAndDisableCloudSync),
                   onTap: () {
                     Navigator.pop(context);
                     _signOut();
@@ -570,13 +661,11 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.delete_forever, color: Colors.red),
-                  title: const Text(
-                    'Delete Account',
-                    style: TextStyle(color: Colors.red),
+                  title: Text(
+                    l10n.deleteAccount,
+                    style: const TextStyle(color: Colors.red),
                   ),
-                  subtitle: const Text(
-                    'Permanently delete your account and all cloud data',
-                  ),
+                  subtitle: Text(l10n.deleteAccountAndCloudData),
                   onTap: () {
                     Navigator.pop(context);
                     _confirmAndDeleteAccount();
@@ -591,27 +680,26 @@ class _CharactersListScreenState extends State<CharactersListScreen>
 
   /// Confirm sync if there are deleted characters, then sync
   void _confirmAndSync() async {
-    // Show confirmation dialog
+    final l10n = AppLocalizations.of(context)!;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Confirm Sync'),
-            content: const Text(
-              'This sync will permanently change the data from the cloud. Are you sure you want to continue?',
-            ),
+            title: Text(l10n.confirmSync),
+            content: Text(l10n.confirmSyncDescription),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: TextButton.styleFrom(
                   foregroundColor: const Color.fromARGB(255, 54, 114, 244),
                 ),
-                child: const Text('Sync'),
+                child: Text(l10n.syncLabel),
               ),
             ],
           ),
@@ -680,21 +768,23 @@ class _CharactersListScreenState extends State<CharactersListScreen>
 
   /// Get tooltip text based on sync status
   String _getCloudButtonTooltip(SyncStatus status) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (!_authService.isAuthenticated) {
-      return 'Sign In & Sync';
+      return '${l10n.signIn} & ${l10n.syncNow}';
     }
 
     switch (status) {
       case SyncStatus.changesAvailable:
         return 'Tap to download changes from other devices';
       case SyncStatus.connected:
-        return 'Cloud Sync Options';
+        return l10n.cloudSyncOptions;
       case SyncStatus.syncing:
         return 'Syncing...';
       case SyncStatus.error:
         return 'Sync Error - Tap to retry';
       case SyncStatus.disconnected:
-        return 'Cloud Sync Options';
+        return l10n.cloudSyncOptions;
     }
   }
 
@@ -736,44 +826,51 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     try {
       await _authService.signOut();
       if (mounted) {
-        SnackbarHelper.showSuccess(context, 'Signed out successfully');
+        SnackbarHelper.showSuccess(
+          context,
+          AppLocalizations.of(context)!.signedOutSuccessfully,
+        );
       }
     } catch (e) {
       if (mounted) {
-        SnackbarHelper.showError(context, 'Error signing out: $e');
+        SnackbarHelper.showError(
+          context,
+          AppLocalizations.of(context)!.errorSigningOut(e.toString()),
+        );
       }
     }
   }
 
   /// Confirm and delete account with multi-step confirmation
   void _confirmAndDeleteAccount() async {
-    // First confirmation dialog - explain what will be deleted
+    final l10n = AppLocalizations.of(context)!;
+
     final firstConfirm = await showDialog<bool>(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Delete Account?'),
-            content: const Column(
+            title: Text(l10n.deleteAccountQuestion),
+            content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'This will permanently delete:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  l10n.deleteAccountWarningTitle,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 12),
-                Text('• Your account'),
-                Text('• All cloud-synced characters'),
-                Text('• All cloud-synced diaries'),
-                SizedBox(height: 16),
+                const SizedBox(height: 12),
+                Text(l10n.deleteAccountWarningAccount),
+                Text(l10n.deleteAccountWarningCharacters),
+                Text(l10n.deleteAccountWarningDiaries),
+                const SizedBox(height: 16),
                 Text(
-                  'Note: Local data on this device will NOT be deleted.',
-                  style: TextStyle(fontStyle: FontStyle.italic),
+                  l10n.deleteAccountWarningNote,
+                  style: const TextStyle(fontStyle: FontStyle.italic),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
-                  'This action cannot be undone.',
-                  style: TextStyle(
+                  l10n.deleteAccountWarningPermanent,
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.red,
                   ),
@@ -783,12 +880,12 @@ class _CharactersListScreenState extends State<CharactersListScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Continue'),
+                child: Text(l10n.continueLabel),
               ),
             ],
           ),
@@ -797,19 +894,16 @@ class _CharactersListScreenState extends State<CharactersListScreen>
     if (firstConfirm != true) return;
     if (!mounted) return;
 
-    // Second confirmation dialog - final warning
     final secondConfirm = await showDialog<bool>(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Are you absolutely sure?'),
-            content: const Text(
-              'Your account and all cloud data will be permanently deleted. This action cannot be undone.\n\nDo you want to proceed?',
-            ),
+            title: Text(l10n.accountDeletionConfirmationTitle),
+            content: Text(l10n.accountDeletionConfirmationMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
@@ -817,7 +911,7 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                   foregroundColor: Colors.white,
                   backgroundColor: Colors.red,
                 ),
-                child: const Text('Delete My Account'),
+                child: Text(l10n.deleteMyAccount),
               ),
             ],
           ),
@@ -825,20 +919,20 @@ class _CharactersListScreenState extends State<CharactersListScreen>
 
     if (secondConfirm != true) return;
 
-    // Proceed with account deletion
     _deleteAccount();
   }
 
   /// Delete account and all cloud data
   void _deleteAccount() async {
+    final l10n = AppLocalizations.of(context)!;
+
     try {
-      // Show loading indicator
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
@@ -846,50 +940,50 @@ class _CharactersListScreenState extends State<CharactersListScreen>
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(width: 16),
-                Text('Deleting account...'),
+                const SizedBox(width: 16),
+                Text(l10n.deletingAccount),
               ],
             ),
-            duration: Duration(seconds: 30),
+            duration: const Duration(seconds: 30),
           ),
         );
       }
 
-      // Step 1: Delete all cloud data
       final cloudDeleteResult = await _syncService.deleteAllCloudData();
       if (!cloudDeleteResult.success) {
         if (mounted) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           SnackbarHelper.showError(
             context,
-            'Failed to delete cloud data: ${cloudDeleteResult.errorMessage}',
+            l10n.failedToDeleteCloudData(
+              cloudDeleteResult.errorMessage ?? l10n.unknown,
+            ),
           );
         }
         return;
       }
 
-      // Step 2: Delete authentication account
       final authDeleteResult = await _authService.deleteAccount();
 
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
         if (authDeleteResult.success) {
-          SnackbarHelper.showSuccess(context, 'Account deleted successfully');
+          SnackbarHelper.showSuccess(context, l10n.accountDeletedSuccessfully);
         } else {
           SnackbarHelper.showError(
             context,
-            'Failed to delete account: ${authDeleteResult.errorMessage}',
+            l10n.failedToDeleteAccount(
+              authDeleteResult.errorMessage ?? l10n.unknown,
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        SnackbarHelper.showError(context, 'Error deleting account: $e');
+        SnackbarHelper.showError(context, l10n.errorDeletingAccount(e.toString()));
       }
     }
   }
-
-
 }
