@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/models/character_model.dart';
 import 'package:dnd_app/models/spell_model.dart';
 import 'package:dnd_app/views/spells/spells_list_screen.dart';
@@ -20,7 +22,16 @@ void main() {
       await tester.pumpWidget(
         ChangeNotifierProvider<SpellsViewModel>(
           create: (_) => viewModel,
-          child: MaterialApp(home: SpellsListScreen()),
+          child: MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const SpellsListScreen(),
+          ),
         ),
       );
 
@@ -49,7 +60,16 @@ void main() {
       await tester.pumpWidget(
         ChangeNotifierProvider<SpellsViewModel>(
           create: (_) => viewModel,
-          child: MaterialApp(home: SpellsListScreen()),
+          child: MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const SpellsListScreen(),
+          ),
         ),
       );
 
@@ -136,6 +156,13 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
           home: SpellDetailsModal(
             spell: spell,
             character: character,
