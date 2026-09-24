@@ -55,6 +55,14 @@ void main() {
     expect(AppLocalizations.of(context)!.savingThrows, 'Saving Throws');
     expect(AppLocalizations.of(context)!.addClassSlot, 'Add Class Slot');
     expect(AppLocalizations.of(context)!.removeSpell, 'Remove Spell');
+    expect(AppLocalizations.of(context)!.physicalTraits, 'Physical Traits');
+    expect(AppLocalizations.of(context)!.height, 'Height');
+    expect(AppLocalizations.of(context)!.age, 'Age');
+    expect(AppLocalizations.of(context)!.eyeColor, 'Eye Color');
+    expect(
+      AppLocalizations.of(context)!.characterAppearance,
+      'Character Appereance',
+    );
   });
 
   testWidgets('app supports spanish locale switch entries', (tester) async {
@@ -109,6 +117,14 @@ void main() {
       'Añadir ranura de clase',
     );
     expect(AppLocalizations.of(context)!.removeSpell, 'Eliminar hechizo');
+    expect(AppLocalizations.of(context)!.physicalTraits, 'Rasgos físicos');
+    expect(AppLocalizations.of(context)!.height, 'Altura');
+    expect(AppLocalizations.of(context)!.age, 'Edad');
+    expect(AppLocalizations.of(context)!.eyeColor, 'Color de ojos');
+    expect(
+      AppLocalizations.of(context)!.characterAppearance,
+      'Apariencia del personaje',
+    );
     expect(AppLocalizations.supportedLocales, contains(const Locale('es')));
   });
 

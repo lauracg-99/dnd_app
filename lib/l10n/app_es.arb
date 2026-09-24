@@ -80,6 +80,46 @@
   "@signInBackupDescription": {
     "description": "Texto de aviso para invitar a iniciar sesión con sincronización en la nube"
   },
+  "physicalTraits": "Rasgos físicos",
+  "@physicalTraits": {
+    "description": "Título de la sección de rasgos físicos en la apariencia del personaje"
+  },
+  "height": "Altura",
+  "@height": {
+    "description": "Etiqueta de la altura del personaje"
+  },
+  "heightHint": "Introduce la altura",
+  "@heightHint": {
+    "description": "Texto de sugerencia para el campo de altura"
+  },
+  "age": "Edad",
+  "@age": {
+    "description": "Etiqueta de la edad del personaje"
+  },
+  "ageHint": "Introduce la edad",
+  "@ageHint": {
+    "description": "Texto de sugerencia para el campo de edad"
+  },
+  "eyeColor": "Color de ojos",
+  "@eyeColor": {
+    "description": "Etiqueta del color de ojos del personaje"
+  },
+  "eyeColorHint": "Introduce el color de ojos",
+  "@eyeColorHint": {
+    "description": "Texto de sugerencia para el campo de color de ojos"
+  },
+  "characterAppearance": "Apariencia del personaje",
+  "@characterAppearance": {
+    "description": "Título de la sección de apariencia del personaje"
+  },
+  "describeCharacterAppearance": "Describe la apariencia, los gestos y los detalles más destacables del personaje.",
+  "@describeCharacterAppearance": {
+    "description": "Texto de ayuda para describir la apariencia del personaje"
+  },
+  "appearanceEditorPlaceholder": "Escribe una descripción de su apariencia, ropa, expresión, postura y rasgos destacados...",
+  "@appearanceEditorPlaceholder": {
+    "description": "Texto de marcador para el editor de descripción de la apariencia"
+  },
   "edit": "Editar",
   "@edit": {
     "description": "Acción de edición"

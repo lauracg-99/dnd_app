@@ -71,6 +71,38 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sign in to backup your data and access it from anywhere';
 
   @override
+  String get physicalTraits => 'Physical Traits';
+
+  @override
+  String get height => 'Height';
+
+  @override
+  String get heightHint => 'Enter height';
+
+  @override
+  String get age => 'Age';
+
+  @override
+  String get ageHint => 'Enter age';
+
+  @override
+  String get eyeColor => 'Eye Color';
+
+  @override
+  String get eyeColorHint => 'Enter eye color';
+
+  @override
+  String get characterAppearance => 'Character Appereance';
+
+  @override
+  String get describeCharacterAppearance =>
+      'Describe the character\'s appearance, mannerisms, and notable details.';
+
+  @override
+  String get appearanceEditorPlaceholder =>
+      'Write a description of their appearance, clothing, expression, posture, and notable features...';
+
+  @override
   String get edit => 'Edit';
 
   @override

@@ -71,6 +71,38 @@ class AppLocalizationsEs extends AppLocalizations {
       'Inicia sesión para guardar tu información y acceder a ella desde cualquier dispositivo';
 
   @override
+  String get physicalTraits => 'Rasgos físicos';
+
+  @override
+  String get height => 'Altura';
+
+  @override
+  String get heightHint => 'Introduce la altura';
+
+  @override
+  String get age => 'Edad';
+
+  @override
+  String get ageHint => 'Introduce la edad';
+
+  @override
+  String get eyeColor => 'Color de ojos';
+
+  @override
+  String get eyeColorHint => 'Introduce el color de ojos';
+
+  @override
+  String get characterAppearance => 'Apariencia del personaje';
+
+  @override
+  String get describeCharacterAppearance =>
+      'Describe la apariencia, los gestos y los detalles más destacables del personaje.';
+
+  @override
+  String get appearanceEditorPlaceholder =>
+      'Escribe una descripción de su apariencia, ropa, expresión, postura y rasgos destacados...';
+
+  @override
   String get edit => 'Editar';
 
   @override

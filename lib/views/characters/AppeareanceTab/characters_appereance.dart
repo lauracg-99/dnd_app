@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/utils/quill_toolbar_configs.dart';
 import 'package:dnd_app/utils/simple_quill_editor.dart';
 
@@ -31,13 +32,15 @@ class CharactersAppereance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Character Image Section
-/*           Card(
+          /*           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -90,7 +93,6 @@ class CharactersAppereance extends StatelessWidget {
               ),
             ),
           ), */
-
           const SizedBox(height: 8),
 
           // Physical Traits Section
@@ -101,7 +103,7 @@ class CharactersAppereance extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Physical Traits',
+                    l10n.physicalTraits,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
@@ -109,11 +111,11 @@ class CharactersAppereance extends StatelessWidget {
                   // Height Field
                   TextField(
                     controller: heightController,
-                    decoration: const InputDecoration(
-                      labelText: 'Height',
-                      hintText: 'e.g., 5\'10" or 178 cm',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.height),
+                    decoration: InputDecoration(
+                      labelText: l10n.height,
+                      hintText: l10n.heightHint,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.height),
                     ),
                     onChanged: (value) => autoSaveCharacter(),
                   ),
@@ -123,11 +125,11 @@ class CharactersAppereance extends StatelessWidget {
                   // Age Field
                   TextField(
                     controller: ageController,
-                    decoration: const InputDecoration(
-                      labelText: 'Age',
-                      hintText: 'e.g., 25 years old',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.cake),
+                    decoration: InputDecoration(
+                      labelText: l10n.age,
+                      hintText: l10n.ageHint,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.cake),
                     ),
                     onChanged: (value) => autoSaveCharacter(),
                   ),
@@ -137,11 +139,11 @@ class CharactersAppereance extends StatelessWidget {
                   // Eye Color Field
                   TextField(
                     controller: eyeColorController,
-                    decoration: const InputDecoration(
-                      labelText: 'Eye Color',
-                      hintText: 'e.g., Blue, Green, Brown',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.visibility),
+                    decoration: InputDecoration(
+                      labelText: l10n.eyeColor,
+                      hintText: l10n.eyeColorHint,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.visibility),
                     ),
                     onChanged: (value) => autoSaveCharacter(),
                   ),
@@ -168,7 +170,7 @@ class CharactersAppereance extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Character Appereance',
+                        l10n.characterAppearance,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -177,7 +179,7 @@ class CharactersAppereance extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Describe your character\'s appearance.',
+                    l10n.describeCharacterAppearance,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.grey.shade600,
                     ),
@@ -192,7 +194,7 @@ class CharactersAppereance extends StatelessWidget {
                     child: SimpleQuillEditor(
                       controller: additionalDetailsController,
                       toolbarConfig: QuillToolbarConfigs.minimal,
-                      placeholder: 'Start writing your character\'s appearance...\n\n',
+                      placeholder: l10n.appearanceEditorPlaceholder,
                       height: 200,
                     ),
                   ),
@@ -204,6 +206,5 @@ class CharactersAppereance extends StatelessWidget {
         ],
       ),
     );
-  
   }
 }

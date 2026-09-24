@@ -218,6 +218,66 @@ abstract class AppLocalizations {
   /// **'Sign in to backup your data and access it from anywhere'**
   String get signInBackupDescription;
 
+  /// Section title for physical traits in character appearance
+  ///
+  /// In en, this message translates to:
+  /// **'Physical Traits'**
+  String get physicalTraits;
+
+  /// Label for character height
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get height;
+
+  /// Hint text for the height field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter height'**
+  String get heightHint;
+
+  /// Label for character age
+  ///
+  /// In en, this message translates to:
+  /// **'Age'**
+  String get age;
+
+  /// Hint text for the age field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter age'**
+  String get ageHint;
+
+  /// Label for character eye color
+  ///
+  /// In en, this message translates to:
+  /// **'Eye Color'**
+  String get eyeColor;
+
+  /// Hint text for the eye color field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter eye color'**
+  String get eyeColorHint;
+
+  /// Section title for character appearance details
+  ///
+  /// In en, this message translates to:
+  /// **'Character Appereance'**
+  String get characterAppearance;
+
+  /// Helper text describing the character appearance editor
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the character\'s appearance, mannerisms, and notable details.'**
+  String get describeCharacterAppearance;
+
+  /// Placeholder text for the appearance description editor
+  ///
+  /// In en, this message translates to:
+  /// **'Write a description of their appearance, clothing, expression, posture, and notable features...'**
+  String get appearanceEditorPlaceholder;
+
   /// Edit action label
   ///
   /// In en, this message translates to:

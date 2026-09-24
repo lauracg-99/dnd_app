@@ -80,6 +80,46 @@
   "@signInBackupDescription": {
     "description": "Login callout text encouraging sign in for cloud sync"
   },
+  "physicalTraits": "Physical Traits",
+  "@physicalTraits": {
+    "description": "Section title for physical traits in character appearance"
+  },
+  "height": "Height",
+  "@height": {
+    "description": "Label for character height"
+  },
+  "heightHint": "Enter height",
+  "@heightHint": {
+    "description": "Hint text for the height field"
+  },
+  "age": "Age",
+  "@age": {
+    "description": "Label for character age"
+  },
+  "ageHint": "Enter age",
+  "@ageHint": {
+    "description": "Hint text for the age field"
+  },
+  "eyeColor": "Eye Color",
+  "@eyeColor": {
+    "description": "Label for character eye color"
+  },
+  "eyeColorHint": "Enter eye color",
+  "@eyeColorHint": {
+    "description": "Hint text for the eye color field"
+  },
+  "characterAppearance": "Character Appereance",
+  "@characterAppearance": {
+    "description": "Section title for character appearance details"
+  },
+  "describeCharacterAppearance": "Describe the character's appearance, mannerisms, and notable details.",
+  "@describeCharacterAppearance": {
+    "description": "Helper text describing the character appearance editor"
+  },
+  "appearanceEditorPlaceholder": "Write a description of their appearance, clothing, expression, posture, and notable features...",
+  "@appearanceEditorPlaceholder": {
+    "description": "Placeholder text for the appearance description editor"
+  },
   "edit": "Edit",
   "@edit": {
     "description": "Edit action label"
