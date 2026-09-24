@@ -39,6 +39,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get retry => 'Reintentar';
 
   @override
+  String get add => 'Añadir';
+
+  @override
+  String get remove => 'Eliminar';
+
+  @override
   String get unknown => 'Desconocido';
 
   @override
@@ -342,6 +348,88 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clearAll => 'Limpiar todo';
+
+  @override
+  String get abilityScores => 'Puntuaciones de habilidad';
+
+  @override
+  String get savingThrows => 'Tiradas de salvación';
+
+  @override
+  String get addClassSlot => 'Añadir ranura de clase';
+
+  @override
+  String get slotName => 'Nombre de la ranura';
+
+  @override
+  String get maxSlots => 'Máx. ranuras';
+
+  @override
+  String get usedSlots => 'Ranuras usadas';
+
+  @override
+  String modifySlot(Object slotName) {
+    return 'Modificar $slotName';
+  }
+
+  @override
+  String get maximumSlots => 'Máximo de ranuras:';
+
+  @override
+  String get slotUsedLabel => 'Ranuras usadas:';
+
+  @override
+  String get setFour => 'Establecer 4';
+
+  @override
+  String get setSix => 'Establecer 6';
+
+  @override
+  String get setEight => 'Establecer 8';
+
+  @override
+  String get useAll => 'Usar todas';
+
+  @override
+  String get halfUsed => 'Mitad usada';
+
+  @override
+  String get accept => 'Aceptar';
+
+  @override
+  String get editSlotName => 'Editar nombre de la ranura';
+
+  @override
+  String get deleteSlot => 'Eliminar ranura';
+
+  @override
+  String get slotsLabel => 'Ranuras:';
+
+  @override
+  String get usedLabel => 'Usadas:';
+
+  @override
+  String get restoreAllSlots => 'Restaurar todas las ranuras';
+
+  @override
+  String get spellPreparationInfo => 'Información de preparación de hechizos';
+
+  @override
+  String get gotIt => 'Entendido';
+
+  @override
+  String get removeSpell => 'Eliminar hechizo';
+
+  @override
+  String removeSpellConfirmation(Object spellName) {
+    return '¿Seguro que quieres quitar \"$spellName\" de la lista de hechizos de tu personaje?';
+  }
+
+  @override
+  String get reorderTabs => 'Reordenar pestañas';
+
+  @override
+  String get resetToDefault => 'Restablecer por defecto';
 
   @override
   String get searchFilterLabel => 'Búsqueda:';

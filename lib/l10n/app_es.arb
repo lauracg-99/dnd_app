@@ -40,6 +40,14 @@
   "@retry": {
     "description": "Acción para reintentar"
   },
+  "add": "Añadir",
+  "@add": {
+    "description": "Acción genérica para añadir"
+  },
+  "remove": "Eliminar",
+  "@remove": {
+    "description": "Acción genérica para eliminar"
+  },
   "unknown": "Desconocido",
   "@unknown": {
     "description": "Texto de reserva para valores desconocidos"
@@ -426,6 +434,116 @@
   "clearAll": "Limpiar todo",
   "@clearAll": {
     "description": "Acción para borrar todos los filtros"
+  },
+  "abilityScores": "Puntuaciones de habilidad",
+  "@abilityScores": {
+    "description": "Título de la sección de puntuaciones de habilidad del personaje"
+  },
+  "savingThrows": "Tiradas de salvación",
+  "@savingThrows": {
+    "description": "Título de la sección de tiradas de salvación del personaje"
+  },
+  "addClassSlot": "Añadir ranura de clase",
+  "@addClassSlot": {
+    "description": "Título del diálogo para añadir una ranura personalizada de clase"
+  },
+  "slotName": "Nombre de la ranura",
+  "@slotName": {
+    "description": "Etiqueta para el nombre de una ranura personalizada"
+  },
+  "maxSlots": "Máx. ranuras",
+  "@maxSlots": {
+    "description": "Etiqueta para el máximo de ranuras de un recurso personalizado"
+  },
+  "usedSlots": "Ranuras usadas",
+  "@usedSlots": {
+    "description": "Etiqueta para las ranuras usadas de un recurso personalizado"
+  },
+  "modifySlot": "Modificar {slotName}",
+  "@modifySlot": {
+    "description": "Título del diálogo para editar una ranura personalizada",
+    "placeholders": {
+      "slotName": {}
+    }
+  },
+  "maximumSlots": "Máximo de ranuras:",
+  "@maximumSlots": {
+    "description": "Texto para la etiqueta de máxima ranura"
+  },
+  "slotUsedLabel": "Ranuras usadas:",
+  "@slotUsedLabel": {
+    "description": "Texto para la etiqueta de ranuras usadas"
+  },
+  "setFour": "Establecer 4",
+  "@setFour": {
+    "description": "Acción rápida para fijar la cantidad de ranuras a 4"
+  },
+  "setSix": "Establecer 6",
+  "@setSix": {
+    "description": "Acción rápida para fijar la cantidad de ranuras a 6"
+  },
+  "setEight": "Establecer 8",
+  "@setEight": {
+    "description": "Acción rápida para fijar la cantidad de ranuras a 8"
+  },
+  "useAll": "Usar todas",
+  "@useAll": {
+    "description": "Acción rápida para usar todas las ranuras"
+  },
+  "halfUsed": "Mitad usada",
+  "@halfUsed": {
+    "description": "Acción rápida para marcar la mitad de las ranuras como usadas"
+  },
+  "accept": "Aceptar",
+  "@accept": {
+    "description": "Acción de confirmación en diálogos"
+  },
+  "editSlotName": "Editar nombre de la ranura",
+  "@editSlotName": {
+    "description": "Título del diálogo para renombrar una ranura personalizada"
+  },
+  "deleteSlot": "Eliminar ranura",
+  "@deleteSlot": {
+    "description": "Título del diálogo para eliminar una ranura personalizada"
+  },
+  "slotsLabel": "Ranuras:",
+  "@slotsLabel": {
+    "description": "Prefijo para la cantidad de ranuras disponibles"
+  },
+  "usedLabel": "Usadas:",
+  "@usedLabel": {
+    "description": "Prefijo para la cantidad de ranuras usadas"
+  },
+  "restoreAllSlots": "Restaurar todas las ranuras",
+  "@restoreAllSlots": {
+    "description": "Acción para restaurar todas las ranuras de hechizos"
+  },
+  "spellPreparationInfo": "Información de preparación de hechizos",
+  "@spellPreparationInfo": {
+    "description": "Título del diálogo de información sobre preparación de hechizos"
+  },
+  "gotIt": "Entendido",
+  "@gotIt": {
+    "description": "Botón para cerrar un diálogo informativo"
+  },
+  "removeSpell": "Eliminar hechizo",
+  "@removeSpell": {
+    "description": "Título y acción para eliminar un hechizo del personaje"
+  },
+  "removeSpellConfirmation": "¿Seguro que quieres quitar \"{spellName}\" de la lista de hechizos de tu personaje?",
+  "@removeSpellConfirmation": {
+    "description": "Confirmación para eliminar un hechizo del personaje",
+    "placeholders": {
+      "spellName": {}
+    }
+  },
+  "reorderTabs": "Reordenar pestañas",
+  "@reorderTabs": {
+    "description": "Título del diálogo para reordenar pestañas del personaje"
+  },
+  "resetToDefault": "Restablecer por defecto",
+  "@resetToDefault": {
+    "description": "Acción para restaurar el orden predeterminado de las pestañas"
   },
   "searchFilterLabel": "Búsqueda:",
   "@searchFilterLabel": {

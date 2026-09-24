@@ -40,6 +40,14 @@
   "@retry": {
     "description": "Retry action"
   },
+  "add": "Add",
+  "@add": {
+    "description": "Generic add action"
+  },
+  "remove": "Remove",
+  "@remove": {
+    "description": "Generic remove action"
+  },
   "unknown": "Unknown",
   "@unknown": {
     "description": "Fallback label for unknown values"
@@ -426,6 +434,116 @@
   "clearAll": "Clear All",
   "@clearAll": {
     "description": "Action to clear all filters"
+  },
+  "abilityScores": "Ability Scores",
+  "@abilityScores": {
+    "description": "Section title for character ability scores"
+  },
+  "savingThrows": "Saving Throws",
+  "@savingThrows": {
+    "description": "Section title for character saving throws"
+  },
+  "addClassSlot": "Add Class Slot",
+  "@addClassSlot": {
+    "description": "Dialog title to add a custom class slot"
+  },
+  "slotName": "Slot Name",
+  "@slotName": {
+    "description": "Label for a custom slot name"
+  },
+  "maxSlots": "Max Slots",
+  "@maxSlots": {
+    "description": "Label for maximum slots in a customized resource"
+  },
+  "usedSlots": "Used Slots",
+  "@usedSlots": {
+    "description": "Label for used slots in a customized resource"
+  },
+  "modifySlot": "Modify {slotName}",
+  "@modifySlot": {
+    "description": "Title for the dialog to edit a custom slot",
+    "placeholders": {
+      "slotName": {}
+    }
+  },
+  "maximumSlots": "Maximum slots:",
+  "@maximumSlots": {
+    "description": "Text for the maximum slot configuration label"
+  },
+  "slotUsedLabel": "Used slots:",
+  "@slotUsedLabel": {
+    "description": "Text for the used slot configuration label"
+  },
+  "setFour": "Set 4",
+  "@setFour": {
+    "description": "Quick action to set slot count to 4"
+  },
+  "setSix": "Set 6",
+  "@setSix": {
+    "description": "Quick action to set slot count to 6"
+  },
+  "setEight": "Set 8",
+  "@setEight": {
+    "description": "Quick action to set slot count to 8"
+  },
+  "useAll": "Use All",
+  "@useAll": {
+    "description": "Quick action to use all slots"
+  },
+  "halfUsed": "Half Used",
+  "@halfUsed": {
+    "description": "Quick action to mark half of the slots as used"
+  },
+  "accept": "Accept",
+  "@accept": {
+    "description": "Confirmation action in dialogs"
+  },
+  "editSlotName": "Edit Slot Name",
+  "@editSlotName": {
+    "description": "Dialog title to rename a custom slot"
+  },
+  "deleteSlot": "Delete Slot",
+  "@deleteSlot": {
+    "description": "Dialog title to delete a custom slot"
+  },
+  "slotsLabel": "Slots:",
+  "@slotsLabel": {
+    "description": "Prefix label for the amount of slots available"
+  },
+  "usedLabel": "Used:",
+  "@usedLabel": {
+    "description": "Prefix label for the amount of used slots"
+  },
+  "restoreAllSlots": "Restore all slots",
+  "@restoreAllSlots": {
+    "description": "Action to restore all spell slots"
+  },
+  "spellPreparationInfo": "Spell Preparation Info",
+  "@spellPreparationInfo": {
+    "description": "Dialog title for spell preparation tips"
+  },
+  "gotIt": "Got it",
+  "@gotIt": {
+    "description": "Dismiss button in informational dialogs"
+  },
+  "removeSpell": "Remove Spell",
+  "@removeSpell": {
+    "description": "Dialog title and action to remove a spell from a character"
+  },
+  "removeSpellConfirmation": "Are you sure you want to remove \"{spellName}\" from your character's spell list?",
+  "@removeSpellConfirmation": {
+    "description": "Confirmation for removing a spell from the character",
+    "placeholders": {
+      "spellName": {}
+    }
+  },
+  "reorderTabs": "Reorder Tabs",
+  "@reorderTabs": {
+    "description": "Dialog title for reordering character tabs"
+  },
+  "resetToDefault": "Reset to Default",
+  "@resetToDefault": {
+    "description": "Action to reset the tab order to default"
   },
   "searchFilterLabel": "Search:",
   "@searchFilterLabel": {

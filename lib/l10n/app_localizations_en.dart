@@ -39,6 +39,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retry => 'Retry';
 
   @override
+  String get add => 'Add';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
   String get unknown => 'Unknown';
 
   @override
@@ -337,6 +343,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearAll => 'Clear All';
+
+  @override
+  String get abilityScores => 'Ability Scores';
+
+  @override
+  String get savingThrows => 'Saving Throws';
+
+  @override
+  String get addClassSlot => 'Add Class Slot';
+
+  @override
+  String get slotName => 'Slot Name';
+
+  @override
+  String get maxSlots => 'Max Slots';
+
+  @override
+  String get usedSlots => 'Used Slots';
+
+  @override
+  String modifySlot(Object slotName) {
+    return 'Modify $slotName';
+  }
+
+  @override
+  String get maximumSlots => 'Maximum slots:';
+
+  @override
+  String get slotUsedLabel => 'Used slots:';
+
+  @override
+  String get setFour => 'Set 4';
+
+  @override
+  String get setSix => 'Set 6';
+
+  @override
+  String get setEight => 'Set 8';
+
+  @override
+  String get useAll => 'Use All';
+
+  @override
+  String get halfUsed => 'Half Used';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get editSlotName => 'Edit Slot Name';
+
+  @override
+  String get deleteSlot => 'Delete Slot';
+
+  @override
+  String get slotsLabel => 'Slots:';
+
+  @override
+  String get usedLabel => 'Used:';
+
+  @override
+  String get restoreAllSlots => 'Restore all slots';
+
+  @override
+  String get spellPreparationInfo => 'Spell Preparation Info';
+
+  @override
+  String get gotIt => 'Got it';
+
+  @override
+  String get removeSpell => 'Remove Spell';
+
+  @override
+  String removeSpellConfirmation(Object spellName) {
+    return 'Are you sure you want to remove \"$spellName\" from your character\'s spell list?';
+  }
+
+  @override
+  String get reorderTabs => 'Reorder Tabs';
+
+  @override
+  String get resetToDefault => 'Reset to Default';
 
   @override
   String get searchFilterLabel => 'Search:';

@@ -1,3 +1,4 @@
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../models/tab_config_model.dart';
 
@@ -66,8 +67,9 @@ class _TabReorderDialogState extends State<TabReorderDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('Reorder Tabs'),
+      title: Text(l10n.reorderTabs),
       content: SizedBox(
         width: double.maxFinite,
         height: 400,
@@ -120,29 +122,30 @@ class _TabReorderDialogState extends State<TabReorderDialog> {
           onPressed: () {
             _resetToDefault();
           },
-          child: const Text('Reset to Default'),
+          child: Text(l10n.resetToDefault),
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.end, 
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancel'),
-          ),
-          SizedBox(width: 8),
-          ElevatedButton(
-            onPressed:
-                _hasChanges
-                    ? () {
-                      widget.onOrderChanged(_tabOrder);
-                      Navigator.of(context).pop();
-                    }
-                    : null,
-            child: const Text('Save'),
-          ),
-        ])
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(l10n.cancel),
+            ),
+            SizedBox(width: 8),
+            ElevatedButton(
+              onPressed:
+                  _hasChanges
+                      ? () {
+                        widget.onOrderChanged(_tabOrder);
+                        Navigator.of(context).pop();
+                      }
+                      : null,
+              child: Text(l10n.save),
+            ),
+          ],
+        ),
       ],
     );
   }

@@ -51,6 +51,10 @@ void main() {
     expect(AppLocalizations.of(context)!.searchClasses, 'Search classes...');
     expect(AppLocalizations.of(context)!.noClassesFound, 'No classes found');
     expect(AppLocalizations.of(context)!.searchWeapons, 'Search weapons...');
+    expect(AppLocalizations.of(context)!.abilityScores, 'Ability Scores');
+    expect(AppLocalizations.of(context)!.savingThrows, 'Saving Throws');
+    expect(AppLocalizations.of(context)!.addClassSlot, 'Add Class Slot');
+    expect(AppLocalizations.of(context)!.removeSpell, 'Remove Spell');
   });
 
   testWidgets('app supports spanish locale switch entries', (tester) async {
@@ -95,6 +99,16 @@ void main() {
       AppLocalizations.of(context)!.languageWarningMessage,
       'Al cambiar a español, algunos recursos como la información de los hechizos seguirán en inglés.',
     );
+    expect(
+      AppLocalizations.of(context)!.abilityScores,
+      'Puntuaciones de habilidad',
+    );
+    expect(AppLocalizations.of(context)!.savingThrows, 'Tiradas de salvación');
+    expect(
+      AppLocalizations.of(context)!.addClassSlot,
+      'Añadir ranura de clase',
+    );
+    expect(AppLocalizations.of(context)!.removeSpell, 'Eliminar hechizo');
     expect(AppLocalizations.supportedLocales, contains(const Locale('es')));
   });
 

@@ -1,3 +1,4 @@
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -656,24 +657,26 @@ class _SpellByLevelState extends State<SpellByLevel> {
     bool isFreeUse,
     bool isRitual,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final result = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Remove Spell'),
-          content: Text(
-            'Are you sure you want to remove "${spell.name}" from your character\'s spell list?',
-          ),
+          title: Text(l10n.removeSpell),
+          content: Text(l10n.removeSpellConfirmation(spell.name)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(true);
               },
-              child: Text('Remove', style: TextStyle(color: Colors.red)),
+              child: Text(
+                l10n.remove,
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
           ],
         );

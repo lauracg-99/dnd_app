@@ -158,6 +158,18 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get retry;
 
+  /// Generic add action
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// Generic remove action
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
   /// Fallback label for unknown values
   ///
   /// In en, this message translates to:
@@ -697,6 +709,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear All'**
   String get clearAll;
+
+  /// Section title for character ability scores
+  ///
+  /// In en, this message translates to:
+  /// **'Ability Scores'**
+  String get abilityScores;
+
+  /// Section title for character saving throws
+  ///
+  /// In en, this message translates to:
+  /// **'Saving Throws'**
+  String get savingThrows;
+
+  /// Dialog title to add a custom class slot
+  ///
+  /// In en, this message translates to:
+  /// **'Add Class Slot'**
+  String get addClassSlot;
+
+  /// Label for a custom slot name
+  ///
+  /// In en, this message translates to:
+  /// **'Slot Name'**
+  String get slotName;
+
+  /// Label for maximum slots in a customized resource
+  ///
+  /// In en, this message translates to:
+  /// **'Max Slots'**
+  String get maxSlots;
+
+  /// Label for used slots in a customized resource
+  ///
+  /// In en, this message translates to:
+  /// **'Used Slots'**
+  String get usedSlots;
+
+  /// Title for the dialog to edit a custom slot
+  ///
+  /// In en, this message translates to:
+  /// **'Modify {slotName}'**
+  String modifySlot(Object slotName);
+
+  /// Text for the maximum slot configuration label
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum slots:'**
+  String get maximumSlots;
+
+  /// Text for the used slot configuration label
+  ///
+  /// In en, this message translates to:
+  /// **'Used slots:'**
+  String get slotUsedLabel;
+
+  /// Quick action to set slot count to 4
+  ///
+  /// In en, this message translates to:
+  /// **'Set 4'**
+  String get setFour;
+
+  /// Quick action to set slot count to 6
+  ///
+  /// In en, this message translates to:
+  /// **'Set 6'**
+  String get setSix;
+
+  /// Quick action to set slot count to 8
+  ///
+  /// In en, this message translates to:
+  /// **'Set 8'**
+  String get setEight;
+
+  /// Quick action to use all slots
+  ///
+  /// In en, this message translates to:
+  /// **'Use All'**
+  String get useAll;
+
+  /// Quick action to mark half of the slots as used
+  ///
+  /// In en, this message translates to:
+  /// **'Half Used'**
+  String get halfUsed;
+
+  /// Confirmation action in dialogs
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// Dialog title to rename a custom slot
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Slot Name'**
+  String get editSlotName;
+
+  /// Dialog title to delete a custom slot
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Slot'**
+  String get deleteSlot;
+
+  /// Prefix label for the amount of slots available
+  ///
+  /// In en, this message translates to:
+  /// **'Slots:'**
+  String get slotsLabel;
+
+  /// Prefix label for the amount of used slots
+  ///
+  /// In en, this message translates to:
+  /// **'Used:'**
+  String get usedLabel;
+
+  /// Action to restore all spell slots
+  ///
+  /// In en, this message translates to:
+  /// **'Restore all slots'**
+  String get restoreAllSlots;
+
+  /// Dialog title for spell preparation tips
+  ///
+  /// In en, this message translates to:
+  /// **'Spell Preparation Info'**
+  String get spellPreparationInfo;
+
+  /// Dismiss button in informational dialogs
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gotIt;
+
+  /// Dialog title and action to remove a spell from a character
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Spell'**
+  String get removeSpell;
+
+  /// Confirmation for removing a spell from the character
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove \"{spellName}\" from your character\'s spell list?'**
+  String removeSpellConfirmation(Object spellName);
+
+  /// Dialog title for reordering character tabs
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder Tabs'**
+  String get reorderTabs;
+
+  /// Action to reset the tab order to default
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to Default'**
+  String get resetToDefault;
 
   /// Prefix label for a search filter chip
   ///

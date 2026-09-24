@@ -1,3 +1,4 @@
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../models/character_model.dart';
 import '../../../helpers/character_ability_helper.dart';
@@ -44,10 +45,11 @@ class StatsTab extends StatefulWidget {
 class _StatsTabState extends State<StatsTab> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     debugPrint('=== StatsTab build ===');
     debugPrint('hasUnsavedAbilityChanges: ${widget.hasUnsavedAbilityChanges}');
     debugPrint('====================');
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -59,9 +61,12 @@ class _StatsTabState extends State<StatsTab> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Ability Scores',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.abilityScores,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -80,7 +85,10 @@ class _StatsTabState extends State<StatsTab> {
                   icon: const Icon(Icons.save, size: 16),
                   label: const Text('Save'),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     textStyle: const TextStyle(fontSize: 12),
                   ),
                 ),
@@ -106,9 +114,9 @@ class _StatsTabState extends State<StatsTab> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Saving Throws',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            l10n.savingThrows,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
 
@@ -121,24 +129,48 @@ class _StatsTabState extends State<StatsTab> {
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
             children: [
-              _buildSavingThrowRow('STR', widget.savingThrows.strengthProficiency, (value) {
-                _updateSavingThrow('strength', value ?? false);
-              }),
-              _buildSavingThrowRow('DEX', widget.savingThrows.dexterityProficiency, (value) {
-                _updateSavingThrow('dexterity', value ?? false);
-              }),
-              _buildSavingThrowRow('CON', widget.savingThrows.constitutionProficiency, (value) {
-                _updateSavingThrow('constitution', value ?? false);
-              }),
-              _buildSavingThrowRow('INT', widget.savingThrows.intelligenceProficiency, (value) {
-                _updateSavingThrow('intelligence', value ?? false);
-              }),
-              _buildSavingThrowRow('WIS', widget.savingThrows.wisdomProficiency, (value) {
-                _updateSavingThrow('wisdom', value ?? false);
-              }),
-              _buildSavingThrowRow('CHA', widget.savingThrows.charismaProficiency, (value) {
-                _updateSavingThrow('charisma', value ?? false);
-              }),
+              _buildSavingThrowRow(
+                'STR',
+                widget.savingThrows.strengthProficiency,
+                (value) {
+                  _updateSavingThrow('strength', value ?? false);
+                },
+              ),
+              _buildSavingThrowRow(
+                'DEX',
+                widget.savingThrows.dexterityProficiency,
+                (value) {
+                  _updateSavingThrow('dexterity', value ?? false);
+                },
+              ),
+              _buildSavingThrowRow(
+                'CON',
+                widget.savingThrows.constitutionProficiency,
+                (value) {
+                  _updateSavingThrow('constitution', value ?? false);
+                },
+              ),
+              _buildSavingThrowRow(
+                'INT',
+                widget.savingThrows.intelligenceProficiency,
+                (value) {
+                  _updateSavingThrow('intelligence', value ?? false);
+                },
+              ),
+              _buildSavingThrowRow(
+                'WIS',
+                widget.savingThrows.wisdomProficiency,
+                (value) {
+                  _updateSavingThrow('wisdom', value ?? false);
+                },
+              ),
+              _buildSavingThrowRow(
+                'CHA',
+                widget.savingThrows.charismaProficiency,
+                (value) {
+                  _updateSavingThrow('charisma', value ?? false);
+                },
+              ),
             ],
           ),
         ],
@@ -168,7 +200,8 @@ class _StatsTabState extends State<StatsTab> {
               ),
             ),
             const SizedBox(height: 2), // Reduced height from 4 to 2
-            Expanded( // Make the container expand to fit available space
+            Expanded(
+              // Make the container expand to fit available space
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -179,19 +212,25 @@ class _StatsTabState extends State<StatsTab> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded( // Make TextField expand
-                      child: Center( // Center the TextField within the Expanded space
+                    Expanded(
+                      // Make TextField expand
+                      child: Center(
+                        // Center the TextField within the Expanded space
                         child: TextField(
                           controller: controller,
                           decoration: InputDecoration(
                             hintText: '10',
                             hintStyle: TextStyle(color: Colors.grey.shade400),
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero, // Remove content padding for better centering
+                            contentPadding:
+                                EdgeInsets
+                                    .zero, // Remove content padding for better centering
                             isDense: true,
                           ),
                           keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.done, // Show "Done" button on keyboard
+                          textInputAction:
+                              TextInputAction
+                                  .done, // Show "Done" button on keyboard
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -227,10 +266,10 @@ class _StatsTabState extends State<StatsTab> {
                       child: Text(
                         _getModifier(controller.text),
                         style: const TextStyle(
-                          fontSize: 11, 
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          height: 1.0, 
+                          height: 1.0,
                         ),
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.visible,
@@ -253,7 +292,9 @@ class _StatsTabState extends State<StatsTab> {
   ) {
     final abilityScore = _getAbilityScore(ability);
     final modifier = ((abilityScore - 10) / 2).floor();
-    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(int.tryParse(widget.levelController.text) ?? 1);
+    final proficiencyBonus = CharacterStats.calculateProficiencyBonus(
+      int.tryParse(widget.levelController.text) ?? 1,
+    );
     final total = modifier + (isProficient ? proficiencyBonus : 0);
 
     return Container(

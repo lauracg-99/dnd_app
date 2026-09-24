@@ -1,3 +1,4 @@
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/models/character_model.dart';
 import 'package:dnd_app/views/characters/SpellsTab/spell_by_level.dart';
 import 'package:dnd_app/widgets/action_button.dart';
@@ -67,6 +68,7 @@ class SpellsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -190,14 +192,14 @@ class SpellsTab extends StatelessWidget {
                             context: context,
                             builder:
                                 (context) => AlertDialog(
-                                  title: const Text('Spell Preparation Info'),
-                                  content: const Text(
+                                  title: Text(l10n.spellPreparationInfo),
+                                  content: Text(
                                     'You can establish if a spell is always prepared or you can cast it for free. Always prepared spells don\'t count against your maximum prepared spells limit.',
                                   ),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
-                                      child: const Text('Got it'),
+                                      child: Text(l10n.gotIt),
                                     ),
                                   ],
                                 ),

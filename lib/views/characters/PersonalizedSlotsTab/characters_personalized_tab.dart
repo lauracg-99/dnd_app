@@ -1,3 +1,4 @@
+import 'package:dnd_app/l10n/app_localizations.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:dnd_app/widgets/action_button.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +66,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
   }
 
   void _showAddPersonalizedSlotDialog() {
+    final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController();
     final maxSlotsController = TextEditingController(text: '4');
 
@@ -72,25 +74,25 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Add Class Slot'),
+            title: Text(l10n.addClassSlot),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Slot Name',
+                  decoration: InputDecoration(
+                    labelText: l10n.slotName,
                     hintText: 'e.g., Superiority Dice, Ki Points',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: maxSlotsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Max Slots',
+                  decoration: InputDecoration(
+                    labelText: l10n.maxSlots,
                     hintText: 'e.g., 4',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
                   textInputAction:
@@ -101,7 +103,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -129,7 +131,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                     );
                   }
                 },
-                child: const Text('Add'),
+                child: Text(l10n.add),
               ),
             ],
           ),
@@ -158,6 +160,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
     String type,
     int currentValue,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final slot = _personalizedSlots[slotIndex];
     final textController = TextEditingController(text: currentValue.toString());
     int localValue = currentValue; // Create a mutable local variable
@@ -166,12 +169,12 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Modify ${slot.name}'),
+            title: Text(l10n.modifySlot(slot.name)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  type == 'slots' ? 'Maximum slots:' : 'Used slots:',
+                  type == 'slots' ? l10n.maximumSlots : l10n.slotUsedLabel,
                   style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 16),
@@ -182,7 +185,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                       TextInputAction.done, // Show "Done" button on keyboard
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
-                    labelText: type == 'slots' ? 'Max Slots' : 'Used Slots',
+                    labelText: type == 'slots' ? l10n.maxSlots : l10n.usedSlots,
                   ),
                   onChanged: (value) {
                     final newValue = int.tryParse(value) ?? localValue;
@@ -228,7 +231,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                           localValue = 4;
                           textController.text = '4';
                         },
-                        child: const Text('Set 4'),
+                        child: Text(l10n.setFour),
                       ),
                       ElevatedButton(
                         onPressed: () {
@@ -239,7 +242,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                           localValue = 6;
                           textController.text = '6';
                         },
-                        child: const Text('Set 6'),
+                        child: Text(l10n.setSix),
                       ),
                       ElevatedButton(
                         onPressed: () {
@@ -250,7 +253,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                           localValue = 8;
                           textController.text = '8';
                         },
-                        child: const Text('Set 8'),
+                        child: Text(l10n.setEight),
                       ),
                     ] else ...[
                       ElevatedButton(
@@ -262,7 +265,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                           localValue = 0;
                           textController.text = '0';
                         },
-                        child: const Text('Clear All'),
+                        child: Text(l10n.clearAll),
                       ),
                       ElevatedButton(
                         onPressed: () {
@@ -273,7 +276,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                           localValue = slot.maxSlots;
                           textController.text = slot.maxSlots.toString();
                         },
-                        child: const Text('Use All'),
+                        child: Text(l10n.useAll),
                       ),
                       ElevatedButton(
                         onPressed: () {
@@ -285,7 +288,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                           localValue = halfSlots;
                           textController.text = halfSlots.toString();
                         },
-                        child: const Text('Half Used'),
+                        child: Text(l10n.halfUsed),
                       ),
                     ],
                   ],
@@ -295,7 +298,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Accept'),
+                child: Text(l10n.accept),
               ),
             ],
           ),
@@ -303,13 +306,14 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
   }
 
   void _showEditSlotNameDialog(int slotIndex, String currentName) {
+    final l10n = AppLocalizations.of(context)!;
     final textController = TextEditingController(text: currentName);
 
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Edit Slot Name'),
+            title: Text(l10n.editSlotName),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -321,9 +325,9 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                 TextField(
                   controller: textController,
                   textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Slot Name',
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: l10n.slotName,
                     hintText: 'e.g., Superiority Dice, Ki Points',
                   ),
                   autofocus: true,
@@ -343,7 +347,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -357,7 +361,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                     Navigator.pop(context);
                   }
                 },
-                child: const Text('Save'),
+                child: Text(l10n.save),
               ),
             ],
           ),
@@ -365,11 +369,12 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
   }
 
   void _showDeleteSlotConfirmation(int slotIndex, String slotName) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Delete Slot'),
+            title: Text(l10n.deleteSlot),
             content: Text(
               'Are you sure you want to delete "$slotName"?\n\nThis action cannot be undone.',
               style: const TextStyle(fontSize: 16),
@@ -377,7 +382,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -395,7 +400,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Delete'),
+                child: Text(l10n.delete),
               ),
             ],
           ),
@@ -407,6 +412,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
     required String label,
     required int slotIndex,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final slot = _personalizedSlots[slotIndex];
     final slots = slot.maxSlots;
     final used = slot.usedSlots;
@@ -459,7 +465,10 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Slots: ', style: const TextStyle(color: Colors.grey)),
+                    Text(
+                      l10n.slotsLabel,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
                     InkWell(
                       onTap:
                           () => _showPersonalizedSlotModifierDialog(
@@ -517,7 +526,10 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    const Text('Used: ', style: TextStyle(color: Colors.grey)),
+                    Text(
+                      l10n.usedLabel,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
                     ...List.generate(slots, (index) {
                       final isUsed = index < used;
                       return Padding(
@@ -587,21 +599,19 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                         context: context,
                         builder:
                             (context) => AlertDialog(
-                              title: Text(
-                                'Establecer usados para ${slot.name}',
-                              ),
+                              title: Text('Set used count for ${slot.name}'),
                               content: TextField(
                                 controller: textController,
                                 keyboardType: TextInputType.number,
                                 decoration: const InputDecoration(
-                                  labelText: 'Número de usados',
+                                  labelText: 'Used count',
                                   border: OutlineInputBorder(),
                                 ),
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
-                                  child: const Text('Cancelar'),
+                                  child: Text(l10n.cancel),
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
@@ -615,7 +625,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
                                       slot.copyWith(usedSlots: clamped),
                                     );
                                   },
-                                  child: const Text('Aceptar'),
+                                  child: Text(l10n.accept),
                                 ),
                               ],
                             ),
@@ -754,7 +764,7 @@ class _CharactersPersonalizedTabState extends State<CharactersPersonalizedTab> {
             child: ActionButton.primary(
               context: context,
               onPressed: _showAddPersonalizedSlotDialog,
-              label: 'Add Personalized Slot',
+              label: AppLocalizations.of(context)!.addClassSlot,
               icon: Symbols.add_circle,
             ),
           ),
