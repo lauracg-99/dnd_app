@@ -9,6 +9,13 @@ description: Use this skill for character notes, journal entries, diaries, campa
 
 This app supports narrative content such as diaries, group notes, character notes, and other writing workflows linked to a character or campaign context.
 
+**Key files:**
+- `lib/models/diary_model.dart` - Diary entry structure
+- `lib/models/diary_group_model.dart` - Diary group/campaign structure
+- `lib/services/diary_service.dart` - Diary CRUD operations
+- `lib/services/diary_group_service.dart` - Group management
+- `lib/views/diaries/` - Diary UI screens (editor, list, view, overview)
+
 ## Best practices
 
 - Keep narrative data separate from mechanical character stats when practical, but preserve the relationship when needed.
@@ -16,14 +23,34 @@ This app supports narrative content such as diaries, group notes, character note
 - Keep entry ordering and grouping predictable, especially when sorting by date, group, or character.
 - Preserve rich text or plain text content carefully if the app supports structured note editing.
 
+**Diary model structure:**
+- Diary model: id, title, content, characterId, groupId, createdAt, updatedAt
+- DiaryGroup model: id, name, characterIds (list), createdAt, updatedAt
+- Content stored as plain text or rich text depending on editor implementation
+- Entries can be grouped by campaign (DiaryGroup) or linked to specific characters
+- Timestamps track creation and modification dates
+
 ## Rules for implementation
 
 - Prefer service or model-level handling for note creation, update, and retrieval.
 - Treat note saving as a persistence flow that must be resilient to user interruptions and app restarts.
 - Ensure empty and loading states are user-friendly and consistent with the rest of the app.
 
+**Service patterns:**
+- Use DiaryService for individual diary entry operations
+- Use DiaryGroupService for campaign/group management
+- DiaryStorageService and DiaryGroupStorageService handle persistence
+- Entries are linked to characters via characterId field
+- Groups can contain multiple characters via characterIds list
+
 ## Validation
 
 - Check that diary entries and notes persist after saving and reopening the screen.
 - Confirm that grouping, ordering, and filtering remain consistent.
 - Verify that UI updates reflect note edits without stale or duplicated items.
+
+**Test commands:**
+- Test diary creation: create entry, save, reload to verify persistence
+- Test diary editing: modify content, verify changes persist
+- Test grouping: create group, add characters, verify group structure
+- Test diary view: navigate between entries, verify correct content display

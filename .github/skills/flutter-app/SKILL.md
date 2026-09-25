@@ -11,12 +11,12 @@ This repository is a Flutter application. Keep all work aligned with the existin
 
 ### Preferred project layout
 
-- `lib/models`: domain models and data structures.
-- `lib/services`: Firebase, persistence, network, and business logic.
-- `lib/viewmodels`: state and presentation logic.
-- `lib/views`: screens/pages.
-- `lib/widgets`: reusable UI components.
-- `lib/helpers` and `lib/utils`: shared support logic.
+- `lib/models`: domain models and data structures (character_model.dart, spell_model.dart, weapon_model.dart, etc.)
+- `lib/services`: Firebase, persistence, network, and business logic (character_service.dart, cloud_sync_service.dart, firebase_auth_service.dart)
+- `lib/viewmodels`: state and presentation logic (minimal usage in this codebase)
+- `lib/views`: screens/pages (character_edit_screen.dart, login_screen.dart, spells_list_screen.dart)
+- `lib/widgets`: reusable UI components (image_crop_widget.dart)
+- `lib/helpers` and `lib/utils`: shared support logic (character_helper.dart, constants.dart, snackbar_helper.dart)
 
 ## Coding standards
 
@@ -28,6 +28,14 @@ This repository is a Flutter application. Keep all work aligned with the existin
 - Respect null safety and avoid forced unwraps unless there is a justified reason.
 - Keep logic separated from UI when possible; avoid placing business logic directly in widgets.
 
+**Codebase-specific patterns:**
+- Models use const constructors and fromJson/toJson for serialization
+- Services are singletons (e.g., FirebaseAuthService, CloudSyncService)
+- Character edit screen uses auto-save for real-time persistence
+- Image cropping uses crop_your_image library with custom widget
+- Keyboard navigation uses keyboard_actions library for form fields
+- Spell search uses real-time filtering with setState
+
 ## Flutter-specific best practices
 
 - Prefer existing patterns already used in the codebase over introducing a new architecture for a small change.
@@ -36,6 +44,13 @@ This repository is a Flutter application. Keep all work aligned with the existin
 - When dealing with Firebase, ensure auth/session and persistence flows are resilient and observable.
 - Check mounted state before using `BuildContext` after async operations.
 - Keep accessibility in mind: labels, semantics, focus order, and touch targets matter.
+
+**Async patterns used:**
+- WidgetsBinding.instance.addPostFrameCallback for post-initialization tasks
+- mounted checks before setState() after async operations
+- Completer for initial auth state loading
+- StreamController for auth state and sync status broadcasting
+- Timer for debouncing sync operations
 
 ## Testing requirements
 
@@ -53,6 +68,16 @@ Before concluding work, run the relevant checks:
 - `flutter test <targeted_test_or_path>`
 
 If a full suite is needed, keep the scope justified and document the reason.
+
+**Common test files:**
+- `test/ability_changes_test.dart` - Ability score modifications
+- `test/shield_bonus_test.dart` - AC calculations
+- `test/weapons_test.dart` - Weapon damage display
+- `test/spell_search_test.dart` - Spell search functionality
+- `test/spell_removal_confirmation_simple_test.dart` - Spell removal confirmation
+- `test/image_crop_widget_test.dart` - Image crop widget
+- `test/json_corruption_test.dart` - JSON corruption recovery
+- `test/account_deletion_test.dart` - Account deletion flow
 
 ## Change hygiene
 

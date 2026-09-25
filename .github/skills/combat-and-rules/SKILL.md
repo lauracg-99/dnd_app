@@ -9,6 +9,11 @@ description: Use this skill for combat, hit points, armor class, saving throws, 
 
 This app includes combat-related values such as HP, AC, speed, saves, skill modifiers, hit dice, and death saves. These values must remain consistent and easy to understand in the UI.
 
+**Key files:**
+- `lib/models/character_model.dart` - CharacterStats, CharacterHealth, CharacterDeathSaves, CharacterSavingThrows, CharacterSkillChecks
+- `lib/services/character_service.dart` - Character creation and persistence
+- `lib/views/characters/character_edit_screen.dart` - Combat stat editing UI
+
 ## Rules
 
 - Keep calculations transparent and deterministic.
@@ -22,8 +27,21 @@ This app includes combat-related values such as HP, AC, speed, saves, skill modi
 - Keep combat-related formulas near the relevant domain logic or service layer.
 - If values are displayed in a form, show the user the exact meaning of each field to reduce confusion.
 
+**Specific patterns:**
+- CharacterStats contains strength, dexterity, constitution, intelligence, wisdom, charisma, proficiencyBonus, armorClass, speed
+- CharacterHealth contains maxHitPoints, currentHitPoints, tempHitPoints, hitDice, hitDiceType
+- CharacterDeathSaves contains successes, failures (both as lists of booleans)
+- CharacterSavingThrows and CharacterSkillChecks have individual modifiers for each save/skill
+- Use CharacterService.createCharacter() for new characters with validated defaults
+- Use CharacterService.saveCharacter() for persistence via CharacterStorageService
+
 ## Validation
 
 - Check battle-related screens and character sheets after edits.
 - Verify that HP/AC/save values persist correctly and are not lost after reload.
 - Validate that the UI reflects the current rules state without stale values.
+
+**Test commands:**
+- `flutter test test/ability_changes_test.dart` - Tests stat modifications
+- `flutter test lib/models/character_model.dart` - Verify model serialization
+- Test character edit screen: edit HP, AC, saves, then reload to confirm persistence
