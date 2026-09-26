@@ -39,15 +39,15 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  keyboard_actions: ^4.1.0
+  keyboard_actions: ^5.0.3
   flutter_launcher_icons: ^0.14.4
   flutter_quill: ^11.5.0
   intl: ^0.20.2
   # Firebase for authentication and cloud sync
-  firebase_core: ^3.8.0
-  firebase_auth: ^5.3.1
-  cloud_firestore: ^5.5.0
-  firebase_remote_config: ^5.5.0
+  firebase_core: ^4.15.0
+  firebase_auth: ^6.7.0
+  cloud_firestore: ^6.10.0
+  firebase_remote_config: ^6.7.0
   shared_preferences: ^2.3.2
   crop_your_image: ^2.0.0
   material_symbols_icons: ^4.2928.1
@@ -59,15 +59,15 @@ dev_dependencies:
     sdk: flutter
   # Firebase testing dependencies - using compatible versions
   # Note: fake_cloud_firestore needs to be compatible with cloud_firestore ^5.x
-  fake_cloud_firestore: ^3.1.0
-  firebase_auth_mocks: ^0.14.2
+  fake_cloud_firestore: ^4.3.0
+  firebase_auth_mocks: ^0.15.2
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
