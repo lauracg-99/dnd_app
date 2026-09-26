@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'firebase_auth_service.dart';
 import 'character_service.dart';
 import 'diary_service.dart';
-import 'device_service.dart';
 import '../models/character_model.dart';
 import '../models/diary_model.dart';
 
@@ -17,7 +16,6 @@ class CloudSyncService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuthService _authService = FirebaseAuthService();
-  final DeviceService _deviceService = DeviceService();
 
   // Expose auth service for other services to check authentication status
   FirebaseAuthService get authService => _authService;
