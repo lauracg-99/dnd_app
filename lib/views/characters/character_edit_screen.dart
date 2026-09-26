@@ -1,5 +1,3 @@
-import 'package:dnd_app/utils/quill_toolbar_configs.dart';
-import 'package:dnd_app/utils/simple_quill_editor.dart';
 import 'package:dnd_app/utils/snackbar_helper.dart';
 import 'package:dnd_app/views/characters/CharacterCoverTab/character_cover_tab.dart';
 import 'package:dnd_app/views/characters/QuickGuideTab/characters_quick_guide.dart';
@@ -44,48 +42,11 @@ import 'SpellsTab/spells_tab.dart';
 import 'SkillsTab/skills_tab.dart';
 import 'SpellSlotsTab/spell_slots_tab.dart';
 import 'AttacksTab/attacks_tab.dart';
+import 'CompanionTab/companion_tab.dart';
 import 'WeaponsTab/weapon_selection_dialog.dart';
 import 'WeaponsTab/weapon_attack_mapper.dart';
 import '../../widgets/dialogs/add_attack_dialog.dart';
 import '../diaries/diary_list_screen.dart';
-
-class _FamiliarFormEntry {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController armorClassController = TextEditingController();
-  final TextEditingController hpController = TextEditingController();
-  final QuillController notesController = QuillController.basic();
-
-  _FamiliarFormEntry({CharacterFamiliar? familiar}) {
-    if (familiar == null) return;
-
-    nameController.text = familiar.name;
-    armorClassController.text = familiar.armorClass;
-    hpController.text = familiar.maxHitPoints;
-
-    if (familiar.notes.isNotEmpty) {
-      try {
-        final List<dynamic> jsonDelta = jsonDecode(familiar.notes);
-        notesController.document = Document.fromJson(jsonDelta);
-      } catch (_) {
-        String text = familiar.notes;
-        if (!text.endsWith('\n')) {
-          text += '\n';
-        }
-        final delta = Delta()..insert(text);
-        notesController.document = Document.fromDelta(delta);
-      }
-    }
-  }
-
-  CharacterFamiliar toCharacterFamiliar() {
-    return CharacterFamiliar(
-      name: nameController.text.trim(),
-      armorClass: armorClassController.text.trim(),
-      maxHitPoints: hpController.text.trim(),
-      notes: jsonEncode(notesController.document.toDelta().toJson()),
-    );
-  }
-}
 
 class CharacterEditScreen extends StatefulWidget {
   final Character character;
@@ -152,8 +113,8 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
   final _needsController = TextEditingController();
   final _conflictController = TextEditingController();
 
-  // Familiar controllers
-  late List<_FamiliarFormEntry> _familiarEntries;
+  // Familiar data
+  late List<CharacterFamiliar> _familiars;
 
   // Stats controllers
   final _strengthController = TextEditingController();
@@ -507,10 +468,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _needsController.text = _pillars.needs;
     _conflictController.text = _pillars.conflict;
 
-    _familiarEntries =
-        character.familiars
-            .map((familiar) => _FamiliarFormEntry(familiar: familiar))
-            .toList();
+    _familiars = List.from(character.familiars);
 
     // Initialize feat notes
     if (character.featNotes.isNotEmpty) {
@@ -693,12 +651,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _wantsController.dispose();
     _needsController.dispose();
     _conflictController.dispose();
-    for (final familiar in _familiarEntries) {
-      familiar.nameController.dispose();
-      familiar.armorClassController.dispose();
-      familiar.hpController.dispose();
-      familiar.notesController.dispose();
-    }
     _strengthController.dispose();
     _dexterityController.dispose();
     _constitutionController.dispose();
@@ -1365,242 +1317,38 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     );
   }
 
-  void _moveFamiliar(int fromIndex, int toIndex) {
-    if (fromIndex < 0 ||
-        toIndex < 0 ||
-        fromIndex >= _familiarEntries.length ||
-        toIndex >= _familiarEntries.length) {
-      return;
-    }
-
-    setState(() {
-      final moved = _familiarEntries.removeAt(fromIndex);
-      _familiarEntries.insert(toIndex, moved);
-    });
-  }
-
   Widget _buildFamiliarTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Spacer(),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _familiarEntries.add(_FamiliarFormEntry());
-                  });
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add companion'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (_familiarEntries.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'No companions.',
-                      style: Theme.of(context).textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            ...List.generate(_familiarEntries.length, (index) {
-              final entry = _familiarEntries[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Companion info',
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed:
-                                      index > 0
-                                          ? () =>
-                                              _moveFamiliar(index, index - 1)
-                                          : null,
-                                  icon: const Icon(
-                                    Icons.arrow_upward,
-                                    size: 18,
-                                  ),
-                                  color: Theme.of(context).colorScheme.primary,
-                                  tooltip: 'Move companion up',
-                                  splashRadius: 18,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                    minWidth: 32,
-                                    minHeight: 32,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed:
-                                      index < _familiarEntries.length - 1
-                                          ? () =>
-                                              _moveFamiliar(index, index + 1)
-                                          : null,
-                                  icon: const Icon(
-                                    Icons.arrow_downward,
-                                    size: 18,
-                                  ),
-                                  color: Theme.of(context).colorScheme.primary,
-                                  tooltip: 'Move companion down',
-                                  splashRadius: 18,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                    minWidth: 32,
-                                    minHeight: 32,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () async {
-                                    final confirmed = await showDialog<bool>(
-                                      context: context,
-                                      builder:
-                                          (context) => AlertDialog(
-                                            title: const Text(
-                                              'Delete companion',
-                                            ),
-                                            content: const Text(
-                                              'Are you sure you want to delete this companion?',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed:
-                                                    () => Navigator.pop(
-                                                      context,
-                                                      false,
-                                                    ),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed:
-                                                    () => Navigator.pop(
-                                                      context,
-                                                      true,
-                                                    ),
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: Colors.red,
-                                                ),
-                                                child: const Text('Delete'),
-                                              ),
-                                            ],
-                                          ),
-                                    );
-
-                                    if (confirmed != true) return;
-
-                                    setState(() {
-                                      final removed = _familiarEntries.removeAt(
-                                        index,
-                                      );
-                                      removed.nameController.dispose();
-                                      removed.armorClassController.dispose();
-                                      removed.hpController.dispose();
-                                      removed.notesController.dispose();
-                                    });
-                                  },
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    size: 18,
-                                  ),
-                                  color: Colors.red,
-                                  tooltip: 'Remove companion',
-                                  splashRadius: 18,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                    minWidth: 32,
-                                    minHeight: 32,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: entry.nameController,
-                          decoration: const InputDecoration(labelText: 'Name'),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: entry.armorClassController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Armor Class',
-                                ),
-                                onChanged: (_) => setState(() {}),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextField(
-                                controller: entry.hpController,
-                                decoration: const InputDecoration(
-                                  labelText: 'HP',
-                                ),
-                                onChanged: (_) => setState(() {}),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Notes',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey.shade50,
-                          ),
-                          child: SimpleQuillEditor(
-                            controller: entry.notesController,
-                            toolbarConfig: QuillToolbarConfigs.minimal,
-                            height: 260,
-                            placeholder:
-                                'Describe your companion, personality, habits, abilities and important details...',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-        ],
-      ),
+    return CompanionTab(
+      familiars: _familiars,
+      onAddCompanion: () {
+        setState(() {
+          _familiars.add(CharacterFamiliar(
+            name: '',
+            armorClass: '',
+            maxHitPoints: '',
+            notes: '',
+          ));
+        });
+      },
+      onRemoveCompanion: (index) {
+        setState(() {
+          _familiars.removeAt(index);
+        });
+      },
+      onReorderCompanion: (oldIndex, newIndex) {
+        setState(() {
+          if (oldIndex < newIndex) {
+            newIndex -= 1;
+          }
+          final item = _familiars.removeAt(oldIndex);
+          _familiars.insert(newIndex, item);
+        });
+      },
+      onFamiliarsChanged: (updatedFamiliars) {
+        setState(() {
+          _familiars = updatedFamiliars;
+        });
+      },
     );
   }
 
@@ -1687,26 +1435,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     setState(() {
       _savingThrows = updatedSavingThrows;
     });
-
-    debugPrint('=== Saving throws updated based on new ability scores ===');
-    debugPrint(
-      'STR modifier: ${_getAbilityModifier('strength')} (prof: ${updatedSavingThrows.strengthProficiency})',
-    );
-    debugPrint(
-      'DEX modifier: ${_getAbilityModifier('dexterity')} (prof: ${updatedSavingThrows.dexterityProficiency})',
-    );
-    debugPrint(
-      'CON modifier: ${_getAbilityModifier('constitution')} (prof: ${updatedSavingThrows.constitutionProficiency})',
-    );
-    debugPrint(
-      'INT modifier: ${_getAbilityModifier('intelligence')} (prof: ${updatedSavingThrows.intelligenceProficiency})',
-    );
-    debugPrint(
-      'WIS modifier: ${_getAbilityModifier('wisdom')} (prof: ${updatedSavingThrows.wisdomProficiency})',
-    );
-    debugPrint(
-      'CHA modifier: ${_getAbilityModifier('charisma')} (prof: ${updatedSavingThrows.charismaProficiency})',
-    );
   }
 
   int _getSpellSaveDC() {
@@ -1743,61 +1471,6 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
 
   String _getAbilityName(String ability) {
     return CharacterAbilityHelper.getAbilityName(ability);
-  }
-
-  // Check if the current class or subclass can cast spells
-  bool _canCastSpells() {
-    final characterClass = _classController.text.trim().toLowerCase();
-    final subclass = _subclassController.text.trim().toLowerCase();
-
-    // Debug log to track spellcasting detection
-    debugPrint(
-      'Checking spellcasting for class: "$characterClass", subclass: "$subclass"',
-    );
-
-    // Full spellcasting classes
-    final spellcastingClasses = {
-      'wizard',
-      'sorcerer',
-      'warlock',
-      'bard',
-      'cleric',
-      'druid',
-      'artificer',
-      'blood hunter',
-      'mystic',
-    };
-
-    // Partial spellcasting classes (subclasses that grant spellcasting)
-    final spellcastingSubclasses = {
-      'eldritch knight', // Fighter subclass
-      'arcane trickster', // Rogue subclass
-    };
-
-    // Check if main class is a spellcasting class
-    if (spellcastingClasses.contains(characterClass)) {
-      debugPrint('Class "$characterClass" is a spellcasting class');
-      return true;
-    }
-
-    // Check if subclass grants spellcasting
-    if (spellcastingSubclasses.contains(subclass)) {
-      debugPrint('Subclass "$subclass" grants spellcasting');
-      return true;
-    }
-
-    // Special case: Ranger and Paladin are spellcasting classes
-    if (characterClass == 'ranger' || characterClass == 'paladin') {
-      debugPrint(
-        'Class "$characterClass" is a spellcasting class (special case)',
-      );
-      return true;
-    }
-
-    debugPrint(
-      'Class "$characterClass" with subclass "$subclass" cannot cast spells',
-    );
-    return false;
   }
 
   Widget _buildArmorClassField() {
@@ -4710,13 +4383,11 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     }
 
     // Check familiar changes
-    final currentFamiliars =
-        _familiarEntries.map((entry) => entry.toCharacterFamiliar()).toList();
-    if (currentFamiliars.length != character.familiars.length) {
+    if (_familiars.length != character.familiars.length) {
       return true;
     }
-    for (int i = 0; i < currentFamiliars.length; i++) {
-      final current = currentFamiliars[i];
+    for (int i = 0; i < _familiars.length; i++) {
+      final current = _familiars[i];
       final original = character.familiars[i];
       if (current.name != original.name ||
           current.armorClass != original.armorClass ||
@@ -4990,10 +4661,7 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
           needs: _needsController.text.trim(),
           conflict: _conflictController.text.trim(),
         ),
-        familiars:
-            _familiarEntries
-                .map((entry) => entry.toCharacterFamiliar())
-                .toList(),
+        familiars: _familiars,
         appearance: CharacterAppearance(
           height: _heightController.text.trim(),
           age: _ageController.text.trim(),
