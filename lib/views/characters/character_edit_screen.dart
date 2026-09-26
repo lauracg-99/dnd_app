@@ -12,6 +12,7 @@ import 'package:dnd_app/views/characters/TabReorderDialog/tab_reorder_dialog.dar
 import 'package:dnd_app/utils/source_mapper.dart';
 import 'package:dnd_app/widgets/appfilter_chip.dart';
 import 'package:dnd_app/widgets/dialogs/spell_slot_modifier_dialog.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -282,9 +283,13 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     _customImagePath = character.customImagePath;
     _appearanceImagePath = character.appearance.appearanceImagePath;
 
-    // Initialize base64 image data
+    // Initialize base64 image data with automatic WebP migration
     _customImageData = character.customImageData;
     _appearanceImageData = character.appearance.appearanceImageData;
+
+    // Migrate existing images to WebP format for better compression
+    // This runs asynchronously to avoid blocking UI initialization
+    _migrateExistingImagesToWebP();
 
     // Initialize controllers
     _nameController.text = character.name;
@@ -4140,12 +4145,16 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
             }
           }
 
+          // Compress and encode appearance image to WebP for better compression
+          final compressedBase64 = await ImageUtils.compressAndEncodeImage(
+            savedFile.path,
+          );
+
           setState(() {
             _appearanceImagePath = savedFile.path;
-            // Convert appearance image to base64 for JSON persistence
-            _appearanceImageData = ImageUtils.imageFileToBase64(savedFile.path);
+            _appearanceImageData = compressedBase64;
             debugPrint(
-              'Appearance image cropped and converted to base64: ${_appearanceImageData?.length ?? 0} characters',
+              'Appearance image cropped and compressed to WebP: ${_appearanceImageData?.length ?? 0} characters',
             );
           });
 
@@ -4209,6 +4218,50 @@ class _CharacterEditScreenState extends State<CharacterEditScreen>
     }
   }
 
+/// Comprueba si la cadena ya representa una imagen WebP
+  bool _isAlreadyWebP(String data) {
+    if (data.startsWith('data:image/webp')) return true;
+    
+    // Si tiene encabezado data:image/..., quitamos el prefijo para revisar el Base64
+    final cleanData = data.contains(',') ? data.split(',').last.trim() : data.trim();
+    
+    // "UklGR" es la firma 'RIFF' en Base64 propia de los archivos WebP
+    return cleanData.startsWith('UklGR');
+  }
+
+  Future<void> _migrateExistingImagesToWebP() async {
+    try {
+      bool needsSave = false;
+
+      final customData = _customImageData;
+
+      // --- MIGRAR IMAGEN DE PERFIL ---
+      // Solo migra si NO es ya WebP
+      if (customData != null && customData.isNotEmpty && !_isAlreadyWebP(customData)) {
+        final migratedProfileData = await ImageUtils.migrateToWebP(customData);
+
+        if (migratedProfileData != null && migratedProfileData != customData) {
+          if (mounted) {
+            setState(() {
+              _customImageData = migratedProfileData;
+              needsSave = true;
+            });
+          }
+          debugPrint('CharacterEditScreen: Profile image migrated to WebP');
+        }
+      }
+
+      // --- AUTO-GUARDADO SEGURO ---
+      if (needsSave && mounted) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (mounted) {
+          _saveCharacter(showToast: false);
+        }
+      }
+    } catch (e) {
+      debugPrint('CharacterEditScreen: Error migrating images to WebP: $e');
+    }
+  }
   /// Check if there are any unsaved changes in the character data
   bool get hasUnsavedChanges {
     final character = _baselineCharacter;

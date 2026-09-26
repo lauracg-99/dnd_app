@@ -80,11 +80,12 @@ class ImageUtils {
     }
   }
 
-  /// Compress an image file and return a base64-encoded JPEG string.
+  /// Compress an image file and return a base64-encoded WebP string.
   ///
   /// The function will resize the image if its largest dimension is greater
-  /// than [maxWidth] and will iteratively reduce JPEG quality until the
+  /// than [maxWidth] and will iteratively reduce WebP quality until the
   /// output fits within [maxBytes] or quality reaches 30.
+  /// WebP provides better compression than JPEG for the same quality.
   static Future<String?> compressAndEncodeImage(
     String? imagePath, {
     int maxWidth = 1024,
@@ -103,31 +104,104 @@ class ImageUtils {
       final img.Image? decoded = img.decodeImage(rawBytes);
       if (decoded == null) {
         // Fallback to original base64 if decoding fails
+        debugPrint('ImageUtils: Failed to decode image, using original bytes');
         return base64Encode(rawBytes);
       }
 
       img.Image working = decoded;
 
-      // Resize if necessary
+      // Resize if necessary - following Performance Optimization rule
       final int maxDim =
           working.width > working.height ? working.width : working.height;
       if (maxDim > maxWidth) {
+        debugPrint('ImageUtils: Resizing image from ${working.width}x${working.height} to max $maxWidth');
         working = img.copyResize(working, width: maxWidth);
       }
 
       int currentQuality = quality;
-      List<int> encoded = img.encodeJpg(working, quality: currentQuality);
+      final webpEncoder = img.WebPEncoder(lossless: false, quality: currentQuality);
+      List<int> encoded = webpEncoder.encode(working);
 
       // Iteratively reduce quality until size is below threshold or quality low
       while (encoded.length > maxBytes && currentQuality > 30) {
         currentQuality -= 5;
-        encoded = img.encodeJpg(working, quality: currentQuality);
+        debugPrint('ImageUtils: Reducing WebP quality to $currentQuality, current size: ${encoded.length} bytes');
+        final reducedEncoder = img.WebPEncoder(lossless: false, quality: currentQuality);
+        encoded = reducedEncoder.encode(working);
       }
 
-      return base64Encode(Uint8List.fromList(encoded));
+      final base64Result = base64Encode(Uint8List.fromList(encoded));
+      debugPrint('ImageUtils: WebP compression complete - Final size: ${encoded.length} bytes, Base64 length: ${base64Result.length}');
+      return base64Result;
     } catch (e) {
-      debugPrint('Error compressing image: $e');
+      debugPrint('ImageUtils: Error compressing image: $e');
       return null;
+    }
+  }
+
+  /// Migrate existing base64 JPEG image data to WebP format for better compression.
+  /// 
+  /// This function takes existing base64 image data (which may be JPEG or other formats),
+  /// decodes it, compresses it using WebP, and returns the new base64 string.
+  /// Used for automatic migration of existing character images.
+  static Future<String?> migrateToWebP(
+    String? base64ImageData, {
+    int maxWidth = 1024,
+    int quality = 85,
+    int maxBytes = 900000,
+  }) async {
+    if (base64ImageData == null || base64ImageData.isEmpty) {
+      debugPrint('ImageUtils: No base64 data to migrate');
+      return null;
+    }
+
+    try {
+      // Remove data URI prefix if present (e.g., "data:image/jpeg;base64,")
+      String cleanBase64 = base64ImageData;
+      if (base64ImageData.contains(',')) {
+        cleanBase64 = base64ImageData.split(',').last;
+      }
+
+      // Decode base64 to bytes
+      final Uint8List imageBytes = base64Decode(cleanBase64);
+      debugPrint('ImageUtils: Migrating image - Original size: ${imageBytes.length} bytes');
+
+      // Decode image using package:image
+      final img.Image? decoded = img.decodeImage(imageBytes);
+      if (decoded == null) {
+        debugPrint('ImageUtils: Failed to decode image during migration, keeping original');
+        return base64ImageData; // Return original if decoding fails
+      }
+
+      img.Image working = decoded;
+
+      // Resize if necessary - following Performance Optimization rule
+      final int maxDim =
+          working.width > working.height ? working.width : working.height;
+      if (maxDim > maxWidth) {
+        debugPrint('ImageUtils: Resizing during migration from ${working.width}x${working.height} to max $maxWidth');
+        working = img.copyResize(working, width: maxWidth);
+      }
+
+      int currentQuality = quality;
+      final webpEncoder = img.WebPEncoder(lossless: false, quality: currentQuality);
+      List<int> encoded = webpEncoder.encode(working);
+
+      // Iteratively reduce quality until size is below threshold or quality low
+      while (encoded.length > maxBytes && currentQuality > 30) {
+        currentQuality -= 5;
+        debugPrint('ImageUtils: Reducing WebP quality during migration to $currentQuality, current size: ${encoded.length} bytes');
+        final reducedEncoder = img.WebPEncoder(lossless: false, quality: currentQuality);
+        encoded = reducedEncoder.encode(working);
+      }
+
+      final base64Result = base64Encode(Uint8List.fromList(encoded));
+      final sizeReduction = ((imageBytes.length - encoded.length) / imageBytes.length * 100).toStringAsFixed(1);
+      debugPrint('ImageUtils: Migration complete - Final size: ${encoded.length} bytes (reduced by $sizeReduction%), Base64 length: ${base64Result.length}');
+      return base64Result;
+    } catch (e) {
+      debugPrint('ImageUtils: Error migrating image to WebP: $e');
+      return base64ImageData; // Return original on error
     }
   }
 
